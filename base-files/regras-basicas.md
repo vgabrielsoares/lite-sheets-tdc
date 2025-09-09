@@ -33,6 +33,7 @@ Em casos de discordância, situações ambíguas ou procedimentos confusos, o na
 - **Atributos:** Os atributos de uma criatura dizem respeito a sua capacidade física e mental em uma medida separada por seis aspectos. Os atributos, naturalmente, podem ir de 0 a 5, sendo 1 equivalente à média de uma criatura humanoide normal.
 
   - **AGILIDADE** - A agilidade mede a destreza manual e física, reflexos, coordenação motora, flexibilidade e rapidez.
+  
   - **CONSTITUIÇÃO** - A constituição mede a composição física de uma criatura, sua saúde e bem-estar, resistência.
 
   - **FORÇA** - A força mede as capacidades físicas dos músculos, atletismo.
