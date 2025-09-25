@@ -16,6 +16,7 @@
 ## gerenciamento de fichas
 
 - rolagem de testes de habilidade
+  - poder rolar usos de habilidade diferentes, possibilitando modificadores diversos para cada uso de habilidade
 - cálculo automático de bônus de habilidades
 - gerenciamento de recursos como PV e PP
 - modificadores automáticos de poderes
