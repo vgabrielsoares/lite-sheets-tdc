@@ -1,0 +1,37 @@
+{
+  "name": "lite-sheets-tdc",
+  "version": "1.0.0",
+  "description": "Sistema de criação e gerenciamento de fichas de RPG totalmente no navegador, com experiência PWA, funcionamento offline, responsividade e foco em acessibilidade. Ideal para jogadores e mestres que buscam praticidade, performance e facilidade de uso, sem depender de backend ou banco de dados externo.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vgabrielsoares/lite-sheets-tdc.git"
+  },
+  "keywords": [],
+  "author": "Victor Gabriel Soares",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/vgabrielsoares/lite-sheets-tdc/issues"
+  },
+  "homepage": "https://github.com/vgabrielsoares/lite-sheets-tdc#readme",
+  "dependencies": {
+    "next": "^16.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.1",
+    "typescript": "^5.9.3"
+  }
+}
