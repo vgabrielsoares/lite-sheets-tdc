@@ -1,17 +1,17 @@
-import type { Metadata, Viewport } from "next";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Lite Sheets TDC",
-  description: "Sistema de gerenciamento de fichas para Tabuleiro do Caos RPG",
-  manifest: "/manifest.json",
+  title: 'Lite Sheets TDC',
+  description: 'Sistema de gerenciamento de fichas para Tabuleiro do Caos RPG',
+  manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#000000",
+  themeColor: '#000000',
 };
 
 export default function RootLayout({
