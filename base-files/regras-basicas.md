@@ -33,7 +33,7 @@ Em casos de discordância, situações ambíguas ou procedimentos confusos, o na
 - **Atributos:** Os atributos de uma criatura dizem respeito a sua capacidade física e mental em uma medida separada por seis aspectos. Os atributos, naturalmente, podem ir de 0 a 5, sendo 1 equivalente à média de uma criatura humanoide normal.
 
   - **AGILIDADE** - A agilidade mede a destreza manual e física, reflexos, coordenação motora, flexibilidade e rapidez.
-  
+
   - **CONSTITUIÇÃO** - A constituição mede a composição física de uma criatura, sua saúde e bem-estar, resistência.
 
   - **FORÇA** - A força mede as capacidades físicas dos músculos, atletismo.
@@ -182,3 +182,58 @@ Cada proficiência tem um custo de acordo com sua quantidade de atributos. Prime
 - **1 Idioma (1 Inf ou 1 Men) -** Proficiência com X
 - **1 Instrumento de Habilidade (1 Atr) -** Proficiência com X
 - **1 Instrumento de Ofício (1 Atr) -** Proficiência com X
+
+## Habilidades de Personagem
+
+| Habilidade    | Atributo     | Carga | Instrumento | Proficiência | Combate |
+| ------------- | ------------ | ----- | ----------- | ------------ | ------- |
+| Acerto        | Agilidade    | -     | -           | -            | Sim     |
+| Acrobacia     | Agilidade    | Sim   | -           | -            | -       |
+| Adestramento  | Influência   | -     | Sim         | -            | -       |
+| Arcano        | Mente        | -     | Sim         | Sim          | -       |
+| Arte          | Mente        | -     | Sim         | -            | -       |
+| Atletismo     | Constituição | Sim   | -           | -            | -       |
+| Condução      | Agilidade    | Sim   | Sim         | Sim          | -       |
+| Destreza      | Agilidade    | Sim   | Sim         | Sim          | -       |
+| Determinação  | Presença     | -     | -           | -            | Sim     |
+| Enganação     | Influência   | -     | Sim         | -            | -       |
+| Estratégia    | Mente        | -     | -           | Sim          | -       |
+| Furtividade   | Agilidade    | Sim   | -           | -            | -       |
+| História      | Mente        | -     | -           | -            | -       |
+| Iniciativa    | Agilidade    | Sim   | -           | -            | Sim     |
+| Instrução     | Mente        | -     | -           | Sim          | -       |
+| Intimidação   | Influência   | -     | -           | -            | -       |
+| Investigação  | Mente        | -     | -           | -            | -       |
+| Luta          | Força        | -     | -           | -            | Sim     |
+| Medicina      | Mente        | -     | Sim         | Sim          | -       |
+| Natureza      | Presença     | -     | -           | -            | Sim     |
+| Ofício        | Especial     | -     | Sim         | -            | -       |
+| Percepção     | Presença     | -     | -           | -            | -       |
+| Performance   | Influência   | Sim   | -           | -            | -       |
+| Perspicácia   | Presença     | -     | -           | -            | -       |
+| Persuasão     | Influência   | -     | -           | -            | -       |
+| Rastreamento  | Presença     | -     | -           | Sim          | -       |
+| Reflexo       | Agilidade    | Sim   | -           | -            | Sim     |
+| Religião      | Presença     | -     | -           | Sim          | Sim     |
+| Sobrevivência | Mente        | -     | -           | -            | -       |
+| Sociedade     | Influência   | -     | -           | -            | -       |
+| Sorte         | Especial     | -     | -           | -            | -       |
+| Tenacidade    | Força        | -     | -           | Sim          | -       |
+| Vigor         | Constituição | -     | -           | Sim          | -       |
+
+## Tamanho de Personagem
+
+|              | Minúsculo | Pequeno | Médio | Grande | Enorme      | Colossal      |
+| ------------ | --------- | ------- | ----- | ------ | ----------- | ------------- |
+| Alcance      | 1         | 1       | 1     | 2      | 3 a 5       | 6 ou mais     |
+| Dano         | -1d4      | -1      | 0     | +1     | +1d4 a +1d8 | +1d10 ou mais |
+| Defesa       | +3        | +1      | 0     | -1     | -2 a -4     | -5 ou mais    |
+| Quadrados    | 0,5       | 1       | 1     | 2      | 3 a 5       | 6 ou mais     |
+| Peso Carreg. | -5        | -2      | 0     | +2     | +5          | +10           |
+| Manobras     | -3        | -1      | 0     | +1     | +2 a +4     | +5 ou mais    |
+| ND de Rastro | +5        | +2      | 0     | -2     | -5 a -7     | -8 ou mais    |
+| Acrobacia    | +5        | +2      | 0     | -2     | -5 a -7     | -8 ou mais    |
+| Atletismo    | -5        | -2      | 0     | +2     | +5 a +7     | +8 ou mais    |
+| Furtividade  | +5        | +2      | 0     | -2     | -5 a -7     | -8 ou mais    |
+| Reflexos     | +3        | +1      | 0     | -1     | -2 a -4     | -5 ou mais    |
+| Tenacidade   | -3        | -1      | 0     | +1     | +2 a +4     | +5 ou mais    |
