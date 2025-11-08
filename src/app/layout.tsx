@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import ReduxProvider from '@/store/Provider';
+import ThemeProviderWrapper from '@/components/layout/ThemeProviderWrapper';
 
 export const metadata: Metadata = {
   title: 'Lite Sheets TDC',
@@ -21,7 +23,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <ReduxProvider>
+          <ThemeProviderWrapper>{children}</ThemeProviderWrapper>
+        </ReduxProvider>
+      </body>
     </html>
   );
 }
