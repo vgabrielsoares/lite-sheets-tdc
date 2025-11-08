@@ -1,30 +1,16 @@
 import AppLayout from '@/components/layout/AppLayout';
-import { Typography, Box } from '@mui/material';
+import CharacterList from '@/components/character-list/CharacterList';
 
+/**
+ * Página inicial do aplicativo - Lista de fichas de personagens
+ *
+ * Esta é a home page que exibe todas as fichas criadas pelo usuário.
+ * Se não houver fichas, exibe um estado vazio com prompt para criar a primeira.
+ */
 export default function Home() {
   return (
     <AppLayout maxWidth="lg">
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-          textAlign: 'center',
-          gap: 2,
-        }}
-      >
-        <Typography variant="h2" component="h1" gutterBottom>
-          Lite Sheets TDC
-        </Typography>
-        <Typography variant="h5" color="text.secondary" gutterBottom>
-          Sistema de Gerenciamento de Fichas de Personagem
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Tabuleiro do Caos RPG
-        </Typography>
-      </Box>
+      <CharacterList />
     </AppLayout>
   );
 }
