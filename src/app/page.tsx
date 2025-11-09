@@ -1,25 +1,16 @@
+import AppLayout from '@/components/layout/AppLayout';
+import CharacterList from '@/components/character-list/CharacterList';
+
+/**
+ * Página inicial do aplicativo - Lista de fichas de personagens
+ *
+ * Esta é a home page que exibe todas as fichas criadas pelo usuário.
+ * Se não houver fichas, exibe um estado vazio com prompt para criar a primeira.
+ */
 export default function Home() {
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '2rem',
-        textAlign: 'center',
-      }}
-    >
-      <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-        Lite Sheets TDC
-      </h1>
-      <p style={{ fontSize: '1.25rem', color: '#666' }}>
-        Sistema de Gerenciamento de Fichas de Personagem
-      </p>
-      <p style={{ fontSize: '1rem', color: '#888', marginTop: '0.5rem' }}>
-        Tabuleiro do Caos RPG
-      </p>
-    </main>
+    <AppLayout maxWidth="lg">
+      <CharacterList />
+    </AppLayout>
   );
 }

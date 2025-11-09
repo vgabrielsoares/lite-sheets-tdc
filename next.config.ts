@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: "export",
+  output: 'export',
+
+  // Permite rotas dinâmicas em export estático
+  trailingSlash: true,
 
   // GitHub Pages usa o nome do repositório como base path
   // Descomentar e ajuste quando fizer deploy
