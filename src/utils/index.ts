@@ -4,6 +4,9 @@
  * Central export point for all utility functions used throughout the application.
  */
 
+// Character factory
+export { createDefaultCharacter } from './characterFactory';
+
 // Calculation utilities
 export {
   roundDown,

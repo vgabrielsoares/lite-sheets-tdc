@@ -23,6 +23,7 @@ import { useAppSelector } from '@/store/hooks';
  *
  * Por enquanto, exibe informações básicas do personagem.
  */
+
 export default function CharacterPage({
   params,
 }: {

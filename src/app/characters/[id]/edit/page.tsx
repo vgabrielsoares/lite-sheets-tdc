@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
  * No MVP 1, a edição acontece direto na página de visualização.
  * Esta rota simplesmente redireciona para a página de visualização.
  */
+
 export default function EditCharacterPage({
   params,
 }: {
