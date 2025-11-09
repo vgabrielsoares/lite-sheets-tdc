@@ -122,12 +122,12 @@ describe('Type System', () => {
 
     it('should have combat skills defined', () => {
       expect(COMBAT_SKILLS).toContain('acerto');
-      expect(COMBAT_SKILLS).toContain('esquiva');
+      expect(COMBAT_SKILLS).toContain('determinacao');
       expect(COMBAT_SKILLS).toContain('iniciativa');
-      expect(COMBAT_SKILLS).toContain('parry');
-      expect(COMBAT_SKILLS).toContain('pontaria');
-      expect(COMBAT_SKILLS).toContain('reacao');
+      expect(COMBAT_SKILLS).toContain('luta');
+      expect(COMBAT_SKILLS).toContain('natureza');
       expect(COMBAT_SKILLS).toContain('reflexo');
+      expect(COMBAT_SKILLS).toContain('religiao');
     });
 
     it('should have correct base proficient skills', () => {

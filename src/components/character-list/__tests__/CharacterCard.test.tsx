@@ -1,0 +1,172 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import CharacterCard from '../CharacterCard';
+import type { Character } from '@/types';
+
+/**
+ * Testes do componente CharacterCard
+ *
+ * Testa:
+ * - Renderização de informações básicas
+ * - Exibição condicional de campos opcionais
+ * - Interação de clique
+ * - Acessibilidade
+ */
+
+// Helper para criar mock mínimo de personagem (apenas campos usados pelo card)
+const createMockCharacter = (overrides: Partial<Character> = {}): Character => {
+  return {
+    id: 'test-id-123',
+    name: 'Aragorn',
+    playerName: 'João Silva',
+    level: 5,
+    lineage: {
+      name: 'Humano',
+    } as any,
+    origin: {
+      name: 'Soldado',
+    } as any,
+    combat: {
+      hp: { current: 45, max: 50, temporary: 0 },
+      pp: { current: 8, max: 10, temporary: 0 },
+    } as any,
+    ...overrides,
+  } as Character;
+};
+
+describe('CharacterCard', () => {
+  it('deve renderizar nome do personagem', () => {
+    const character = createMockCharacter();
+    render(<CharacterCard character={character} />);
+    expect(screen.getByText('Aragorn')).toBeInTheDocument();
+  });
+
+  it('deve renderizar nome do jogador quando preenchido', () => {
+    const character = createMockCharacter();
+    render(<CharacterCard character={character} />);
+    expect(screen.getByText(/Jogador: João Silva/)).toBeInTheDocument();
+  });
+
+  it('não deve renderizar nome do jogador quando vazio', () => {
+    const character = createMockCharacter({ playerName: undefined });
+    render(<CharacterCard character={character} />);
+    expect(screen.queryByText(/Jogador:/)).not.toBeInTheDocument();
+  });
+
+  it('deve renderizar nível do personagem', () => {
+    const character = createMockCharacter();
+    render(<CharacterCard character={character} />);
+    expect(screen.getByText('Nível 5')).toBeInTheDocument();
+  });
+
+  it('deve renderizar linhagem quando preenchida', () => {
+    const character = createMockCharacter();
+    render(<CharacterCard character={character} />);
+    expect(screen.getByText('Humano')).toBeInTheDocument();
+  });
+
+  it('deve renderizar origem quando preenchida', () => {
+    const character = createMockCharacter();
+    render(<CharacterCard character={character} />);
+    expect(screen.getByText('Soldado')).toBeInTheDocument();
+  });
+
+  it('não deve renderizar linhagem quando não preenchida', () => {
+    const character = createMockCharacter({ lineage: undefined });
+    render(<CharacterCard character={character} />);
+    // Apenas Nível deve estar presente
+    expect(screen.getByText('Nível 5')).toBeInTheDocument();
+    expect(screen.queryByText('Humano')).not.toBeInTheDocument();
+  });
+
+  it('não deve renderizar origem quando não preenchida', () => {
+    const character = createMockCharacter({ origin: undefined });
+    render(<CharacterCard character={character} />);
+    expect(screen.queryByText('Soldado')).not.toBeInTheDocument();
+  });
+
+  it('deve renderizar PV atual/máximo', () => {
+    const character = createMockCharacter();
+    render(<CharacterCard character={character} />);
+    expect(screen.getByText(/PV:/)).toBeInTheDocument();
+    expect(screen.getByText(/45\/50/)).toBeInTheDocument();
+  });
+
+  it('deve renderizar PP atual/máximo', () => {
+    const character = createMockCharacter();
+    render(<CharacterCard character={character} />);
+    expect(screen.getByText(/PP:/)).toBeInTheDocument();
+    expect(screen.getByText(/8\/10/)).toBeInTheDocument();
+  });
+
+  it('deve chamar onClick quando clicado', async () => {
+    const user = userEvent.setup();
+    const handleClick = jest.fn();
+    const character = createMockCharacter();
+
+    render(<CharacterCard character={character} onClick={handleClick} />);
+
+    const card = screen.getByRole('button');
+    await user.click(card);
+
+    expect(handleClick).toHaveBeenCalledTimes(1);
+    expect(handleClick).toHaveBeenCalledWith('test-id-123');
+  });
+
+  it('deve permitir navegação por teclado (Enter)', async () => {
+    const user = userEvent.setup();
+    const handleClick = jest.fn();
+    const character = createMockCharacter();
+
+    render(<CharacterCard character={character} onClick={handleClick} />);
+
+    const card = screen.getByRole('button');
+    card.focus();
+    await user.keyboard('{Enter}');
+
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('deve permitir navegação por teclado (Space)', async () => {
+    const user = userEvent.setup();
+    const handleClick = jest.fn();
+    const character = createMockCharacter();
+
+    render(<CharacterCard character={character} onClick={handleClick} />);
+
+    const card = screen.getByRole('button');
+    card.focus();
+    await user.keyboard(' ');
+
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('não deve ter role button quando onClick não está definido', () => {
+    const character = createMockCharacter();
+    const { container } = render(<CharacterCard character={character} />);
+    const card = container.querySelector('.MuiCard-root');
+    expect(card).not.toHaveAttribute('role', 'button');
+  });
+
+  it('deve exibir "Sem nome" quando nome não está preenchido', () => {
+    const character = createMockCharacter({ name: '' });
+    render(<CharacterCard character={character} />);
+    expect(screen.getByText('Sem nome')).toBeInTheDocument();
+  });
+
+  it('deve ter aria-label apropriado', () => {
+    const character = createMockCharacter();
+    render(<CharacterCard character={character} onClick={jest.fn()} />);
+    expect(
+      screen.getByLabelText('Ficha do personagem Aragorn')
+    ).toBeInTheDocument();
+  });
+
+  it('deve ter aria-label correto quando personagem não tem nome', () => {
+    const character = createMockCharacter({ name: '' });
+    render(<CharacterCard character={character} onClick={jest.fn()} />);
+    expect(
+      screen.getByLabelText('Ficha do personagem Sem nome')
+    ).toBeInTheDocument();
+  });
+});
