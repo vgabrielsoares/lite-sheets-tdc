@@ -289,10 +289,20 @@ export function EditableNumber({
 
       {!autoSave && (
         <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-          <IconButton size="small" color="primary" onClick={handleConfirm}>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={handleConfirm}
+            aria-label="Confirmar"
+          >
             <CheckIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="error" onClick={handleCancel}>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={handleCancel}
+            aria-label="Cancelar"
+          >
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>

@@ -205,6 +205,7 @@ export function EditableText({
   if (!isEditing) {
     return (
       <Box
+        data-testid="editable-text-view"
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -229,6 +230,7 @@ export function EditableText({
           <Typography
             variant={variant}
             color={value ? 'text.primary' : 'text.disabled'}
+            sx={multiline ? { whiteSpace: 'pre-line' } : undefined}
           >
             {value || placeholder}
           </Typography>
@@ -269,10 +271,20 @@ export function EditableText({
 
       {!autoSave && (
         <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-          <IconButton size="small" color="primary" onClick={handleConfirm}>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={handleConfirm}
+            aria-label="Confirmar"
+          >
             <CheckIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="error" onClick={handleCancel}>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={handleCancel}
+            aria-label="Cancelar"
+          >
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
