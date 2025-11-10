@@ -7,6 +7,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { Character } from '@/types';
+import { characterService } from '@/services/characterService';
 
 /**
  * Estado da slice de personagens
@@ -34,40 +35,33 @@ const initialState: CharactersState = {
 
 /**
  * Thunk para carregar personagens do IndexedDB
- * (Será implementado quando o serviço de DB estiver pronto)
  */
 export const loadCharacters = createAsyncThunk(
   'characters/loadCharacters',
   async () => {
-    // TODO: Implementar integração com characterService quando disponível
-    // const characters = await characterService.getAll();
-    // return characters;
-    return [] as Character[];
+    const characters = await characterService.getAll();
+    return characters;
   }
 );
 
 /**
  * Thunk para salvar personagem no IndexedDB
- * (Será implementado quando o serviço de DB estiver pronto)
  */
 export const saveCharacter = createAsyncThunk(
   'characters/saveCharacter',
   async (character: Character) => {
-    // TODO: Implementar integração com characterService quando disponível
-    // await characterService.save(character);
+    await characterService.create(character);
     return character;
   }
 );
 
 /**
  * Thunk para deletar personagem do IndexedDB
- * (Será implementado quando o serviço de DB estiver pronto)
  */
 export const deleteCharacter = createAsyncThunk(
   'characters/deleteCharacter',
   async (characterId: string) => {
-    // TODO: Implementar integração com characterService quando disponível
-    // await characterService.delete(characterId);
+    await characterService.delete(characterId);
     return characterId;
   }
 );
