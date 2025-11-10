@@ -47,3 +47,16 @@ export {
   isValidLanguageCount,
   isValidMovementSpeed,
 } from './validators';
+
+// Lineage utilities
+export {
+  applyAttributeModifiers,
+  validateAttributeModifier,
+  calculateCarryingCapacity,
+  getDefaultMovementSpeed,
+  createDefaultMovement,
+  getSizeModifierForSkill,
+  createDefaultLineage,
+  validateLineage,
+  applyLineageToCharacter,
+} from './lineageUtils';
