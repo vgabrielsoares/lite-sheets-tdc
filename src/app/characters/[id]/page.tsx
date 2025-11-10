@@ -1,52 +1,53 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
-import { ArrowBack, Edit, Delete } from '@mui/icons-material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import AppLayout from '@/components/layout/AppLayout';
-import { useAppSelector } from '@/store/hooks';
-import { selectCharacterById } from '@/features/characters/charactersSlice';
+import { CharacterSheet } from '@/components/character';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import {
+  selectCharacterById,
+  updateCharacter,
+} from '@/features/characters/charactersSlice';
+import type { Character } from '@/types';
 
 /**
  * Página de visualização de ficha de personagem
  *
- * Exibe todos os detalhes da ficha de um personagem específico.
- * No MVP 1, esta página será construída gradualmente conforme
- * os componentes de visualização forem desenvolvidos nas próximas fases.
+ * Exibe a ficha completa do personagem com sistema de abas,
+ * permitindo visualização e edição de todos os dados.
  *
- * Por enquanto, exibe informações básicas do personagem.
+ * Implementa o layout base da ficha conforme Issue 3.1 da FASE 3.
  */
 export default function CharacterDetailPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const params = useParams();
   const id = params?.id as string;
 
   const character = useAppSelector((state) => selectCharacterById(state, id));
 
-  const handleBack = () => {
-    router.push('/');
-  };
+  /**
+   * Atualiza os dados do personagem
+   */
+  const handleUpdate = (updates: Partial<Character>) => {
+    if (!character) return;
 
-  const handleEdit = () => {
-    router.push(`/characters/${id}/edit`);
-  };
-
-  const handleDelete = () => {
-    // TODO: Implementar confirmação e deleção
-    console.log('Delete character:', id);
+    dispatch(
+      updateCharacter({
+        id: character.id,
+        updates: {
+          ...updates,
+          updatedAt: new Date().toISOString(),
+        },
+      })
+    );
   };
 
   // Loading state (caso o personagem ainda não esteja carregado)
   if (!character) {
     return (
-      <AppLayout maxWidth="lg">
+      <AppLayout maxWidth="xl">
         <Box
           sx={{
             display: 'flex',
@@ -65,116 +66,8 @@ export default function CharacterDetailPage() {
   }
 
   return (
-    <AppLayout maxWidth="lg">
-      <Box sx={{ py: 4 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-          }}
-        >
-          <Button startIcon={<ArrowBack />} onClick={handleBack}>
-            Voltar
-          </Button>
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Edit />}
-              onClick={handleEdit}
-            >
-              Editar
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<Delete />}
-              onClick={handleDelete}
-            >
-              Deletar
-            </Button>
-          </Box>
-        </Box>
-
-        <Paper sx={{ p: 4 }}>
-          <Typography variant="h3" component="h1" gutterBottom>
-            {character.name}
-          </Typography>
-
-          {character.playerName && (
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              Jogador: {character.playerName}
-            </Typography>
-          )}
-
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="h5" gutterBottom>
-              Informações Básicas
-            </Typography>
-
-            <Box
-              sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}
-            >
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Nível
-                </Typography>
-                <Typography variant="h6">{character.level}</Typography>
-              </Box>
-
-              {character.lineage?.name && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Linhagem
-                  </Typography>
-                  <Typography variant="h6">{character.lineage.name}</Typography>
-                </Box>
-              )}
-
-              {character.origin?.name && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Origem
-                  </Typography>
-                  <Typography variant="h6">{character.origin.name}</Typography>
-                </Box>
-              )}
-
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Pontos de Vida (PV)
-                </Typography>
-                <Typography variant="h6">
-                  {character.combat.hp.current} / {character.combat.hp.max}
-                  {character.combat.hp.temporary > 0 &&
-                    ` (+${character.combat.hp.temporary} temp)`}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Pontos de Poder (PP)
-                </Typography>
-                <Typography variant="h6">
-                  {character.combat.pp.current} / {character.combat.pp.max}
-                  {character.combat.pp.temporary > 0 &&
-                    ` (+${character.combat.pp.temporary} temp)`}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-
-          <Alert severity="info" sx={{ mt: 4 }}>
-            <Typography variant="body2">
-              <strong>Em desenvolvimento:</strong> Esta página será expandida
-              nas próximas fases com componentes para exibir atributos,
-              habilidades, combate, inventário, feitiços e muito mais.
-            </Typography>
-          </Alert>
-        </Paper>
-      </Box>
+    <AppLayout maxWidth={false}>
+      <CharacterSheet character={character} onUpdate={handleUpdate} />
     </AppLayout>
   );
 }
