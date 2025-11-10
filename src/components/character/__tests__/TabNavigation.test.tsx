@@ -56,7 +56,10 @@ describe('TabNavigation', () => {
     it('deve permitir navegação entre todas as abas', () => {
       render(<TabNavigation currentTab="main" onTabChange={mockOnTabChange} />);
 
-      CHARACTER_TABS.forEach((tab, index) => {
+      // Filtrar a aba atual ('main') pois o MUI Tabs não dispara onChange ao clicar na aba já selecionada
+      const otherTabs = CHARACTER_TABS.filter((tab) => tab.id !== 'main');
+
+      otherTabs.forEach((tab, index) => {
         const tabElement = screen.getByRole('tab', { name: tab.label });
         fireEvent.click(tabElement);
 
