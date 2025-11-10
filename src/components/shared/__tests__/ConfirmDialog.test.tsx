@@ -105,11 +105,15 @@ describe('ConfirmDialog', () => {
     );
   });
 
-  it('deve focar automaticamente no botão de confirmação', () => {
+  it('deve focar automaticamente no botão de confirmação', async () => {
     render(<ConfirmDialog {...defaultProps} />);
 
     const confirmButton = screen.getByRole('button', { name: /confirmar/i });
-    expect(confirmButton).toHaveAttribute('autofocus');
+
+    // Aguardar o foco automático (nextTick)
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(confirmButton).toHaveFocus();
   });
 
   it('não deve chamar onCancel ao clicar fora quando closeOnBackdropClick é false', () => {

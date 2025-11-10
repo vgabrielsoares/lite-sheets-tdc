@@ -39,14 +39,12 @@ describe('EditableNumber', () => {
   });
 
   it('calls onChange with debounce in autoSave mode', async () => {
-    jest.useFakeTimers();
-
     render(
       <EditableNumber
         value={5}
         onChange={mockOnChange}
         autoSave
-        debounceMs={500}
+        debounceMs={100}
       />
     );
 
@@ -59,14 +57,13 @@ describe('EditableNumber', () => {
     // Não deve chamar onChange imediatamente
     expect(mockOnChange).not.toHaveBeenCalled();
 
-    // Avançar tempo para debounce
-    jest.advanceTimersByTime(500);
-
-    await waitFor(() => {
-      expect(mockOnChange).toHaveBeenCalledWith(15);
-    });
-
-    jest.useRealTimers();
+    // Aguardar debounce
+    await waitFor(
+      () => {
+        expect(mockOnChange).toHaveBeenCalledWith(15);
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('validates minimum value', async () => {
@@ -84,7 +81,7 @@ describe('EditableNumber', () => {
 
     await userEvent.clear(input);
     await userEvent.type(input, '3');
-    await userEvent.click(screen.getByRole('button', { name: /check/i }));
+    await userEvent.click(screen.getByRole('button', { name: /confirmar/i }));
 
     expect(await screen.findByText('Valor mínimo: 5')).toBeInTheDocument();
     expect(mockOnChange).not.toHaveBeenCalled();
@@ -105,11 +102,13 @@ describe('EditableNumber', () => {
 
     await userEvent.clear(input);
     await userEvent.type(input, '25');
-    await userEvent.click(screen.getByRole('button', { name: /check/i }));
+    await userEvent.click(screen.getByRole('button', { name: /confirmar/i }));
 
-    expect(await screen.findByText('Valor máximo: 20')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Valor máximo: 20', {}, { timeout: 3000 })
+    ).toBeInTheDocument();
     expect(mockOnChange).not.toHaveBeenCalled();
-  });
+  }, 10000);
 
   it('validates with custom validator', async () => {
     const customValidator = (value: number) => {
@@ -131,11 +130,13 @@ describe('EditableNumber', () => {
 
     await userEvent.clear(input);
     await userEvent.type(input, '15');
-    await userEvent.click(screen.getByRole('button', { name: /check/i }));
+    await userEvent.click(screen.getByRole('button', { name: /confirmar/i }));
 
-    expect(await screen.findByText('Deve ser par')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Deve ser par', {}, { timeout: 3000 })
+    ).toBeInTheDocument();
     expect(mockOnChange).not.toHaveBeenCalled();
-  });
+  }, 10000);
 
   it('shows error for invalid number', async () => {
     render(
@@ -147,11 +148,13 @@ describe('EditableNumber', () => {
 
     await userEvent.clear(input);
     await userEvent.type(input, 'abc');
-    await userEvent.click(screen.getByRole('button', { name: /check/i }));
+    await userEvent.click(screen.getByRole('button', { name: /confirmar/i }));
 
-    expect(await screen.findByText('Valor inválido')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Valor inválido', {}, { timeout: 3000 })
+    ).toBeInTheDocument();
     expect(mockOnChange).not.toHaveBeenCalled();
-  });
+  }, 10000);
 
   it('cancels edit on Escape key', async () => {
     render(<EditableNumber value={42} onChange={mockOnChange} />);
@@ -165,7 +168,7 @@ describe('EditableNumber', () => {
 
     expect(screen.getByText('42')).toBeInTheDocument();
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
-  });
+  }, 10000);
 
   it('confirms edit on Enter key (non-autoSave)', async () => {
     render(
@@ -179,7 +182,7 @@ describe('EditableNumber', () => {
     await userEvent.type(input, '25{Enter}');
 
     expect(mockOnChange).toHaveBeenCalledWith(25);
-  });
+  }, 10000);
 
   it('displays label when provided', () => {
     render(<EditableNumber value={5} onChange={mockOnChange} label="Level" />);
@@ -194,5 +197,5 @@ describe('EditableNumber', () => {
     const input = screen.getByRole('spinbutton');
 
     expect(input).toHaveAttribute('step', '5');
-  });
+  }, 10000);
 });

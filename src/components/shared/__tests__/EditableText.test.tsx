@@ -38,14 +38,12 @@ describe('EditableText', () => {
   });
 
   it('calls onChange with debounce in autoSave mode', async () => {
-    jest.useFakeTimers();
-
     render(
       <EditableText
         value="Original"
         onChange={mockOnChange}
         autoSave
-        debounceMs={500}
+        debounceMs={100}
       />
     );
 
@@ -58,14 +56,13 @@ describe('EditableText', () => {
     // Não deve chamar onChange imediatamente
     expect(mockOnChange).not.toHaveBeenCalled();
 
-    // Avançar tempo para debounce
-    jest.advanceTimersByTime(500);
-
-    await waitFor(() => {
-      expect(mockOnChange).toHaveBeenCalledWith('New Value');
-    });
-
-    jest.useRealTimers();
+    // Aguardar debounce
+    await waitFor(
+      () => {
+        expect(mockOnChange).toHaveBeenCalledWith('New Value');
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('validates required field', async () => {
@@ -82,7 +79,7 @@ describe('EditableText', () => {
     const input = screen.getByRole('textbox');
 
     await userEvent.clear(input);
-    await userEvent.click(screen.getByRole('button', { name: /check/i }));
+    await userEvent.click(screen.getByRole('button', { name: /confirmar/i }));
 
     expect(
       await screen.findByText('Este campo é obrigatório')
@@ -109,7 +106,7 @@ describe('EditableText', () => {
     const input = screen.getByRole('textbox');
 
     await userEvent.type(input, '123456');
-    await userEvent.click(screen.getByRole('button', { name: /check/i }));
+    await userEvent.click(screen.getByRole('button', { name: /confirmar/i }));
 
     expect(await screen.findByText('Muito longo')).toBeInTheDocument();
     expect(mockOnChange).not.toHaveBeenCalled();
@@ -123,7 +120,7 @@ describe('EditableText', () => {
 
     await userEvent.clear(input);
     await userEvent.type(input, 'Changed');
-    fireEvent.keyDown(input, { key: 'Escape' });
+    await userEvent.keyboard('{Escape}');
 
     expect(screen.getByText('Original')).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
@@ -153,7 +150,8 @@ describe('EditableText', () => {
       />
     );
 
-    await userEvent.click(screen.getByText('Line 1\nLine 2'));
+    // Clicar no elemento de visualização para entrar em modo de edição
+    await userEvent.click(screen.getByTestId('editable-text-view'));
 
     const input = screen.getByRole('textbox');
     expect(input).toHaveAttribute('rows', '3');
