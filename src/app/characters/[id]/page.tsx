@@ -1,7 +1,6 @@
 'use client';
 
-import { use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
   Box,
   Typography,
@@ -23,14 +22,11 @@ import { useAppSelector } from '@/store/hooks';
  *
  * Por enquanto, exibe informações básicas do personagem.
  */
-
-export default function CharacterPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
+export default function CharacterDetailPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
+
   const character = useAppSelector((state) =>
     state.characters.characters.find((char) => char.id === id)
   );
