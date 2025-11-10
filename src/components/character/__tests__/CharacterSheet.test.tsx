@@ -76,7 +76,8 @@ describe('CharacterSheet', () => {
       );
 
       expect(screen.getByText('Fichas')).toBeInTheDocument();
-      expect(screen.getByText('Aragorn')).toBeInTheDocument();
+      // Pode haver múltiplos elementos com "Aragorn" (breadcrumb + ficha)
+      expect(screen.getAllByText('Aragorn').length).toBeGreaterThan(0);
     });
 
     it('deve renderizar a navegação por abas', () => {
@@ -95,7 +96,8 @@ describe('CharacterSheet', () => {
         <CharacterSheet character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      expect(screen.getByText('Stats Básicos')).toBeInTheDocument();
+      // Verifica se conteúdo da aba principal está visível (ex: "Linhagem")
+      expect(screen.getByText('Linhagem')).toBeInTheDocument();
     });
   });
 
@@ -116,8 +118,8 @@ describe('CharacterSheet', () => {
         <CharacterSheet character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      // Inicia na aba Principal
-      expect(screen.getByText('Stats Básicos')).toBeInTheDocument();
+      // Inicia na aba Principal - verifica conteúdo da aba main
+      expect(screen.getByText('Linhagem')).toBeInTheDocument();
 
       // Navega para aba de Combate
       const combatTab = screen.getByRole('tab', { name: 'Combate' });
@@ -177,7 +179,8 @@ describe('CharacterSheet', () => {
       );
 
       // Por enquanto, apenas verifica se o componente renderiza sem erros
-      expect(screen.getByText('Aragorn')).toBeInTheDocument();
+      // Pode haver múltiplos elementos com "Aragorn"
+      expect(screen.getAllByText('Aragorn').length).toBeGreaterThan(0);
     });
   });
 
