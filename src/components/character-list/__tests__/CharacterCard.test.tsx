@@ -169,4 +169,136 @@ describe('CharacterCard', () => {
       screen.getByLabelText('Ficha do personagem Sem nome')
     ).toBeInTheDocument();
   });
+
+  // Testes para funcionalidade de delete (Issue 2.5)
+  describe('Delete functionality', () => {
+    it('deve exibir botão de delete quando onDelete é fornecido', () => {
+      const character = createMockCharacter();
+      const handleDelete = jest.fn();
+
+      render(<CharacterCard character={character} onDelete={handleDelete} />);
+
+      const deleteButton = screen.getByLabelText(/deletar personagem aragorn/i);
+      expect(deleteButton).toBeInTheDocument();
+    });
+
+    it('não deve exibir botão de delete quando onDelete não é fornecido', () => {
+      const character = createMockCharacter();
+
+      render(<CharacterCard character={character} />);
+
+      const deleteButton = screen.queryByLabelText(/deletar personagem/i);
+      expect(deleteButton).not.toBeInTheDocument();
+    });
+
+    it('deve abrir dialog de confirmação ao clicar no botão de delete', async () => {
+      const user = userEvent.setup();
+      const character = createMockCharacter();
+      const handleDelete = jest.fn();
+
+      render(<CharacterCard character={character} onDelete={handleDelete} />);
+
+      const deleteButton = screen.getByLabelText(/deletar personagem aragorn/i);
+      await user.click(deleteButton);
+
+      expect(screen.getByText('Deletar Personagem')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /tem certeza que deseja deletar o personagem "Aragorn"/i
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('não deve propagar clique do botão delete para o card', async () => {
+      const user = userEvent.setup();
+      const character = createMockCharacter();
+      const handleClick = jest.fn();
+      const handleDelete = jest.fn();
+
+      render(
+        <CharacterCard
+          character={character}
+          onClick={handleClick}
+          onDelete={handleDelete}
+        />
+      );
+
+      const deleteButton = screen.getByLabelText(/deletar personagem aragorn/i);
+      await user.click(deleteButton);
+
+      // onClick do card não deve ter sido chamado
+      expect(handleClick).not.toHaveBeenCalled();
+      // Dialog deve estar aberto
+      expect(screen.getByText('Deletar Personagem')).toBeInTheDocument();
+    });
+
+    it('deve chamar onDelete ao confirmar exclusão', async () => {
+      const user = userEvent.setup();
+      const character = createMockCharacter();
+      const handleDelete = jest.fn();
+
+      render(<CharacterCard character={character} onDelete={handleDelete} />);
+
+      // Abre o dialog
+      const deleteButton = screen.getByLabelText(/deletar personagem aragorn/i);
+      await user.click(deleteButton);
+
+      // Confirma a exclusão
+      const confirmButton = screen.getByRole('button', { name: /deletar/i });
+      await user.click(confirmButton);
+
+      expect(handleDelete).toHaveBeenCalledTimes(1);
+      expect(handleDelete).toHaveBeenCalledWith('test-id-123');
+    });
+
+    it('não deve chamar onDelete ao cancelar exclusão', async () => {
+      const user = userEvent.setup();
+      const character = createMockCharacter();
+      const handleDelete = jest.fn();
+
+      render(<CharacterCard character={character} onDelete={handleDelete} />);
+
+      // Abre o dialog
+      const deleteButton = screen.getByLabelText(/deletar personagem aragorn/i);
+      await user.click(deleteButton);
+
+      // Cancela a exclusão
+      const cancelButton = screen.getByRole('button', { name: /cancelar/i });
+      await user.click(cancelButton);
+
+      expect(handleDelete).not.toHaveBeenCalled();
+    });
+
+    it('deve desabilitar botão de delete quando isDeleting é true', () => {
+      const character = createMockCharacter();
+      const handleDelete = jest.fn();
+
+      render(
+        <CharacterCard
+          character={character}
+          onDelete={handleDelete}
+          isDeleting={true}
+        />
+      );
+
+      const deleteButton = screen.getByLabelText(/deletar personagem aragorn/i);
+      expect(deleteButton).toBeDisabled();
+    });
+
+    it('deve aplicar opacidade reduzida ao card quando isDeleting é true', () => {
+      const character = createMockCharacter();
+      const handleDelete = jest.fn();
+
+      const { container } = render(
+        <CharacterCard
+          character={character}
+          onDelete={handleDelete}
+          isDeleting={true}
+        />
+      );
+
+      const card = container.querySelector('.MuiCard-root');
+      expect(card).toHaveStyle({ opacity: 0.6 });
+    });
+  });
 });

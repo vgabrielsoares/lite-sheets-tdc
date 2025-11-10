@@ -1,14 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import { Box, Typography, Button, Grid, CircularProgress } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import {
   selectAllCharacters,
   selectCharactersLoading,
   selectCharactersError,
+  deleteCharacter,
 } from '@/features/characters/charactersSlice';
+import { useNotifications } from '@/hooks/useNotifications';
 import CharacterCard from './CharacterCard';
 import EmptyState from './EmptyState';
 
@@ -19,6 +22,7 @@ import EmptyState from './EmptyState';
  * - Exibir estado vazio quando não há fichas
  * - Exibir grid de cards com informações básicas de cada ficha
  * - Prover navegação para criação e visualização de fichas
+ * - Permitir exclusão de fichas com confirmação (Issue 2.5)
  *
  * Seguindo requisitos do MVP 1 (mvp-um.md):
  * - Lista de fichas na tela inicial
@@ -38,9 +42,16 @@ import EmptyState from './EmptyState';
  */
 export default function CharacterList() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const characters = useAppSelector(selectAllCharacters);
   const loading = useAppSelector(selectCharactersLoading);
   const error = useAppSelector(selectCharactersError);
+  const { showSuccess, showError } = useNotifications();
+
+  // Estado para controlar qual personagem está sendo deletado
+  const [deletingCharacterId, setDeletingCharacterId] = useState<string | null>(
+    null
+  );
 
   // Carregar personagens ao montar componente
   // REMOVIDO: useEffect(() => { dispatch(loadCharacters()); }, [dispatch]);
@@ -58,6 +69,28 @@ export default function CharacterList() {
    */
   const handleViewCharacter = (characterId: string) => {
     router.push(`/characters/${characterId}`);
+  };
+
+  /**
+   * Deleta um personagem após confirmação
+   * Exibe feedback visual de sucesso ou erro
+   */
+  const handleDeleteCharacter = async (characterId: string) => {
+    const character = characters.find((c) => c.id === characterId);
+    const characterName = character?.name || 'Sem nome';
+
+    try {
+      setDeletingCharacterId(characterId);
+      await dispatch(deleteCharacter(characterId)).unwrap();
+      showSuccess(`Personagem "${characterName}" deletado com sucesso`);
+    } catch (err) {
+      console.error('Erro ao deletar personagem:', err);
+      showError(
+        `Erro ao deletar personagem "${characterName}". Tente novamente.`
+      );
+    } finally {
+      setDeletingCharacterId(null);
+    }
   };
 
   // Estado de carregamento
@@ -175,6 +208,8 @@ export default function CharacterList() {
             <CharacterCard
               character={character}
               onClick={handleViewCharacter}
+              onDelete={handleDeleteCharacter}
+              isDeleting={deletingCharacterId === character.id}
             />
           </Grid>
         ))}
