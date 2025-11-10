@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Alert } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import type { Character } from '@/types';
+import { BasicStats, HealthPoints, PowerPoints } from '../stats';
 
 export interface MainTabProps {
   /**
@@ -14,6 +15,16 @@ export interface MainTabProps {
    * Callback para atualizar o personagem
    */
   onUpdate: (updates: Partial<Character>) => void;
+
+  /**
+   * Callback para abrir sidebar de linhagem
+   */
+  onOpenLineage?: () => void;
+
+  /**
+   * Callback para abrir sidebar de origem
+   */
+  onOpenOrigin?: () => void;
 }
 
 /**
@@ -24,40 +35,72 @@ export interface MainTabProps {
  * - Linhagem e origem
  * - PV e PP (atual/máximo/temporário)
  * - Nível e XP
- * - Defesa
- * - Deslocamento
  *
+ * Implementa edição inline com auto-save automático através dos componentes
+ * EditableText e EditableNumber.
+ *
+ * @example
+ * ```tsx
+ * <MainTab
+ *   character={character}
+ *   onUpdate={handleUpdate}
+ *   onOpenLineage={() => setSidebarType('lineage')}
+ *   onOpenOrigin={() => setSidebarType('origin')}
+ * />
+ * ```
  */
-export function MainTab({ character, onUpdate }: MainTabProps) {
+export function MainTab({
+  character,
+  onUpdate,
+  onOpenLineage,
+  onOpenOrigin,
+}: MainTabProps) {
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
-        Stats Básicos
-      </Typography>
+      <Stack spacing={3}>
+        {/* Informações Básicas */}
+        <BasicStats
+          character={character}
+          onUpdate={onUpdate}
+          onOpenLineage={onOpenLineage}
+          onOpenOrigin={onOpenOrigin}
+        />
 
-      <Alert severity="info" sx={{ mt: 2 }}>
-        <Typography variant="body2">
-          <strong>Em desenvolvimento:</strong> Esta aba será implementada na
-          Issue 3.2 com componentes para exibir e editar stats básicos do
-          personagem (PV, PP, defesa, deslocamento, etc.).
-        </Typography>
-      </Alert>
+        {/* PV e PP lado a lado */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 2,
+          }}
+        >
+          {/* Pontos de Vida */}
+          <HealthPoints
+            hp={character.combat.hp}
+            onUpdate={(hp) =>
+              onUpdate({
+                combat: {
+                  ...character.combat,
+                  hp,
+                },
+              })
+            }
+          />
 
-      {/* Placeholder para desenvolvimento futuro */}
-      <Box sx={{ mt: 3 }}>
-        <Typography variant="body2" color="text.secondary">
-          Nome: {character.name}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Nível: {character.level}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          PV: {character.combat.hp.current}/{character.combat.hp.max}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          PP: {character.combat.pp.current}/{character.combat.pp.max}
-        </Typography>
-      </Box>
+          {/* Pontos de Poder */}
+          <PowerPoints
+            pp={character.combat.pp}
+            onUpdate={(pp) =>
+              onUpdate({
+                combat: {
+                  ...character.combat,
+                  pp,
+                },
+              })
+            }
+          />
+        </Box>
+      </Stack>
     </Box>
   );
 }
