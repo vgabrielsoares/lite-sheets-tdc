@@ -13,6 +13,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export type ThemeMode = 'light' | 'dark';
 
 /**
+ * Posicionamento da ficha de personagem
+ */
+export type SheetPosition = 'left' | 'right';
+
+/**
  * Estado da slice de app
  */
 interface AppState {
@@ -30,6 +35,8 @@ interface AppState {
   isPWAInstalled: boolean;
   /** Última sincronização com IndexedDB */
   lastSync: string | null;
+  /** Posicionamento da ficha de personagem (esquerda/direita) */
+  sheetPosition: SheetPosition;
 }
 
 /**
@@ -43,6 +50,7 @@ const initialState: AppState = {
   isOffline: false,
   isPWAInstalled: false,
   lastSync: null,
+  sheetPosition: 'left',
 };
 
 /**
@@ -130,6 +138,20 @@ const appSlice = createSlice({
     },
 
     /**
+     * Define o posicionamento da ficha de personagem
+     */
+    setSheetPosition: (state, action: PayloadAction<SheetPosition>) => {
+      state.sheetPosition = action.payload;
+    },
+
+    /**
+     * Alterna o posicionamento da ficha de personagem
+     */
+    toggleSheetPosition: (state) => {
+      state.sheetPosition = state.sheetPosition === 'left' ? 'right' : 'left';
+    },
+
+    /**
      * Reseta o estado da aplicação
      */
     resetAppState: () => initialState,
@@ -149,6 +171,8 @@ export const {
   setOfflineStatus,
   setPWAInstalled,
   updateLastSync,
+  setSheetPosition,
+  toggleSheetPosition,
   resetAppState,
 } = appSlice.actions;
 
@@ -177,6 +201,9 @@ export const selectIsPWAInstalled = (state: any) => state.app.isPWAInstalled;
 
 /** Retorna o timestamp da última sincronização */
 export const selectLastSync = (state: any) => state.app.lastSync;
+
+/** Retorna o posicionamento da ficha de personagem */
+export const selectSheetPosition = (state: any) => state.app.sheetPosition;
 
 /**
  * Reducer exportado
