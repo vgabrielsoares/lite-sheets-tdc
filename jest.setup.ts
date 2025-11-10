@@ -7,6 +7,14 @@
 import '@testing-library/jest-dom';
 import 'fake-indexeddb/auto';
 
+// Mock uuid para evitar problemas com ESM
+jest.mock('uuid', () => ({
+  v4: () => 'test-uuid-1234-5678-90ab-cdef',
+  v1: () => 'test-uuid-v1-1234-5678',
+  v5: jest.fn(),
+  NIL: '00000000-0000-0000-0000-000000000000',
+}));
+
 // Mock do crypto.randomUUID para Node.js
 if (typeof crypto === 'undefined' || !crypto.randomUUID) {
   Object.defineProperty(globalThis, 'crypto', {
