@@ -28,3 +28,6 @@ export * from './defaults';
 
 // Feitiços
 export * from './spells';
+
+// Linhagens
+export * from './lineage';
