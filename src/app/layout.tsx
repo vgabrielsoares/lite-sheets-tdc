@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import ReduxProvider from '@/store/Provider';
+import CharacterLoader from '@/store/CharacterLoader';
 import ThemeProviderWrapper from '@/components/layout/ThemeProviderWrapper';
+import { NotificationProvider } from '@/components/shared';
 
 export const metadata: Metadata = {
   title: {
@@ -74,7 +76,12 @@ export default function RootLayout({
       </head>
       <body>
         <ReduxProvider>
-          <ThemeProviderWrapper>{children}</ThemeProviderWrapper>
+          <CharacterLoader>
+            <ThemeProviderWrapper>
+              <NotificationProvider />
+              {children}
+            </ThemeProviderWrapper>
+          </CharacterLoader>
         </ReduxProvider>
       </body>
     </html>
