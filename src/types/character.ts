@@ -182,8 +182,8 @@ export interface Lineage {
   languages: LanguageName[];
   /** Deslocamento */
   movement: Record<MovementType, number>;
-  /** Sentido aguçado (se aplicável) */
-  keenSense?: SenseType;
+  /** Sentidos aguçados (se aplicável) */
+  keenSenses?: SenseType[];
   /** Tipo de visão */
   vision: VisionType;
   /** Características de ancestralidade */

@@ -195,6 +195,7 @@ export function createDefaultLineage(): Lineage {
     age: 25,
     languages: [],
     movement: createDefaultMovement(),
+    keenSenses: [],
     vision: 'normal',
     ancestryTraits: [],
   };
@@ -255,11 +256,11 @@ export function applyLineageToCharacter(
   // Atualiza sentidos
   updatedCharacter.senses = {
     vision: lineage.vision,
-    keenSenses: lineage.keenSense ? [lineage.keenSense] : [],
+    keenSenses: lineage.keenSenses || [],
     perceptionModifiers: {
-      visao: lineage.keenSense === 'visao' ? 5 : 0,
-      olfato: lineage.keenSense === 'olfato' ? 5 : 0,
-      audicao: lineage.keenSense === 'audicao' ? 5 : 0,
+      visao: lineage.keenSenses?.includes('visao') ? 5 : 0,
+      olfato: lineage.keenSenses?.includes('olfato') ? 5 : 0,
+      audicao: lineage.keenSenses?.includes('audicao') ? 5 : 0,
     },
   };
 

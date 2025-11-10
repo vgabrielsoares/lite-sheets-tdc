@@ -118,7 +118,7 @@ export function LinhagemSidebar({
 }: LinhagemSidebarProps) {
   // Estado local da linhagem sendo editada
   const [localLineage, setLocalLineage] = useState<Lineage>(
-    lineage || createDefaultLineage()
+    () => lineage || createDefaultLineage()
   );
 
   // Debounce para auto-save
@@ -129,11 +129,28 @@ export function LinhagemSidebar({
 
   /**
    * Sincroniza estado local com props quando a linhagem externa muda
+   * Apenas sincroniza se a sidebar acabou de abrir ou se houve mudança externa significativa
    */
   useEffect(() => {
-    if (lineage) {
-      setLocalLineage(lineage);
+    if (open) {
+      // Quando a sidebar abre, carrega a linhagem mais recente
+      const currentLineage = lineage || createDefaultLineage();
+      setLocalLineage(currentLineage);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  /**
+   * Sincroniza quando a linhagem externa muda significativamente
+   */
+  useEffect(() => {
+    if (lineage && open) {
+      // Apenas atualiza se for significativamente diferente (evita loops de sincronização)
+      if (JSON.stringify(lineage) !== JSON.stringify(localLineage)) {
+        setLocalLineage(lineage);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineage]);
 
   /**
@@ -205,13 +222,16 @@ export function LinhagemSidebar({
   };
 
   /**
-   * Atualiza sentido aguçado
+   * Atualiza sentidos aguçados (multiselect)
    */
-  const handleKeenSenseChange = (event: SelectChangeEvent<string>) => {
+  const handleKeenSensesChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
+    const senses = (
+      typeof value === 'string' ? value.split(',') : value
+    ) as SenseType[];
     setLocalLineage((prev) => ({
       ...prev,
-      keenSense: value === 'none' ? undefined : (value as SenseType),
+      keenSenses: senses,
     }));
   };
 
@@ -291,6 +311,8 @@ export function LinhagemSidebar({
       title="Linhagem do Personagem"
       width="lg"
       anchor="right"
+      showOverlay={false}
+      closeOnOverlayClick={false}
     >
       <Box sx={{ p: 3 }}>
         {/* Validação */}
@@ -557,17 +579,26 @@ export function LinhagemSidebar({
                 </FormHelperText>
               </FormControl>
 
-              {/* Sentido Aguçado */}
+              {/* Sentidos Aguçados */}
               <FormControl fullWidth>
-                <InputLabel>Sentido Aguçado</InputLabel>
+                <InputLabel>Sentidos Aguçados</InputLabel>
                 <Select
-                  value={localLineage.keenSense || 'none'}
-                  onChange={handleKeenSenseChange}
-                  label="Sentido Aguçado"
+                  multiple
+                  value={localLineage.keenSenses || []}
+                  onChange={handleKeenSensesChange}
+                  label="Sentidos Aguçados"
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((sense) => (
+                        <Chip
+                          key={sense}
+                          label={SENSE_LABELS[sense]}
+                          size="small"
+                        />
+                      ))}
+                    </Box>
+                  )}
                 >
-                  <MenuItem value="none">
-                    <em>Nenhum</em>
-                  </MenuItem>
                   {SENSE_TYPES.map((sense) => (
                     <MenuItem key={sense} value={sense}>
                       {SENSE_LABELS[sense]}
@@ -575,9 +606,9 @@ export function LinhagemSidebar({
                   ))}
                 </Select>
                 <FormHelperText>
-                  {localLineage.keenSense
-                    ? KEEN_SENSE_DESCRIPTIONS[localLineage.keenSense]
-                    : 'Nenhum sentido aguçado'}
+                  {localLineage.keenSenses && localLineage.keenSenses.length > 0
+                    ? `${localLineage.keenSenses.length} sentido(s) selecionado(s): ${localLineage.keenSenses.map((s) => SENSE_LABELS[s]).join(', ')}`
+                    : 'Nenhum sentido aguçado selecionado'}
                 </FormHelperText>
               </FormControl>
             </Stack>
