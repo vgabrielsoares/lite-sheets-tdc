@@ -12,6 +12,7 @@ import {
 import { ArrowBack, Edit, Delete } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAppSelector } from '@/store/hooks';
+import { selectCharacterById } from '@/features/characters/charactersSlice';
 
 /**
  * Página de visualização de ficha de personagem
@@ -27,9 +28,7 @@ export default function CharacterDetailPage() {
   const params = useParams();
   const id = params?.id as string;
 
-  const character = useAppSelector((state) =>
-    state.characters.characters.find((char) => char.id === id)
-  );
+  const character = useAppSelector((state) => selectCharacterById(state, id));
 
   const handleBack = () => {
     router.push('/');

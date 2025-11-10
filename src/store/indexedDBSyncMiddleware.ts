@@ -34,13 +34,11 @@ function isActionWithPayload<T = any>(
  * automaticamente as mudanças no IndexedDB.
  *
  * **Actions sincronizadas:**
- * - `characters/addCharacter` - Cria novo personagem no IndexedDB
- * - `characters/updateCharacter` - Atualiza personagem existente
- * - `characters/removeCharacter` - Remove personagem do IndexedDB
+ * - `characters/removeCharacter` - Remove personagem do IndexedDB (síncrona)
  * - `characters/setCharacters` - Substitui todos os personagens (bulk)
  *
- * **Nota:** As oper ações assíncronas (thunks) já lidam com IndexedDB
- * diretamente, então não precisam de sincronização adicional.
+ * **Nota:** Os thunks assíncronos (addCharacter, updateCharacter, deleteCharacter)
+ * já lidam com IndexedDB diretamente, então não precisam de sincronização adicional.
  */
 export const indexedDBSyncMiddleware: Middleware<{}, RootState> =
   (store) => (next) => async (action) => {
@@ -55,29 +53,11 @@ export const indexedDBSyncMiddleware: Middleware<{}, RootState> =
     // Depois sincroniza com IndexedDB (fire-and-forget)
     try {
       switch (action.type) {
-        case 'characters/addCharacter': {
-          // Adicionar personagem ao IndexedDB
-          const character = action.payload as Character;
-          await characterService.create(character);
-          console.log(`✅ Personagem "${character.name}" salvo no IndexedDB`);
-          break;
-        }
-
-        case 'characters/updateCharacter': {
-          // Atualizar personagem no IndexedDB
-          const character = action.payload as Character;
-          await characterService.update(character.id, character);
-          console.log(
-            `✅ Personagem "${character.name}" atualizado no IndexedDB`
-          );
-          break;
-        }
-
         case 'characters/removeCharacter': {
-          // Remover personagem do IndexedDB
+          // Remover personagem do IndexedDB (ação síncrona)
           const characterId = action.payload as string;
           await characterService.delete(characterId);
-          console.log(`✅ Personagem removido do IndexedDB`);
+          console.log(`✅ Personagem removido do IndexedDB (sync)`);
           break;
         }
 
@@ -101,6 +81,14 @@ export const indexedDBSyncMiddleware: Middleware<{}, RootState> =
           );
           break;
         }
+
+        // As ações fulfilled dos thunks NÃO precisam de sync, pois
+        // os thunks já salvaram no IndexedDB antes de retornar
+        case 'characters/addCharacter/fulfilled':
+        case 'characters/updateCharacter/fulfilled':
+        case 'characters/deleteCharacter/fulfilled':
+          console.log(`ℹ️ ${action.type} - Já sincronizado pelo thunk`);
+          break;
 
         default:
           // Outras actions não precisam de sincronização

@@ -4,6 +4,11 @@ import { Box, Typography, Button, Grid, CircularProgress } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useAppSelector } from '@/store/hooks';
+import {
+  selectAllCharacters,
+  selectCharactersLoading,
+  selectCharactersError,
+} from '@/features/characters/charactersSlice';
 import CharacterCard from './CharacterCard';
 import EmptyState from './EmptyState';
 
@@ -33,9 +38,9 @@ import EmptyState from './EmptyState';
  */
 export default function CharacterList() {
   const router = useRouter();
-  const { characters, loading, error } = useAppSelector(
-    (state) => state.characters
-  );
+  const characters = useAppSelector(selectAllCharacters);
+  const loading = useAppSelector(selectCharactersLoading);
+  const error = useAppSelector(selectCharactersError);
 
   // Carregar personagens ao montar componente
   // REMOVIDO: useEffect(() => { dispatch(loadCharacters()); }, [dispatch]);

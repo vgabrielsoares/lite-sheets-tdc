@@ -166,8 +166,9 @@ describe('CharacterCreationForm', () => {
 
       await waitFor(() => {
         const state = store.getState();
-        expect(state.characters.characters).toHaveLength(1);
-        expect(state.characters.characters[0].name).toBe('Aragorn');
+        const characters = Object.values(state.characters.entities);
+        expect(characters).toHaveLength(1);
+        expect(characters[0].name).toBe('Aragorn');
       });
 
       await waitFor(() => {
@@ -191,8 +192,9 @@ describe('CharacterCreationForm', () => {
 
       await waitFor(() => {
         const state = store.getState();
-        expect(state.characters.characters[0].name).toBe('Legolas');
-        expect(state.characters.characters[0].playerName).toBe('João');
+        const characters = Object.values(state.characters.entities);
+        expect(characters[0].name).toBe('Legolas');
+        expect(characters[0].playerName).toBe('João');
       });
     });
 
@@ -207,7 +209,8 @@ describe('CharacterCreationForm', () => {
 
       await waitFor(() => {
         const state = store.getState();
-        expect(state.characters.characters[0].name).toBe('Gimli');
+        const characters = Object.values(state.characters.entities);
+        expect(characters[0].name).toBe('Gimli');
       });
     });
 

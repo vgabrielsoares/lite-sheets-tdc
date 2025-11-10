@@ -10,6 +10,8 @@ import charactersReducer, {
   clearSelection,
   clearError,
   setCharacters,
+  loadCharacters,
+  deleteCharacter,
   selectAllCharacters,
   selectSelectedCharacter,
   selectCharacterById,
@@ -17,8 +19,22 @@ import charactersReducer, {
   selectCharactersLoading,
   selectCharactersError,
   selectCharactersCount,
+  selectCharacterEntities,
+  selectCharacterIds,
 } from '../charactersSlice';
 import type { Character } from '@/types';
+
+// Mock do characterService
+jest.mock('@/services/characterService', () => ({
+  characterService: {
+    getAll: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
+
+import { characterService } from '@/services/characterService';
 
 // Mock de personagem para testes
 const mockCharacter: Character = {
@@ -139,64 +155,28 @@ const mockCharacter2: Character = {
 };
 
 describe('charactersSlice', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('reducers', () => {
     it('deve retornar o estado inicial', () => {
       expect(charactersReducer(undefined, { type: 'unknown' })).toEqual({
-        characters: [],
+        entities: {},
+        ids: [],
         selectedCharacterId: null,
         loading: false,
         error: null,
       });
     });
 
-    it('deve adicionar um personagem', () => {
-      const actual = charactersReducer(undefined, addCharacter(mockCharacter));
-      expect(actual.characters).toHaveLength(1);
-      expect(actual.characters[0]).toEqual(mockCharacter);
-      expect(actual.error).toBeNull();
-    });
-
-    it('deve atualizar um personagem existente', () => {
-      const initialState = {
-        characters: [mockCharacter],
-        selectedCharacterId: null,
-        loading: false,
-        error: null,
-      };
-
-      const updatedCharacter = {
-        ...mockCharacter,
-        name: 'Aragorn II',
-      };
-
-      const actual = charactersReducer(
-        initialState,
-        updateCharacter(updatedCharacter)
-      );
-
-      expect(actual.characters[0].name).toBe('Aragorn II');
-      expect(actual.error).toBeNull();
-    });
-
-    it('deve definir erro ao tentar atualizar personagem inexistente', () => {
-      const initialState = {
-        characters: [],
-        selectedCharacterId: null,
-        loading: false,
-        error: null,
-      };
-
-      const actual = charactersReducer(
-        initialState,
-        updateCharacter(mockCharacter)
-      );
-
-      expect(actual.error).toContain('não encontrado');
-    });
-
     it('deve remover um personagem', () => {
       const initialState = {
-        characters: [mockCharacter, mockCharacter2],
+        entities: {
+          'char-1': mockCharacter,
+          'char-2': mockCharacter2,
+        },
+        ids: ['char-1', 'char-2'],
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -204,14 +184,17 @@ describe('charactersSlice', () => {
 
       const actual = charactersReducer(initialState, removeCharacter('char-1'));
 
-      expect(actual.characters).toHaveLength(1);
-      expect(actual.characters[0].id).toBe('char-2');
+      expect(actual.ids).toHaveLength(1);
+      expect(actual.ids[0]).toBe('char-2');
+      expect(actual.entities['char-1']).toBeUndefined();
+      expect(actual.entities['char-2']).toEqual(mockCharacter2);
       expect(actual.error).toBeNull();
     });
 
     it('deve limpar seleção ao remover personagem selecionado', () => {
       const initialState = {
-        characters: [mockCharacter],
+        entities: { 'char-1': mockCharacter },
+        ids: ['char-1'],
         selectedCharacterId: 'char-1',
         loading: false,
         error: null,
@@ -224,7 +207,8 @@ describe('charactersSlice', () => {
 
     it('deve selecionar um personagem', () => {
       const initialState = {
-        characters: [mockCharacter],
+        entities: { 'char-1': mockCharacter },
+        ids: ['char-1'],
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -238,7 +222,8 @@ describe('charactersSlice', () => {
 
     it('deve limpar a seleção', () => {
       const initialState = {
-        characters: [mockCharacter],
+        entities: { 'char-1': mockCharacter },
+        ids: ['char-1'],
         selectedCharacterId: 'char-1',
         loading: false,
         error: null,
@@ -251,7 +236,8 @@ describe('charactersSlice', () => {
 
     it('deve limpar o erro', () => {
       const initialState = {
-        characters: [],
+        entities: {},
+        ids: [],
         selectedCharacterId: null,
         loading: false,
         error: 'Algum erro',
@@ -264,7 +250,8 @@ describe('charactersSlice', () => {
 
     it('deve substituir todos os personagens', () => {
       const initialState = {
-        characters: [mockCharacter],
+        entities: { 'char-1': mockCharacter },
+        ids: ['char-1'],
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -277,16 +264,138 @@ describe('charactersSlice', () => {
         setCharacters(newCharacters)
       );
 
-      expect(actual.characters).toHaveLength(1);
-      expect(actual.characters[0].id).toBe('char-2');
+      expect(actual.ids).toHaveLength(1);
+      expect(actual.ids[0]).toBe('char-2');
+      expect(actual.entities['char-2']).toEqual(mockCharacter2);
+      expect(actual.entities['char-1']).toBeUndefined();
       expect(actual.error).toBeNull();
+    });
+  });
+
+  describe('async thunks', () => {
+    it('loadCharacters.fulfilled deve carregar personagens', () => {
+      const characters = [mockCharacter, mockCharacter2];
+      const action = {
+        type: loadCharacters.fulfilled.type,
+        payload: characters,
+      };
+
+      const actual = charactersReducer(undefined, action);
+
+      expect(actual.ids).toHaveLength(2);
+      expect(actual.ids).toEqual(['char-1', 'char-2']);
+      expect(actual.entities['char-1']).toEqual(mockCharacter);
+      expect(actual.entities['char-2']).toEqual(mockCharacter2);
+      expect(actual.loading).toBe(false);
+      expect(actual.error).toBeNull();
+    });
+
+    it('loadCharacters.pending deve definir loading como true', () => {
+      const action = { type: loadCharacters.pending.type };
+      const actual = charactersReducer(undefined, action);
+
+      expect(actual.loading).toBe(true);
+      expect(actual.error).toBeNull();
+    });
+
+    it('loadCharacters.rejected deve definir erro', () => {
+      const action = {
+        type: loadCharacters.rejected.type,
+        error: { message: 'Erro ao carregar' },
+      };
+      const actual = charactersReducer(undefined, action);
+
+      expect(actual.loading).toBe(false);
+      expect(actual.error).toBe('Erro ao carregar');
+    });
+
+    it('addCharacter.fulfilled deve adicionar novo personagem', () => {
+      const action = {
+        type: addCharacter.fulfilled.type,
+        payload: mockCharacter,
+      };
+      const actual = charactersReducer(undefined, action);
+
+      expect(actual.ids).toHaveLength(1);
+      expect(actual.ids[0]).toBe('char-1');
+      expect(actual.entities['char-1']).toEqual(mockCharacter);
+      expect(actual.loading).toBe(false);
+    });
+
+    it('addCharacter.pending deve definir loading', () => {
+      const action = { type: addCharacter.pending.type };
+      const actual = charactersReducer(undefined, action);
+
+      expect(actual.loading).toBe(true);
+    });
+
+    it('updateCharacter.fulfilled deve atualizar personagem existente', () => {
+      const initialState = {
+        entities: { 'char-1': mockCharacter },
+        ids: ['char-1'],
+        selectedCharacterId: null,
+        loading: false,
+        error: null,
+      };
+
+      const updates = { name: 'Aragorn II' };
+      const action = {
+        type: updateCharacter.fulfilled.type,
+        payload: { id: 'char-1', updates },
+      };
+
+      const actual = charactersReducer(initialState, action);
+
+      expect(actual.entities['char-1'].name).toBe('Aragorn II');
+      expect(actual.loading).toBe(false);
+      expect(actual.error).toBeNull();
+    });
+
+    it('updateCharacter.fulfilled deve definir erro se personagem não existir', () => {
+      const updates = { name: 'Test' };
+      const action = {
+        type: updateCharacter.fulfilled.type,
+        payload: { id: 'non-existent', updates },
+      };
+
+      const actual = charactersReducer(undefined, action);
+
+      expect(actual.error).toContain('não encontrado');
+    });
+
+    it('deleteCharacter.fulfilled deve remover personagem', () => {
+      const initialState = {
+        entities: {
+          'char-1': mockCharacter,
+          'char-2': mockCharacter2,
+        },
+        ids: ['char-1', 'char-2'],
+        selectedCharacterId: null,
+        loading: false,
+        error: null,
+      };
+
+      const action = {
+        type: deleteCharacter.fulfilled.type,
+        payload: 'char-1',
+      };
+      const actual = charactersReducer(initialState, action);
+
+      expect(actual.ids).toHaveLength(1);
+      expect(actual.ids[0]).toBe('char-2');
+      expect(actual.entities['char-1']).toBeUndefined();
+      expect(actual.loading).toBe(false);
     });
   });
 
   describe('selectors', () => {
     const mockState = {
       characters: {
-        characters: [mockCharacter, mockCharacter2],
+        entities: {
+          'char-1': mockCharacter,
+          'char-2': mockCharacter2,
+        },
+        ids: ['char-1', 'char-2'],
         selectedCharacterId: 'char-1',
         loading: false,
         error: null,
@@ -294,10 +403,9 @@ describe('charactersSlice', () => {
     };
 
     it('selectAllCharacters deve retornar todos os personagens', () => {
-      expect(selectAllCharacters(mockState)).toEqual([
-        mockCharacter,
-        mockCharacter2,
-      ]);
+      const result = selectAllCharacters(mockState);
+      expect(result).toHaveLength(2);
+      expect(result).toEqual([mockCharacter, mockCharacter2]);
     });
 
     it('selectSelectedCharacter deve retornar o personagem selecionado', () => {
@@ -330,6 +438,17 @@ describe('charactersSlice', () => {
 
     it('selectCharactersCount deve retornar a quantidade de personagens', () => {
       expect(selectCharactersCount(mockState)).toBe(2);
+    });
+
+    it('selectCharacterEntities deve retornar todas as entities', () => {
+      const entities = selectCharacterEntities(mockState);
+      expect(entities['char-1']).toEqual(mockCharacter);
+      expect(entities['char-2']).toEqual(mockCharacter2);
+    });
+
+    it('selectCharacterIds deve retornar todos os IDs', () => {
+      const ids = selectCharacterIds(mockState);
+      expect(ids).toEqual(['char-1', 'char-2']);
     });
   });
 });

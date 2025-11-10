@@ -130,8 +130,9 @@ describe('useCharacterCreation', () => {
       });
 
       const state = store.getState();
-      expect(state.characters.characters).toHaveLength(1);
-      expect(state.characters.characters[0].name).toBe('Aragorn');
+      const characters = Object.values(state.characters.entities);
+      expect(characters).toHaveLength(1);
+      expect(characters[0].name).toBe('Aragorn');
       expect(result.current.error).toBeNull();
     });
 
@@ -146,8 +147,9 @@ describe('useCharacterCreation', () => {
       });
 
       const state = store.getState();
-      expect(state.characters.characters[0].name).toBe('Legolas');
-      expect(state.characters.characters[0].playerName).toBe('João');
+      const characters = Object.values(state.characters.entities);
+      expect(characters[0].name).toBe('Legolas');
+      expect(characters[0].playerName).toBe('João');
     });
 
     it('deve trimmar espaços do nome do personagem', async () => {
@@ -158,7 +160,8 @@ describe('useCharacterCreation', () => {
       });
 
       const state = store.getState();
-      expect(state.characters.characters[0].name).toBe('Gimli');
+      const characters = Object.values(state.characters.entities);
+      expect(characters[0].name).toBe('Gimli');
     });
 
     it('deve criar personagem com valores padrão de nível 1', async () => {
@@ -169,7 +172,7 @@ describe('useCharacterCreation', () => {
       });
 
       const state = store.getState();
-      const character = state.characters.characters[0];
+      const character = Object.values(state.characters.entities)[0];
 
       // Verificar valores padrão básicos
       expect(character.level).toBe(1);
