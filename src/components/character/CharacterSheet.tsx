@@ -34,6 +34,7 @@ import {
   SpellsTab,
   DescriptionTab,
 } from './tabs';
+import { LinhagemSidebar } from './sidebars';
 
 export interface CharacterSheetProps {
   /**
@@ -79,6 +80,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   // Estado da aba atual
   const [currentTab, setCurrentTab] = useState<CharacterTabId>('main');
 
+  // Estado da sidebar (qual sidebar está aberta)
+  const [activeSidebar, setActiveSidebar] = useState<
+    'lineage' | 'origin' | null
+  >(null);
+
   // Preferência de posicionamento da ficha (Redux)
   const sheetPosition = useAppSelector(selectSheetPosition);
 
@@ -97,10 +103,43 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Abre a sidebar de linhagem
+   */
+  const handleOpenLineageSidebar = () => {
+    setActiveSidebar('lineage');
+  };
+
+  /**
+   * Abre a sidebar de origem
+   */
+  const handleOpenOriginSidebar = () => {
+    setActiveSidebar('origin');
+  };
+
+  /**
+   * Fecha qualquer sidebar aberta
+   */
+  const handleCloseSidebar = () => {
+    setActiveSidebar(null);
+  };
+
+  /**
+   * Handler para atualizar a linhagem do personagem
+   */
+  const handleUpdateLineage = (lineage: Character['lineage']) => {
+    onUpdate({ lineage });
+  };
+
+  /**
    * Renderiza o conteúdo da aba atual
    */
   const renderTabContent = () => {
-    const tabProps = { character, onUpdate };
+    const tabProps = {
+      character,
+      onUpdate,
+      onOpenLineage: handleOpenLineageSidebar,
+      onOpenOrigin: handleOpenOriginSidebar,
+    };
 
     switch (currentTab) {
       case 'main':
@@ -208,9 +247,36 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               flex: '1 1 auto',
               order: sheetPosition === 'left' ? 2 : 1,
               minHeight: '200px',
-              // Placeholder visual para desenvolvimento
-              display: 'none', // Será exibido quando houver sidebar
             }}
+          >
+            {/* Sidebar de Linhagem */}
+            {activeSidebar === 'lineage' && (
+              <LinhagemSidebar
+                open={activeSidebar === 'lineage'}
+                lineage={character.lineage}
+                onUpdate={handleUpdateLineage}
+                onClose={handleCloseSidebar}
+              />
+            )}
+
+            {/* Sidebar de Origem será implementada na próxima issue */}
+            {activeSidebar === 'origin' && (
+              <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 1 }}>
+                <Typography>
+                  Sidebar de Origem será implementada em breve
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* Sidebar em modo mobile (overlay) */}
+        {isMobile && activeSidebar === 'lineage' && (
+          <LinhagemSidebar
+            open={activeSidebar === 'lineage'}
+            lineage={character.lineage}
+            onUpdate={handleUpdateLineage}
+            onClose={handleCloseSidebar}
           />
         )}
       </Box>
