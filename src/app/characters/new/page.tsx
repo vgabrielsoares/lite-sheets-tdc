@@ -1,7 +1,19 @@
 'use client';
 
-import AppLayout from '@/components/layout/AppLayout';
-import { CharacterCreationForm } from '@/components/character';
+import dynamic from 'next/dynamic';
+
+// Importa o formulário de criação com SSR desabilitado
+const CharacterCreationForm = dynamic(
+  () =>
+    import('@/components/character').then((mod) => ({
+      default: mod.CharacterCreationForm,
+    })),
+  { ssr: false }
+);
+
+const AppLayout = dynamic(() => import('@/components/layout/AppLayout'), {
+  ssr: false,
+});
 
 /**
  * Página de criação de nova ficha de personagem
