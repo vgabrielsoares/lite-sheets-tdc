@@ -6,7 +6,11 @@
  * para garantir tipagem correta.
  */
 
-import { useDispatch, useSelector } from 'react-redux';
+import {
+  useDispatch,
+  useSelector,
+  type TypedUseSelectorHook,
+} from 'react-redux';
 import type { RootState, AppDispatch } from './index';
 
 /**
@@ -21,7 +25,7 @@ import type { RootState, AppDispatch } from './index';
  * dispatch(addCharacter(newCharacter));
  * ```
  */
-export const useAppDispatch = useDispatch.withTypes<AppDispatch>();
+export const useAppDispatch: () => AppDispatch = useDispatch;
 
 /**
  * Hook useSelector tipado
@@ -35,4 +39,4 @@ export const useAppDispatch = useDispatch.withTypes<AppDispatch>();
  * const themeMode = useAppSelector(selectThemeMode);
  * ```
  */
-export const useAppSelector = useSelector.withTypes<RootState>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

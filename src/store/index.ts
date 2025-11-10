@@ -21,6 +21,8 @@ import storage from 'redux-persist/lib/storage';
 // Importa os reducers
 import charactersReducer from '@/features/characters/charactersSlice';
 import appReducer from '@/features/app/appSlice';
+import notificationsReducer from '@/features/app/notificationsSlice';
+import { indexedDBSyncMiddleware } from './indexedDBSyncMiddleware';
 
 /**
  * Configuração do redux-persist
@@ -32,7 +34,7 @@ const persistConfig = {
   // Whitelist: apenas o que deve ser persistido
   whitelist: ['characters', 'app'],
   // Blacklist: o que não deve ser persistido
-  blacklist: [],
+  blacklist: ['notifications'],
 };
 
 /**
@@ -41,12 +43,16 @@ const persistConfig = {
 const rootReducer = combineReducers({
   characters: charactersReducer,
   app: appReducer,
+  notifications: notificationsReducer,
 });
 
 /**
  * Reducer persistido
  */
 const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+// Exportar tipo do estado antes de criar o store
+export type RootState = ReturnType<typeof rootReducer>;
 
 /**
  * Configuração do store
@@ -59,7 +65,7 @@ export const store = configureStore({
         // Ignora estas actions do redux-persist
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }),
+    }).concat(indexedDBSyncMiddleware), // Adiciona middleware de sincronização com IndexedDB
   devTools: process.env.NODE_ENV !== 'production',
 });
 
@@ -71,9 +77,6 @@ export const persistor = persistStore(store);
 /**
  * Tipos exportados para uso em toda a aplicação
  */
-
-/** Tipo do estado global da aplicação */
-export type RootState = ReturnType<typeof store.getState>;
 
 /** Tipo do dispatch */
 export type AppDispatch = typeof store.dispatch;

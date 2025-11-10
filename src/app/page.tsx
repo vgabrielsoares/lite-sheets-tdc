@@ -1,13 +1,17 @@
+'use client';
+
+import { Box } from '@mui/material';
 import AppLayout from '@/components/layout/AppLayout';
-import CharacterList from '@/components/character-list/CharacterList';
+import { CharacterList } from '@/components/character-list';
 
 /**
- * Página inicial do aplicativo - Lista de fichas de personagens
+ * Página principal - Lista de personagens
  *
- * Esta é a home page que exibe todas as fichas criadas pelo usuário.
- * Se não houver fichas, exibe um estado vazio com prompt para criar a primeira.
+ * Exibe todos os personagens salvos localmente no IndexedDB.
+ * Se não houver personagens, mostra um estado vazio com
+ * instruções para criar o primeiro personagem.
  */
-export default function Home() {
+export default function HomePage() {
   return (
     <AppLayout maxWidth="lg">
       <CharacterList />

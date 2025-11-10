@@ -1,7 +1,6 @@
 'use client';
 
-import { use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
   Box,
   Typography,
@@ -13,6 +12,7 @@ import {
 import { ArrowBack, Edit, Delete } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAppSelector } from '@/store/hooks';
+import { selectCharacterById } from '@/features/characters/charactersSlice';
 
 /**
  * Página de visualização de ficha de personagem
@@ -23,17 +23,12 @@ import { useAppSelector } from '@/store/hooks';
  *
  * Por enquanto, exibe informações básicas do personagem.
  */
-
-export default function CharacterPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
+export default function CharacterDetailPage() {
   const router = useRouter();
-  const character = useAppSelector((state) =>
-    state.characters.characters.find((char) => char.id === id)
-  );
+  const params = useParams();
+  const id = params?.id as string;
+
+  const character = useAppSelector((state) => selectCharacterById(state, id));
 
   const handleBack = () => {
     router.push('/');

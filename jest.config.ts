@@ -21,6 +21,8 @@ const config: Config = {
     '!src/**/__tests__/**',
     '!src/**/*.stories.tsx',
   ],
+  // Transform ESM modules from node_modules
+  transformIgnorePatterns: ['node_modules/(?!(uuid)/)'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
