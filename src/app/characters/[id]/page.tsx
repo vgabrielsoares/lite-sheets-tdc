@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import AppLayout from '@/components/layout/AppLayout';
 import { CharacterSheet } from '@/components/character';
@@ -27,15 +28,29 @@ export default function CharacterDetailPage() {
 
   const character = useAppSelector((state) => selectCharacterById(state, id));
 
+  // Estado local para manter o personagem e evitar flash de loading
+  const [loadedCharacter, setLoadedCharacter] = useState<Character | null>(
+    null
+  );
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Atualiza o estado local quando o personagem muda
+  useEffect(() => {
+    if (character) {
+      setLoadedCharacter(character);
+      setIsInitialLoad(false);
+    }
+  }, [character]);
+
   /**
    * Atualiza os dados do personagem
    */
   const handleUpdate = (updates: Partial<Character>) => {
-    if (!character) return;
+    if (!loadedCharacter) return;
 
     dispatch(
       updateCharacter({
-        id: character.id,
+        id: loadedCharacter.id,
         updates: {
           ...updates,
           updatedAt: new Date().toISOString(),
@@ -44,8 +59,8 @@ export default function CharacterDetailPage() {
     );
   };
 
-  // Loading state (caso o personagem ainda não esteja carregado)
-  if (!character) {
+  // Loading state (apenas no carregamento inicial)
+  if (isInitialLoad && !loadedCharacter) {
     return (
       <AppLayout maxWidth="xl">
         <Box
@@ -65,9 +80,32 @@ export default function CharacterDetailPage() {
     );
   }
 
+  // Se não encontrou o personagem após carregar
+  if (!isInitialLoad && !loadedCharacter) {
+    return (
+      <AppLayout maxWidth="xl">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            gap: 2,
+          }}
+        >
+          <Typography variant="h5">Personagem não encontrado</Typography>
+          <Typography color="text.secondary">
+            O personagem que você está procurando não existe.
+          </Typography>
+        </Box>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout maxWidth={false}>
-      <CharacterSheet character={character} onUpdate={handleUpdate} />
+      <CharacterSheet character={loadedCharacter!} onUpdate={handleUpdate} />
     </AppLayout>
   );
 }
