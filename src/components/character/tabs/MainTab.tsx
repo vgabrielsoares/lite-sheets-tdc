@@ -32,6 +32,11 @@ export interface MainTabProps {
    * Callback para abrir sidebar de origem
    */
   onOpenOrigin?: () => void;
+
+  /**
+   * Callback para abrir sidebar de tamanho
+   */
+  onOpenSize?: () => void;
 }
 
 /**
@@ -53,6 +58,7 @@ export interface MainTabProps {
  *   onUpdate={handleUpdate}
  *   onOpenLineage={() => setSidebarType('lineage')}
  *   onOpenOrigin={() => setSidebarType('origin')}
+ *   onOpenSize={() => setSidebarType('size')}
  * />
  * ```
  */
@@ -61,6 +67,7 @@ export function MainTab({
   onUpdate,
   onOpenLineage,
   onOpenOrigin,
+  onOpenSize,
 }: MainTabProps) {
   return (
     <Box>
@@ -71,6 +78,7 @@ export function MainTab({
           onUpdate={onUpdate}
           onOpenLineage={onOpenLineage}
           onOpenOrigin={onOpenOrigin}
+          onOpenSize={onOpenSize}
         />
 
         {/* PV e PP lado a lado */}

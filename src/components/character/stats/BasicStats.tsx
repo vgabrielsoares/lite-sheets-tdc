@@ -38,6 +38,11 @@ export interface BasicStatsProps {
    * Callback para abrir sidebar de origem
    */
   onOpenOrigin?: () => void;
+
+  /**
+   * Callback para abrir sidebar de tamanho
+   */
+  onOpenSize?: () => void;
 }
 
 /**
@@ -58,6 +63,7 @@ export interface BasicStatsProps {
  *   onUpdate={handleUpdate}
  *   onOpenLineage={() => setSidebarOpen('lineage')}
  *   onOpenOrigin={() => setSidebarOpen('origin')}
+ *   onOpenSize={() => setSidebarOpen('size')}
  * />
  * ```
  */
@@ -66,6 +72,7 @@ export function BasicStats({
   onUpdate,
   onOpenLineage,
   onOpenOrigin,
+  onOpenSize,
 }: BasicStatsProps) {
   return (
     <Card>
@@ -186,7 +193,20 @@ export function BasicStats({
                 <Chip
                   label={`Tamanho: ${character.lineage.size}`}
                   size="small"
-                  sx={{ mt: 1 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenSize?.();
+                  }}
+                  sx={{
+                    mt: 1,
+                    cursor: onOpenSize ? 'pointer' : 'default',
+                    '&:hover': onOpenSize
+                      ? {
+                          bgcolor: 'primary.light',
+                          color: 'primary.contrastText',
+                        }
+                      : {},
+                  }}
                 />
               )}
             </Box>

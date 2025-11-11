@@ -34,7 +34,7 @@ import {
   SpellsTab,
   DescriptionTab,
 } from './tabs';
-import { LinhagemSidebar, OrigemSidebar } from './sidebars';
+import { LinhagemSidebar, OrigemSidebar, SizeSidebar } from './sidebars';
 
 export interface CharacterSheetProps {
   /**
@@ -82,7 +82,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   // Estado da sidebar (qual sidebar está aberta)
   const [activeSidebar, setActiveSidebar] = useState<
-    'lineage' | 'origin' | null
+    'lineage' | 'origin' | 'size' | null
   >(null);
 
   // Preferência de posicionamento da ficha (Redux)
@@ -117,6 +117,13 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Abre a sidebar de tamanho
+   */
+  const handleOpenSizeSidebar = () => {
+    setActiveSidebar('size');
+  };
+
+  /**
    * Fecha qualquer sidebar aberta
    */
   const handleCloseSidebar = () => {
@@ -146,6 +153,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onUpdate,
       onOpenLineage: handleOpenLineageSidebar,
       onOpenOrigin: handleOpenOriginSidebar,
+      onOpenSize: handleOpenSizeSidebar,
     };
 
     switch (currentTab) {
@@ -275,6 +283,15 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 onClose={handleCloseSidebar}
               />
             )}
+
+            {/* Sidebar de Tamanho */}
+            {activeSidebar === 'size' && character.lineage?.size && (
+              <SizeSidebar
+                open={activeSidebar === 'size'}
+                currentSize={character.lineage.size}
+                onClose={handleCloseSidebar}
+              />
+            )}
           </Box>
         )}
 
@@ -294,6 +311,15 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             open={activeSidebar === 'origin'}
             origin={character.origin}
             onUpdate={handleUpdateOrigin}
+            onClose={handleCloseSidebar}
+          />
+        )}
+
+        {/* Sidebar de Tamanho em modo mobile (overlay) */}
+        {isMobile && activeSidebar === 'size' && character.lineage?.size && (
+          <SizeSidebar
+            open={activeSidebar === 'size'}
+            currentSize={character.lineage.size}
             onClose={handleCloseSidebar}
           />
         )}
