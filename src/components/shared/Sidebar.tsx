@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography, IconButton, Paper, Divider } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -13,24 +13,107 @@ const SIDEBAR_WIDTHS = {
 export type SidebarWidth = keyof typeof SIDEBAR_WIDTHS;
 
 export interface SidebarProps {
+  /**
+   * Controla se a sidebar está aberta
+   */
   open: boolean;
+
+  /**
+   * Callback chamado ao fechar a sidebar
+   */
   onClose: () => void;
+
+  /**
+   * Título da sidebar
+   */
   title?: string;
+
+  /**
+   * Conteúdo da sidebar
+   */
   children: React.ReactNode;
+
+  /**
+   * Largura da sidebar
+   * @default 'lg' (640px) - Padrão definido pela LinhagemSidebar
+   */
   width?: SidebarWidth;
-  anchor?: 'left' | 'right';
-  showOverlay?: boolean;
-  closeOnOverlayClick?: boolean;
+
+  /**
+   * Se true, fecha sidebar ao pressionar ESC
+   * @default true
+   */
   closeOnEscape?: boolean;
+
+  /**
+   * Se true, adiciona padding de 3 no conteúdo (padrão LinhagemSidebar)
+   * @default true
+   */
+  contentPadding?: boolean;
+
+  /**
+   * Elevação do Paper (sombra)
+   * @default 2
+   */
+  elevation?: number;
 }
 
+/**
+ * Componente Sidebar padronizado
+ *
+ * Este componente fornece uma estrutura completa e consistente para sidebars
+ * em toda a aplicação. Ele já inclui:
+ * - Header com título e botão de fechar
+ * - Área de conteúdo com scroll customizado
+ * - Padding padrão de 3 (24px) seguindo o padrão da LinhagemSidebar
+ * - Largura padrão 'lg' (640px) seguindo o padrão da LinhagemSidebar
+ * - Renderização inline (ao lado do conteúdo principal, não modal)
+ * - Tratamento de tecla ESC para fechar
+ *
+ * **Importante**: Este componente é renderizado inline e deve ser usado dentro
+ * de um container flex/grid para posicionamento correto ao lado da ficha.
+ *
+ * @example
+ * ```tsx
+ * <Box sx={{ display: 'flex', gap: 2 }}>
+ *   <Box sx={{ flex: 1 }}>
+ *     {/* Conteúdo principal (ficha) *\/}
+ *   </Box>
+ *   <Sidebar open={open} onClose={handleClose} title="Detalhes">
+ *     <Stack spacing={3}>
+ *       {/* Conteúdo da sidebar *\/}
+ *     </Stack>
+ *   </Sidebar>
+ * </Box>
+ * ```
+ */
 export function Sidebar({
   open,
   onClose,
   title,
-  width = 'md',
+  width = 'lg', // Padrão da LinhagemSidebar
+  closeOnEscape = true,
+  contentPadding = true, // Padrão da LinhagemSidebar (p: 3)
+  elevation = 2,
   children,
 }: SidebarProps) {
+  /**
+   * Fecha sidebar ao pressionar ESC
+   */
+  useEffect(() => {
+    if (!open || !closeOnEscape) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, closeOnEscape, onClose]);
+
+  // Não renderiza nada se não estiver aberta
   if (!open) {
     return null;
   }
@@ -39,16 +122,18 @@ export function Sidebar({
 
   return (
     <Paper
-      elevation={2}
+      elevation={elevation}
       sx={{
         width: sidebarWidth,
+        maxWidth: '100vw',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        borderRadius: 2,
+        flexShrink: 0, // Não encolher a sidebar
       }}
     >
+      {/* Header */}
       <Box
         sx={{
           p: 2,
@@ -58,6 +143,7 @@ export function Sidebar({
           borderBottom: 1,
           borderColor: 'divider',
           minHeight: 64,
+          flexShrink: 0, // Não encolher o header
         }}
       >
         <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
@@ -80,11 +166,15 @@ export function Sidebar({
 
       <Divider />
 
+      {/* Área de Conteúdo com Scroll */}
       <Box
         sx={{
           flex: 1,
           overflow: 'auto',
           overflowX: 'hidden',
+          // Padding padrão de 3 (24px) seguindo LinhagemSidebar
+          ...(contentPadding && { p: 3 }),
+          // Scrollbar customizada
           '&::-webkit-scrollbar': {
             width: '8px',
           },
