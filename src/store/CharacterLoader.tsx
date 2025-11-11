@@ -13,6 +13,7 @@
 
 import { useCharacterSync } from '@/hooks/useCharacterSync';
 import { CircularProgress, Box, Typography, Alert } from '@mui/material';
+import { memo } from 'react';
 
 /**
  * Props do CharacterLoader
@@ -25,6 +26,17 @@ export interface CharacterLoaderProps {
   /** Se true, exibe mensagem de erro se houver */
   showError?: boolean;
 }
+
+/**
+ * Componente interno que não re-renderiza os filhos
+ */
+const CharacterLoaderContent = memo(function CharacterLoaderContent({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <>{children}</>;
+});
 
 /**
  * Componente de carregamento e sincronização de personagens
@@ -90,11 +102,11 @@ export default function CharacterLoader({
             sincronizados.
           </Typography>
         </Alert>
-        {children}
+        <CharacterLoaderContent>{children}</CharacterLoaderContent>
       </Box>
     );
   }
 
-  // Renderizar filhos normalmente
-  return <>{children}</>;
+  // Renderizar filhos normalmente, mas com memo para evitar re-renders
+  return <CharacterLoaderContent>{children}</CharacterLoaderContent>;
 }
