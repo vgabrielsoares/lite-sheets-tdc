@@ -60,3 +60,13 @@ export {
   validateLineage,
   applyLineageToCharacter,
 } from './lineageUtils';
+
+// Origin utilities
+export {
+  createDefaultOrigin,
+  validateOrigin,
+  isOriginEmpty,
+  getAttributeModifiersSummary,
+  applyOriginAttributeModifiers,
+  createExampleOrigin,
+} from './originUtils';
