@@ -6,3 +6,6 @@
 
 export { LinhagemSidebar } from './LinhagemSidebar';
 export type { LinhagemSidebarProps } from './LinhagemSidebar';
+
+export { OrigemSidebar } from './OrigemSidebar';
+export type { OrigemSidebarProps } from './OrigemSidebar';
