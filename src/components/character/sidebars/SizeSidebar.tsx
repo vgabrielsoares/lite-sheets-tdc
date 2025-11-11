@@ -116,7 +116,6 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
       open={open}
       onClose={onClose}
       title={`Tamanho: ${SIZE_LABELS[currentSize]}`}
-      width="lg"
     >
       <Stack spacing={3}>
         {/* Descrição do Tamanho Atual */}

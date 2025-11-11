@@ -290,12 +290,7 @@ export const OrigemSidebar: React.FC<OrigemSidebarProps> = ({
     !attributeModifiersValidation.valid || !skillProficienciesValidation.valid;
 
   return (
-    <Sidebar
-      open={open}
-      onClose={onClose}
-      title="Origem do Personagem"
-      width="md"
-    >
+    <Sidebar open={open} onClose={onClose} title="Origem do Personagem">
       <Stack spacing={3}>
         {/* Header com informações */}
         <Alert severity="info" icon={<InfoIcon />}>
