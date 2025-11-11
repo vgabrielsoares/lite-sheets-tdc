@@ -31,3 +31,6 @@ export * from './spells';
 
 // Linhagens
 export * from './lineage';
+
+// Origens
+export * from './origins';
