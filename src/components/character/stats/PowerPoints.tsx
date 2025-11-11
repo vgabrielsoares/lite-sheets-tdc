@@ -79,16 +79,16 @@ export function PowerPoints({
     onUpdate({ ...pp, temporary: newTemporary });
   };
 
-  // Calcular porcentagem de PP para barra visual
-  const maxTotal = pp.max + pp.temporary;
-  const percentage =
-    maxTotal > 0 ? Math.round((pp.current / maxTotal) * 100) : 0;
+  // Calcular porcentagens para a barra visual
+  const currentPercentage = Math.round((pp.current / pp.max) * 100);
+  const temporaryPercentage = Math.round((pp.temporary / pp.max) * 100);
+  const totalWithTemp = pp.current + pp.temporary;
 
-  // Cor da barra baseada na porcentagem
+  // Cor da barra baseada na porcentagem do PP atual
   const getBarColor = (): string => {
-    if (percentage > 75) return 'info.main';
-    if (percentage > 50) return 'primary.main';
-    if (percentage > 25) return 'warning.light';
+    if (currentPercentage > 75) return 'info.main';
+    if (currentPercentage > 50) return 'primary.main';
+    if (currentPercentage > 25) return 'warning.light';
     return 'warning.main';
   };
 
@@ -119,43 +119,60 @@ export function PowerPoints({
         <Divider sx={{ mb: 2 }} />
 
         {/* Barra Visual de PP */}
-        {maxTotal > 0 && (
-          <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3 }}>
+          <Box
+            sx={{
+              width: '100%',
+              height: 24,
+              bgcolor: 'action.disabledBackground',
+              borderRadius: 1,
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
+            {/* Barra de PP atual */}
             <Box
               sx={{
-                width: '100%',
-                height: 24,
-                bgcolor: 'action.disabledBackground',
-                borderRadius: 1,
-                overflow: 'hidden',
-                position: 'relative',
+                width: `${currentPercentage}%`,
+                height: '100%',
+                bgcolor: getBarColor(),
+                transition: 'width 0.3s ease-in-out, background-color 0.3s',
+                position: 'absolute',
+                left: 0,
               }}
-            >
+            />
+            {/* Barra de PP temporário (aparece depois do atual) */}
+            {pp.temporary > 0 && (
               <Box
                 sx={{
-                  width: `${percentage}%`,
+                  width: `${temporaryPercentage}%`,
                   height: '100%',
-                  bgcolor: getBarColor(),
-                  transition: 'width 0.3s ease-in-out, background-color 0.3s',
+                  bgcolor: 'secondary.main',
+                  opacity: 0.7,
+                  transition: 'width 0.3s ease-in-out',
+                  position: 'absolute',
+                  left: `${currentPercentage}%`,
                 }}
               />
-              <Typography
-                variant="caption"
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  textShadow: '0 0 2px rgba(0,0,0,0.8)',
-                }}
-              >
-                {percentage}%
-              </Typography>
-            </Box>
+            )}
+            <Typography
+              variant="caption"
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                color: 'white',
+                fontWeight: 'bold',
+                textShadow: '0 0 2px rgba(0,0,0,0.8)',
+                zIndex: 1,
+              }}
+            >
+              {currentPercentage}%
+              {pp.temporary > 0 && ` (+${temporaryPercentage}%)`}
+            </Typography>
           </Box>
-        )}
+        </Box>
 
         <Stack spacing={2}>
           {/* PP Atual */}

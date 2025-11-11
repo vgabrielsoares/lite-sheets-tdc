@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -127,6 +127,12 @@ export function LinhagemSidebar({
   // Estado de validação
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
+  // Flag para controlar se o usuário já editou algo
+  const [hasUserEdited, setHasUserEdited] = useState(false);
+
+  // Ref para controlar primeira montagem
+  const isFirstRender = useRef(true);
+
   /**
    * Sincroniza estado local com props quando a linhagem externa muda
    * Apenas sincroniza se a sidebar acabou de abrir ou se houve mudança externa significativa
@@ -136,6 +142,8 @@ export function LinhagemSidebar({
       // Quando a sidebar abre, carrega a linhagem mais recente
       const currentLineage = lineage || createDefaultLineage();
       setLocalLineage(currentLineage);
+      setHasUserEdited(false); // Reset flag quando abre
+      setValidationErrors([]); // Limpa erros ao abrir
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -157,14 +165,20 @@ export function LinhagemSidebar({
    * Auto-save com debounce
    */
   useEffect(() => {
-    if (debouncedLineage && open) {
+    // Pula a primeira renderização
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    if (debouncedLineage && open && hasUserEdited) {
       // Valida antes de salvar
       const isValid = validateLineage(debouncedLineage);
       if (isValid) {
         onUpdate(debouncedLineage);
         setValidationErrors([]);
       } else {
-        // Coleta erros de validação
+        // Coleta erros de validação apenas se usuário já editou
         const errors: string[] = [];
         if (!debouncedLineage.name || debouncedLineage.name.trim() === '') {
           errors.push('Nome da linhagem é obrigatório');
@@ -181,6 +195,7 @@ export function LinhagemSidebar({
   const handleTextChange =
     (field: keyof Lineage) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setHasUserEdited(true); // Marca que usuário editou
       setLocalLineage((prev) => ({
         ...prev,
         [field]: event.target.value,
@@ -192,6 +207,7 @@ export function LinhagemSidebar({
    */
   const handleNumberChange =
     (field: keyof Lineage) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      setHasUserEdited(true); // Marca que usuário editou
       const value = parseInt(event.target.value, 10);
       if (!isNaN(value)) {
         setLocalLineage((prev) => ({
@@ -205,6 +221,7 @@ export function LinhagemSidebar({
    * Atualiza tamanho
    */
   const handleSizeChange = (event: SelectChangeEvent<CreatureSize>) => {
+    setHasUserEdited(true); // Marca que usuário editou
     setLocalLineage((prev) => ({
       ...prev,
       size: event.target.value as CreatureSize,
@@ -215,6 +232,7 @@ export function LinhagemSidebar({
    * Atualiza tipo de visão
    */
   const handleVisionChange = (event: SelectChangeEvent<VisionType>) => {
+    setHasUserEdited(true); // Marca que usuário editou
     setLocalLineage((prev) => ({
       ...prev,
       vision: event.target.value as VisionType,
@@ -225,6 +243,7 @@ export function LinhagemSidebar({
    * Atualiza sentidos aguçados (multiselect)
    */
   const handleKeenSensesChange = (event: SelectChangeEvent<string[]>) => {
+    setHasUserEdited(true); // Marca que usuário editou
     const value = event.target.value;
     const senses = (
       typeof value === 'string' ? value.split(',') : value
@@ -239,6 +258,7 @@ export function LinhagemSidebar({
    * Atualiza idiomas selecionados
    */
   const handleLanguagesChange = (event: SelectChangeEvent<string[]>) => {
+    setHasUserEdited(true); // Marca que usuário editou
     const value = event.target.value;
     const languages = (
       typeof value === 'string' ? value.split(',') : value
@@ -255,6 +275,7 @@ export function LinhagemSidebar({
   const handleMovementChange =
     (movementType: MovementType) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
+      setHasUserEdited(true); // Marca que usuário editou
       const value = parseInt(event.target.value, 10) || 0;
       setLocalLineage((prev) => ({
         ...prev,
@@ -269,6 +290,7 @@ export function LinhagemSidebar({
    * Adiciona nova característica de ancestralidade
    */
   const handleAddAncestryTrait = () => {
+    setHasUserEdited(true); // Marca que usuário editou
     setLocalLineage((prev) => ({
       ...prev,
       ancestryTraits: [...prev.ancestryTraits, { name: '', description: '' }],
@@ -279,6 +301,7 @@ export function LinhagemSidebar({
    * Remove característica de ancestralidade
    */
   const handleRemoveAncestryTrait = (index: number) => {
+    setHasUserEdited(true); // Marca que usuário editou
     setLocalLineage((prev) => ({
       ...prev,
       ancestryTraits: prev.ancestryTraits.filter((_, i) => i !== index),
@@ -291,6 +314,7 @@ export function LinhagemSidebar({
   const handleAncestryTraitChange =
     (index: number, field: keyof AncestryTrait) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setHasUserEdited(true); // Marca que usuário editou
       setLocalLineage((prev) => ({
         ...prev,
         ancestryTraits: prev.ancestryTraits.map((trait, i) =>
@@ -312,7 +336,6 @@ export function LinhagemSidebar({
       width="lg"
       anchor="right"
       showOverlay={false}
-      closeOnOverlayClick={false}
     >
       <Box sx={{ p: 3 }}>
         {/* Validação */}

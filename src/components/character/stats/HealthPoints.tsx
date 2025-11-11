@@ -60,17 +60,16 @@ export function HealthPoints({
 }: HealthPointsProps) {
   // Incrementar/decrementar PV atual
   const adjustCurrent = (amount: number) => {
-    const newCurrent = Math.max(
-      0,
-      Math.min(hp.max + hp.temporary, hp.current + amount)
-    );
+    const newCurrent = Math.max(0, Math.min(hp.max, hp.current + amount));
     onUpdate({ ...hp, current: newCurrent });
   };
 
   // Incrementar/decrementar PV máximo
   const adjustMax = (amount: number) => {
     const newMax = Math.max(1, hp.max + amount);
-    onUpdate({ ...hp, max: newMax });
+    // Ajusta current se exceder o novo máximo
+    const newCurrent = Math.min(hp.current, newMax);
+    onUpdate({ ...hp, max: newMax, current: newCurrent });
   };
 
   // Incrementar/decrementar PV temporário
@@ -79,14 +78,16 @@ export function HealthPoints({
     onUpdate({ ...hp, temporary: newTemporary });
   };
 
-  // Calcular porcentagem de PV para barra visual
-  const percentage = Math.round((hp.current / (hp.max + hp.temporary)) * 100);
+  // Calcular porcentagens para a barra visual
+  const currentPercentage = Math.round((hp.current / hp.max) * 100);
+  const temporaryPercentage = Math.round((hp.temporary / hp.max) * 100);
+  const totalWithTemp = hp.current + hp.temporary;
 
-  // Cor da barra baseada na porcentagem
+  // Cor da barra baseada na porcentagem do PV atual
   const getBarColor = (): string => {
-    if (percentage > 75) return 'success.main';
-    if (percentage > 50) return 'warning.main';
-    if (percentage > 25) return 'error.light';
+    if (currentPercentage > 75) return 'success.main';
+    if (currentPercentage > 50) return 'warning.main';
+    if (currentPercentage > 25) return 'error.light';
     return 'error.main';
   };
 
@@ -128,14 +129,31 @@ export function HealthPoints({
               position: 'relative',
             }}
           >
+            {/* Barra de PV atual */}
             <Box
               sx={{
-                width: `${percentage}%`,
+                width: `${currentPercentage}%`,
                 height: '100%',
                 bgcolor: getBarColor(),
                 transition: 'width 0.3s ease-in-out, background-color 0.3s',
+                position: 'absolute',
+                left: 0,
               }}
             />
+            {/* Barra de PV temporário (aparece depois do atual) */}
+            {hp.temporary > 0 && (
+              <Box
+                sx={{
+                  width: `${temporaryPercentage}%`,
+                  height: '100%',
+                  bgcolor: 'info.main',
+                  opacity: 0.7,
+                  transition: 'width 0.3s ease-in-out',
+                  position: 'absolute',
+                  left: `${currentPercentage}%`,
+                }}
+              />
+            )}
             <Typography
               variant="caption"
               sx={{
@@ -146,9 +164,11 @@ export function HealthPoints({
                 color: 'white',
                 fontWeight: 'bold',
                 textShadow: '0 0 2px rgba(0,0,0,0.8)',
+                zIndex: 1,
               }}
             >
-              {percentage}%
+              {currentPercentage}%
+              {hp.temporary > 0 && ` (+${temporaryPercentage}%)`}
             </Typography>
           </Box>
         </Box>
@@ -192,11 +212,11 @@ export function HealthPoints({
                   onChange={(current) => onUpdate({ ...hp, current })}
                   variant="h4"
                   min={0}
-                  max={hp.max + hp.temporary}
+                  max={hp.max}
                   validate={(value) => {
                     if (value < 0) return 'PV não pode ser negativo';
-                    if (value > hp.max + hp.temporary) {
-                      return `PV atual não pode exceder PV máximo + temporário (${hp.max + hp.temporary})`;
+                    if (value > hp.max) {
+                      return `PV atual não pode exceder PV máximo (${hp.max})`;
                     }
                     return null;
                   }}
@@ -208,7 +228,7 @@ export function HealthPoints({
                 <IconButton
                   size="small"
                   onClick={() => adjustCurrent(5)}
-                  disabled={hp.current >= hp.max + hp.temporary}
+                  disabled={hp.current >= hp.max}
                   color="success"
                 >
                   <Typography variant="caption">+5</Typography>
@@ -218,7 +238,7 @@ export function HealthPoints({
                 <IconButton
                   size="small"
                   onClick={() => adjustCurrent(1)}
-                  disabled={hp.current >= hp.max + hp.temporary}
+                  disabled={hp.current >= hp.max}
                   color="success"
                 >
                   <AddIcon />
