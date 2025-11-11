@@ -111,17 +111,15 @@ export function useCharacterCreation(): UseCharacterCreationReturn {
           playerName: data.playerName?.trim() || undefined,
         });
 
-        // Adicionar ao store Redux (que sincroniza com IndexedDB via middleware)
-        dispatch(addCharacter(newCharacter));
+        // Adicionar ao store Redux (que salva no IndexedDB)
+        // IMPORTANTE: Esperar o resultado para garantir que foi salvo
+        await dispatch(addCharacter(newCharacter)).unwrap();
 
         // Salvar personagem criado
         setCreatedCharacter(newCharacter);
 
         // Exibir notificação de sucesso
         showSuccess('Ficha criada com sucesso!');
-
-        // Pequeno delay para garantir que o estado foi atualizado
-        await new Promise((resolve) => setTimeout(resolve, 100));
 
         // Redirecionar para a visualização da ficha criada
         router.push(`/characters/${newCharacter.id}`);
