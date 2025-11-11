@@ -68,7 +68,7 @@ describe('LinhagemSidebar', () => {
         />
       );
 
-      const nameInput = screen.getByLabelText('Nome da Linhagem');
+      const nameInput = screen.getByLabelText(/nome da linhagem/i);
       expect(nameInput).toHaveValue('Elfo');
 
       const descInput = screen.getByLabelText('Descrição da Linhagem');
@@ -88,7 +88,7 @@ describe('LinhagemSidebar', () => {
         />
       );
 
-      const nameInput = screen.getByLabelText('Nome da Linhagem');
+      const nameInput = screen.getByLabelText(/nome da linhagem/i);
       await user.clear(nameInput);
       await user.type(nameInput, 'Anão');
 
@@ -276,7 +276,7 @@ describe('LinhagemSidebar', () => {
   });
 
   describe('Seleção de Sentido Aguçado', () => {
-    it('deve permitir selecionar sentido aguçado', async () => {
+    it('deve permitir selecionar sentidos aguçados', async () => {
       const user = userEvent.setup();
 
       render(
@@ -287,7 +287,7 @@ describe('LinhagemSidebar', () => {
         />
       );
 
-      const senseSelect = screen.getByLabelText('Sentido Aguçado');
+      const senseSelect = screen.getByLabelText('Sentidos Aguçados');
       await user.click(senseSelect);
 
       const olfatoOption = screen.getByRole('option', { name: 'Olfato' });
@@ -296,13 +296,45 @@ describe('LinhagemSidebar', () => {
       await waitFor(() => {
         expect(mockOnUpdate).toHaveBeenCalledWith(
           expect.objectContaining({
-            keenSense: 'olfato',
+            keenSenses: ['olfato'],
           })
         );
       });
     });
 
-    it('deve permitir remover sentido aguçado', async () => {
+    it('deve permitir selecionar múltiplos sentidos aguçados', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <LinhagemSidebar
+          open={true}
+          onClose={mockOnClose}
+          onUpdate={mockOnUpdate}
+        />
+      );
+
+      const senseSelect = screen.getByLabelText('Sentidos Aguçados');
+
+      // Seleciona primeiro sentido
+      await user.click(senseSelect);
+      const olfatoOption = screen.getByRole('option', { name: 'Olfato' });
+      await user.click(olfatoOption);
+
+      // Seleciona segundo sentido
+      await user.click(senseSelect);
+      const visaoOption = screen.getByRole('option', { name: 'Visão' });
+      await user.click(visaoOption);
+
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            keenSenses: expect.arrayContaining(['olfato', 'visao']),
+          })
+        );
+      });
+    });
+
+    it('deve permitir remover sentidos aguçados', async () => {
       const user = userEvent.setup();
 
       render(
@@ -312,21 +344,22 @@ describe('LinhagemSidebar', () => {
           onUpdate={mockOnUpdate}
           lineage={{
             ...defaultLineage,
-            keenSense: 'visao',
+            keenSenses: ['visao', 'olfato'],
           }}
         />
       );
 
-      const senseSelect = screen.getByLabelText('Sentido Aguçado');
+      const senseSelect = screen.getByLabelText('Sentidos Aguçados');
       await user.click(senseSelect);
 
-      const noneOption = screen.getByRole('option', { name: 'Nenhum' });
-      await user.click(noneOption);
+      // Remove um sentido (clica novamente em uma opção já selecionada)
+      const visaoOption = screen.getByRole('option', { name: 'Visão' });
+      await user.click(visaoOption);
 
       await waitFor(() => {
         expect(mockOnUpdate).toHaveBeenCalledWith(
           expect.objectContaining({
-            keenSense: undefined,
+            keenSenses: ['olfato'],
           })
         );
       });
@@ -503,7 +536,7 @@ describe('LinhagemSidebar', () => {
         />
       );
 
-      const nameInput = screen.getByLabelText('Nome da Linhagem');
+      const nameInput = screen.getByLabelText(/nome da linhagem/i);
       await user.clear(nameInput);
       await user.type(nameInput, 'Humano');
 

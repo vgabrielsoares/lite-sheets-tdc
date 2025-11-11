@@ -144,6 +144,7 @@ export function LinhagemSidebar({
       setLocalLineage(currentLineage);
       setHasUserEdited(false); // Reset flag quando abre
       setValidationErrors([]); // Limpa erros ao abrir
+      isFirstRender.current = true; // Reset flag de primeira renderização
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -338,8 +339,8 @@ export function LinhagemSidebar({
       showOverlay={false}
     >
       <Box sx={{ p: 3 }}>
-        {/* Validação */}
-        {showValidation && validationErrors.length > 0 && (
+        {/* Validação - apenas exibe se usuário já editou */}
+        {showValidation && hasUserEdited && validationErrors.length > 0 && (
           <Box
             sx={{
               p: 2,
@@ -396,8 +397,10 @@ export function LinhagemSidebar({
           {/* Tamanho */}
           <Box>
             <FormControl fullWidth>
-              <InputLabel>Tamanho</InputLabel>
+              <InputLabel id="size-label">Tamanho</InputLabel>
               <Select
+                labelId="size-label"
+                id="size-select"
                 value={localLineage.size}
                 onChange={handleSizeChange}
                 label="Tamanho"
@@ -522,8 +525,12 @@ export function LinhagemSidebar({
 
           {/* Idiomas */}
           <FormControl fullWidth>
-            <InputLabel>Idiomas Ganhos pela Linhagem</InputLabel>
+            <InputLabel id="languages-label">
+              Idiomas Ganhos pela Linhagem
+            </InputLabel>
             <Select
+              labelId="languages-label"
+              id="languages-select"
               multiple
               value={localLineage.languages}
               onChange={handleLanguagesChange}
@@ -585,8 +592,10 @@ export function LinhagemSidebar({
             <Stack spacing={2}>
               {/* Tipo de Visão */}
               <FormControl fullWidth>
-                <InputLabel>Tipo de Visão</InputLabel>
+                <InputLabel id="vision-type-label">Tipo de Visão</InputLabel>
                 <Select
+                  labelId="vision-type-label"
+                  id="vision-type-select"
                   value={localLineage.vision}
                   onChange={handleVisionChange}
                   label="Tipo de Visão"
@@ -604,8 +613,12 @@ export function LinhagemSidebar({
 
               {/* Sentidos Aguçados */}
               <FormControl fullWidth>
-                <InputLabel>Sentidos Aguçados</InputLabel>
+                <InputLabel id="keen-senses-label">
+                  Sentidos Aguçados
+                </InputLabel>
                 <Select
+                  labelId="keen-senses-label"
+                  id="keen-senses-select"
                   multiple
                   value={localLineage.keenSenses || []}
                   onChange={handleKeenSensesChange}
