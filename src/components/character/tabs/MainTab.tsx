@@ -3,7 +3,14 @@
 import React from 'react';
 import { Box, Stack } from '@mui/material';
 import type { Character } from '@/types';
-import { BasicStats, HealthPoints, PowerPoints } from '../stats';
+import {
+  BasicStats,
+  HealthPoints,
+  PowerPoints,
+  DefenseDisplay,
+  MovementDisplay,
+} from '../stats';
+import type { MovementType } from '@/types';
 
 export interface MainTabProps {
   /**
@@ -95,6 +102,72 @@ export function MainTab({
                 combat: {
                   ...character.combat,
                   pp,
+                },
+              })
+            }
+          />
+        </Box>
+
+        {/* Defesa e Deslocamento lado a lado */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 2,
+          }}
+        >
+          {/* Defesa */}
+          <DefenseDisplay
+            agilidade={character.attributes.agilidade}
+            armorBonus={character.combat.defense.armorBonus}
+            maxAgilityBonus={character.combat.defense.maxAgilityBonus}
+            otherBonuses={character.combat.defense.otherBonuses}
+            onArmorBonusChange={(value) =>
+              onUpdate({
+                combat: {
+                  ...character.combat,
+                  defense: {
+                    ...character.combat.defense,
+                    armorBonus: value,
+                  },
+                },
+              })
+            }
+            onMaxAgilityBonusChange={(value) =>
+              onUpdate({
+                combat: {
+                  ...character.combat,
+                  defense: {
+                    ...character.combat.defense,
+                    maxAgilityBonus: value,
+                  },
+                },
+              })
+            }
+            onOtherBonusesChange={(bonuses) =>
+              onUpdate({
+                combat: {
+                  ...character.combat,
+                  defense: {
+                    ...character.combat.defense,
+                    otherBonuses: bonuses,
+                  },
+                },
+              })
+            }
+          />
+
+          {/* Deslocamento */}
+          <MovementDisplay
+            movement={character.movement.speeds}
+            onMovementChange={(type: MovementType, value: number) =>
+              onUpdate({
+                movement: {
+                  ...character.movement,
+                  speeds: {
+                    ...character.movement.speeds,
+                    [type]: value,
+                  },
                 },
               })
             }
