@@ -83,9 +83,12 @@ export default function CharacterLoader({
   }
 
   // Exibir erro se houver (não bloqueia renderização, apenas avisa)
-  if (showError && error) {
+  // Nota: Erros de atualização (updateCharacter) não devem bloquear a UI
+  if (showError && error && error.includes('carregar')) {
     return (
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2, mt: { xs: 7, sm: 8 } }}>
+        {' '}
+        {/* Margem para não ficar atrás do header */}
         <Alert
           severity="error"
           sx={{ mb: 2 }}
