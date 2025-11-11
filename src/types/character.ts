@@ -15,7 +15,7 @@ import type {
   Note,
   BaseEntity,
 } from './common';
-import type { Attributes } from './attributes';
+import type { Attributes, AttributeName } from './attributes';
 import type { Skills, SkillName } from './skills';
 import type { CombatData } from './combat';
 import type { Inventory } from './inventory';
@@ -143,6 +143,11 @@ export interface Origin {
   description?: string;
   /** Proficiências com habilidades ganhas (2) */
   skillProficiencies: SkillName[];
+  /** Modificadores de atributos (+1 em um, ou +1 em dois e -1 em um) */
+  attributeModifiers: {
+    attribute: AttributeName;
+    value: number; // +1 ou -1
+  }[];
   /** Habilidade especial da origem */
   specialAbility?: {
     name: string;

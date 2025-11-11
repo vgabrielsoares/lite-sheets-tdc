@@ -34,7 +34,7 @@ import {
   SpellsTab,
   DescriptionTab,
 } from './tabs';
-import { LinhagemSidebar } from './sidebars';
+import { LinhagemSidebar, OrigemSidebar } from './sidebars';
 
 export interface CharacterSheetProps {
   /**
@@ -128,6 +128,13 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
    */
   const handleUpdateLineage = (lineage: Character['lineage']) => {
     onUpdate({ lineage });
+  };
+
+  /**
+   * Handler para atualizar a origem do personagem
+   */
+  const handleUpdateOrigin = (origin: Character['origin']) => {
+    onUpdate({ origin });
   };
 
   /**
@@ -259,13 +266,14 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               />
             )}
 
-            {/* Sidebar de Origem será implementada na próxima issue */}
+            {/* Sidebar de Origem */}
             {activeSidebar === 'origin' && (
-              <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 1 }}>
-                <Typography>
-                  Sidebar de Origem será implementada em breve
-                </Typography>
-              </Box>
+              <OrigemSidebar
+                open={activeSidebar === 'origin'}
+                origin={character.origin}
+                onUpdate={handleUpdateOrigin}
+                onClose={handleCloseSidebar}
+              />
             )}
           </Box>
         )}
@@ -276,6 +284,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             open={activeSidebar === 'lineage'}
             lineage={character.lineage}
             onUpdate={handleUpdateLineage}
+            onClose={handleCloseSidebar}
+          />
+        )}
+
+        {/* Sidebar de Origem em modo mobile (overlay) */}
+        {isMobile && activeSidebar === 'origin' && (
+          <OrigemSidebar
+            open={activeSidebar === 'origin'}
+            origin={character.origin}
+            onUpdate={handleUpdateOrigin}
             onClose={handleCloseSidebar}
           />
         )}
