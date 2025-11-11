@@ -284,6 +284,10 @@ export const characterService = {
         throw new Error(`Personagem com ID ${id} não encontrado`);
       }
 
+      // Log dos updates para debug
+      console.log('📝 Atualizando personagem:', id);
+      console.log('📝 Updates recebidos:', JSON.stringify(updates, null, 2));
+
       // Criar objeto atualizado
       const updatedCharacter: Character = {
         ...existing,
@@ -292,6 +296,12 @@ export const characterService = {
         createdAt: existing.createdAt, // Preservar data de criação
         updatedAt: new Date().toISOString(), // Atualizar timestamp
       };
+
+      // Log do personagem final
+      console.log(
+        '📝 Personagem final:',
+        JSON.stringify(updatedCharacter, null, 2)
+      );
 
       // Validar dados básicos
       if (updatedCharacter.name.trim() === '') {
@@ -309,9 +319,64 @@ export const characterService = {
       return updatedCharacter;
     } catch (error) {
       console.error(`❌ Erro ao atualizar personagem ${id}:`, error);
+
+      // Log mais detalhado do erro
+      if (error instanceof Error) {
+        console.error(`❌ Mensagem: ${error.message}`);
+        console.error(`❌ Stack: ${error.stack}`);
+      }
+
       throw new CharacterServiceError(
         `Falha ao atualizar personagem com ID: ${id}`,
         'UPDATE_FAILED',
+        error
+      );
+    }
+  },
+
+  /**
+   * Restaura um personagem no IndexedDB preservando todos os campos
+   *
+   * Este método é útil quando o personagem existe no Redux mas não no IndexedDB
+   * (por exemplo, após uma race condition ou falha de sincronização).
+   *
+   * Diferente de create(), este método preserva o ID, createdAt e updatedAt originais.
+   *
+   * @param character Personagem completo a ser restaurado
+   * @returns Promise<Character> Personagem restaurado
+   * @throws {CharacterServiceError} Se falhar ao restaurar personagem
+   *
+   * @example
+   * await characterService.restore(reduxCharacter);
+   * console.log('Personagem restaurado no IndexedDB');
+   */
+  async restore(character: Character): Promise<Character> {
+    try {
+      // Validar dados básicos
+      if (!character.id || typeof character.id !== 'string') {
+        throw new Error('ID do personagem é obrigatório');
+      }
+
+      if (!character.name || character.name.trim() === '') {
+        throw new Error('Nome do personagem é obrigatório');
+      }
+
+      if (character.level < 1) {
+        throw new Error('Nível do personagem deve ser maior que 0');
+      }
+
+      // Adicionar ao banco preservando todos os campos
+      await db.characters.put(character);
+
+      console.log(
+        `✅ Personagem restaurado: ${character.name} (${character.id})`
+      );
+      return character;
+    } catch (error) {
+      console.error('❌ Erro ao restaurar personagem:', error);
+      throw new CharacterServiceError(
+        'Falha ao restaurar personagem',
+        'RESTORE_FAILED',
         error
       );
     }
