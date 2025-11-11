@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -100,25 +100,56 @@ export const OrigemSidebar: React.FC<OrigemSidebarProps> = ({
   // Flag para detectar se usuário já editou algo
   const [hasUserEdited, setHasUserEdited] = useState(false);
 
+  // Ref para rastrear se a sidebar estava aberta anteriormente
+  const wasOpenRef = useRef(false);
+
+  // Ref para rastrear se já sincronizou ao abrir (evita auto-save do valor inicial)
+  const hasSyncedRef = useRef(false);
+
   // Debounce do estado local para auto-save
   const debouncedOrigin = useDebounce(localOrigin, 500);
 
   /**
-   * Sincroniza origem externa com estado local quando abre
+   * Sincroniza origem externa com estado local APENAS quando abre
+   * (não quando origin muda enquanto já está aberta)
    */
   useEffect(() => {
-    if (open) {
+    // Só sincroniza quando a sidebar ABRE (transição de fechado para aberto)
+    if (open && !wasOpenRef.current) {
       setLocalOrigin(origin || createDefaultOrigin());
       setHasUserEdited(false);
+      hasSyncedRef.current = false; // Resetar flag de sync
     }
-  }, [open, origin]);
+
+    // Marcar como sincronizado após a sidebar abrir
+    if (open && !hasSyncedRef.current) {
+      hasSyncedRef.current = true;
+    }
+
+    wasOpenRef.current = open;
+    // Intencionalmente não incluímos 'origin' nas dependências
+    // para evitar resetar o estado enquanto o usuário está editando
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   /**
    * Auto-save: Atualiza origem externa quando debounced muda
-   * (apenas se usuário já editou algo)
+   * (apenas se usuário já editou algo E já sincronizou ao abrir)
    */
   useEffect(() => {
-    if (hasUserEdited && open) {
+    console.log('🔍 Auto-save check:', {
+      hasUserEdited,
+      open,
+      hasSynced: hasSyncedRef.current,
+      shouldSave: hasUserEdited && open && hasSyncedRef.current,
+    });
+
+    // Só salvar se:
+    // 1. Usuário editou algo (hasUserEdited = true)
+    // 2. Sidebar está aberta (open = true)
+    // 3. Já sincronizou o valor inicial (hasSyncedRef.current = true)
+    if (hasUserEdited && open && hasSyncedRef.current) {
+      console.log('💾 Auto-save DISPARANDO agora:', debouncedOrigin);
       onUpdate(debouncedOrigin);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,6 +161,7 @@ export const OrigemSidebar: React.FC<OrigemSidebarProps> = ({
   const handleTextChange =
     (field: keyof Origin) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      console.log('✏️ Campo editado:', field, '→', event.target.value);
       setHasUserEdited(true);
       setLocalOrigin((prev) => ({
         ...prev,
