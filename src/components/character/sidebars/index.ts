@@ -9,3 +9,6 @@ export type { LinhagemSidebarProps } from './LinhagemSidebar';
 
 export { OrigemSidebar } from './OrigemSidebar';
 export type { OrigemSidebarProps } from './OrigemSidebar';
+
+export { SizeSidebar } from './SizeSidebar';
+export type { SizeSidebarProps } from './SizeSidebar';
