@@ -10,3 +10,7 @@ export type { HealthPointsProps } from './HealthPoints';
 
 export { PowerPoints } from './PowerPoints';
 export type { PowerPointsProps } from './PowerPoints';
+
+export { DefenseDisplay } from './DefenseDisplay';
+
+export { MovementDisplay } from './MovementDisplay';
