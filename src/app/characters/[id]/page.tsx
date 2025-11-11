@@ -1,14 +1,16 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import AppLayout from '@/components/layout/AppLayout';
 import { CharacterSheet } from '@/components/character';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { useNotifications } from '@/hooks/useNotifications';
 import {
   selectCharacterById,
   updateCharacter,
+  clearError,
 } from '@/features/characters/charactersSlice';
 import type { Character } from '@/types';
 
@@ -25,8 +27,10 @@ export default function CharacterDetailPage() {
   const dispatch = useAppDispatch();
   const params = useParams();
   const id = params?.id as string;
+  const { showError, showSuccess } = useNotifications();
 
   const character = useAppSelector((state) => selectCharacterById(state, id));
+  const loading = useAppSelector((state) => state.characters.loading);
 
   // Estado local para manter o personagem e evitar flash de loading
   const [loadedCharacter, setLoadedCharacter] = useState<Character | null>(
@@ -34,30 +38,65 @@ export default function CharacterDetailPage() {
   );
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Atualiza o estado local quando o personagem muda
+  // Atualiza o estado local quando o personagem muda APENAS se não estiver em loading
+  // Isso previne re-renders durante updates
   useEffect(() => {
-    if (character) {
+    if (character && !loading) {
+      setLoadedCharacter(character);
+      setIsInitialLoad(false);
+    } else if (character && isInitialLoad) {
+      // Primeira carga - sempre atualiza
       setLoadedCharacter(character);
       setIsInitialLoad(false);
     }
-  }, [character]);
+  }, [character, loading, isInitialLoad]);
 
   /**
    * Atualiza os dados do personagem
+   * Memoizado para evitar re-criação em cada render
    */
-  const handleUpdate = (updates: Partial<Character>) => {
-    if (!loadedCharacter) return;
+  const handleUpdate = useCallback(
+    async (updates: Partial<Character>) => {
+      if (!loadedCharacter) return;
 
-    dispatch(
-      updateCharacter({
-        id: loadedCharacter.id,
-        updates: {
-          ...updates,
-          updatedAt: new Date().toISOString(),
-        },
-      })
-    );
-  };
+      console.log('🔄 handleUpdate CHAMADO com updates:', updates);
+
+      try {
+        // Limpa erros anteriores
+        dispatch(clearError());
+
+        console.log('⏳ Disparando updateCharacter thunk...');
+
+        // Atualiza o personagem
+        await dispatch(
+          updateCharacter({
+            id: loadedCharacter.id,
+            updates: {
+              ...updates,
+              updatedAt: new Date().toISOString(),
+            },
+          })
+        ).unwrap();
+
+        console.log('✅ updateCharacter concluído com sucesso!');
+
+        // Sucesso (opcional - pode remover se muito verboso)
+        // showSuccess('Personagem atualizado com sucesso!');
+      } catch (error) {
+        // Captura o erro e exibe notificação
+        console.error('❌ ERRO ao atualizar personagem:', error);
+        showError(
+          'Erro ao salvar as alterações. Verifique os dados e tente novamente.'
+        );
+
+        // Limpa o erro do state para não bloquear a UI
+        setTimeout(() => {
+          dispatch(clearError());
+        }, 100);
+      }
+    },
+    [loadedCharacter, dispatch, showError]
+  );
 
   // Loading state (apenas no carregamento inicial)
   if (isInitialLoad && !loadedCharacter) {
