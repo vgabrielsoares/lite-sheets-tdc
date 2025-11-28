@@ -7,22 +7,12 @@ import {
   Breadcrumbs,
   Link,
   Typography,
-  IconButton,
-  Tooltip,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import {
-  SwapHoriz as SwapIcon,
-  ArrowBack as BackIcon,
-} from '@mui/icons-material';
+import { ArrowBack as BackIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import type { Character } from '@/types';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import {
-  selectSheetPosition,
-  toggleSheetPosition,
-} from '@/features/app/appSlice';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
 import {
@@ -73,7 +63,6 @@ export interface CharacterSheetProps {
  */
 export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -84,16 +73,6 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   const [activeSidebar, setActiveSidebar] = useState<
     'lineage' | 'origin' | 'size' | null
   >(null);
-
-  // Preferência de posicionamento da ficha (Redux)
-  const sheetPosition = useAppSelector(selectSheetPosition);
-
-  /**
-   * Alterna o posicionamento da ficha (esquerda/direita)
-   */
-  const handleTogglePosition = () => {
-    dispatch(toggleSheetPosition());
-  };
 
   /**
    * Navega de volta para a lista de fichas
@@ -209,37 +188,28 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             <Typography color="text.secondary">{currentTabLabel}</Typography>
           )}
         </Breadcrumbs>
-
-        {/* Botão de alternar posicionamento (apenas desktop) */}
-        {!isMobile && (
-          <Tooltip
-            title={`Alternar posicionamento da ficha (${
-              sheetPosition === 'left' ? 'esquerda' : 'direita'
-            })`}
-          >
-            <IconButton
-              onClick={handleTogglePosition}
-              aria-label="Alternar posicionamento da ficha"
-            >
-              <SwapIcon />
-            </IconButton>
-          </Tooltip>
-        )}
       </Box>
 
-      {/* Layout principal */}
+      {/* Layout principal - Centralizado */}
       <Box
         sx={{
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
           gap: 3,
+          justifyContent: 'center', // Centraliza horizontalmente
+          // Altura fixa baseada na viewport para evitar alongamento
+          height: isMobile ? 'auto' : 'calc(100vh - 200px)',
+          maxHeight: isMobile ? 'none' : 'calc(100vh - 200px)',
         }}
       >
         {/* Container da ficha */}
         <Box
           sx={{
-            flex: isMobile ? '1 1 auto' : '0 1 800px',
-            order: isMobile ? 1 : sheetPosition === 'left' ? 1 : 2,
+            flex: isMobile ? '1 1 auto' : '0 0 800px',
+            maxWidth: '800px',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
           }}
         >
           {/* Navegação por abas */}
@@ -250,18 +220,38 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             role="tabpanel"
             id={`tabpanel-${currentTab}`}
             aria-labelledby={`tab-${currentTab}`}
+            sx={{
+              flex: 1,
+              overflow: 'auto',
+              // Scrollbar customizada para o conteúdo da ficha
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                bgcolor: 'transparent',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: 'action.hover',
+                borderRadius: '4px',
+                '&:hover': {
+                  bgcolor: 'action.selected',
+                },
+              },
+            }}
           >
             {renderTabContent()}
           </Box>
         </Box>
 
-        {/* Área reservada para sidebar (implementada nas próximas issues) */}
+        {/* Área reservada para sidebar */}
         {!isMobile && (
           <Box
             sx={{
-              flex: '1 1 auto',
-              order: sheetPosition === 'left' ? 2 : 1,
-              minHeight: '200px',
+              flex: '0 0 640px', // Largura fixa da sidebar (lg)
+              maxWidth: '640px',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {/* Sidebar de Linhagem */}
