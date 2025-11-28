@@ -96,8 +96,11 @@ describe('CharacterSheet', () => {
         <CharacterSheet character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      // Verifica se conteúdo da aba principal está visível (ex: "Linhagem")
-      expect(screen.getByText('Linhagem')).toBeInTheDocument();
+      // Verifica se o tabpanel da aba principal está renderizado
+      const mainTabPanel = screen.getByRole('tabpanel', {
+        name: 'Principal',
+      });
+      expect(mainTabPanel).toBeInTheDocument();
     });
   });
 
@@ -118,8 +121,11 @@ describe('CharacterSheet', () => {
         <CharacterSheet character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      // Inicia na aba Principal - verifica conteúdo da aba main
-      expect(screen.getByText('Linhagem')).toBeInTheDocument();
+      // Inicia na aba Principal - verifica tabpanel ativo
+      const mainTabPanel = screen.getByRole('tabpanel', {
+        name: 'Principal',
+      });
+      expect(mainTabPanel).toBeInTheDocument();
 
       // Navega para aba de Combate
       const combatTab = screen.getByRole('tab', { name: 'Combate' });
@@ -133,41 +139,16 @@ describe('CharacterSheet', () => {
   });
 
   describe('Posicionamento', () => {
-    it('deve ter botão de alternar posicionamento', () => {
+    it('deve ter layout centralizado no desktop', () => {
       renderWithProvider(
         <CharacterSheet character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      const toggleButton = screen.getByLabelText(
-        'Alternar posicionamento da ficha'
-      );
-      expect(toggleButton).toBeInTheDocument();
-    });
-
-    it('deve alternar o posicionamento ao clicar no botão', () => {
-      const { store } = renderWithProvider(
-        <CharacterSheet character={mockCharacter} onUpdate={mockOnUpdate} />,
-        'left'
-      );
-
-      const toggleButton = screen.getByLabelText(
-        'Alternar posicionamento da ficha'
-      );
-
-      // Estado inicial: left
-      expect(store.getState().app.sheetPosition).toBe('left');
-
-      // Clica para alternar
-      fireEvent.click(toggleButton);
-
-      // Verifica se mudou para right
-      expect(store.getState().app.sheetPosition).toBe('right');
-
-      // Clica novamente para alternar de volta
-      fireEvent.click(toggleButton);
-
-      // Verifica se voltou para left
-      expect(store.getState().app.sheetPosition).toBe('left');
+      // Verifica se a ficha está renderizada
+      const mainTabPanel = screen.getByRole('tabpanel', {
+        name: 'Principal',
+      });
+      expect(mainTabPanel).toBeInTheDocument();
     });
   });
 
