@@ -178,7 +178,6 @@ export function BasicStats({
                 <AutoAwesomeIcon color="primary" />
                 <Typography variant="caption" color="text.secondary">
                   Linhagem
-                  {onOpenLineage && ' (clique para detalhes)'}
                 </Typography>
               </Box>
               <Typography
@@ -235,7 +234,6 @@ export function BasicStats({
                 <HomeIcon color="primary" />
                 <Typography variant="caption" color="text.secondary">
                   Origem
-                  {onOpenOrigin && ' (clique para detalhes)'}
                 </Typography>
               </Box>
               <Typography
@@ -300,28 +298,54 @@ export function BasicStats({
               <Box
                 sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
               >
-                <StarIcon color="primary" />
+                <StarIcon color="warning" />
                 <Typography variant="caption" color="text.secondary">
                   Experiência (XP)
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                <EditableNumber
-                  value={character.experience.current}
-                  onChange={(current) =>
-                    onUpdate({
-                      experience: {
-                        ...character.experience,
-                        current,
-                      },
-                    })
-                  }
-                  variant="h4"
-                  min={0}
-                />
-                <Typography variant="body2" color="text.secondary">
-                  / {character.experience.toNextLevel || '—'} XP
-                </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                  <EditableNumber
+                    value={character.experience.current}
+                    onChange={(current) =>
+                      onUpdate({
+                        experience: {
+                          ...character.experience,
+                          current,
+                        },
+                      })
+                    }
+                    variant="h4"
+                    min={0}
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    / {character.experience.toNextLevel ?? '—'} XP
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Próximo Nível:
+                  </Typography>
+                  <EditableNumber
+                    value={character.experience.toNextLevel ?? 50}
+                    onChange={(toNextLevel) =>
+                      onUpdate({
+                        experience: {
+                          ...character.experience,
+                          toNextLevel,
+                        },
+                      })
+                    }
+                    variant="h6"
+                    min={1}
+                    max={999999}
+                    validate={(value) => {
+                      if (value < 1) return 'Mínimo: 1 XP';
+                      if (value > 999999) return 'Máximo: 999.999 XP';
+                      return null;
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
           </Box>
