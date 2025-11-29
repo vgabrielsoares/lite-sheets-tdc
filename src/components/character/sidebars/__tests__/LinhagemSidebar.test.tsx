@@ -276,7 +276,7 @@ describe('LinhagemSidebar', () => {
   });
 
   describe('Seleção de Sentido Aguçado', () => {
-    it('deve permitir selecionar sentidos aguçados', async () => {
+    it('deve permitir adicionar sentido aguçado', async () => {
       const user = userEvent.setup();
 
       render(
@@ -287,82 +287,104 @@ describe('LinhagemSidebar', () => {
         />
       );
 
-      const senseSelect = screen.getByLabelText('Sentidos Aguçados');
-      await user.click(senseSelect);
+      // Procura pelo botão "Adicionar" na seção de sentidos aguçados
+      const addButtons = screen.getAllByRole('button', { name: /adicionar/i });
+      // Assume que o último botão é o de sentidos (após ancestralidade)
+      const addKeenSenseButton = addButtons[addButtons.length - 2];
 
+      await user.click(addKeenSenseButton);
+
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            keenSenses: expect.arrayContaining([
+              expect.objectContaining({
+                type: 'visao',
+                bonus: 5,
+              }),
+            ]),
+          })
+        );
+      });
+    });
+
+    it('deve permitir editar tipo e bônus de sentido aguçado', async () => {
+      const user = userEvent.setup();
+
+      const lineage: Lineage = {
+        ...defaultLineage,
+        keenSenses: [{ type: 'visao', bonus: 5, description: '' }],
+      };
+
+      render(
+        <LinhagemSidebar
+          open={true}
+          onClose={mockOnClose}
+          onUpdate={mockOnUpdate}
+          lineage={lineage}
+        />
+      );
+
+      // Muda o tipo do sentido
+      const typeSelect = screen.getByLabelText('Tipo de Sentido');
+      await user.click(typeSelect);
       const olfatoOption = screen.getByRole('option', { name: 'Olfato' });
       await user.click(olfatoOption);
 
       await waitFor(() => {
         expect(mockOnUpdate).toHaveBeenCalledWith(
           expect.objectContaining({
-            keenSenses: ['olfato'],
+            keenSenses: expect.arrayContaining([
+              expect.objectContaining({
+                type: 'olfato',
+              }),
+            ]),
           })
         );
       });
     });
 
-    it('deve permitir selecionar múltiplos sentidos aguçados', async () => {
+    it('deve permitir remover sentido aguçado', async () => {
       const user = userEvent.setup();
+
+      const lineage: Lineage = {
+        ...defaultLineage,
+        keenSenses: [
+          { type: 'visao', bonus: 5, description: '' },
+          { type: 'olfato', bonus: 7, description: '' },
+        ],
+      };
 
       render(
         <LinhagemSidebar
           open={true}
           onClose={mockOnClose}
           onUpdate={mockOnUpdate}
+          lineage={lineage}
         />
       );
 
-      const senseSelect = screen.getByLabelText('Sentidos Aguçados');
-
-      // Seleciona primeiro sentido
-      await user.click(senseSelect);
-      const olfatoOption = screen.getByRole('option', { name: 'Olfato' });
-      await user.click(olfatoOption);
-
-      // Seleciona segundo sentido
-      await user.click(senseSelect);
-      const visaoOption = screen.getByRole('option', { name: 'Visão' });
-      await user.click(visaoOption);
-
-      await waitFor(() => {
-        expect(mockOnUpdate).toHaveBeenCalledWith(
-          expect.objectContaining({
-            keenSenses: expect.arrayContaining(['olfato', 'visao']),
-          })
-        );
-      });
-    });
-
-    it('deve permitir remover sentidos aguçados', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <LinhagemSidebar
-          open={true}
-          onClose={mockOnClose}
-          onUpdate={mockOnUpdate}
-          lineage={{
-            ...defaultLineage,
-            keenSenses: ['visao', 'olfato'],
-          }}
-        />
+      // Encontra botão de deletar (ícone vermelho)
+      const deleteButtons = screen.getAllByRole('button');
+      const deleteButton = deleteButtons.find((btn) =>
+        btn.querySelector('[data-testid="DeleteIcon"]')
       );
 
-      const senseSelect = screen.getByLabelText('Sentidos Aguçados');
-      await user.click(senseSelect);
+      if (deleteButton) {
+        await user.click(deleteButton);
 
-      // Remove um sentido (clica novamente em uma opção já selecionada)
-      const visaoOption = screen.getByRole('option', { name: 'Visão' });
-      await user.click(visaoOption);
-
-      await waitFor(() => {
-        expect(mockOnUpdate).toHaveBeenCalledWith(
-          expect.objectContaining({
-            keenSenses: ['olfato'],
-          })
-        );
-      });
+        await waitFor(() => {
+          expect(mockOnUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({
+              keenSenses: expect.arrayContaining([
+                expect.objectContaining({
+                  type: 'olfato',
+                }),
+              ]),
+            })
+          );
+        });
+      }
     });
   });
 
