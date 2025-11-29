@@ -13,6 +13,7 @@ import {
 import { ArrowBack as BackIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import type { Character } from '@/types';
+import type { HealthPoints, PowerPoints } from '@/types/combat';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
 import {
@@ -25,6 +26,10 @@ import {
   DescriptionTab,
 } from './tabs';
 import { LinhagemSidebar, OrigemSidebar, SizeSidebar } from './sidebars';
+import { HPDetailSidebar } from './sidebars/HPDetailSidebar';
+import { PPDetailSidebar } from './sidebars/PPDetailSidebar';
+import DefenseSidebar from './sidebars/DefenseSidebar';
+import MovementSidebar from './sidebars/MovementSidebar';
 
 export interface CharacterSheetProps {
   /**
@@ -71,7 +76,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   // Estado da sidebar (qual sidebar está aberta)
   const [activeSidebar, setActiveSidebar] = useState<
-    'lineage' | 'origin' | 'size' | null
+    'lineage' | 'origin' | 'size' | 'hp' | 'pp' | 'defense' | 'movement' | null
   >(null);
 
   /**
@@ -100,6 +105,34 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
    */
   const handleOpenSizeSidebar = () => {
     setActiveSidebar('size');
+  };
+
+  /**
+   * Abre a sidebar de defesa
+   */
+  const handleOpenDefenseSidebar = () => {
+    setActiveSidebar('defense');
+  };
+
+  /**
+   * Abre a sidebar de deslocamento
+   */
+  const handleOpenMovementSidebar = () => {
+    setActiveSidebar('movement');
+  };
+
+  /**
+   * Abre a sidebar de detalhes de PV
+   */
+  const handleOpenHPSidebar = () => {
+    setActiveSidebar('hp');
+  };
+
+  /**
+   * Abre a sidebar de detalhes de PP
+   */
+  const handleOpenPPSidebar = () => {
+    setActiveSidebar('pp');
   };
 
   /**
@@ -133,6 +166,10 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenLineage: handleOpenLineageSidebar,
       onOpenOrigin: handleOpenOriginSidebar,
       onOpenSize: handleOpenSizeSidebar,
+      onOpenHP: handleOpenHPSidebar,
+      onOpenPP: handleOpenPPSidebar,
+      onOpenDefense: handleOpenDefenseSidebar,
+      onOpenMovement: handleOpenMovementSidebar,
     };
 
     switch (currentTab) {
@@ -282,6 +319,54 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 onClose={handleCloseSidebar}
               />
             )}
+
+            {/* Sidebar de PV */}
+            {activeSidebar === 'hp' && (
+              <HPDetailSidebar
+                open={activeSidebar === 'hp'}
+                hp={character.combat.hp}
+                onChange={(hp: HealthPoints) =>
+                  onUpdate({
+                    combat: { ...character.combat, hp },
+                  })
+                }
+                onClose={handleCloseSidebar}
+              />
+            )}
+
+            {/* Sidebar de PP */}
+            {activeSidebar === 'pp' && (
+              <PPDetailSidebar
+                open={activeSidebar === 'pp'}
+                pp={character.combat.pp}
+                onChange={(pp: PowerPoints) =>
+                  onUpdate({
+                    combat: { ...character.combat, pp },
+                  })
+                }
+                onClose={handleCloseSidebar}
+              />
+            )}
+
+            {/* Sidebar de Defesa */}
+            {activeSidebar === 'defense' && (
+              <DefenseSidebar
+                open={activeSidebar === 'defense'}
+                character={character}
+                onUpdate={(updated) => onUpdate(updated)}
+                onClose={handleCloseSidebar}
+              />
+            )}
+
+            {/* Sidebar de Deslocamento */}
+            {activeSidebar === 'movement' && (
+              <MovementSidebar
+                open={activeSidebar === 'movement'}
+                character={character}
+                onUpdate={(updated) => onUpdate(updated)}
+                onClose={handleCloseSidebar}
+              />
+            )}
           </Box>
         )}
 
@@ -310,6 +395,54 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           <SizeSidebar
             open={activeSidebar === 'size'}
             currentSize={character.lineage.size}
+            onClose={handleCloseSidebar}
+          />
+        )}
+
+        {/* Sidebar de PV em modo mobile (overlay) */}
+        {isMobile && activeSidebar === 'hp' && (
+          <HPDetailSidebar
+            open={activeSidebar === 'hp'}
+            hp={character.combat.hp}
+            onChange={(hp: HealthPoints) =>
+              onUpdate({
+                combat: { ...character.combat, hp },
+              })
+            }
+            onClose={handleCloseSidebar}
+          />
+        )}
+
+        {/* Sidebar de PP em modo mobile (overlay) */}
+        {isMobile && activeSidebar === 'pp' && (
+          <PPDetailSidebar
+            open={activeSidebar === 'pp'}
+            pp={character.combat.pp}
+            onChange={(pp: PowerPoints) =>
+              onUpdate({
+                combat: { ...character.combat, pp },
+              })
+            }
+            onClose={handleCloseSidebar}
+          />
+        )}
+
+        {/* Sidebar de Defesa em modo mobile (overlay) */}
+        {isMobile && activeSidebar === 'defense' && (
+          <DefenseSidebar
+            open={activeSidebar === 'defense'}
+            character={character}
+            onUpdate={(updated) => onUpdate(updated)}
+            onClose={handleCloseSidebar}
+          />
+        )}
+
+        {/* Sidebar de Deslocamento em modo mobile (overlay) */}
+        {isMobile && activeSidebar === 'movement' && (
+          <MovementSidebar
+            open={activeSidebar === 'movement'}
+            character={character}
+            onUpdate={(updated) => onUpdate(updated)}
             onClose={handleCloseSidebar}
           />
         )}
