@@ -25,7 +25,6 @@ import {
   Button,
   List,
   ListItem,
-  ListItemText,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import ShieldIcon from '@mui/icons-material/Shield';
@@ -52,6 +51,8 @@ interface DefenseDisplayProps {
   onOtherBonusesChange?: (bonuses: Modifier[]) => void;
   /** Whether the component is in edit mode */
   editable?: boolean;
+  /** Callback to open a sidebar for detailed editing */
+  onOpenDetails?: () => void;
 }
 
 export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
@@ -63,6 +64,7 @@ export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
   onMaxAgilityBonusChange,
   onOtherBonusesChange,
   editable = true,
+  onOpenDetails,
 }) => {
   // Calculate the effective agility bonus (limited by armor if applicable)
   const effectiveAgilityBonus =
@@ -130,7 +132,11 @@ Total: ${totalDefense}
         alignItems: 'center',
         gap: 1,
         minWidth: 200,
+        border: onOpenDetails ? 1 : 0,
+        borderColor: onOpenDetails ? 'primary.main' : 'transparent',
+        cursor: onOpenDetails ? 'pointer' : 'default',
       }}
+      onClick={onOpenDetails}
     >
       {/* Header */}
       <Box
@@ -255,7 +261,7 @@ Total: ${totalDefense}
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              Limite de Agi (Armadura):
+              Limite de Agilidade:
             </Typography>
             <TextField
               type="number"

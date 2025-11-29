@@ -38,6 +38,8 @@ interface MovementDisplayProps {
   onMovementChange?: (type: MovementType, value: number) => void;
   /** Whether the component is in edit mode */
   editable?: boolean;
+  /** Callback to open a sidebar for detailed editing */
+  onOpenDetails?: () => void;
 }
 
 // Icons for each movement type
@@ -74,6 +76,7 @@ export const MovementDisplay: React.FC<MovementDisplayProps> = ({
   movement,
   onMovementChange,
   editable = true,
+  onOpenDetails,
 }) => {
   // Get primary movement (andando/walking) for main display
   const primaryMovement = movement.andando || 0;
@@ -112,13 +115,17 @@ ${
         alignItems: 'center',
         gap: 1,
         minWidth: 200,
+        border: onOpenDetails ? 1 : 0,
+        borderColor: onOpenDetails ? 'primary.main' : 'transparent',
+        cursor: onOpenDetails ? 'pointer' : 'default',
       }}
+      onClick={onOpenDetails}
     >
       {/* Header */}
       <Box
         sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}
       >
-        <DirectionsWalkIcon color="primary" />
+        <DirectionsWalkIcon color="success" />
         <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
           Deslocamento
         </Typography>
