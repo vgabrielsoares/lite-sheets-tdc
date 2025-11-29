@@ -20,6 +20,7 @@ import {
   AccordionDetails,
   OutlinedInput,
   SelectChangeEvent,
+  Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -28,10 +29,12 @@ import InfoIcon from '@mui/icons-material/Info';
 
 import { Sidebar } from '@/components/shared';
 import type { Lineage, LanguageName, AncestryTrait } from '@/types/character';
+import type { AttributeName } from '@/types/attributes';
 import type {
   CreatureSize,
   VisionType,
   SenseType,
+  KeenSense,
   MovementType,
 } from '@/types/common';
 import {
@@ -48,7 +51,13 @@ import {
   KEEN_SENSE_DESCRIPTIONS,
   SIZE_MODIFIERS,
   getSizeModifiers,
+  LINEAGE_ATTRIBUTE_MODIFIER_RULES,
+  LINEAGE_VALIDATION,
 } from '@/constants/lineage';
+import {
+  ATTRIBUTE_LIST,
+  ATTRIBUTE_LABELS,
+} from '@/constants/attributes';
 import { LANGUAGE_LIST, LANGUAGE_LABELS } from '@/constants/languages';
 import { createDefaultLineage, validateLineage } from '@/utils/lineageUtils';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -87,10 +96,10 @@ export interface LinhagemSidebarProps {
  *
  * Sidebar completa para editar todos os aspectos da linhagem de um personagem:
  * - Nome e descrição
- * - Modificadores de atributos (+1 em um, ou +1 em dois e -1 em um)
+ * - Modificadores de atributos (4 opções: +1 em um, +1 em dois e -1 em um, +2 em um e -1 em outro, ou +1 em dois)
  * - Tamanho (com visualização de modificadores)
  * - Altura, peso (kg e medida RPG)
- * - Idade
+ * - Idade, maioridade e expectativa de vida
  * - Idiomas ganhos
  * - Deslocamento por tipo
  * - Sentido aguçado
@@ -231,17 +240,136 @@ export function LinhagemSidebar({
   };
 
   /**
-   * Atualiza sentidos aguçados (multiselect)
+   * Adiciona novo sentido aguçado
    */
-  const handleKeenSensesChange = (event: SelectChangeEvent<string[]>) => {
-    setHasUserEdited(true); // Marca que usuário editou
-    const value = event.target.value;
-    const senses = (
-      typeof value === 'string' ? value.split(',') : value
-    ) as SenseType[];
+  const handleAddKeenSense = () => {
+    setHasUserEdited(true);
     setLocalLineage((prev) => ({
       ...prev,
-      keenSenses: senses,
+      keenSenses: [
+        ...(prev.keenSenses || []),
+        { type: 'visao', bonus: 5, description: '' },
+      ],
+    }));
+  };
+
+  /**
+   * Remove sentido aguçado
+   */
+  const handleRemoveKeenSense = (index: number) => {
+    setHasUserEdited(true);
+    setLocalLineage((prev) => ({
+      ...prev,
+      keenSenses: (prev.keenSenses || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  /**
+   * Atualiza tipo de sentido aguçado
+   */
+  const handleKeenSenseTypeChange =
+    (index: number) => (event: SelectChangeEvent<SenseType>) => {
+      setHasUserEdited(true);
+      setLocalLineage((prev) => ({
+        ...prev,
+        keenSenses: (prev.keenSenses || []).map((sense, i) =>
+          i === index
+            ? { ...sense, type: event.target.value as SenseType }
+            : sense
+        ),
+      }));
+    };
+
+  /**
+   * Atualiza bônus de sentido aguçado
+   */
+  const handleKeenSenseBonusChange =
+    (index: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      setHasUserEdited(true);
+      const value = parseInt(event.target.value, 10);
+      if (!isNaN(value)) {
+        setLocalLineage((prev) => ({
+          ...prev,
+          keenSenses: (prev.keenSenses || []).map((sense, i) =>
+            i === index ? { ...sense, bonus: value } : sense
+          ),
+        }));
+      }
+    };
+
+  /**
+   * Atualiza descrição de sentido aguçado
+   */
+  const handleKeenSenseDescriptionChange =
+    (index: number) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setHasUserEdited(true);
+      setLocalLineage((prev) => ({
+        ...prev,
+        keenSenses: (prev.keenSenses || []).map((sense, i) =>
+          i === index ? { ...sense, description: event.target.value } : sense
+        ),
+      }));
+    };
+
+  /**
+   * Adiciona novo modificador de atributo
+   */
+  const handleAddAttributeModifier = () => {
+    setHasUserEdited(true);
+    setLocalLineage((prev) => ({
+      ...prev,
+      attributeModifiers: [
+        ...(prev.attributeModifiers ?? []),
+        { attribute: 'agilidade', value: 1 },
+      ],
+    }));
+  };
+
+  /**
+   * Remove modificador de atributo
+   */
+  const handleRemoveAttributeModifier = (index: number) => {
+    setHasUserEdited(true);
+    setLocalLineage((prev) => ({
+      ...prev,
+      attributeModifiers: (prev.attributeModifiers ?? []).filter(
+        (_, i) => i !== index
+      ),
+    }));
+  };
+
+  /**
+   * Atualiza atributo do modificador
+   */
+  const handleAttributeModifierAttributeChange = (
+    index: number,
+    event: SelectChangeEvent<AttributeName>
+  ) => {
+    setHasUserEdited(true);
+    const newAttribute = event.target.value as AttributeName;
+    setLocalLineage((prev) => ({
+      ...prev,
+      attributeModifiers: (prev.attributeModifiers ?? []).map((mod, i) =>
+        i === index ? { ...mod, attribute: newAttribute } : mod
+      ),
+    }));
+  };
+
+  /**
+   * Atualiza valor do modificador (+2, +1 ou -1)
+   */
+  const handleAttributeModifierValueChange = (
+    index: number,
+    event: SelectChangeEvent<number>
+  ) => {
+    setHasUserEdited(true);
+    const newValue = Number(event.target.value);
+    setLocalLineage((prev) => ({
+      ...prev,
+      attributeModifiers: (prev.attributeModifiers ?? []).map((mod, i) =>
+        i === index ? { ...mod, value: newValue } : mod
+      ),
     }));
   };
 
@@ -319,6 +447,14 @@ export function LinhagemSidebar({
    */
   const sizeModifiers = getSizeModifiers(localLineage.size);
 
+  /**
+   * Valida modificadores de atributos
+   */
+  const attributeModifiersValidation =
+    LINEAGE_VALIDATION.validateAttributeModifiers(
+      localLineage.attributeModifiers ?? []
+    );
+
   return (
     <Sidebar open={open} onClose={onClose} title="Linhagem do Personagem">
       <Stack spacing={3}>
@@ -372,6 +508,124 @@ export function LinhagemSidebar({
           rows={3}
           helperText="Descrição geral da linhagem e suas características"
         />
+
+        <Divider />
+
+        {/* Modificadores de Atributos */}
+        <Accordion defaultExpanded>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6">Modificadores de Atributos</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Stack spacing={2}>
+              <Alert severity="info" variant="outlined">
+                <Typography variant="body2" gutterBottom>
+                  A linhagem concede modificadores de atributos seguindo uma
+                  das opções:
+                </Typography>
+                <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+                  <li>
+                    {LINEAGE_ATTRIBUTE_MODIFIER_RULES.SINGLE_BONUS.description}
+                  </li>
+                  <li>
+                    {
+                      LINEAGE_ATTRIBUTE_MODIFIER_RULES
+                        .DOUBLE_BONUS_SINGLE_PENALTY.description
+                    }
+                  </li>
+                  <li>
+                    {
+                      LINEAGE_ATTRIBUTE_MODIFIER_RULES
+                        .MAJOR_BONUS_SINGLE_PENALTY.description
+                    }
+                  </li>
+                  <li>
+                    {LINEAGE_ATTRIBUTE_MODIFIER_RULES.DOUBLE_BONUS.description}
+                  </li>
+                </Typography>
+              </Alert>
+
+              {/* Lista de modificadores */}
+              {(localLineage.attributeModifiers ?? []).map((modifier, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <FormControl sx={{ flex: 2 }}>
+                    <InputLabel>Atributo</InputLabel>
+                    <Select
+                      value={modifier.attribute}
+                      onChange={(e) =>
+                        handleAttributeModifierAttributeChange(
+                          index,
+                          e as SelectChangeEvent<AttributeName>
+                        )
+                      }
+                      label="Atributo"
+                    >
+                      {ATTRIBUTE_LIST.map((attr) => (
+                        <MenuItem key={attr} value={attr}>
+                          {ATTRIBUTE_LABELS[attr]}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl sx={{ flex: 1 }}>
+                    <InputLabel>Valor</InputLabel>
+                    <Select
+                      value={modifier.value}
+                      onChange={(e) =>
+                        handleAttributeModifierValueChange(
+                          index,
+                          e as SelectChangeEvent<number>
+                        )
+                      }
+                      label="Valor"
+                    >
+                      <MenuItem value={2}>+2</MenuItem>
+                      <MenuItem value={1}>+1</MenuItem>
+                      <MenuItem value={-1}>-1</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <IconButton
+                    color="error"
+                    onClick={() => handleRemoveAttributeModifier(index)}
+                    aria-label="Remover modificador"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
+
+              {/* Botão para adicionar modificador */}
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={handleAddAttributeModifier}
+                disabled={(localLineage.attributeModifiers ?? []).length >= 3}
+              >
+                Adicionar Modificador
+              </Button>
+
+              {/* Mensagens de validação */}
+              {showValidation && !attributeModifiersValidation.valid && (
+                <Alert severity="error">
+                  {attributeModifiersValidation.errors.map((error, idx) => (
+                    <Typography key={idx} variant="body2">
+                      • {error}
+                    </Typography>
+                  ))}
+                </Alert>
+              )}
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
 
         <Divider />
 
@@ -482,7 +736,7 @@ export function LinhagemSidebar({
               inputProps={{ min: 1, max: 10000 }}
             />
             <TextField
-              label='Peso (medida "Peso")'
+              label='Peso'
               type="number"
               value={localLineage.weightRPG}
               onChange={handleNumberChange('weightRPG')}
@@ -491,15 +745,34 @@ export function LinhagemSidebar({
               inputProps={{ min: 1, max: 10000 }}
             />
           </Stack>
-          <TextField
-            label="Idade"
-            type="number"
-            value={localLineage.age}
-            onChange={handleNumberChange('age')}
-            fullWidth
-            sx={{ mt: 2 }}
-            inputProps={{ min: 0, max: 10000 }}
-          />
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
+            <TextField
+              label="Idade"
+              type="number"
+              value={localLineage.age}
+              onChange={handleNumberChange('age')}
+              fullWidth
+              inputProps={{ min: 0, max: 10000 }}
+            />
+            <TextField
+              label="Maioridade"
+              type="number"
+              value={localLineage.adulthood ?? ''}
+              onChange={handleNumberChange('adulthood')}
+              fullWidth
+              helperText="Idade em que atinge a maioridade"
+              inputProps={{ min: 0, max: 10000 }}
+            />
+            <TextField
+              label="Expectativa de Vida"
+              type="number"
+              value={localLineage.lifeExpectancy ?? ''}
+              onChange={handleNumberChange('lifeExpectancy')}
+              fullWidth
+              helperText="Anos de vida esperados"
+              inputProps={{ min: 0, max: 10000 }}
+            />
+          </Stack>
         </Box>
 
         <Divider />
@@ -593,39 +866,106 @@ export function LinhagemSidebar({
             </FormControl>
 
             {/* Sentidos Aguçados */}
-            <FormControl fullWidth>
-              <InputLabel id="keen-senses-label">Sentidos Aguçados</InputLabel>
-              <Select
-                labelId="keen-senses-label"
-                id="keen-senses-select"
-                multiple
-                value={localLineage.keenSenses || []}
-                onChange={handleKeenSensesChange}
-                label="Sentidos Aguçados"
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((sense) => (
-                      <Chip
-                        key={sense}
-                        label={SENSE_LABELS[sense]}
-                        size="small"
-                      />
-                    ))}
-                  </Box>
-                )}
+            <Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
               >
-                {SENSE_TYPES.map((sense) => (
-                  <MenuItem key={sense} value={sense}>
-                    {SENSE_LABELS[sense]}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>
-                {localLineage.keenSenses && localLineage.keenSenses.length > 0
-                  ? `${localLineage.keenSenses.length} sentido(s) selecionado(s): ${localLineage.keenSenses.map((s) => SENSE_LABELS[s]).join(', ')}`
-                  : 'Nenhum sentido aguçado selecionado'}
-              </FormHelperText>
-            </FormControl>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                  Sentidos Aguçados
+                </Typography>
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={handleAddKeenSense}
+                  size="small"
+                  variant="outlined"
+                >
+                  Adicionar
+                </Button>
+              </Box>
+
+              {!localLineage.keenSenses ||
+              localLineage.keenSenses.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  Nenhum sentido aguçado definido. Clique em "Adicionar" para
+                  criar um.
+                </Typography>
+              ) : (
+                <Stack spacing={2}>
+                  {localLineage.keenSenses.map((sense, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        p: 2,
+                        pr: 6,
+                        border: 1,
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        position: 'relative',
+                      }}
+                    >
+                      <IconButton
+                        onClick={() => handleRemoveKeenSense(index)}
+                        size="small"
+                        sx={{ position: 'absolute', top: 8, right: 8 }}
+                        color="error"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+
+                      <Stack spacing={2}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel id={`keen-sense-type-${index}`}>
+                            Tipo de Sentido
+                          </InputLabel>
+                          <Select
+                            labelId={`keen-sense-type-${index}`}
+                            value={sense.type}
+                            onChange={handleKeenSenseTypeChange(index)}
+                            label="Tipo de Sentido"
+                          >
+                            {SENSE_TYPES.map((type) => (
+                              <MenuItem key={type} value={type}>
+                                {SENSE_LABELS[type]}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          <FormHelperText>
+                            {KEEN_SENSE_DESCRIPTIONS[sense.type]}
+                          </FormHelperText>
+                        </FormControl>
+
+                        <TextField
+                          label="Bônus"
+                          type="number"
+                          value={sense.bonus}
+                          onChange={handleKeenSenseBonusChange(index)}
+                          fullWidth
+                          size="small"
+                          inputProps={{ min: 2, max: 10, step: 1 }}
+                          helperText="Bônus de +2 a +10"
+                        />
+
+                        <TextField
+                          label="Descrição (opcional)"
+                          value={sense.description || ''}
+                          onChange={handleKeenSenseDescriptionChange(index)}
+                          fullWidth
+                          multiline
+                          rows={2}
+                          size="small"
+                          helperText="Detalhes específicos deste sentido aguçado"
+                        />
+                      </Stack>
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+            </Box>
           </Stack>
         </Box>
 
@@ -666,6 +1006,7 @@ export function LinhagemSidebar({
                   key={index}
                   sx={{
                     p: 2,
+                    pr: 6,
                     border: 1,
                     borderColor: 'divider',
                     borderRadius: 1,
