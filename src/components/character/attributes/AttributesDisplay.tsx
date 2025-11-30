@@ -13,11 +13,6 @@ export interface AttributesDisplayProps {
   attributes: Attributes;
 
   /**
-   * Callback quando um atributo muda
-   */
-  onChange: (attribute: AttributeName, value: number) => void;
-
-  /**
    * Callback quando um atributo é clicado (para abrir sidebar)
    */
   onAttributeClick?: (attribute: AttributeName) => void;
@@ -30,23 +25,19 @@ export interface AttributesDisplayProps {
  * - Atributos Corporais (Agilidade, Constituição, Força)
  * - Atributos Mentais (Influência, Mente, Presença)
  *
- * Cada atributo é exibido em um card individual clicável que permite
- * edição inline e abre sidebar com detalhes ao clicar.
- *
- * Atualiza automaticamente idiomas e proficiências quando o atributo Mente muda.
+ * Cada atributo é exibido em um card individual clicável (somente leitura).
+ * A edição é feita através da sidebar de detalhes.
  *
  * @example
  * ```tsx
  * <AttributesDisplay
  *   attributes={character.attributes}
- *   onChange={(attr, value) => updateAttribute(attr, value)}
  *   onAttributeClick={(attr) => openAttributeSidebar(attr)}
  * />
  * ```
  */
 export function AttributesDisplay({
   attributes,
-  onChange,
   onAttributeClick,
 }: AttributesDisplayProps) {
   return (
@@ -97,7 +88,6 @@ export function AttributesDisplay({
               key={attr}
               name={attr}
               value={attributes[attr]}
-              onChange={(value) => onChange(attr, value)}
               onClick={
                 onAttributeClick ? () => onAttributeClick(attr) : undefined
               }
@@ -137,7 +127,6 @@ export function AttributesDisplay({
               key={attr}
               name={attr}
               value={attributes[attr]}
-              onChange={(value) => onChange(attr, value)}
               onClick={
                 onAttributeClick ? () => onAttributeClick(attr) : undefined
               }
@@ -159,8 +148,10 @@ export function AttributesDisplay({
           <strong>Importante:</strong> Atributos normalmente vão de 0 a 5, mas
           podem ser superados em casos especiais. Com atributo 0, você rola 2d20
           e escolhe o menor resultado. Com atributo 1-5, você rola aquela
-          quantidade de d20 e escolhe o maior resultado. Clique em um atributo
-          para ver detalhes e habilidades relacionadas.
+          quantidade de d20 e escolhe o maior resultado.{' '}
+          <strong>
+            Clique em um atributo para abrir a sidebar e editar seu valor.
+          </strong>
         </Typography>
       </Box>
     </Paper>

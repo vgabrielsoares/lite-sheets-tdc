@@ -218,14 +218,6 @@ export function MainTab({
         {/* Atributos */}
         <AttributesDisplay
           attributes={character.attributes}
-          onChange={(attribute, value) =>
-            onUpdate({
-              attributes: {
-                ...character.attributes,
-                [attribute]: value,
-              },
-            })
-          }
           onAttributeClick={onOpenAttribute}
         />
       </Stack>

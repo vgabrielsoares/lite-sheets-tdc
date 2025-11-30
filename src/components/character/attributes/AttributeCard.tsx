@@ -11,7 +11,6 @@ import {
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import { EditableNumber } from '@/components/shared';
 import { ATTRIBUTE_LABELS, ATTRIBUTE_ABBREVIATIONS } from '@/constants';
 import type { AttributeName } from '@/types';
 
@@ -25,11 +24,6 @@ export interface AttributeCardProps {
    * Valor atual do atributo
    */
   value: number;
-
-  /**
-   * Callback quando o valor muda
-   */
-  onChange: (value: number) => void;
 
   /**
    * Callback quando o card é clicado (para abrir sidebar)
@@ -50,19 +44,18 @@ export interface AttributeCardProps {
 /**
  * Card de Atributo Individual
  *
- * Exibe um atributo com seu valor, permitindo edição inline.
+ * Exibe um atributo com seu valor (somente leitura).
  * Fornece indicadores visuais para casos especiais:
  * - Valor 0: Ícone de aviso (rola 2d20 e escolhe o menor)
  * - Valor > 5: Ícone de destaque (superou o limite padrão)
  *
- * Ao clicar no card (fora do campo de edição), abre sidebar com detalhes.
+ * Ao clicar no card, abre sidebar com detalhes e edição.
  *
  * @example
  * ```tsx
  * <AttributeCard
  *   name="agilidade"
  *   value={character.attributes.agilidade}
- *   onChange={(value) => updateAttribute('agilidade', value)}
  *   onClick={() => openAttributeSidebar('agilidade')}
  * />
  * ```
@@ -70,7 +63,6 @@ export interface AttributeCardProps {
 export function AttributeCard({
   name,
   value,
-  onChange,
   onClick,
   min = 0,
   maxDefault = 5,
@@ -96,17 +88,7 @@ export function AttributeCard({
             }
           : {},
       }}
-      onClick={(e) => {
-        // Não abrir sidebar se clicar no campo de edição
-        const target = e.target as HTMLElement;
-        if (
-          !target.closest('input') &&
-          !target.closest('button') &&
-          !target.closest('.MuiIconButton-root')
-        ) {
-          onClick?.();
-        }
-      }}
+      onClick={onClick}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -154,22 +136,11 @@ export function AttributeCard({
               </Tooltip>
             )}
 
-            {/* Campo de valor */}
-            <Box
-              sx={{ flex: 1, textAlign: 'center' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <EditableNumber
-                value={value}
-                onChange={onChange}
-                min={min}
-                variant="h4"
-                autoSave={true}
-                debounceMs={300}
-                textFieldProps={{
-                  sx: { textAlign: 'center' },
-                }}
-              />
+            {/* Campo de valor (somente leitura) */}
+            <Box sx={{ flex: 1, textAlign: 'center' }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                {value}
+              </Typography>
             </Box>
 
             {/* Indicador de valor acima do padrão */}
