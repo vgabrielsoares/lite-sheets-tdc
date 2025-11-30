@@ -19,6 +19,8 @@ import {
   calculateSpellAttackBonus,
   calculateCoinWeight,
   getEncumbranceState,
+  applyDeltaToHP,
+  applyDeltaToPP,
 } from '../calculations';
 
 describe('roundDown', () => {
@@ -267,5 +269,123 @@ describe('getEncumbranceState', () => {
   it('should handle edge cases', () => {
     expect(getEncumbranceState(0, 0)).toBe('normal'); // no capacity, no load
     expect(getEncumbranceState(1, 0)).toBe('imobilizado'); // any load with 0 capacity
+  });
+});
+
+describe('applyDeltaToHP', () => {
+  it('should return unchanged HP when delta is 0', () => {
+    const hp = { max: 20, current: 10, temporary: 5 };
+    expect(applyDeltaToHP(hp, 0)).toEqual(hp);
+  });
+
+  describe('damage (negative delta)', () => {
+    it('should subtract from temporary HP first', () => {
+      const hp = { max: 20, current: 10, temporary: 5 };
+      const result = applyDeltaToHP(hp, -3);
+      expect(result).toEqual({ max: 20, current: 10, temporary: 2 });
+    });
+
+    it('should subtract from current HP when temporary is depleted', () => {
+      const hp = { max: 20, current: 10, temporary: 5 };
+      const result = applyDeltaToHP(hp, -8);
+      expect(result).toEqual({ max: 20, current: 7, temporary: 0 });
+    });
+
+    it('should handle damage exceeding all HP', () => {
+      const hp = { max: 20, current: 10, temporary: 5 };
+      const result = applyDeltaToHP(hp, -20);
+      expect(result).toEqual({ max: 20, current: 0, temporary: 0 });
+    });
+
+    it('should not allow current HP to go below 0', () => {
+      const hp = { max: 20, current: 5, temporary: 0 };
+      const result = applyDeltaToHP(hp, -10);
+      expect(result).toEqual({ max: 20, current: 0, temporary: 0 });
+    });
+
+    it('should subtract from current when no temporary HP', () => {
+      const hp = { max: 20, current: 10, temporary: 0 };
+      const result = applyDeltaToHP(hp, -3);
+      expect(result).toEqual({ max: 20, current: 7, temporary: 0 });
+    });
+  });
+
+  describe('healing (positive delta)', () => {
+    it('should increase current HP only', () => {
+      const hp = { max: 20, current: 10, temporary: 5 };
+      const result = applyDeltaToHP(hp, 3);
+      expect(result).toEqual({ max: 20, current: 13, temporary: 5 });
+    });
+
+    it('should cap healing at max HP', () => {
+      const hp = { max: 20, current: 18, temporary: 5 };
+      const result = applyDeltaToHP(hp, 5);
+      expect(result).toEqual({ max: 20, current: 20, temporary: 5 });
+    });
+
+    it('should not affect temporary HP', () => {
+      const hp = { max: 20, current: 5, temporary: 3 };
+      const result = applyDeltaToHP(hp, 10);
+      expect(result).toEqual({ max: 20, current: 15, temporary: 3 });
+    });
+  });
+});
+
+describe('applyDeltaToPP', () => {
+  it('should return unchanged PP when delta is 0', () => {
+    const pp = { max: 10, current: 5, temporary: 3 };
+    expect(applyDeltaToPP(pp, 0)).toEqual(pp);
+  });
+
+  describe('spending (negative delta)', () => {
+    it('should subtract from temporary PP first', () => {
+      const pp = { max: 10, current: 5, temporary: 3 };
+      const result = applyDeltaToPP(pp, -2);
+      expect(result).toEqual({ max: 10, current: 5, temporary: 1 });
+    });
+
+    it('should subtract from current PP when temporary is depleted', () => {
+      const pp = { max: 10, current: 5, temporary: 3 };
+      const result = applyDeltaToPP(pp, -5);
+      expect(result).toEqual({ max: 10, current: 3, temporary: 0 });
+    });
+
+    it('should handle spending exceeding all PP', () => {
+      const pp = { max: 10, current: 5, temporary: 3 };
+      const result = applyDeltaToPP(pp, -10);
+      expect(result).toEqual({ max: 10, current: 0, temporary: 0 });
+    });
+
+    it('should not allow current PP to go below 0', () => {
+      const pp = { max: 10, current: 2, temporary: 0 };
+      const result = applyDeltaToPP(pp, -5);
+      expect(result).toEqual({ max: 10, current: 0, temporary: 0 });
+    });
+
+    it('should subtract from current when no temporary PP', () => {
+      const pp = { max: 10, current: 5, temporary: 0 };
+      const result = applyDeltaToPP(pp, -2);
+      expect(result).toEqual({ max: 10, current: 3, temporary: 0 });
+    });
+  });
+
+  describe('recovery (positive delta)', () => {
+    it('should increase current PP only', () => {
+      const pp = { max: 10, current: 5, temporary: 3 };
+      const result = applyDeltaToPP(pp, 2);
+      expect(result).toEqual({ max: 10, current: 7, temporary: 3 });
+    });
+
+    it('should cap recovery at max PP', () => {
+      const pp = { max: 10, current: 9, temporary: 3 };
+      const result = applyDeltaToPP(pp, 5);
+      expect(result).toEqual({ max: 10, current: 10, temporary: 3 });
+    });
+
+    it('should not affect temporary PP', () => {
+      const pp = { max: 10, current: 2, temporary: 2 };
+      const result = applyDeltaToPP(pp, 5);
+      expect(result).toEqual({ max: 10, current: 7, temporary: 2 });
+    });
   });
 });

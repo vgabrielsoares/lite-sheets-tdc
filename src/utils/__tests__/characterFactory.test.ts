@@ -89,7 +89,7 @@ describe('characterFactory', () => {
       });
 
       it('deve ter XP para próximo nível definido', () => {
-        expect(character.experience.toNextLevel).toBe(1000);
+        expect(character.experience.toNextLevel).toBe(50);
       });
     });
 
@@ -334,8 +334,8 @@ describe('characterFactory', () => {
     });
 
     describe('Deslocamento', () => {
-      it('deve ter deslocamento andando padrão de 6', () => {
-        expect(character.movement.speeds.andando).toBe(6);
+      it('deve ter deslocamento andando padrão de 5', () => {
+        expect(character.movement.speeds.andando).toBe(5);
       });
 
       it('deve ter outros deslocamentos em 0', () => {
@@ -573,8 +573,8 @@ describe('characterFactory', () => {
         );
       });
 
-      it('deve seguir regra: Deslocamento padrão andando = 6', () => {
-        expect(character.movement.speeds.andando).toBe(6);
+      it('deve seguir regra: Deslocamento padrão andando = 5', () => {
+        expect(character.movement.speeds.andando).toBe(5);
       });
 
       it('deve seguir regra: Todas habilidades começam em Leigo (x0)', () => {
