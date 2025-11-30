@@ -33,10 +33,10 @@ import {
 } from '@mui/material';
 import {
   Star as StarIcon,
-  FitnessCenter as CombatIcon,
-  ShoppingCart as LoadIcon,
-  Build as InstrumentIcon,
-  Lock as ProficiencyIcon,
+  SportsMartialArts as CombatIcon,
+  Backpack as LoadIcon,
+  Construction as InstrumentIcon,
+  MenuBook as ProficiencyIcon,
   SwapHoriz as CustomIcon,
 } from '@mui/icons-material';
 
