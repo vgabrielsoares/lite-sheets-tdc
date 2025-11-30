@@ -25,6 +25,8 @@ export {
   calculateSpellAttackBonus,
   calculateCoinWeight,
   getEncumbranceState,
+  applyDeltaToHP,
+  applyDeltaToPP,
 } from './calculations';
 
 // Validation utilities

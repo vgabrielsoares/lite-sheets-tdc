@@ -95,7 +95,7 @@ export function calculateCarryingCapacity(
 ): number {
   const sizeModifiers = getSizeModifiers(size as any);
   const base = 5 + strength * 5;
-  const withSize = base * sizeModifiers.carryingCapacity;
+  const withSize = base + sizeModifiers.carryingCapacity;
   return Math.floor(withSize + otherModifiers);
 }
 
@@ -111,10 +111,10 @@ export function getDefaultMovementSpeed(
   size: string,
   movementType: MovementType
 ): number {
-  // Para a maioria das criaturas, andando é 9m independente do tamanho
+  // Para a maioria das criaturas, andando é 5m independente do tamanho (MVP-1)
   // Outros tipos de deslocamento são 0 por padrão
   if (movementType === 'andando') {
-    return 9;
+    return 5;
   }
   return 0;
 }
@@ -126,7 +126,7 @@ export function getDefaultMovementSpeed(
  */
 export function createDefaultMovement(): Record<MovementType, number> {
   return {
-    andando: 9,
+    andando: 5,
     voando: 0,
     escalando: 0,
     escavando: 0,
@@ -188,11 +188,14 @@ export function createDefaultLineage(): Lineage {
   return {
     name: '',
     description: '',
+    attributeModifiers: [],
     size: 'medio',
     height: 170,
     weightKg: 70,
     weightRPG: 70,
     age: 25,
+    adulthood: undefined,
+    lifeExpectancy: undefined,
     languages: [],
     movement: createDefaultMovement(),
     keenSenses: [],
@@ -228,6 +231,29 @@ export function validateLineage(lineage: Partial<Lineage>): boolean {
 }
 
 /**
+ * Calcula modificadores de percepção baseado em sentidos aguçados
+ * Cada sentido aguçado concede seu bônus específico
+ *
+ * @param keenSenses - Array de sentidos aguçados com bônus
+ * @returns Objeto com modificadores por tipo de sentido
+ */
+export function calculatePerceptionModifiers(
+  keenSenses: import('@/types/common').KeenSense[]
+): Record<import('@/types/common').SenseType, number> {
+  const modifiers: Record<import('@/types/common').SenseType, number> = {
+    visao: 0,
+    olfato: 0,
+    audicao: 0,
+  };
+
+  keenSenses.forEach((sense) => {
+    modifiers[sense.type] = sense.bonus;
+  });
+
+  return modifiers;
+}
+
+/**
  * Aplica mudanças de linhagem ao personagem
  * Atualiza todos os campos relacionados automaticamente
  *
@@ -257,11 +283,7 @@ export function applyLineageToCharacter(
   updatedCharacter.senses = {
     vision: lineage.vision,
     keenSenses: lineage.keenSenses || [],
-    perceptionModifiers: {
-      visao: lineage.keenSenses?.includes('visao') ? 5 : 0,
-      olfato: lineage.keenSenses?.includes('olfato') ? 5 : 0,
-      audicao: lineage.keenSenses?.includes('audicao') ? 5 : 0,
-    },
+    perceptionModifiers: calculatePerceptionModifiers(lineage.keenSenses || []),
   };
 
   // Atualiza idiomas da linhagem (mantém Comum e outros idiomas já conhecidos)
