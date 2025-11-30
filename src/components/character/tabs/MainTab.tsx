@@ -5,8 +5,8 @@ import { Box, Stack } from '@mui/material';
 import type { Character } from '@/types';
 import {
   BasicStats,
-  HealthPoints,
-  PowerPoints,
+  CompactHealthPoints,
+  CompactPowerPoints,
   DefenseDisplay,
   MovementDisplay,
 } from '../stats';
@@ -37,6 +37,24 @@ export interface MainTabProps {
    * Callback para abrir sidebar de tamanho
    */
   onOpenSize?: () => void;
+
+  /**
+   * Callback para abrir detalhes de PV
+   */
+  onOpenHP?: () => void;
+
+  /**
+   * Callback para abrir detalhes de PP
+   */
+  onOpenPP?: () => void;
+  /**
+   * Callback para abrir detalhes de Defesa
+   */
+  onOpenDefense?: () => void;
+  /**
+   * Callback para abrir detalhes de Deslocamento
+   */
+  onOpenMovement?: () => void;
 }
 
 /**
@@ -68,6 +86,10 @@ export function MainTab({
   onOpenLineage,
   onOpenOrigin,
   onOpenSize,
+  onOpenHP,
+  onOpenPP,
+  onOpenDefense,
+  onOpenMovement,
 }: MainTabProps) {
   return (
     <Box>
@@ -89,10 +111,10 @@ export function MainTab({
             gap: 2,
           }}
         >
-          {/* Pontos de Vida */}
-          <HealthPoints
+          {/* Pontos de Vida (Compacto) */}
+          <CompactHealthPoints
             hp={character.combat.hp}
-            onUpdate={(hp) =>
+            onChange={(hp) =>
               onUpdate({
                 combat: {
                   ...character.combat,
@@ -100,12 +122,13 @@ export function MainTab({
                 },
               })
             }
+            onOpenDetails={onOpenHP}
           />
 
-          {/* Pontos de Poder */}
-          <PowerPoints
+          {/* Pontos de Poder (Compacto) */}
+          <CompactPowerPoints
             pp={character.combat.pp}
-            onUpdate={(pp) =>
+            onChange={(pp) =>
               onUpdate({
                 combat: {
                   ...character.combat,
@@ -113,6 +136,7 @@ export function MainTab({
                 },
               })
             }
+            onOpenDetails={onOpenPP}
           />
         </Box>
 
@@ -130,6 +154,7 @@ export function MainTab({
             armorBonus={character.combat.defense.armorBonus}
             maxAgilityBonus={character.combat.defense.maxAgilityBonus}
             otherBonuses={character.combat.defense.otherBonuses}
+            onOpenDetails={onOpenDefense}
             onArmorBonusChange={(value) =>
               onUpdate({
                 combat: {
@@ -168,6 +193,7 @@ export function MainTab({
           {/* Deslocamento */}
           <MovementDisplay
             movement={character.movement.speeds}
+            onOpenDetails={onOpenMovement}
             onMovementChange={(type: MovementType, value: number) =>
               onUpdate({
                 movement: {
