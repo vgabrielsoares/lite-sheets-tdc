@@ -2,7 +2,12 @@
 
 import React from 'react';
 import { Box, Stack } from '@mui/material';
-import type { Character, AttributeName } from '@/types';
+import type {
+  Character,
+  AttributeName,
+  SkillName,
+  ProficiencyLevel,
+} from '@/types';
 import {
   BasicStats,
   CompactHealthPoints,
@@ -11,7 +16,9 @@ import {
   MovementDisplay,
 } from '../stats';
 import { AttributesDisplay } from '../attributes';
+import { SkillsDisplay } from '../skills';
 import type { MovementType } from '@/types';
+import { getEncumbranceState, calculateCarryCapacity } from '@/utils';
 
 export interface MainTabProps {
   /**
@@ -61,6 +68,27 @@ export interface MainTabProps {
    * Callback para abrir detalhes de um atributo
    */
   onOpenAttribute?: (attribute: AttributeName) => void;
+
+  /**
+   * Callback para abrir detalhes de uma habilidade
+   */
+  onOpenSkill?: (skillName: SkillName) => void;
+
+  /**
+   * Callback para alterar atributo-chave de uma habilidade
+   */
+  onSkillKeyAttributeChange?: (
+    skillName: SkillName,
+    newAttribute: AttributeName
+  ) => void;
+
+  /**
+   * Callback para alterar proficiência de uma habilidade
+   */
+  onSkillProficiencyChange?: (
+    skillName: SkillName,
+    newProficiency: ProficiencyLevel
+  ) => void;
 }
 
 /**
@@ -97,7 +125,21 @@ export function MainTab({
   onOpenDefense,
   onOpenMovement,
   onOpenAttribute,
+  onOpenSkill,
+  onSkillKeyAttributeChange,
+  onSkillProficiencyChange,
 }: MainTabProps) {
+  // Calcular se personagem está sobrecarregado
+  const carryCapacity = calculateCarryCapacity(character.attributes.forca);
+  // Calcular carga atual somando peso de todos os itens
+  const currentLoad = character.inventory.items.reduce(
+    (total, item) => total + (item.weight || 0) * (item.quantity || 1),
+    0
+  );
+  const encumbranceState = getEncumbranceState(currentLoad, carryCapacity);
+  const isOverloaded =
+    encumbranceState === 'sobrecarregado' || encumbranceState === 'imobilizado';
+
   return (
     <Box>
       <Stack spacing={3}>
@@ -220,6 +262,21 @@ export function MainTab({
           attributes={character.attributes}
           onAttributeClick={onOpenAttribute}
         />
+
+        {/* Habilidades */}
+        {onOpenSkill &&
+          onSkillKeyAttributeChange &&
+          onSkillProficiencyChange && (
+            <SkillsDisplay
+              skills={character.skills}
+              attributes={character.attributes}
+              characterLevel={character.level}
+              isOverloaded={isOverloaded}
+              onKeyAttributeChange={onSkillKeyAttributeChange}
+              onProficiencyChange={onSkillProficiencyChange}
+              onSkillClick={onOpenSkill}
+            />
+          )}
       </Stack>
     </Box>
   );
