@@ -153,7 +153,7 @@ export function calculateSkillRollFormula(
 
   // 2. Aplicar modificadores de dados
   const diceModifierTotal = diceModifiers
-    .filter((mod) => mod.type === 'dice')
+    .filter((mod) => mod.affectsDice === true)
     .reduce((sum, mod) => sum + (mod.value || 0), 0);
 
   let finalDiceCount = baseDiceCount + diceModifierTotal;
@@ -226,8 +226,8 @@ export function calculateSkillRoll(
   const attributeValue = attributes[keyAttribute];
 
   // Separar modificadores de valor e de dados
-  const valueModifiers = modifiers.filter((mod) => mod.type !== 'dice');
-  const diceModifiers = modifiers.filter((mod) => mod.type === 'dice');
+  const valueModifiers = modifiers.filter((mod) => !mod.affectsDice);
+  const diceModifiers = modifiers.filter((mod) => mod.affectsDice === true);
 
   // Calcular modificador total
   const calculation = calculateSkillTotalModifier(
@@ -309,4 +309,148 @@ export function requiresProficiency(skillName: SkillName): boolean {
  */
 export function isCombatSkill(skillName: SkillName): boolean {
   return SKILL_METADATA[skillName].isCombatSkill;
+}
+
+/**
+ * Calcula o modificador total para um uso customizado de habilidade
+ *
+ * Usa as mesmas regras que calculateSkillTotalModifier, mas com:
+ * - Atributo-chave do uso customizado
+ * - Bônus específico do uso
+ * - Mesma proficiência da habilidade base
+ * - Mesma lógica de assinatura e penalidades
+ *
+ * @param skillUse - Uso customizado da habilidade
+ * @param baseSkill - Habilidade base (para proficiência e assinatura)
+ * @param attributes - Atributos do personagem
+ * @param characterLevel - Nível do personagem (para bônus de assinatura)
+ * @param isOverloaded - Se personagem está sobrecarregado
+ * @returns Modificador total do uso customizado
+ *
+ * @example
+ * const skillUse: SkillUse = {
+ *   id: '1',
+ *   name: 'Acrobacia em Combate',
+ *   skillName: 'acrobacia',
+ *   keyAttribute: 'forca',
+ *   bonus: 2,
+ * };
+ * const skill: Skill = {
+ *   name: 'acrobacia',
+ *   keyAttribute: 'agilidade',
+ *   proficiencyLevel: 'versado',
+ *   isSignature: false,
+ *   modifiers: [],
+ * };
+ * const attributes: Attributes = { agilidade: 3, forca: 2, ... };
+ * calculateSkillUseModifier(skillUse, skill, attributes, 5, false);
+ * // Returns: (2 * 2) + 2 = 6 (Força 2 × Versado + bônus +2)
+ */
+export function calculateSkillUseModifier(
+  skillUse: {
+    keyAttribute: AttributeName;
+    bonus: number;
+    skillName: SkillName;
+  },
+  baseSkill: {
+    proficiencyLevel: ProficiencyLevel;
+    isSignature: boolean;
+    modifiers: Modifier[];
+  },
+  attributes: Attributes,
+  characterLevel: number,
+  isOverloaded: boolean
+): number {
+  const metadata = SKILL_METADATA[skillUse.skillName];
+
+  // Valor do atributo customizado
+  const attributeValue = attributes[skillUse.keyAttribute];
+
+  // Usa a proficiência da habilidade base
+  const proficiencyMultiplier =
+    SKILL_PROFICIENCY_LEVELS[baseSkill.proficiencyLevel];
+
+  // Modificador base
+  const baseModifier = attributeValue * proficiencyMultiplier;
+
+  // Bônus de assinatura (usa regras da habilidade base)
+  let signatureBonus = 0;
+  if (baseSkill.isSignature && proficiencyMultiplier > 0) {
+    const isCombat = metadata.isCombatSkill === true;
+    signatureBonus = isCombat
+      ? Math.max(1, Math.floor(characterLevel / 3))
+      : characterLevel;
+  }
+
+  // Outros modificadores da habilidade base
+  const otherModifiers = baseSkill.modifiers.reduce(
+    (sum, mod) => sum + mod.value,
+    0
+  );
+
+  // Bônus específico do uso
+  const useBonus = skillUse.bonus;
+
+  // Penalidade de carga
+  const loadPenalty =
+    isOverloaded && metadata.hasCargaPenalty === true ? CARGA_PENALTY_VALUE : 0;
+
+  return (
+    baseModifier + signatureBonus + otherModifiers + useBonus + loadPenalty
+  );
+}
+
+/**
+ * Calcula a fórmula de rolagem para um uso customizado de habilidade
+ *
+ * @param skillUse - Uso customizado da habilidade
+ * @param baseSkill - Habilidade base (para proficiência e assinatura)
+ * @param attributes - Atributos do personagem
+ * @param characterLevel - Nível do personagem (para bônus de assinatura)
+ * @param isOverloaded - Se personagem está sobrecarregado
+ * @returns Fórmula de rolagem formatada (ex: "2d20+6")
+ *
+ * @example
+ * calculateSkillUseRollFormula(skillUse, skill, attributes, 5, false);
+ * // Returns: "2d20+6" (Força 2 = 2d20, modificador total +6)
+ */
+export function calculateSkillUseRollFormula(
+  skillUse: {
+    keyAttribute: AttributeName;
+    bonus: number;
+    skillName: SkillName;
+  },
+  baseSkill: {
+    proficiencyLevel: ProficiencyLevel;
+    isSignature: boolean;
+    modifiers: Modifier[];
+  },
+  attributes: Attributes,
+  characterLevel: number,
+  isOverloaded: boolean
+): string {
+  const modifier = calculateSkillUseModifier(
+    skillUse,
+    baseSkill,
+    attributes,
+    characterLevel,
+    isOverloaded
+  );
+
+  const attributeValue = attributes[skillUse.keyAttribute];
+
+  // Quantidade de dados
+  const diceCount = attributeValue;
+
+  // Regra especial: atributo 0 = rolar 2d20 e escolher o menor
+  if (attributeValue === 0) {
+    const sign = modifier >= 0 ? '+' : '';
+    return modifier === 0 ? '2d20 (menor)' : `2d20 (menor)${sign}${modifier}`;
+  }
+
+  // Fórmula normal
+  const sign = modifier >= 0 ? '+' : '';
+  return modifier === 0
+    ? `${diceCount}d20`
+    : `${diceCount}d20${sign}${modifier}`;
 }
