@@ -25,7 +25,12 @@ import {
   SpellsTab,
   DescriptionTab,
 } from './tabs';
-import { LinhagemSidebar, OrigemSidebar, SizeSidebar } from './sidebars';
+import {
+  LinhagemSidebar,
+  OrigemSidebar,
+  SizeSidebar,
+  AttributeSidebar,
+} from './sidebars';
 import { HPDetailSidebar } from './sidebars/HPDetailSidebar';
 import { PPDetailSidebar } from './sidebars/PPDetailSidebar';
 import DefenseSidebar from './sidebars/DefenseSidebar';
@@ -175,6 +180,18 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
    */
   const handleUpdateOrigin = (origin: Character['origin']) => {
     onUpdate({ origin });
+  };
+
+  /**
+   * Handler para atualizar um atributo do personagem
+   */
+  const handleUpdateAttribute = (attribute: AttributeName, value: number) => {
+    onUpdate({
+      attributes: {
+        ...character.attributes,
+        [attribute]: value,
+      },
+    });
   };
 
   /**
@@ -390,23 +407,15 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               />
             )}
 
-            {/* Sidebar de Atributo - Placeholder para Issue 4.2 */}
+            {/* Sidebar de Atributo */}
             {activeSidebar === 'attribute' && selectedAttribute && (
-              <Box
-                sx={{
-                  p: 3,
-                  bgcolor: 'background.paper',
-                  borderLeft: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  Atributo: {selectedAttribute}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Sidebar de detalhes do atributo será implementada na Issue 4.2
-                </Typography>
-              </Box>
+              <AttributeSidebar
+                open={activeSidebar === 'attribute'}
+                onClose={handleCloseSidebar}
+                attribute={selectedAttribute}
+                character={character}
+                onUpdateAttribute={handleUpdateAttribute}
+              />
             )}
           </Box>
         )}
@@ -488,28 +497,15 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           />
         )}
 
-        {/* Sidebar de Atributo em modo mobile (overlay) - Placeholder para Issue 4.2 */}
+        {/* Sidebar de Atributo em modo mobile (overlay) */}
         {isMobile && activeSidebar === 'attribute' && selectedAttribute && (
-          <Box
-            sx={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              bgcolor: 'background.paper',
-              zIndex: theme.zIndex.drawer,
-              p: 3,
-              overflow: 'auto',
-            }}
-          >
-            <Typography variant="h6" gutterBottom>
-              Atributo: {selectedAttribute}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Sidebar de detalhes do atributo será implementada na Issue 4.2
-            </Typography>
-          </Box>
+          <AttributeSidebar
+            open={activeSidebar === 'attribute'}
+            onClose={handleCloseSidebar}
+            attribute={selectedAttribute}
+            character={character}
+            onUpdateAttribute={handleUpdateAttribute}
+          />
         )}
       </Box>
     </Container>
