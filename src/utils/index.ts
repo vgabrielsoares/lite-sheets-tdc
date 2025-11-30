@@ -84,3 +84,14 @@ export {
   handleAttributeChange,
   getAttributeWarnings,
 } from './attributeUpdates';
+
+// Skill calculation utilities
+export {
+  calculateSkillTotalModifier,
+  calculateSkillRollFormula,
+  calculateSkillRoll,
+  hasLoadPenalty,
+  requiresInstrument,
+  requiresProficiency,
+  isCombatSkill,
+} from './skillCalculations';
