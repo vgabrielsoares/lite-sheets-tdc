@@ -123,6 +123,8 @@ export function Sidebar({
   return (
     <Paper
       elevation={elevation}
+      role="complementary"
+      aria-label={title || 'Sidebar de detalhes'}
       sx={{
         width: sidebarWidth,
         maxWidth: '100vw',
@@ -146,13 +148,18 @@ export function Sidebar({
           flexShrink: 0, // Não encolher o header
         }}
       >
-        <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="h6"
+          component="h2"
+          id="sidebar-title"
+          sx={{ fontWeight: 600 }}
+        >
           {title || 'Detalhes'}
         </Typography>
 
         <IconButton
           onClick={onClose}
-          aria-label="Fechar sidebar"
+          aria-label={`Fechar ${title || 'sidebar'}`}
           size="small"
           sx={{
             '&:hover': {
@@ -168,6 +175,8 @@ export function Sidebar({
 
       {/* Área de Conteúdo com Scroll */}
       <Box
+        role="region"
+        aria-labelledby="sidebar-title"
         sx={{
           flex: 1,
           overflow: 'auto',
