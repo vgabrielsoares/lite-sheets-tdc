@@ -72,3 +72,15 @@ export {
   applyOriginAttributeModifiers,
   createExampleOrigin,
 } from './originUtils';
+
+// Attribute update utilities
+export {
+  getAvailableLanguageSlots,
+  validateLanguages,
+  getAvailableLanguageSlotsForCharacter,
+  getAvailableSkillProficiencySlots,
+  validateSkillProficiencies,
+  getAvailableSkillProficiencySlotsForCharacter,
+  handleAttributeChange,
+  getAttributeWarnings,
+} from './attributeUpdates';
