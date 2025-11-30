@@ -12,7 +12,12 @@ import {
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import type { Character, AttributeName } from '@/types';
+import type {
+  Character,
+  AttributeName,
+  SkillName,
+  ProficiencyLevel,
+} from '@/types';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
@@ -89,12 +94,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
     | 'defense'
     | 'movement'
     | 'attribute'
+    | 'skill'
     | null
   >(null);
 
   // Atributo selecionado para a sidebar
   const [selectedAttribute, setSelectedAttribute] =
     useState<AttributeName | null>(null);
+
+  // Habilidade selecionada para a sidebar
+  const [selectedSkill, setSelectedSkill] = useState<SkillName | null>(null);
 
   /**
    * Navega de volta para a lista de fichas
@@ -161,11 +170,20 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Abre a sidebar de detalhes de uma habilidade
+   */
+  const handleOpenSkillSidebar = (skillName: SkillName) => {
+    setSelectedSkill(skillName);
+    setActiveSidebar('skill');
+  };
+
+  /**
    * Fecha qualquer sidebar aberta
    */
   const handleCloseSidebar = () => {
     setActiveSidebar(null);
     setSelectedAttribute(null);
+    setSelectedSkill(null);
   };
 
   /**
@@ -195,6 +213,42 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Handler para atualizar atributo-chave de uma habilidade
+   */
+  const handleSkillKeyAttributeChange = (
+    skillName: SkillName,
+    newAttribute: AttributeName
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          keyAttribute: newAttribute,
+        },
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar proficiência de uma habilidade
+   */
+  const handleSkillProficiencyChange = (
+    skillName: SkillName,
+    newProficiency: ProficiencyLevel
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          proficiencyLevel: newProficiency,
+        },
+      },
+    });
+  };
+
+  /**
    * Renderiza o conteúdo da aba atual
    */
   const renderTabContent = () => {
@@ -209,6 +263,9 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenDefense: handleOpenDefenseSidebar,
       onOpenMovement: handleOpenMovementSidebar,
       onOpenAttribute: handleOpenAttributeSidebar,
+      onOpenSkill: handleOpenSkillSidebar,
+      onSkillKeyAttributeChange: handleSkillKeyAttributeChange,
+      onSkillProficiencyChange: handleSkillProficiencyChange,
     };
 
     switch (currentTab) {
