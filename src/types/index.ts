@@ -62,6 +62,7 @@ export type {
   SkillName,
   Skill,
   Skills,
+  SkillUse,
   SkillModifierCalculation,
   SkillRollFormula,
 } from './skills';
