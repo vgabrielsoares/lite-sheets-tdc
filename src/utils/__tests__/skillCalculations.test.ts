@@ -8,12 +8,14 @@ import {
   calculateSkillTotalModifier,
   calculateSkillRollFormula,
   calculateSkillRoll,
+  calculateSkillUseModifier,
+  calculateSkillUseRollFormula,
   hasLoadPenalty,
   requiresInstrument,
   requiresProficiency,
   isCombatSkill,
 } from '../skillCalculations';
-import type { Attributes, Modifier } from '@/types';
+import type { Attributes, Modifier, Skill } from '@/types';
 
 describe('skillCalculations', () => {
   describe('calculateSkillTotalModifier', () => {
@@ -518,6 +520,274 @@ describe('skillCalculations', () => {
       expect(isCombatSkill('atletismo')).toBe(false);
       expect(isCombatSkill('percepcao')).toBe(false);
       expect(isCombatSkill('persuasao')).toBe(false);
+    });
+  });
+
+  describe('calculateSkillUseModifier', () => {
+    const mockAttributes: Attributes = {
+      agilidade: 3,
+      constituicao: 2,
+      forca: 4,
+      influencia: 1,
+      mente: 2,
+      presenca: 3,
+    };
+
+    it('deve calcular modificador de uso customizado com atributo diferente', () => {
+      const skillUse = {
+        keyAttribute: 'forca' as const,
+        bonus: 2,
+        skillName: 'acrobacia' as const,
+      };
+
+      const baseSkill: Skill = {
+        name: 'acrobacia',
+        keyAttribute: 'agilidade',
+        proficiencyLevel: 'versado',
+        isSignature: false,
+        modifiers: [],
+      };
+
+      const result = calculateSkillUseModifier(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        5,
+        false
+      );
+
+      // Força 4 × Versado (2) + Bônus +2 = 8 + 2 = 10
+      expect(result).toBe(10);
+    });
+
+    it('deve incluir bônus de assinatura em uso customizado (habilidade não-combate)', () => {
+      const skillUse = {
+        keyAttribute: 'forca' as const,
+        bonus: 1,
+        skillName: 'atletismo' as const,
+      };
+
+      const baseSkill: Skill = {
+        name: 'atletismo',
+        keyAttribute: 'constituicao',
+        proficiencyLevel: 'adepto',
+        isSignature: true, // Habilidade de Assinatura
+        modifiers: [],
+      };
+
+      const result = calculateSkillUseModifier(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        7, // Nível 7
+        false
+      );
+
+      // Força 4 × Adepto (1) + Assinatura (7, não-combate) + Bônus +1 = 4 + 7 + 1 = 12
+      expect(result).toBe(12);
+    });
+
+    it('deve incluir bônus de assinatura reduzido em uso customizado (habilidade de combate)', () => {
+      const skillUse = {
+        keyAttribute: 'constituicao' as const,
+        bonus: 0,
+        skillName: 'luta' as const,
+      };
+
+      const baseSkill: Skill = {
+        name: 'luta',
+        keyAttribute: 'forca',
+        proficiencyLevel: 'mestre',
+        isSignature: true, // Habilidade de Assinatura
+        modifiers: [],
+      };
+
+      const result = calculateSkillUseModifier(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        9, // Nível 9
+        false
+      );
+
+      // Constituição 2 × Mestre (3) + Assinatura (9÷3 = 3, combate) + Bônus 0 = 6 + 3 = 9
+      expect(result).toBe(9);
+    });
+
+    it('deve aplicar penalidade de carga quando sobrecarregado', () => {
+      const skillUse = {
+        keyAttribute: 'agilidade' as const,
+        bonus: 0,
+        skillName: 'acrobacia' as const, // Tem propriedade Carga
+      };
+
+      const baseSkill: Skill = {
+        name: 'acrobacia',
+        keyAttribute: 'agilidade',
+        proficiencyLevel: 'versado',
+        isSignature: false,
+        modifiers: [],
+      };
+
+      const result = calculateSkillUseModifier(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        1,
+        true // Sobrecarregado
+      );
+
+      // Agilidade 3 × Versado (2) - Carga (-5) = 6 - 5 = 1
+      expect(result).toBe(1);
+    });
+
+    it('deve incluir modificadores da habilidade base', () => {
+      const skillUse = {
+        keyAttribute: 'presenca' as const,
+        bonus: 3,
+        skillName: 'persuasao' as const,
+      };
+
+      const baseSkill: Skill = {
+        name: 'persuasao',
+        keyAttribute: 'influencia',
+        proficiencyLevel: 'adepto',
+        isSignature: false,
+        modifiers: [
+          { value: 2, source: 'item', type: 'bonus' },
+          { value: -1, source: 'debuff', type: 'penalidade' },
+        ],
+      };
+
+      const result = calculateSkillUseModifier(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        1,
+        false
+      );
+
+      // Presença 3 × Adepto (1) + Modificadores (2-1) + Bônus +3 = 3 + 1 + 3 = 7
+      expect(result).toBe(7);
+    });
+  });
+
+  describe('calculateSkillUseRollFormula', () => {
+    const mockAttributes: Attributes = {
+      agilidade: 3,
+      constituicao: 2,
+      forca: 4,
+      influencia: 0, // Atributo 0 para testar regra especial
+      mente: 2,
+      presenca: 3,
+    };
+
+    it('deve gerar fórmula correta para uso customizado', () => {
+      const skillUse = {
+        keyAttribute: 'forca' as const,
+        bonus: 2,
+        skillName: 'acrobacia' as const,
+      };
+
+      const baseSkill: Skill = {
+        name: 'acrobacia',
+        keyAttribute: 'agilidade',
+        proficiencyLevel: 'versado',
+        isSignature: false,
+        modifiers: [],
+      };
+
+      const result = calculateSkillUseRollFormula(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        5,
+        false
+      );
+
+      // Força 4 = 4d20, modificador +10
+      expect(result).toBe('4d20+10');
+    });
+
+    it('deve aplicar regra especial para atributo 0', () => {
+      const skillUse = {
+        keyAttribute: 'influencia' as const, // Influência = 0
+        bonus: 0,
+        skillName: 'persuasao' as const,
+      };
+
+      const baseSkill: Skill = {
+        name: 'persuasao',
+        keyAttribute: 'influencia',
+        proficiencyLevel: 'leigo',
+        isSignature: false,
+        modifiers: [],
+      };
+
+      const result = calculateSkillUseRollFormula(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        1,
+        false
+      );
+
+      // Influência 0 = 2d20 (menor), modificador 0
+      expect(result).toBe('2d20 (menor)');
+    });
+
+    it('deve gerar fórmula com modificador negativo', () => {
+      const skillUse = {
+        keyAttribute: 'mente' as const,
+        bonus: -3,
+        skillName: 'investigacao' as const,
+      };
+
+      const baseSkill: Skill = {
+        name: 'investigacao',
+        keyAttribute: 'mente',
+        proficiencyLevel: 'leigo',
+        isSignature: false,
+        modifiers: [],
+      };
+
+      const result = calculateSkillUseRollFormula(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        1,
+        false
+      );
+
+      // Mente 2 = 2d20, modificador -3
+      expect(result).toBe('2d20-3');
+    });
+
+    it('deve gerar fórmula sem modificador quando zero', () => {
+      const skillUse = {
+        keyAttribute: 'presenca' as const,
+        bonus: 0,
+        skillName: 'percepcao' as const,
+      };
+
+      const baseSkill: Skill = {
+        name: 'percepcao',
+        keyAttribute: 'presenca',
+        proficiencyLevel: 'leigo',
+        isSignature: false,
+        modifiers: [],
+      };
+
+      const result = calculateSkillUseRollFormula(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        1,
+        false
+      );
+
+      // Presença 3 = 3d20, modificador 0
+      expect(result).toBe('3d20');
     });
   });
 });
