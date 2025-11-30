@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import type { Character } from '@/types';
+import type { Character, AttributeName } from '@/types';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
@@ -76,8 +76,20 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   // Estado da sidebar (qual sidebar está aberta)
   const [activeSidebar, setActiveSidebar] = useState<
-    'lineage' | 'origin' | 'size' | 'hp' | 'pp' | 'defense' | 'movement' | null
+    | 'lineage'
+    | 'origin'
+    | 'size'
+    | 'hp'
+    | 'pp'
+    | 'defense'
+    | 'movement'
+    | 'attribute'
+    | null
   >(null);
+
+  // Atributo selecionado para a sidebar
+  const [selectedAttribute, setSelectedAttribute] =
+    useState<AttributeName | null>(null);
 
   /**
    * Navega de volta para a lista de fichas
@@ -136,10 +148,19 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Abre a sidebar de detalhes de um atributo
+   */
+  const handleOpenAttributeSidebar = (attribute: AttributeName) => {
+    setSelectedAttribute(attribute);
+    setActiveSidebar('attribute');
+  };
+
+  /**
    * Fecha qualquer sidebar aberta
    */
   const handleCloseSidebar = () => {
     setActiveSidebar(null);
+    setSelectedAttribute(null);
   };
 
   /**
@@ -170,6 +191,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenPP: handleOpenPPSidebar,
       onOpenDefense: handleOpenDefenseSidebar,
       onOpenMovement: handleOpenMovementSidebar,
+      onOpenAttribute: handleOpenAttributeSidebar,
     };
 
     switch (currentTab) {
@@ -367,6 +389,25 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 onClose={handleCloseSidebar}
               />
             )}
+
+            {/* Sidebar de Atributo - Placeholder para Issue 4.2 */}
+            {activeSidebar === 'attribute' && selectedAttribute && (
+              <Box
+                sx={{
+                  p: 3,
+                  bgcolor: 'background.paper',
+                  borderLeft: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography variant="h6" gutterBottom>
+                  Atributo: {selectedAttribute}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Sidebar de detalhes do atributo será implementada na Issue 4.2
+                </Typography>
+              </Box>
+            )}
           </Box>
         )}
 
@@ -445,6 +486,30 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             onUpdate={(updated) => onUpdate(updated)}
             onClose={handleCloseSidebar}
           />
+        )}
+
+        {/* Sidebar de Atributo em modo mobile (overlay) - Placeholder para Issue 4.2 */}
+        {isMobile && activeSidebar === 'attribute' && selectedAttribute && (
+          <Box
+            sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              bgcolor: 'background.paper',
+              zIndex: theme.zIndex.drawer,
+              p: 3,
+              overflow: 'auto',
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Atributo: {selectedAttribute}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Sidebar de detalhes do atributo será implementada na Issue 4.2
+            </Typography>
+          </Box>
         )}
       </Box>
     </Container>
