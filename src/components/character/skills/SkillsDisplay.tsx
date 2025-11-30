@@ -1,0 +1,415 @@
+'use client';
+
+/**
+ * SkillsDisplay - Componente para exibir lista completa das 33 habilidades
+ *
+ * Funcionalidades:
+ * - Exibe todas as 33 habilidades do sistema
+ * - Busca/filtro por nome de habilidade
+ * - Organização alfabética
+ * - Filtros por:
+ *   - Proficiência (Leigo, Adepto, Versado, Mestre)
+ *   - Tipo (Combate, Não-combate)
+ *   - Atributo-chave
+ * - Responsivo e acessível
+ * - Integração com SkillRow
+ */
+
+import React, { useState, useMemo } from 'react';
+import {
+  Box,
+  Typography,
+  TextField,
+  InputAdornment,
+  Stack,
+  Chip,
+  Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  Collapse,
+  IconButton,
+  Tooltip,
+  Alert,
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  FilterList as FilterIcon,
+  ExpandMore as ExpandMoreIcon,
+  Info as InfoIcon,
+} from '@mui/icons-material';
+
+import type {
+  SkillName,
+  ProficiencyLevel,
+  AttributeName,
+  Attributes,
+  Skills,
+} from '@/types';
+import { SKILL_LIST, SKILL_LABELS, ATTRIBUTE_LABELS } from '@/constants';
+import { SkillRow } from './SkillRow';
+
+export interface SkillsDisplayProps {
+  /** Todas as habilidades do personagem */
+  skills: Skills;
+  /** Atributos do personagem (para cálculos) */
+  attributes: Attributes;
+  /** Nível do personagem */
+  characterLevel: number;
+  /** Se personagem está sobrecarregado */
+  isOverloaded: boolean;
+  /** Callback quando atributo-chave é alterado */
+  onKeyAttributeChange: (
+    skillName: SkillName,
+    newAttribute: AttributeName
+  ) => void;
+  /** Callback quando proficiência é alterada */
+  onProficiencyChange: (
+    skillName: SkillName,
+    newProficiency: ProficiencyLevel
+  ) => void;
+  /** Callback quando habilidade é clicada (abre sidebar) */
+  onSkillClick: (skillName: SkillName) => void;
+}
+
+/**
+ * Componente SkillsDisplay - Lista completa de habilidades com busca e filtros
+ */
+export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
+  skills,
+  attributes,
+  characterLevel,
+  isOverloaded,
+  onKeyAttributeChange,
+  onProficiencyChange,
+  onSkillClick,
+}) => {
+  // Estados locais
+  const [searchQuery, setSearchQuery] = useState('');
+  const [proficiencyFilter, setProficiencyFilter] = useState<
+    ProficiencyLevel | 'all'
+  >('all');
+  const [attributeFilter, setAttributeFilter] = useState<AttributeName | 'all'>(
+    'all'
+  );
+  const [combatFilter, setCombatFilter] = useState<
+    'all' | 'combat' | 'non-combat'
+  >('all');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Contar proficiências
+  const proficiencyCounts = useMemo(() => {
+    const counts: Record<ProficiencyLevel, number> = {
+      leigo: 0,
+      adepto: 0,
+      versado: 0,
+      mestre: 0,
+    };
+
+    SKILL_LIST.forEach((skillName) => {
+      const skill = skills[skillName];
+      counts[skill.proficiencyLevel]++;
+    });
+
+    return counts;
+  }, [skills]);
+
+  // Contar proficiências adquiridas (não-leigo)
+  const acquiredProficiencies = useMemo(() => {
+    return (
+      proficiencyCounts.adepto +
+      proficiencyCounts.versado +
+      proficiencyCounts.mestre
+    );
+  }, [proficiencyCounts]);
+
+  // Máximo de proficiências permitidas (3 + Mente)
+  const maxProficiencies = 3 + attributes.mente;
+
+  // Filtrar habilidades
+  const filteredSkills = useMemo(() => {
+    return SKILL_LIST.filter((skillName) => {
+      const skill = skills[skillName];
+      const label = SKILL_LABELS[skillName].toLowerCase();
+
+      // Filtro de busca
+      if (searchQuery && !label.includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+
+      // Filtro de proficiência
+      if (
+        proficiencyFilter !== 'all' &&
+        skill.proficiencyLevel !== proficiencyFilter
+      ) {
+        return false;
+      }
+
+      // Filtro de atributo-chave
+      if (attributeFilter !== 'all' && skill.keyAttribute !== attributeFilter) {
+        return false;
+      }
+
+      // Filtro de combate/não-combate
+      if (combatFilter === 'combat' && !skill.isSignature) {
+        // Nota: isCombatSkill está na metadata, não na Skill
+        // Usar verificação simples baseada em lista conhecida
+        const combatSkills: SkillName[] = [
+          'acerto',
+          'determinacao',
+          'iniciativa',
+          'luta',
+          'natureza',
+          'reflexo',
+          'religiao',
+        ];
+        if (!combatSkills.includes(skillName)) {
+          return false;
+        }
+      } else if (combatFilter === 'non-combat') {
+        const combatSkills: SkillName[] = [
+          'acerto',
+          'determinacao',
+          'iniciativa',
+          'luta',
+          'natureza',
+          'reflexo',
+          'religiao',
+        ];
+        if (combatSkills.includes(skillName)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [searchQuery, proficiencyFilter, attributeFilter, combatFilter, skills]);
+
+  // Handlers
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleProficiencyFilterChange = (event: SelectChangeEvent<string>) => {
+    setProficiencyFilter(event.target.value as ProficiencyLevel | 'all');
+  };
+
+  const handleAttributeFilterChange = (event: SelectChangeEvent<string>) => {
+    setAttributeFilter(event.target.value as AttributeName | 'all');
+  };
+
+  const handleCombatFilterChange = (event: SelectChangeEvent<string>) => {
+    setCombatFilter(event.target.value as 'all' | 'combat' | 'non-combat');
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setProficiencyFilter('all');
+    setAttributeFilter('all');
+    setCombatFilter('all');
+  };
+
+  const activeFiltersCount =
+    (searchQuery ? 1 : 0) +
+    (proficiencyFilter !== 'all' ? 1 : 0) +
+    (attributeFilter !== 'all' ? 1 : 0) +
+    (combatFilter !== 'all' ? 1 : 0);
+
+  return (
+    <Box>
+      {/* Header com título e estatísticas */}
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Typography variant="h6">Habilidades</Typography>
+          <Chip label={`${filteredSkills.length} / 33`} size="small" />
+          {isOverloaded && (
+            <Tooltip title="Sobrecarregado: algumas habilidades sofrem penalidade de -5">
+              <Chip label="Sobrecarregado" size="small" color="warning" />
+            </Tooltip>
+          )}
+        </Box>
+
+        <Typography variant="body2" color="text.secondary">
+          Proficiências adquiridas: {acquiredProficiencies} / {maxProficiencies}
+          {acquiredProficiencies > maxProficiencies && (
+            <Typography component="span" color="error" sx={{ ml: 1 }}>
+              (Excede o limite!)
+            </Typography>
+          )}
+        </Typography>
+
+        {acquiredProficiencies > maxProficiencies && (
+          <Alert severity="warning" sx={{ mt: 1 }}>
+            <Typography variant="body2">
+              Você possui mais proficiências do que o permitido. Reduza para{' '}
+              {maxProficiencies} ou aumente seu atributo Mente.
+            </Typography>
+          </Alert>
+        )}
+      </Box>
+
+      {/* Busca e Filtros */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        {/* Campo de busca */}
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Buscar habilidade..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 2 }}
+        />
+
+        {/* Toggle de filtros */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <IconButton
+              size="small"
+              onClick={() => setShowFilters(!showFilters)}
+              aria-label="Mostrar filtros"
+              aria-expanded={showFilters}
+            >
+              <FilterIcon />
+              <ExpandMoreIcon
+                sx={{
+                  transform: showFilters ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s',
+                }}
+              />
+            </IconButton>
+            <Typography variant="body2">Filtros avançados</Typography>
+            {activeFiltersCount > 0 && (
+              <Chip
+                label={`${activeFiltersCount} ativos`}
+                size="small"
+                color="primary"
+              />
+            )}
+          </Box>
+
+          {activeFiltersCount > 0 && (
+            <Chip
+              label="Limpar filtros"
+              size="small"
+              onClick={clearFilters}
+              onDelete={clearFilters}
+            />
+          )}
+        </Box>
+
+        {/* Filtros expansíveis */}
+        <Collapse in={showFilters}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            sx={{ mt: 2 }}
+          >
+            {/* Filtro de Proficiência */}
+            <FormControl fullWidth size="small">
+              <InputLabel>Proficiência</InputLabel>
+              <Select
+                value={proficiencyFilter}
+                label="Proficiência"
+                onChange={handleProficiencyFilterChange}
+              >
+                <MenuItem value="all">Todas</MenuItem>
+                <MenuItem value="leigo">
+                  Leigo ({proficiencyCounts.leigo})
+                </MenuItem>
+                <MenuItem value="adepto">
+                  Adepto ({proficiencyCounts.adepto})
+                </MenuItem>
+                <MenuItem value="versado">
+                  Versado ({proficiencyCounts.versado})
+                </MenuItem>
+                <MenuItem value="mestre">
+                  Mestre ({proficiencyCounts.mestre})
+                </MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Filtro de Atributo */}
+            <FormControl fullWidth size="small">
+              <InputLabel>Atributo-chave</InputLabel>
+              <Select
+                value={attributeFilter}
+                label="Atributo-chave"
+                onChange={handleAttributeFilterChange}
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                {Object.entries(ATTRIBUTE_LABELS).map(([key, label]) => (
+                  <MenuItem key={key} value={key}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Filtro Combate/Não-combate */}
+            <FormControl fullWidth size="small">
+              <InputLabel>Tipo</InputLabel>
+              <Select
+                value={combatFilter}
+                label="Tipo"
+                onChange={handleCombatFilterChange}
+              >
+                <MenuItem value="all">Todas</MenuItem>
+                <MenuItem value="combat">Combate</MenuItem>
+                <MenuItem value="non-combat">Não-combate</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        </Collapse>
+      </Paper>
+
+      {/* Info sobre Habilidade de Assinatura */}
+      <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
+        <Typography variant="body2">
+          Clique em qualquer habilidade para ver detalhes, usos específicos e
+          definir como <strong>Habilidade de Assinatura</strong>.
+        </Typography>
+      </Alert>
+
+      {/* Lista de habilidades */}
+      {filteredSkills.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            Nenhuma habilidade encontrada com os filtros aplicados.
+          </Typography>
+        </Paper>
+      ) : (
+        <Stack spacing={1}>
+          {filteredSkills.map((skillName) => (
+            <SkillRow
+              key={skillName}
+              skill={skills[skillName]}
+              attributes={attributes}
+              characterLevel={characterLevel}
+              isOverloaded={isOverloaded}
+              onKeyAttributeChange={onKeyAttributeChange}
+              onProficiencyChange={onProficiencyChange}
+              onClick={onSkillClick}
+            />
+          ))}
+        </Stack>
+      )}
+    </Box>
+  );
+};
+
+export default SkillsDisplay;
