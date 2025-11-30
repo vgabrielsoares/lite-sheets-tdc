@@ -16,6 +16,7 @@ import type {
   Character,
   AttributeName,
   SkillName,
+  SkillUse,
   ProficiencyLevel,
 } from '@/types';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
@@ -40,6 +41,7 @@ import { HPDetailSidebar } from './sidebars/HPDetailSidebar';
 import { PPDetailSidebar } from './sidebars/PPDetailSidebar';
 import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
+import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 
 export interface CharacterSheetProps {
   /**
@@ -243,6 +245,42 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         [skillName]: {
           ...character.skills[skillName],
           proficiencyLevel: newProficiency,
+        },
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar usos customizados de uma habilidade
+   */
+  const handleUpdateCustomUses = (
+    skillName: SkillName,
+    customUses: SkillUse[]
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          customUses,
+        },
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar atributos personalizados de usos padrões
+   */
+  const handleUpdateDefaultUseAttributes = (
+    skillName: SkillName,
+    overrides: Record<string, AttributeName>
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          defaultUseAttributeOverrides: overrides,
         },
       },
     });
@@ -474,6 +512,20 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 onUpdateAttribute={handleUpdateAttribute}
               />
             )}
+
+            {/* Sidebar de Usos de Habilidade */}
+            {activeSidebar === 'skill' && selectedSkill && (
+              <SkillUsageSidebar
+                open={activeSidebar === 'skill'}
+                onClose={handleCloseSidebar}
+                skill={character.skills[selectedSkill]}
+                attributes={character.attributes}
+                characterLevel={character.level}
+                isOverloaded={false} // TODO: Calculate from inventory
+                onUpdateCustomUses={handleUpdateCustomUses}
+                onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
+              />
+            )}
           </Box>
         )}
 
@@ -562,6 +614,20 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             attribute={selectedAttribute}
             character={character}
             onUpdateAttribute={handleUpdateAttribute}
+          />
+        )}
+
+        {/* Sidebar de Usos de Habilidade em modo mobile (overlay) */}
+        {isMobile && activeSidebar === 'skill' && selectedSkill && (
+          <SkillUsageSidebar
+            open={activeSidebar === 'skill'}
+            onClose={handleCloseSidebar}
+            skill={character.skills[selectedSkill]}
+            attributes={character.attributes}
+            characterLevel={character.level}
+            isOverloaded={false} // TODO: Calculate from inventory
+            onUpdateCustomUses={handleUpdateCustomUses}
+            onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
           />
         )}
       </Box>
