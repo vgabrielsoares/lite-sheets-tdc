@@ -62,11 +62,66 @@ export const addCharacter = createAsyncThunk(
 /**
  * Thunk para atualizar personagem existente
  * Atualiza no IndexedDB e no Redux store
+ *
+ * IMPORTANTE: Se o personagem não existir no IndexedDB, ele será restaurado
+ * a partir do Redux state antes de atualizar. Isso resolve race conditions
+ * onde o personagem existe no Redux mas não no IndexedDB.
  */
 export const updateCharacter = createAsyncThunk(
   'characters/updateCharacter',
-  async ({ id, updates }: { id: string; updates: Partial<Character> }) => {
+  async (
+    { id, updates }: { id: string; updates: Partial<Character> },
+    { getState }
+  ) => {
+    console.log('🔧 updateCharacter thunk iniciado para ID:', id);
+    console.log('🔧 Updates recebidos:', JSON.stringify(updates, null, 2));
+
+    // Verificar se o personagem existe no IndexedDB
+    let existingCharacter = await characterService.getById(id);
+
+    console.log('🔧 Personagem encontrado no IndexedDB:', !!existingCharacter);
+
+    // Se não existir no IndexedDB mas existir no Redux, restaurar primeiro
+    if (!existingCharacter) {
+      const state = getState() as any;
+      const reduxCharacter = state.characters.entities[id] as
+        | Character
+        | undefined;
+
+      console.log('🔧 Personagem encontrado no Redux:', !!reduxCharacter);
+
+      if (reduxCharacter) {
+        console.warn(
+          `⚠️ Personagem ${id} existe no Redux mas não no IndexedDB. Restaurando...`
+        );
+
+        // Criar o personagem no IndexedDB a partir do Redux state
+        // Removendo campos que são gerados automaticamente no create
+        const {
+          id: _id,
+          createdAt: _createdAt,
+          updatedAt: _updatedAt,
+          ...characterData
+        } = reduxCharacter;
+
+        // Usar um método especial para restaurar com o ID original
+        // Vamos adicionar ao IndexedDB diretamente preservando todos os campos
+        await characterService.restore(reduxCharacter);
+
+        console.log(`✅ Personagem ${id} restaurado no IndexedDB`);
+      } else {
+        // Personagem não existe em nenhum lugar - erro crítico
+        console.error(`❌ Personagem ${id} NÃO ENCONTRADO em lugar nenhum!`);
+        throw new Error(
+          `Personagem com ID ${id} não encontrado no Redux nem no IndexedDB`
+        );
+      }
+    }
+
+    // Agora atualizar normalmente
+    console.log('🔧 Atualizando personagem no IndexedDB...');
     await characterService.update(id, updates);
+    console.log('🔧 Personagem atualizado com sucesso!');
     return { id, updates };
   }
 );
@@ -193,14 +248,16 @@ const charactersSlice = createSlice({
 
     // Update character (async thunk)
     builder.addCase(updateCharacter.pending, (state) => {
-      state.loading = true;
+      // NÃO alteramos loading para true aqui para evitar UI "piscando"
+      // durante updates automáticos (auto-save)
       state.error = null;
     });
     builder.addCase(updateCharacter.fulfilled, (state, action) => {
       state.loading = false;
       const { id, updates } = action.payload;
       if (state.entities[id]) {
-        state.entities[id] = { ...state.entities[id], ...updates };
+        // Atualizar apenas os campos modificados, mantendo a mesma referência
+        Object.assign(state.entities[id], updates);
         state.error = null;
       } else {
         state.error = `Personagem com ID ${id} não encontrado`;

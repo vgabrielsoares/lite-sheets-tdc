@@ -51,6 +51,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/uuid": "^10.0.0",
+    "baseline-browser-mapping": "^2.8.32",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.1",
     "eslint-config-prettier": "^10.1.8",

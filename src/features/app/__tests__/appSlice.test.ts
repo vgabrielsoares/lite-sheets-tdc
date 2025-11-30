@@ -33,6 +33,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left',
       });
     });
 
@@ -45,6 +46,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       let actual = appReducer(initialState, toggleTheme());
@@ -63,6 +65,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       const actual = appReducer(initialState, setThemeMode('light'));
@@ -78,6 +81,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       const actual = appReducer(
@@ -98,6 +102,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       const actual = appReducer(
@@ -119,6 +124,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       const actual = appReducer(initialState, closeSidebar());
@@ -136,6 +142,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       let actual = appReducer(initialState, toggleSidebar());
@@ -155,6 +162,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       const actual = appReducer(initialState, setSidebarWidth('sm'));
@@ -170,6 +178,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       const actual = appReducer(initialState, setOfflineStatus(true));
@@ -185,6 +194,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       const actual = appReducer(initialState, setPWAInstalled(true));
@@ -200,6 +210,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left' as const,
       };
 
       const actual = appReducer(initialState, updateLastSync());
@@ -219,6 +230,7 @@ describe('appSlice', () => {
         isOffline: true,
         isPWAInstalled: true,
         lastSync: '2024-01-01T00:00:00.000Z',
+        sheetPosition: 'left' as const,
       };
 
       const actual = appReducer(modifiedState, resetAppState());
@@ -231,6 +243,7 @@ describe('appSlice', () => {
         isOffline: false,
         isPWAInstalled: false,
         lastSync: null,
+        sheetPosition: 'left',
       });
     });
   });

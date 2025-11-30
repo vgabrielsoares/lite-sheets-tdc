@@ -25,6 +25,8 @@ export {
   calculateSpellAttackBonus,
   calculateCoinWeight,
   getEncumbranceState,
+  applyDeltaToHP,
+  applyDeltaToPP,
 } from './calculations';
 
 // Validation utilities
@@ -47,3 +49,26 @@ export {
   isValidLanguageCount,
   isValidMovementSpeed,
 } from './validators';
+
+// Lineage utilities
+export {
+  applyAttributeModifiers,
+  validateAttributeModifier,
+  calculateCarryingCapacity,
+  getDefaultMovementSpeed,
+  createDefaultMovement,
+  getSizeModifierForSkill,
+  createDefaultLineage,
+  validateLineage,
+  applyLineageToCharacter,
+} from './lineageUtils';
+
+// Origin utilities
+export {
+  createDefaultOrigin,
+  validateOrigin,
+  isOriginEmpty,
+  getAttributeModifiersSummary,
+  applyOriginAttributeModifiers,
+  createExampleOrigin,
+} from './originUtils';

@@ -20,13 +20,23 @@ jest.mock('next/navigation', () => ({
  * Helper para criar store de teste
  */
 const createTestStore = (initialCharacters: Character[] = []) => {
+  // Converter array de personagens para estrutura normalizada (entities + ids)
+  const entities: Record<string, Character> = {};
+  const ids: string[] = [];
+
+  initialCharacters.forEach((character) => {
+    entities[character.id] = character;
+    ids.push(character.id);
+  });
+
   return configureStore({
     reducer: {
       characters: charactersReducer,
     },
     preloadedState: {
       characters: {
-        characters: initialCharacters,
+        entities,
+        ids,
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -185,7 +195,8 @@ describe('CharacterList', () => {
         },
         preloadedState: {
           characters: {
-            characters: [],
+            entities: {},
+            ids: [],
             selectedCharacterId: null,
             loading: true,
             error: null,
@@ -212,7 +223,8 @@ describe('CharacterList', () => {
         },
         preloadedState: {
           characters: {
-            characters: [],
+            entities: {},
+            ids: [],
             selectedCharacterId: null,
             loading: false,
             error: 'Erro ao carregar fichas do banco de dados',
@@ -239,7 +251,8 @@ describe('CharacterList', () => {
         },
         preloadedState: {
           characters: {
-            characters: [],
+            entities: {},
+            ids: [],
             selectedCharacterId: null,
             loading: false,
             error: 'Erro ao carregar fichas',

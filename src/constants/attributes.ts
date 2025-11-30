@@ -106,3 +106,44 @@ export const MENTAL_ATTRIBUTES: AttributeName[] = [
   'mente',
   'presenca',
 ];
+
+/**
+ * Padrões de modificadores de atributos para Linhagem e Origem
+ *
+ * Segundo as regras básicas (MVP-1):
+ * - Padrão 1: +2 em um atributo e -1 em outro atributo
+ * - Padrão 2: +1 em dois atributos diferentes
+ */
+export type AttributeModifierPattern = 'plus2minus1' | 'plus1plus1';
+
+/**
+ * Labels para os padrões de modificadores
+ */
+export const ATTRIBUTE_MODIFIER_PATTERN_LABELS: Record<
+  AttributeModifierPattern,
+  string
+> = {
+  plus2minus1: '+2 em um atributo, -1 em outro',
+  plus1plus1: '+1 em dois atributos',
+};
+
+/**
+ * Descrições detalhadas dos padrões
+ */
+export const ATTRIBUTE_MODIFIER_PATTERN_DESCRIPTIONS: Record<
+  AttributeModifierPattern,
+  string
+> = {
+  plus2minus1:
+    'Escolha um atributo para receber +2 e outro para receber -1. Representa uma linhagem/origem com um foco forte em uma característica específica.',
+  plus1plus1:
+    'Escolha dois atributos diferentes para receber +1 cada. Representa uma linhagem/origem balanceada com duas características fortes.',
+};
+
+/**
+ * Lista de padrões disponíveis
+ */
+export const ATTRIBUTE_MODIFIER_PATTERNS: AttributeModifierPattern[] = [
+  'plus2minus1',
+  'plus1plus1',
+];

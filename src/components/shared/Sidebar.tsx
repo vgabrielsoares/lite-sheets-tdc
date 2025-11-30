@@ -1,20 +1,9 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import {
-  Drawer,
-  Box,
-  IconButton,
-  Typography,
-  useTheme,
-  useMediaQuery,
-  Divider,
-} from '@mui/material';
+import { Box, Typography, IconButton, Paper, Divider } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
-/**
- * Larguras disponíveis para a sidebar
- */
 const SIDEBAR_WIDTHS = {
   sm: 320,
   md: 480,
@@ -25,17 +14,17 @@ export type SidebarWidth = keyof typeof SIDEBAR_WIDTHS;
 
 export interface SidebarProps {
   /**
-   * Controla se a sidebar está aberta ou fechada
+   * Controla se a sidebar está aberta
    */
   open: boolean;
 
   /**
-   * Callback chamado quando a sidebar deve ser fechada
+   * Callback chamado ao fechar a sidebar
    */
   onClose: () => void;
 
   /**
-   * Título exibido no topo da sidebar (opcional)
+   * Título da sidebar
    */
   title?: string;
 
@@ -46,93 +35,70 @@ export interface SidebarProps {
 
   /**
    * Largura da sidebar
-   * @default 'md'
+   * @default 'lg' (640px) - Padrão definido pela LinhagemSidebar
    */
   width?: SidebarWidth;
 
   /**
-   * Lado da tela onde a sidebar aparece
-   * @default 'right'
-   */
-  anchor?: 'left' | 'right';
-
-  /**
-   * Se true, exibe um overlay escurecido quando aberta
-   * @default true
-   */
-  showOverlay?: boolean;
-
-  /**
-   * Se true, permite fechar ao clicar no overlay
-   * @default true
-   */
-  closeOnOverlayClick?: boolean;
-
-  /**
-   * Se true, permite fechar ao pressionar ESC
+   * Se true, fecha sidebar ao pressionar ESC
    * @default true
    */
   closeOnEscape?: boolean;
+
+  /**
+   * Se true, adiciona padding de 3 no conteúdo (padrão LinhagemSidebar)
+   * @default true
+   */
+  contentPadding?: boolean;
+
+  /**
+   * Elevação do Paper (sombra)
+   * @default 2
+   */
+  elevation?: number;
 }
 
 /**
- * Componente Sidebar Retrátil
+ * Componente Sidebar padronizado
  *
- * Sidebar reutilizável que se adapta responsivamente:
- * - Desktop: Sidebar fixa lateral
- * - Mobile: Drawer que cobre a tela
+ * Este componente fornece uma estrutura completa e consistente para sidebars
+ * em toda a aplicação. Ele já inclui:
+ * - Header com título e botão de fechar
+ * - Área de conteúdo com scroll customizado
+ * - Padding padrão de 3 (24px) seguindo o padrão da LinhagemSidebar
+ * - Largura padrão 'lg' (640px) seguindo o padrão da LinhagemSidebar
+ * - Renderização inline (ao lado do conteúdo principal, não modal)
+ * - Tratamento de tecla ESC para fechar
  *
- * Funcionalidades:
- * - Animação suave de abertura/fechamento
- * - Diferentes tamanhos (sm, md, lg)
- * - Fechamento por ESC, overlay ou botão
- * - Totalmente acessível (keyboard navigation)
- * - Responsivo (drawer no mobile, sidebar no desktop)
+ * **Importante**: Este componente é renderizado inline e deve ser usado dentro
+ * de um container flex/grid para posicionamento correto ao lado da ficha.
  *
  * @example
  * ```tsx
- * function MyComponent() {
- *   const { isOpen, open, close } = useSidebar();
- *
- *   return (
- *     <>
- *       <button onClick={open}>Abrir detalhes</button>
- *       <Sidebar
- *         open={isOpen}
- *         onClose={close}
- *         title="Detalhes do Atributo"
- *         width="md"
- *       >
- *         <p>Conteúdo aqui...</p>
- *       </Sidebar>
- *     </>
- *   );
- * }
+ * <Box sx={{ display: 'flex', gap: 2 }}>
+ *   <Box sx={{ flex: 1 }}>
+ *     {/* Conteúdo principal (ficha) *\/}
+ *   </Box>
+ *   <Sidebar open={open} onClose={handleClose} title="Detalhes">
+ *     <Stack spacing={3}>
+ *       {/* Conteúdo da sidebar *\/}
+ *     </Stack>
+ *   </Sidebar>
+ * </Box>
  * ```
  */
 export function Sidebar({
   open,
   onClose,
   title,
-  children,
-  width = 'md',
-  anchor = 'right',
-  showOverlay = true,
-  closeOnOverlayClick = true,
+  width = 'lg', // Padrão da LinhagemSidebar
   closeOnEscape = true,
+  contentPadding = true, // Padrão da LinhagemSidebar (p: 3)
+  elevation = 2,
+  children,
 }: SidebarProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  // Largura da sidebar baseada no tamanho selecionado
-  const sidebarWidth = SIDEBAR_WIDTHS[width];
-
-  // No mobile, usa fullscreen em telas muito pequenas
-  const drawerWidth =
-    isMobile && window.innerWidth < 360 ? '100%' : sidebarWidth;
-
   /**
-   * Effect para fechar sidebar ao pressionar ESC
+   * Fecha sidebar ao pressionar ESC
    */
   useEffect(() => {
     if (!open || !closeOnEscape) return;
@@ -144,153 +110,97 @@ export function Sidebar({
     };
 
     document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [open, closeOnEscape, onClose]);
 
-  /**
-   * Handler para fechar ao clicar no overlay
-   */
-  const handleOverlayClick = () => {
-    if (closeOnOverlayClick) {
-      onClose();
-    }
-  };
+  // Não renderiza nada se não estiver aberta
+  if (!open) {
+    return null;
+  }
+
+  const sidebarWidth = SIDEBAR_WIDTHS[width];
 
   return (
-    <Drawer
-      anchor={anchor}
-      open={open}
-      onClose={handleOverlayClick}
-      variant={isMobile ? 'temporary' : 'temporary'}
-      ModalProps={{
-        keepMounted: false, // Desmonta quando fecha para melhor testabilidade
-        ...(showOverlay
-          ? {}
-          : {
-              BackdropProps: {
-                invisible: true,
-              },
-            }),
-      }}
-      SlideProps={{
-        direction: anchor === 'left' ? 'right' : 'left',
-      }}
+    <Paper
+      elevation={elevation}
+      role="complementary"
+      aria-label={title || 'Sidebar de detalhes'}
       sx={{
-        '& .MuiDrawer-paper': {
-          width: drawerWidth,
-          maxWidth: '100vw',
-          boxSizing: 'border-box',
-          // Transição suave
-          transition: theme.transitions.create(['transform', 'width'], {
-            easing: theme.transitions.easing.easeOut,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
-        },
+        width: sidebarWidth,
+        maxWidth: '100vw',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        flexShrink: 0, // Não encolher a sidebar
       }}
     >
+      {/* Header */}
       <Box
         sx={{
-          height: '100%',
+          p: 2,
           display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: 1,
+          borderColor: 'divider',
+          minHeight: 64,
+          flexShrink: 0, // Não encolher o header
         }}
-        role="complementary"
-        aria-label={title || 'Sidebar de detalhes'}
       >
-        {/* Header da Sidebar */}
-        {title && (
-          <>
-            <Box
-              sx={{
-                p: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                minHeight: 64,
-              }}
-            >
-              <Typography
-                variant="h6"
-                component="h2"
-                sx={{
-                  fontWeight: 600,
-                  flex: 1,
-                  pr: 2,
-                }}
-              >
-                {title}
-              </Typography>
+        <Typography
+          variant="h6"
+          component="h2"
+          id="sidebar-title"
+          sx={{ fontWeight: 600 }}
+        >
+          {title || 'Detalhes'}
+        </Typography>
 
-              <IconButton
-                onClick={onClose}
-                aria-label="Fechar sidebar"
-                sx={{
-                  color: theme.palette.text.secondary,
-                  '&:hover': {
-                    color: theme.palette.text.primary,
-                  },
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Botão de fechar quando não há título */}
-        {!title && (
-          <Box
-            sx={{
-              p: 1,
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}
-          >
-            <IconButton
-              onClick={onClose}
-              aria-label="Fechar sidebar"
-              sx={{
-                color: theme.palette.text.secondary,
-                '&:hover': {
-                  color: theme.palette.text.primary,
-                },
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-        )}
-
-        {/* Conteúdo da Sidebar */}
-        <Box
+        <IconButton
+          onClick={onClose}
+          aria-label={`Fechar ${title || 'sidebar'}`}
+          size="small"
           sx={{
-            flex: 1,
-            overflow: 'auto',
-            p: 2,
-            // Scrollbar personalizada
-            '&::-webkit-scrollbar': {
-              width: '8px',
-            },
-            '&::-webkit-scrollbar-track': {
-              backgroundColor: theme.palette.background.default,
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: theme.palette.divider,
-              borderRadius: '4px',
-              '&:hover': {
-                backgroundColor: theme.palette.action.hover,
-              },
+            '&:hover': {
+              bgcolor: 'action.hover',
             },
           }}
         >
-          {children}
-        </Box>
+          <CloseIcon />
+        </IconButton>
       </Box>
-    </Drawer>
+
+      <Divider />
+
+      {/* Área de Conteúdo com Scroll */}
+      <Box
+        role="region"
+        aria-labelledby="sidebar-title"
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+          overflowX: 'hidden',
+          // Padding padrão de 3 (24px) seguindo LinhagemSidebar
+          ...(contentPadding && { p: 3 }),
+          // Scrollbar customizada
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'action.hover',
+            borderRadius: '4px',
+            '&:hover': {
+              bgcolor: 'action.selected',
+            },
+          },
+        }}
+      >
+        {children}
+      </Box>
+    </Paper>
   );
 }

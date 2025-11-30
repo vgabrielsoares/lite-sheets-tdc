@@ -43,6 +43,8 @@ export default function Footer() {
         borderTop: `1px solid ${theme.palette.divider}`,
         mt: 'auto',
         py: 3,
+        position: 'relative',
+        zIndex: (theme) => theme.zIndex.drawer + 1, // Fica acima da sidebar
       }}
     >
       <Container maxWidth="lg">

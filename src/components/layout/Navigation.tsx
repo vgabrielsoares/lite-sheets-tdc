@@ -18,11 +18,7 @@ import {
   ListItemText,
   Button,
 } from '@mui/material';
-import {
-  Home as HomeIcon,
-  Person as PersonIcon,
-  Add as AddIcon,
-} from '@mui/icons-material';
+import { Person as PersonIcon, Add as AddIcon } from '@mui/icons-material';
 
 /**
  * Item de navegação
@@ -40,11 +36,6 @@ interface NavItem {
  * Lista de itens de navegação
  */
 const navItems: NavItem[] = [
-  {
-    label: 'Início',
-    path: '/',
-    icon: <HomeIcon />,
-  },
   {
     label: 'Minhas Fichas',
     path: '/',

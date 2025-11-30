@@ -10,12 +10,13 @@ import type {
   Timestamp,
   MovementType,
   SenseType,
+  KeenSense,
   VisionType,
   CreatureSize,
   Note,
   BaseEntity,
 } from './common';
-import type { Attributes } from './attributes';
+import type { Attributes, AttributeName } from './attributes';
 import type { Skills, SkillName } from './skills';
 import type { CombatData } from './combat';
 import type { Inventory } from './inventory';
@@ -143,6 +144,11 @@ export interface Origin {
   description?: string;
   /** Proficiências com habilidades ganhas (2) */
   skillProficiencies: SkillName[];
+  /** Modificadores de atributos (+1 em um, ou +1 em dois e -1 em um) */
+  attributeModifiers: {
+    attribute: AttributeName;
+    value: number; // +1 ou -1
+  }[];
   /** Habilidade especial da origem */
   specialAbility?: {
     name: string;
@@ -168,6 +174,11 @@ export interface Lineage {
   name: string;
   /** Descrição da linhagem */
   description?: string;
+  /** Modificadores de atributos (+2/-1, +1/+1, ou outro padrão) */
+  attributeModifiers: {
+    attribute: AttributeName;
+    value: number; // +2, +1, -1, etc.
+  }[];
   /** Tamanho */
   size: CreatureSize;
   /** Altura em centímetros */
@@ -176,14 +187,18 @@ export interface Lineage {
   weightKg: number;
   /** Peso na medida do RPG */
   weightRPG: number;
-  /** Idade */
+  /** Idade atual */
   age: number;
+  /** Idade de maioridade */
+  adulthood?: number;
+  /** Expectativa de vida */
+  lifeExpectancy?: number;
   /** Idiomas ganhos pela linhagem */
   languages: LanguageName[];
   /** Deslocamento */
   movement: Record<MovementType, number>;
-  /** Sentido aguçado (se aplicável) */
-  keenSense?: SenseType;
+  /** Sentidos aguçados (se aplicável) */
+  keenSenses?: KeenSense[];
   /** Tipo de visão */
   vision: VisionType;
   /** Características de ancestralidade */
@@ -207,7 +222,7 @@ export interface Senses {
   /** Tipo de visão */
   vision: VisionType;
   /** Sentidos aguçados */
-  keenSenses: SenseType[];
+  keenSenses: KeenSense[];
   /** Modificadores de percepção por tipo de sentido */
   perceptionModifiers: Record<SenseType, number>;
 }
@@ -280,6 +295,8 @@ export interface PhysicalDescription {
   eyes?: string;
   /** Cor do cabelo */
   hair?: string;
+  /** Peso do personagem (MVP-1: padrão 10) */
+  weight?: number;
   /** Outros detalhes */
   other?: string;
 }

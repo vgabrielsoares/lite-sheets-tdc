@@ -108,7 +108,7 @@ export default function ConfirmDialog({
           color={confirmColor}
           variant="contained"
           autoFocus
-          aria-label={confirmText}
+          aria-label={loading ? 'Aguarde...' : confirmText}
         >
           {loading ? 'Aguarde...' : confirmText}
         </Button>

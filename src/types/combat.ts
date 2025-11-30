@@ -90,6 +90,8 @@ export interface Defense {
   armorBonus: number;
   /** Bônus de escudo */
   shieldBonus: number;
+  /** Limite máximo de bônus de Agilidade permitido pela armadura (undefined = sem limite) */
+  maxAgilityBonus?: number;
   /** Outros bônus */
   otherBonuses: Modifier[];
   /** Defesa total */

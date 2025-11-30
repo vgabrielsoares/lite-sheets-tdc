@@ -152,6 +152,23 @@ const darkThemeOptions: ThemeOptions = {
   shape: {
     borderRadius: 8, // Bordas arredondadas suaves
   },
+  transitions: {
+    duration: {
+      shortest: 150,
+      shorter: 200,
+      short: 250,
+      standard: 300,
+      complex: 375,
+      enteringScreen: 225,
+      leavingScreen: 195,
+    },
+    easing: {
+      easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      easeOut: 'cubic-bezier(0.0, 0, 0.2, 1)',
+      easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
+      sharp: 'cubic-bezier(0.4, 0, 0.6, 1)',
+    },
+  },
   components: {
     MuiButton: {
       styleOverrides: {
@@ -159,6 +176,7 @@ const darkThemeOptions: ThemeOptions = {
           borderRadius: 8,
           textTransform: 'none', // Sobrescreve uppercase padrão para melhor UX
           fontWeight: 500,
+          transition: 'all 0.2s ease-in-out',
         },
         contained: {
           boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
@@ -175,6 +193,7 @@ const darkThemeOptions: ThemeOptions = {
           boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
           backgroundImage:
             'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          transition: 'box-shadow 0.3s ease-in-out, transform 0.2s ease-in-out',
           '&:hover': {
             boxShadow: '0 6px 16px rgba(0,0,0,0.7)',
           },

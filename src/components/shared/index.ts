@@ -9,3 +9,12 @@ export { default as NotificationProvider } from './NotificationProvider';
 
 export { default as ConfirmDialog } from './ConfirmDialog';
 export type { ConfirmDialogProps } from './ConfirmDialog';
+
+export { EditableText } from './EditableText';
+export type { EditableTextProps } from './EditableText';
+
+export { EditableNumber } from './EditableNumber';
+export type { EditableNumberProps } from './EditableNumber';
+
+export { EditableSelect } from './EditableSelect';
+export type { EditableSelectProps, SelectOption } from './EditableSelect';

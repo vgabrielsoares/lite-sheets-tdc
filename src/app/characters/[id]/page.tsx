@@ -1,52 +1,107 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
-import { ArrowBack, Edit, Delete } from '@mui/icons-material';
+import { useEffect, useState, useCallback } from 'react';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import AppLayout from '@/components/layout/AppLayout';
-import { useAppSelector } from '@/store/hooks';
-import { selectCharacterById } from '@/features/characters/charactersSlice';
+import { CharacterSheet } from '@/components/character';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { useNotifications } from '@/hooks/useNotifications';
+import {
+  selectCharacterById,
+  updateCharacter,
+  clearError,
+} from '@/features/characters/charactersSlice';
+import type { Character } from '@/types';
 
 /**
  * Página de visualização de ficha de personagem
  *
- * Exibe todos os detalhes da ficha de um personagem específico.
- * No MVP 1, esta página será construída gradualmente conforme
- * os componentes de visualização forem desenvolvidos nas próximas fases.
+ * Exibe a ficha completa do personagem com sistema de abas,
+ * permitindo visualização e edição de todos os dados.
  *
- * Por enquanto, exibe informações básicas do personagem.
+ * Implementa o layout base da ficha conforme Issue 3.1 da FASE 3.
  */
 export default function CharacterDetailPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const params = useParams();
   const id = params?.id as string;
+  const { showError, showSuccess } = useNotifications();
 
   const character = useAppSelector((state) => selectCharacterById(state, id));
+  const loading = useAppSelector((state) => state.characters.loading);
 
-  const handleBack = () => {
-    router.push('/');
-  };
+  // Estado local para manter o personagem e evitar flash de loading
+  const [loadedCharacter, setLoadedCharacter] = useState<Character | null>(
+    null
+  );
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const handleEdit = () => {
-    router.push(`/characters/${id}/edit`);
-  };
+  // Atualiza o estado local quando o personagem muda APENAS se não estiver em loading
+  // Isso previne re-renders durante updates
+  useEffect(() => {
+    if (character && !loading) {
+      setLoadedCharacter(character);
+      setIsInitialLoad(false);
+    } else if (character && isInitialLoad) {
+      // Primeira carga - sempre atualiza
+      setLoadedCharacter(character);
+      setIsInitialLoad(false);
+    }
+  }, [character, loading, isInitialLoad]);
 
-  const handleDelete = () => {
-    // TODO: Implementar confirmação e deleção
-    console.log('Delete character:', id);
-  };
+  /**
+   * Atualiza os dados do personagem
+   * Memoizado para evitar re-criação em cada render
+   */
+  const handleUpdate = useCallback(
+    async (updates: Partial<Character>) => {
+      if (!loadedCharacter) return;
 
-  // Loading state (caso o personagem ainda não esteja carregado)
-  if (!character) {
+      console.log('🔄 handleUpdate CHAMADO com updates:', updates);
+
+      try {
+        // Limpa erros anteriores
+        dispatch(clearError());
+
+        console.log('⏳ Disparando updateCharacter thunk...');
+
+        // Atualiza o personagem
+        await dispatch(
+          updateCharacter({
+            id: loadedCharacter.id,
+            updates: {
+              ...updates,
+              updatedAt: new Date().toISOString(),
+            },
+          })
+        ).unwrap();
+
+        console.log('✅ updateCharacter concluído com sucesso!');
+
+        // Sucesso (opcional - pode remover se muito verboso)
+        // showSuccess('Personagem atualizado com sucesso!');
+      } catch (error) {
+        // Captura o erro e exibe notificação
+        console.error('❌ ERRO ao atualizar personagem:', error);
+        showError(
+          'Erro ao salvar as alterações. Verifique os dados e tente novamente.'
+        );
+
+        // Limpa o erro do state para não bloquear a UI
+        setTimeout(() => {
+          dispatch(clearError());
+        }, 100);
+      }
+    },
+    [loadedCharacter, dispatch, showError]
+  );
+
+  // Loading state (apenas no carregamento inicial)
+  if (isInitialLoad && !loadedCharacter) {
     return (
-      <AppLayout maxWidth="lg">
+      <AppLayout maxWidth="xl">
         <Box
           sx={{
             display: 'flex',
@@ -64,117 +119,32 @@ export default function CharacterDetailPage() {
     );
   }
 
-  return (
-    <AppLayout maxWidth="lg">
-      <Box sx={{ py: 4 }}>
+  // Se não encontrou o personagem após carregar
+  if (!isInitialLoad && !loadedCharacter) {
+    return (
+      <AppLayout maxWidth="xl">
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'space-between',
+            flexDirection: 'column',
             alignItems: 'center',
-            mb: 3,
+            justifyContent: 'center',
+            minHeight: '60vh',
+            gap: 2,
           }}
         >
-          <Button startIcon={<ArrowBack />} onClick={handleBack}>
-            Voltar
-          </Button>
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Edit />}
-              onClick={handleEdit}
-            >
-              Editar
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<Delete />}
-              onClick={handleDelete}
-            >
-              Deletar
-            </Button>
-          </Box>
-        </Box>
-
-        <Paper sx={{ p: 4 }}>
-          <Typography variant="h3" component="h1" gutterBottom>
-            {character.name}
+          <Typography variant="h5">Personagem não encontrado</Typography>
+          <Typography color="text.secondary">
+            O personagem que você está procurando não existe.
           </Typography>
+        </Box>
+      </AppLayout>
+    );
+  }
 
-          {character.playerName && (
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              Jogador: {character.playerName}
-            </Typography>
-          )}
-
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="h5" gutterBottom>
-              Informações Básicas
-            </Typography>
-
-            <Box
-              sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}
-            >
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Nível
-                </Typography>
-                <Typography variant="h6">{character.level}</Typography>
-              </Box>
-
-              {character.lineage?.name && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Linhagem
-                  </Typography>
-                  <Typography variant="h6">{character.lineage.name}</Typography>
-                </Box>
-              )}
-
-              {character.origin?.name && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Origem
-                  </Typography>
-                  <Typography variant="h6">{character.origin.name}</Typography>
-                </Box>
-              )}
-
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Pontos de Vida (PV)
-                </Typography>
-                <Typography variant="h6">
-                  {character.combat.hp.current} / {character.combat.hp.max}
-                  {character.combat.hp.temporary > 0 &&
-                    ` (+${character.combat.hp.temporary} temp)`}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Pontos de Poder (PP)
-                </Typography>
-                <Typography variant="h6">
-                  {character.combat.pp.current} / {character.combat.pp.max}
-                  {character.combat.pp.temporary > 0 &&
-                    ` (+${character.combat.pp.temporary} temp)`}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-
-          <Alert severity="info" sx={{ mt: 4 }}>
-            <Typography variant="body2">
-              <strong>Em desenvolvimento:</strong> Esta página será expandida
-              nas próximas fases com componentes para exibir atributos,
-              habilidades, combate, inventário, feitiços e muito mais.
-            </Typography>
-          </Alert>
-        </Paper>
-      </Box>
+  return (
+    <AppLayout maxWidth={false}>
+      <CharacterSheet character={loadedCharacter!} onUpdate={handleUpdate} />
     </AppLayout>
   );
 }

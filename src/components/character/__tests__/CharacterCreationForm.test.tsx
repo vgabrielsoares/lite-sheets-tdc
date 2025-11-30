@@ -109,12 +109,14 @@ describe('CharacterCreationForm', () => {
     it('deve exibir erro quando tentar criar sem nome', async () => {
       renderWithProviders(<CharacterCreationForm />);
 
-      const submitButton = screen.getByRole('button', { name: /Criar Ficha/i });
-      fireEvent.click(submitButton);
+      const form = screen
+        .getByRole('button', { name: /Criar Ficha/i })
+        .closest('form')!;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(
-          screen.getByText(/nome do personagem é obrigatório/i)
+          screen.getByText(/O nome do personagem é obrigatório/i)
         ).toBeInTheDocument();
       });
 
@@ -280,12 +282,14 @@ describe('CharacterCreationForm', () => {
     it('deve permitir fechar mensagem de erro', async () => {
       renderWithProviders(<CharacterCreationForm />);
 
-      const submitButton = screen.getByRole('button', { name: /Criar Ficha/i });
-      fireEvent.click(submitButton);
+      const form = screen
+        .getByRole('button', { name: /Criar Ficha/i })
+        .closest('form')!;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(
-          screen.getByText(/nome do personagem é obrigatório/i)
+          screen.getByText(/O nome do personagem é obrigatório/i)
         ).toBeInTheDocument();
       });
 
@@ -294,7 +298,7 @@ describe('CharacterCreationForm', () => {
 
       await waitFor(() => {
         expect(
-          screen.queryByText(/nome do personagem é obrigatório/i)
+          screen.queryByText(/O nome do personagem é obrigatório/i)
         ).not.toBeInTheDocument();
       });
     });
@@ -318,11 +322,15 @@ describe('CharacterCreationForm', () => {
       expect(nameInput).toBeRequired();
     });
 
-    it('deve ter autofocus no campo de nome', () => {
+    it('deve ter autofocus no campo de nome', async () => {
       renderWithProviders(<CharacterCreationForm />);
 
       const nameInput = screen.getByLabelText(/Nome do Personagem/i);
-      expect(nameInput).toHaveAttribute('autofocus');
+
+      // Aguardar nextTick para o autofocus ser aplicado
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(nameInput).toHaveFocus();
     });
   });
 });

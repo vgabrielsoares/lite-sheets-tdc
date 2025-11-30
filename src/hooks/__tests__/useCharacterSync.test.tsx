@@ -102,14 +102,25 @@ function renderHookWithProvider() {
 }
 
 describe('useCharacterSync', () => {
+  let consoleErrorSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Reset explícito dos mocks do characterService
+    (characterService.create as jest.Mock).mockReset();
+    (characterService.update as jest.Mock).mockReset();
+    (characterService.delete as jest.Mock).mockReset();
+    (characterService.getAll as jest.Mock).mockReset();
+    (characterService.getById as jest.Mock).mockReset();
   });
 
   afterEach(() => {
     jest.runOnlyPendingTimers();
     jest.useRealTimers();
+    consoleErrorSpy.mockRestore();
   });
 
   describe('Carregamento Inicial', () => {
@@ -418,7 +429,7 @@ describe('useCharacterSync', () => {
       });
 
       // Verificar que erro foi logado (console.error)
-      expect(console.error).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalled();
     });
   });
 

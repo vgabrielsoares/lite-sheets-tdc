@@ -232,7 +232,7 @@ function createDefaultInventory(): Inventory {
 function createDefaultMovement(): Movement {
   return {
     speeds: {
-      andando: 6, // Padrão
+      andando: 5, // Padrão
       voando: 0,
       escalando: 0,
       escavando: 0,
@@ -285,24 +285,27 @@ function createDefaultDefiners(): CharacterDefiners {
 }
 
 /**
- * Cria descrição física vazia
+ * Cria descrição física com peso padrão
+ * MVP-1: Peso padrão de 10
  */
 function createDefaultPhysicalDescription(): PhysicalDescription {
   return {
     skin: undefined,
     eyes: undefined,
     hair: undefined,
+    weight: 10, // MVP-1: Peso padrão
     other: undefined,
   };
 }
 
 /**
  * Cria experiência de nível 1
+ * MVP-1: 50 XP necessário para alcançar nível 2
  */
 function createDefaultExperience(): Experience {
   return {
     current: 0,
-    toNextLevel: 1000, // XP necessário para nível 2
+    toNextLevel: 50, // XP necessário para nível 2
   };
 }
 

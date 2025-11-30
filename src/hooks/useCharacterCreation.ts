@@ -65,25 +65,26 @@ export function useCharacterCreation(): UseCharacterCreationReturn {
 
   /**
    * Valida os dados do formulário
+   * @returns mensagem de erro ou null se válido
    */
-  const validateFormData = useCallback((data: CharacterFormData): boolean => {
-    if (!data.name || !data.name.trim()) {
-      setError('O nome do personagem é obrigatório');
-      return false;
-    }
+  const validateFormData = useCallback(
+    (data: CharacterFormData): string | null => {
+      if (!data.name || !data.name.trim()) {
+        return 'O nome do personagem é obrigatório';
+      }
 
-    if (data.name.trim().length < 2) {
-      setError('O nome do personagem deve ter pelo menos 2 caracteres');
-      return false;
-    }
+      if (data.name.trim().length < 2) {
+        return 'O nome do personagem deve ter pelo menos 2 caracteres';
+      }
 
-    if (data.name.trim().length > 100) {
-      setError('O nome do personagem não pode ter mais de 100 caracteres');
-      return false;
-    }
+      if (data.name.trim().length > 100) {
+        return 'O nome do personagem não pode ter mais de 100 caracteres';
+      }
 
-    return true;
-  }, []);
+      return null;
+    },
+    []
+  );
 
   /**
    * Cria um novo personagem com valores padrão
@@ -94,7 +95,10 @@ export function useCharacterCreation(): UseCharacterCreationReturn {
       setError(null);
 
       // Validar dados
-      if (!validateFormData(data)) {
+      const validationError = validateFormData(data);
+      if (validationError) {
+        setError(validationError);
+        showError(validationError);
         return;
       }
 
@@ -107,17 +111,15 @@ export function useCharacterCreation(): UseCharacterCreationReturn {
           playerName: data.playerName?.trim() || undefined,
         });
 
-        // Adicionar ao store Redux (que sincroniza com IndexedDB via middleware)
-        dispatch(addCharacter(newCharacter));
+        // Adicionar ao store Redux (que salva no IndexedDB)
+        // IMPORTANTE: Esperar o resultado para garantir que foi salvo
+        await dispatch(addCharacter(newCharacter)).unwrap();
 
         // Salvar personagem criado
         setCreatedCharacter(newCharacter);
 
         // Exibir notificação de sucesso
         showSuccess('Ficha criada com sucesso!');
-
-        // Pequeno delay para garantir que o estado foi atualizado
-        await new Promise((resolve) => setTimeout(resolve, 100));
 
         // Redirecionar para a visualização da ficha criada
         router.push(`/characters/${newCharacter.id}`);
@@ -133,7 +135,7 @@ export function useCharacterCreation(): UseCharacterCreationReturn {
         setIsLoading(false);
       }
     },
-    [dispatch, router, validateFormData]
+    [dispatch, router, validateFormData, showSuccess, showError]
   );
 
   /**

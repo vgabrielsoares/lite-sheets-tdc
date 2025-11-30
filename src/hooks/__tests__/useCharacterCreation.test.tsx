@@ -189,8 +189,8 @@ describe('useCharacterCreation', () => {
       expect(character.attributes.mente).toBe(1);
       expect(character.attributes.presenca).toBe(1);
 
-      // Verificar idiomas (Comum)
-      expect(character.languages).toContain('Comum');
+      // Verificar idiomas (comum - lowercase como definido em LANGUAGE_LIST)
+      expect(character.languages).toContain('comum');
 
       // Verificar inventário inicial
       expect(character.inventory.items).toHaveLength(2);

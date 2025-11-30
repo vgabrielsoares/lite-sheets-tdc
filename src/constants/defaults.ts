@@ -110,8 +110,9 @@ export const DEFAULT_BASE_DEFENSE = 15;
 
 /**
  * Deslocamento padrão andando (em metros)
+ * MVP-1: 5 metros é o padrão oficial
  */
-export const DEFAULT_MOVEMENT_WALKING = 9;
+export const DEFAULT_MOVEMENT_WALKING = 5;
 
 /**
  * Tamanho padrão de personagem

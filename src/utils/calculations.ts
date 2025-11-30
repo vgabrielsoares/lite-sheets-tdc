@@ -338,3 +338,83 @@ export function getEncumbranceState(
   }
   return 'normal';
 }
+
+/**
+ * Applies damage to Health Points prioritizing temporary HP first.
+ * When adding (healing), only current HP increases; temporary does not auto-recover.
+ *
+ * @param hp - Current HP object { max, current, temporary }
+ * @param delta - Negative for damage, positive for healing
+ * @returns Updated HP object
+ */
+export function applyDeltaToHP(
+  hp: { max: number; current: number; temporary: number },
+  delta: number
+) {
+  if (delta === 0) return hp;
+  if (delta < 0) {
+    const damage = Math.abs(delta);
+    let remaining = damage;
+    let newTemp = hp.temporary;
+    let newCurrent = hp.current;
+
+    if (newTemp > 0) {
+      const tempDamage = Math.min(newTemp, remaining);
+      newTemp -= tempDamage;
+      remaining -= tempDamage;
+    }
+    if (remaining > 0) {
+      newCurrent = Math.max(0, newCurrent - remaining);
+    }
+    return { ...hp, current: newCurrent, temporary: newTemp };
+  }
+  // Healing: increase current only, cap at max
+  const healed = Math.min(hp.current + delta, hp.max);
+  return { ...hp, current: healed };
+}
+
+/**
+ * Applies a delta to PP (Power Points) following the same logic as HP
+ * - Spending (negative delta): Subtract from temporary first, then current
+ * - Recovery (positive delta): Add to current only, cap at max
+ *
+ * @param pp - Current PP state with max, current, and temporary values
+ * @param delta - The change to apply (negative for spending, positive for recovery)
+ * @returns New PP state after applying the delta
+ *
+ * @example
+ * // Spending PP: temporary first, then current
+ * applyDeltaToPP({ max: 10, current: 5, temporary: 3 }, -4); // { max: 10, current: 4, temporary: 0 }
+ * applyDeltaToPP({ max: 10, current: 5, temporary: 0 }, -2); // { max: 10, current: 3, temporary: 0 }
+ *
+ * // Recovering PP: add to current, cap at max
+ * applyDeltaToPP({ max: 10, current: 5, temporary: 0 }, 3); // { max: 10, current: 8, temporary: 0 }
+ * applyDeltaToPP({ max: 10, current: 9, temporary: 0 }, 5); // { max: 10, current: 10, temporary: 0 }
+ */
+export function applyDeltaToPP(
+  pp: { max: number; current: number; temporary: number },
+  delta: number
+) {
+  if (delta === 0) return pp;
+  if (delta < 0) {
+    const cost = Math.abs(delta);
+    let remaining = cost;
+    let newTemp = pp.temporary;
+    let newCurrent = pp.current;
+
+    // Subtract from temporary first
+    if (newTemp > 0) {
+      const tempCost = Math.min(newTemp, remaining);
+      newTemp -= tempCost;
+      remaining -= tempCost;
+    }
+    // Then subtract remaining from current
+    if (remaining > 0) {
+      newCurrent = Math.max(0, newCurrent - remaining);
+    }
+    return { ...pp, current: newCurrent, temporary: newTemp };
+  }
+  // Recovery: increase current only, cap at max
+  const recovered = Math.min(pp.current + delta, pp.max);
+  return { ...pp, current: recovered };
+}

@@ -67,7 +67,7 @@ export default function Header() {
       <AppBar
         position="fixed"
         sx={{
-          zIndex: theme.zIndex.drawer + 1,
+          zIndex: 1300, // Maior que modal (1300), alertas, e outros componentes
           backgroundColor: 'background.paper',
           color: 'text.primary',
           boxShadow: theme.shadows[2],

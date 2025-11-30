@@ -13,6 +13,7 @@
 
 import { useCharacterSync } from '@/hooks/useCharacterSync';
 import { CircularProgress, Box, Typography, Alert } from '@mui/material';
+import { memo } from 'react';
 
 /**
  * Props do CharacterLoader
@@ -25,6 +26,17 @@ export interface CharacterLoaderProps {
   /** Se true, exibe mensagem de erro se houver */
   showError?: boolean;
 }
+
+/**
+ * Componente interno que não re-renderiza os filhos
+ */
+const CharacterLoaderContent = memo(function CharacterLoaderContent({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <>{children}</>;
+});
 
 /**
  * Componente de carregamento e sincronização de personagens
@@ -71,9 +83,12 @@ export default function CharacterLoader({
   }
 
   // Exibir erro se houver (não bloqueia renderização, apenas avisa)
-  if (showError && error) {
+  // Nota: Erros de atualização (updateCharacter) não devem bloquear a UI
+  if (showError && error && error.includes('carregar')) {
     return (
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2, mt: { xs: 7, sm: 8 } }}>
+        {' '}
+        {/* Margem para não ficar atrás do header */}
         <Alert
           severity="error"
           sx={{ mb: 2 }}
@@ -90,11 +105,11 @@ export default function CharacterLoader({
             sincronizados.
           </Typography>
         </Alert>
-        {children}
+        <CharacterLoaderContent>{children}</CharacterLoaderContent>
       </Box>
     );
   }
 
-  // Renderizar filhos normalmente
-  return <>{children}</>;
+  // Renderizar filhos normalmente, mas com memo para evitar re-renders
+  return <CharacterLoaderContent>{children}</CharacterLoaderContent>;
 }
