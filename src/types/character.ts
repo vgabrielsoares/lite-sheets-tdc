@@ -10,6 +10,7 @@ import type {
   Timestamp,
   MovementType,
   SenseType,
+  KeenSense,
   VisionType,
   CreatureSize,
   Note,
@@ -173,6 +174,11 @@ export interface Lineage {
   name: string;
   /** Descrição da linhagem */
   description?: string;
+  /** Modificadores de atributos (+2/-1, +1/+1, ou outro padrão) */
+  attributeModifiers: {
+    attribute: AttributeName;
+    value: number; // +2, +1, -1, etc.
+  }[];
   /** Tamanho */
   size: CreatureSize;
   /** Altura em centímetros */
@@ -181,14 +187,18 @@ export interface Lineage {
   weightKg: number;
   /** Peso na medida do RPG */
   weightRPG: number;
-  /** Idade */
+  /** Idade atual */
   age: number;
+  /** Idade de maioridade */
+  adulthood?: number;
+  /** Expectativa de vida */
+  lifeExpectancy?: number;
   /** Idiomas ganhos pela linhagem */
   languages: LanguageName[];
   /** Deslocamento */
   movement: Record<MovementType, number>;
   /** Sentidos aguçados (se aplicável) */
-  keenSenses?: SenseType[];
+  keenSenses?: KeenSense[];
   /** Tipo de visão */
   vision: VisionType;
   /** Características de ancestralidade */
@@ -212,7 +222,7 @@ export interface Senses {
   /** Tipo de visão */
   vision: VisionType;
   /** Sentidos aguçados */
-  keenSenses: SenseType[];
+  keenSenses: KeenSense[];
   /** Modificadores de percepção por tipo de sentido */
   perceptionModifiers: Record<SenseType, number>;
 }
@@ -285,6 +295,8 @@ export interface PhysicalDescription {
   eyes?: string;
   /** Cor do cabelo */
   hair?: string;
+  /** Peso do personagem (MVP-1: padrão 10) */
+  weight?: number;
   /** Outros detalhes */
   other?: string;
 }

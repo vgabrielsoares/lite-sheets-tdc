@@ -49,6 +49,19 @@ export type MovementType =
 export type SenseType = 'visao' | 'olfato' | 'audicao';
 
 /**
+ * Sentido aguçado com bônus variável
+ * Permite múltiplos sentidos com diferentes níveis de aprimoramento
+ */
+export interface KeenSense {
+  /** Tipo do sentido aguçado */
+  type: SenseType;
+  /** Bônus concedido (+2 a +10) */
+  bonus: number;
+  /** Descrição opcional do sentido */
+  description?: string;
+}
+
+/**
  * Tipos de visão
  */
 export type VisionType = 'normal' | 'penumbra' | 'escuro';

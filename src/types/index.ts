@@ -12,6 +12,7 @@ export type {
   ProficiencyLevel,
   MovementType,
   SenseType,
+  KeenSense,
   VisionType,
   CreatureSize,
   DiceType,
