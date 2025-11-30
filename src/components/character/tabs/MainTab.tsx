@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Stack } from '@mui/material';
-import type { Character } from '@/types';
+import type { Character, AttributeName } from '@/types';
 import {
   BasicStats,
   CompactHealthPoints,
@@ -10,6 +10,7 @@ import {
   DefenseDisplay,
   MovementDisplay,
 } from '../stats';
+import { AttributesDisplay } from '../attributes';
 import type { MovementType } from '@/types';
 
 export interface MainTabProps {
@@ -55,6 +56,11 @@ export interface MainTabProps {
    * Callback para abrir detalhes de Deslocamento
    */
   onOpenMovement?: () => void;
+
+  /**
+   * Callback para abrir detalhes de um atributo
+   */
+  onOpenAttribute?: (attribute: AttributeName) => void;
 }
 
 /**
@@ -90,6 +96,7 @@ export function MainTab({
   onOpenPP,
   onOpenDefense,
   onOpenMovement,
+  onOpenAttribute,
 }: MainTabProps) {
   return (
     <Box>
@@ -207,6 +214,20 @@ export function MainTab({
             }
           />
         </Box>
+
+        {/* Atributos */}
+        <AttributesDisplay
+          attributes={character.attributes}
+          onChange={(attribute, value) =>
+            onUpdate({
+              attributes: {
+                ...character.attributes,
+                [attribute]: value,
+              },
+            })
+          }
+          onAttributeClick={onOpenAttribute}
+        />
       </Stack>
     </Box>
   );
