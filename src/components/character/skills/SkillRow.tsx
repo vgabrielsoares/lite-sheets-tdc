@@ -152,21 +152,29 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   const indicators = [];
   if (skill.isSignature) {
     indicators.push(
-      <Tooltip key="signature" title="Habilidade de Assinatura">
+      <Tooltip
+        key="signature"
+        title="Habilidade de Assinatura"
+        enterDelay={300}
+      >
         <StarIcon fontSize="small" color="warning" />
       </Tooltip>
     );
   }
   if (metadata.isCombatSkill) {
     indicators.push(
-      <Tooltip key="combat" title="Habilidade de Combate">
+      <Tooltip key="combat" title="Habilidade de Combate" enterDelay={300}>
         <CombatIcon fontSize="small" color="error" />
       </Tooltip>
     );
   }
   if (metadata.hasCargaPenalty) {
     indicators.push(
-      <Tooltip key="load" title="Sofre penalidade quando Sobrecarregado">
+      <Tooltip
+        key="load"
+        title="Sofre penalidade quando Sobrecarregado"
+        enterDelay={300}
+      >
         <LoadIcon
           fontSize="small"
           color={isOverloaded ? 'warning' : 'disabled'}
@@ -176,21 +184,25 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   }
   if (metadata.requiresInstrument) {
     indicators.push(
-      <Tooltip key="instrument" title="Requer instrumento">
+      <Tooltip key="instrument" title="Requer instrumento" enterDelay={300}>
         <InstrumentIcon fontSize="small" color="action" />
       </Tooltip>
     );
   }
   if (metadata.requiresProficiency) {
     indicators.push(
-      <Tooltip key="proficiency" title="Requer proficiência para uso efetivo">
+      <Tooltip
+        key="proficiency"
+        title="Requer proficiência para uso efetivo"
+        enterDelay={300}
+      >
         <ProficiencyIcon fontSize="small" color="action" />
       </Tooltip>
     );
   }
   if (isCustomAttribute) {
     indicators.push(
-      <Tooltip key="custom" title="Atributo-chave customizado">
+      <Tooltip key="custom" title="Atributo-chave customizado" enterDelay={300}>
         <CustomIcon fontSize="small" color="primary" />
       </Tooltip>
     );
@@ -211,11 +223,16 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         borderRadius: 2,
         border: `1px solid ${theme.palette.divider}`,
         cursor: 'pointer',
-        transition: 'all 0.2s ease-in-out',
+        // Otimização: apenas transições nas propriedades que mudam
+        transition:
+          'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out',
+        // Uso de will-change para otimizar rendering
+        willChange: 'border-color, background-color',
+        // Forçar compositing layer para evitar repaints
+        transform: 'translateZ(0)',
         '&:hover': {
           borderColor: theme.palette.primary.main,
           backgroundColor: alpha(theme.palette.primary.main, 0.05),
-          transform: 'translateX(4px)',
         },
         // Destaque se é Habilidade de Assinatura
         ...(skill.isSignature && {
@@ -232,6 +249,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
               ? `${SKILL_LABELS[skill.name]} - Atributo padrão: ${metadata.keyAttribute === 'especial' ? 'Especial' : ATTRIBUTE_LABELS[metadata.keyAttribute]} (customizado para ${ATTRIBUTE_LABELS[skill.keyAttribute]})`
               : `${SKILL_LABELS[skill.name]} - Atributo: ${metadata.keyAttribute === 'especial' ? 'Especial' : ATTRIBUTE_LABELS[metadata.keyAttribute]}`
           }
+          enterDelay={300}
         >
           <Typography
             variant="body1"
@@ -320,6 +338,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       >
         <Tooltip
           title={`Modificador total: ${calculation.attributeValue} (atributo) × ${calculation.proficiencyMultiplier} (proficiência) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
+          enterDelay={300}
         >
           <Chip
             label={
@@ -336,6 +355,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
 
         <Tooltip
           title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+          enterDelay={300}
         >
           <Typography
             variant="body1"
@@ -363,6 +383,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       >
         <Tooltip
           title={`Modificador total: ${calculation.attributeValue} (atributo) × ${calculation.proficiencyMultiplier} (proficiência) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
+          enterDelay={300}
         >
           <Chip
             label={
@@ -378,6 +399,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         </Tooltip>
         <Tooltip
           title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+          enterDelay={300}
         >
           <Typography
             variant="body2"
