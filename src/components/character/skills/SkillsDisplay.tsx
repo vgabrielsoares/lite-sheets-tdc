@@ -55,6 +55,7 @@ import {
   ATTRIBUTE_LABELS,
   SKILL_METADATA,
 } from '@/constants';
+import { getProficiencyInfo } from '@/utils/proficiencyCalculations';
 import { SkillRow } from './SkillRow';
 
 export interface SkillsDisplayProps {
@@ -108,7 +109,15 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
   >('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Contar proficiências
+  // Calcular informações de proficiência usando utility
+  const proficiencyInfo = useMemo(() => {
+    return getProficiencyInfo(skills, attributes.mente);
+  }, [skills, attributes.mente]);
+
+  const { max: maxProficiencies, acquired: acquiredProficiencies } =
+    proficiencyInfo;
+
+  // Contar proficiências por nível
   const proficiencyCounts = useMemo(() => {
     const counts: Record<ProficiencyLevel, number> = {
       leigo: 0,
@@ -124,18 +133,6 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
 
     return counts;
   }, [skills]);
-
-  // Contar proficiências adquiridas (não-leigo)
-  const acquiredProficiencies = useMemo(() => {
-    return (
-      proficiencyCounts.adepto +
-      proficiencyCounts.versado +
-      proficiencyCounts.mestre
-    );
-  }, [proficiencyCounts]);
-
-  // Máximo de proficiências permitidas (3 + Mente)
-  const maxProficiencies = 3 + attributes.mente;
 
   // Filtrar habilidades
   const filteredSkills = useMemo(() => {

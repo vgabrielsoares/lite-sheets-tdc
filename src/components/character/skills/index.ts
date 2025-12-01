@@ -4,6 +4,7 @@
 
 export { SkillRow } from './SkillRow';
 export { SkillsDisplay } from './SkillsDisplay';
+export { ProficiencySelector } from './ProficiencySelector';
 export {
   InlineModifiers,
   extractDiceModifier,
@@ -13,4 +14,5 @@ export {
 
 export type { SkillRowProps } from './SkillRow';
 export type { SkillsDisplayProps } from './SkillsDisplay';
+export type { ProficiencySelectorProps } from './ProficiencySelector';
 export type { InlineModifiersProps } from './ModifierManager';
