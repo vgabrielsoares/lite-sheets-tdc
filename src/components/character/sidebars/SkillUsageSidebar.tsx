@@ -44,6 +44,7 @@ import {
   Edit as EditIcon,
   Save as SaveIcon,
   Close as CloseIcon,
+  Star as StarIcon,
 } from '@mui/icons-material';
 
 import { Sidebar } from '@/components/shared/Sidebar';
@@ -74,6 +75,8 @@ import {
   calculateSkillUseModifier,
   calculateSkillUseRollFormula,
 } from '@/utils/skillCalculations';
+import { calculateSignatureAbilityBonus } from '@/utils';
+import { COMBAT_SKILLS } from '@/constants/skills';
 
 export interface SkillUsageSidebarProps {
   /** Controla se a sidebar está aberta */
@@ -105,6 +108,10 @@ export interface SkillUsageSidebarProps {
     skillName: SkillName,
     modifiers: Modifier[]
   ) => void;
+  /** Callback quando habilidade de assinatura é alterada */
+  onSignatureAbilityChange?: (skillName: SkillName | null) => void;
+  /** Nome da habilidade que é atualmente a assinatura (se houver) */
+  currentSignatureSkill?: SkillName | null;
 }
 
 interface EditingUse extends Partial<SkillUse> {
@@ -125,6 +132,8 @@ export function SkillUsageSidebar({
   onUpdateDefaultUseAttributes,
   onUpdateDefaultUseModifiers,
   onUpdateSkillModifiers,
+  onSignatureAbilityChange,
+  currentSignatureSkill,
 }: SkillUsageSidebarProps) {
   const [editingUse, setEditingUse] = useState<EditingUse | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -146,7 +155,14 @@ export function SkillUsageSidebar({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [useToDelete, setUseToDelete] = useState<string | null>(null);
 
+  // Estado para confirmação de habilidade de assinatura
+  const [signatureConfirmOpen, setSignatureConfirmOpen] = useState(false);
+  const [signatureAction, setSignatureAction] = useState<'set' | 'unset'>(
+    'set'
+  );
+
   const customUses = skill.customUses || [];
+  const isCurrentSignature = currentSignatureSkill === skill.name;
 
   /**
    * Inicia adição de novo uso customizado
@@ -251,6 +267,45 @@ export function SkillUsageSidebar({
 
     setDeleteConfirmOpen(false);
     setUseToDelete(null);
+  };
+
+  /**
+   * Inicia processo de tornar esta habilidade a assinatura
+   */
+  const handleSetSignature = () => {
+    if (currentSignatureSkill && currentSignatureSkill !== skill.name) {
+      // Já existe outra habilidade como assinatura
+      setSignatureAction('set');
+      setSignatureConfirmOpen(true);
+    } else {
+      // Não há assinatura ou é esta mesma
+      if (onSignatureAbilityChange) {
+        onSignatureAbilityChange(skill.name);
+      }
+    }
+  };
+
+  /**
+   * Inicia processo de remover esta habilidade como assinatura
+   */
+  const handleUnsetSignature = () => {
+    setSignatureAction('unset');
+    setSignatureConfirmOpen(true);
+  };
+
+  /**
+   * Confirma mudança de habilidade de assinatura
+   */
+  const handleConfirmSignature = () => {
+    if (!onSignatureAbilityChange) return;
+
+    if (signatureAction === 'set') {
+      onSignatureAbilityChange(skill.name);
+    } else {
+      onSignatureAbilityChange(null);
+    }
+
+    setSignatureConfirmOpen(false);
   };
 
   /**
@@ -867,6 +922,80 @@ export function SkillUsageSidebar({
 
         <Divider />
 
+        {/* Habilidade de Assinatura */}
+        {onSignatureAbilityChange && (
+          <>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                Habilidade de Assinatura
+              </Typography>
+              <Typography variant="caption" color="text.secondary" paragraph>
+                Escolha UMA habilidade especial que recebe bônus adicional igual
+                ao seu nível
+                {COMBAT_SKILLS.includes(skill.name) &&
+                  ' (÷3 para habilidades de combate)'}
+                .
+              </Typography>
+
+              {isCurrentSignature ? (
+                <Alert
+                  severity="success"
+                  icon={<StarIcon />}
+                  action={
+                    <Button
+                      size="small"
+                      color="inherit"
+                      onClick={handleUnsetSignature}
+                    >
+                      Remover
+                    </Button>
+                  }
+                >
+                  <Typography variant="body2">
+                    <strong>{SKILL_LABELS[skill.name]}</strong> é sua Habilidade
+                    de Assinatura e recebe{' '}
+                    <strong>
+                      +
+                      {calculateSignatureAbilityBonus(
+                        characterLevel,
+                        COMBAT_SKILLS.includes(skill.name)
+                      )}
+                    </strong>{' '}
+                    de bônus
+                    {COMBAT_SKILLS.includes(skill.name) &&
+                      ` (nível ${characterLevel} ÷ 3 = ${Math.floor(characterLevel / 3) || 1})`}
+                    .
+                  </Typography>
+                </Alert>
+              ) : (
+                <Box>
+                  {currentSignatureSkill && (
+                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 2 }}>
+                      <Typography variant="body2">
+                        <strong>{SKILL_LABELS[currentSignatureSkill]}</strong> é
+                        atualmente sua Habilidade de Assinatura. Tornar{' '}
+                        <strong>{SKILL_LABELS[skill.name]}</strong> sua
+                        assinatura irá substituí-la.
+                      </Typography>
+                    </Alert>
+                  )}
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    startIcon={<StarIcon />}
+                    onClick={handleSetSignature}
+                    fullWidth
+                  >
+                    Tornar Habilidade de Assinatura
+                  </Button>
+                </Box>
+              )}
+            </Box>
+
+            <Divider />
+          </>
+        )}
+
         {/* Modificadores da Habilidade Geral */}
         <Box>
           <Typography variant="subtitle1" fontWeight={600} gutterBottom>
@@ -1012,6 +1141,29 @@ export function SkillUsageSidebar({
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         confirmText="Remover"
+        cancelText="Cancelar"
+      />
+
+      {/* Diálogo de Confirmação de Habilidade de Assinatura */}
+      <ConfirmDialog
+        open={signatureConfirmOpen}
+        title={
+          signatureAction === 'set'
+            ? 'Tornar Habilidade de Assinatura'
+            : 'Remover Habilidade de Assinatura'
+        }
+        message={
+          signatureAction === 'set'
+            ? currentSignatureSkill
+              ? `Tem certeza que deseja tornar "${SKILL_LABELS[skill.name]}" sua Habilidade de Assinatura? Isso irá remover "${SKILL_LABELS[currentSignatureSkill]}" como sua habilidade especial.`
+              : `Tem certeza que deseja tornar "${SKILL_LABELS[skill.name]}" sua Habilidade de Assinatura? Esta habilidade receberá bônus especial igual ao seu nível.`
+            : `Tem certeza que deseja remover "${SKILL_LABELS[skill.name]}" como sua Habilidade de Assinatura? Você perderá o bônus especial desta habilidade.`
+        }
+        onConfirm={handleConfirmSignature}
+        onCancel={() => setSignatureConfirmOpen(false)}
+        confirmText={
+          signatureAction === 'set' ? 'Tornar Assinatura' : 'Remover'
+        }
         cancelText="Cancelar"
       />
     </Sidebar>
