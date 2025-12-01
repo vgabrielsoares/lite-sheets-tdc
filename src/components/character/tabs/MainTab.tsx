@@ -7,6 +7,7 @@ import type {
   AttributeName,
   SkillName,
   ProficiencyLevel,
+  Modifier,
 } from '@/types';
 import {
   BasicStats,
@@ -89,6 +90,14 @@ export interface MainTabProps {
     skillName: SkillName,
     newProficiency: ProficiencyLevel
   ) => void;
+
+  /**
+   * Callback para alterar modificadores de uma habilidade
+   */
+  onSkillModifiersChange?: (
+    skillName: SkillName,
+    modifiers: Modifier[]
+  ) => void;
 }
 
 /**
@@ -128,6 +137,7 @@ export function MainTab({
   onOpenSkill,
   onSkillKeyAttributeChange,
   onSkillProficiencyChange,
+  onSkillModifiersChange,
 }: MainTabProps) {
   // Calcular se personagem está sobrecarregado
   const carryCapacity = calculateCarryCapacity(character.attributes.forca);
@@ -274,6 +284,7 @@ export function MainTab({
               isOverloaded={isOverloaded}
               onKeyAttributeChange={onSkillKeyAttributeChange}
               onProficiencyChange={onSkillProficiencyChange}
+              onModifiersChange={onSkillModifiersChange}
               onSkillClick={onOpenSkill}
             />
           )}
