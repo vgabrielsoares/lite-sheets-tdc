@@ -166,6 +166,39 @@ export function calculateSignatureAbilityBonus(
 }
 
 /**
+ * Calculates the total skill modifier including signature ability bonus
+ * Formula: (Atributo × multiplicador de proficiência) + bônus de assinatura + outros modificadores
+ *
+ * @param attributeValue - The value of the key attribute for this skill
+ * @param proficiencyLevel - The proficiency level ('leigo', 'adepto', 'versado', 'mestre')
+ * @param isSignature - Whether this is the character's signature ability
+ * @param characterLevel - The character's current level (required if isSignature is true)
+ * @param isCombatSkill - Whether this is a combat skill (required if isSignature is true)
+ * @param otherModifiers - Additional modifiers from equipment, spells, etc. (default: 0)
+ * @returns The total calculated skill modifier
+ *
+ * @example
+ * calculateTotalSkillModifier(2, 'versado', false, 1, false); // 4 (2 × 2 + 0)
+ * calculateTotalSkillModifier(3, 'adepto', true, 5, false); // 8 (3 × 1 + 5)
+ * calculateTotalSkillModifier(2, 'versado', true, 9, true); // 7 (2 × 2 + 3)
+ * calculateTotalSkillModifier(4, 'mestre', false, 1, false, 2); // 14 (4 × 3 + 0 + 2)
+ */
+export function calculateTotalSkillModifier(
+  attributeValue: number,
+  proficiencyLevel: ProficiencyLevel,
+  isSignature: boolean,
+  characterLevel: number,
+  isCombatSkill: boolean,
+  otherModifiers: number = 0
+): number {
+  const baseModifier = calculateSkillModifier(attributeValue, proficiencyLevel);
+  const signatureBonus = isSignature
+    ? calculateSignatureAbilityBonus(characterLevel, isCombatSkill)
+    : 0;
+  return baseModifier + signatureBonus + otherModifiers;
+}
+
+/**
  * Calculates HP recovery from a Descanso (Rest) using the Dormir (Sleep) action
  * Formula: Nível do Personagem × Constituição + outros modificadores
  *

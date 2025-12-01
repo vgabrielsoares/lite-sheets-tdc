@@ -12,6 +12,7 @@ export {
   roundDown,
   calculateDefense,
   calculateSkillModifier,
+  calculateTotalSkillModifier,
   calculateCarryCapacity,
   calculateMaxDyingRounds,
   calculatePPPerRound,
