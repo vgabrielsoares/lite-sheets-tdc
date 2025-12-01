@@ -159,19 +159,26 @@ export function calculateSkillRollFormula(
   let finalDiceCount = baseDiceCount + diceModifierTotal;
 
   // 3. Se quantidade de dados ficar < 1, aplicar regra especial:
-  // Rola (valor absoluto) d20 e escolhe o MENOR
-  if (finalDiceCount < 1) {
-    finalDiceCount = Math.abs(finalDiceCount) || 1; // mínimo 1d20
+  // Para atributo 0 (que vira 2d20) com penalidades:
+  // - 2 + (-1) = 1d20 (rola 1 e pega o menor, mas mostramos como 1d20)
+  // - 2 + (-2) = 0d20 (rola 0 dados e pega o menor, mostramos como 0d20)
+  // - 2 + (-3) = -1d20 (penalidade extra, mostramos como -1d20)
+  // Para qualquer caso, se ficar negativo, usamos o valor negativo direto
+  if (attributeValue === 0 && finalDiceCount < 2) {
+    takeLowest = true;
+    // Mantém o valor (pode ser 1, 0, -1, -2, etc.)
+  } else if (finalDiceCount < 1 && attributeValue !== 0) {
+    // Para outros casos (atributo não é 0), se ficar < 1:
+    // Rola valor absoluto e escolhe o menor
+    finalDiceCount = Math.abs(finalDiceCount) || 1;
     takeLowest = true;
   }
 
   // 4. Gerar string da fórmula
   let formula = `${finalDiceCount}d20`;
 
-  // Adicionar indicador de "menor" se takeLowest
-  if (takeLowest) {
-    formula += ' (menor)';
-  }
+  // NÃO adicionamos indicador de "menor" na fórmula
+  // (a lógica interna ainda usa takeLowest para o cálculo)
 
   // Adicionar modificador
   if (totalModifier > 0) {
@@ -351,6 +358,7 @@ export function calculateSkillUseModifier(
     keyAttribute: AttributeName;
     bonus: number;
     skillName: SkillName;
+    modifiers?: Modifier[];
   },
   baseSkill: {
     proficiencyLevel: ProficiencyLevel;
@@ -382,11 +390,16 @@ export function calculateSkillUseModifier(
       : characterLevel;
   }
 
-  // Outros modificadores da habilidade base
-  const otherModifiers = baseSkill.modifiers.reduce(
-    (sum, mod) => sum + mod.value,
-    0
-  );
+  // Combinar modificadores: habilidade base + uso específico
+  const allModifiers = [
+    ...(baseSkill.modifiers || []),
+    ...(skillUse.modifiers || []),
+  ];
+
+  // Somar apenas modificadores que não afetam dados (modificadores numéricos)
+  const numericModifiers = allModifiers
+    .filter((mod) => !mod.affectsDice)
+    .reduce((sum, mod) => sum + mod.value, 0);
 
   // Bônus específico do uso
   const useBonus = skillUse.bonus;
@@ -396,7 +409,7 @@ export function calculateSkillUseModifier(
     isOverloaded && metadata.hasCargaPenalty === true ? CARGA_PENALTY_VALUE : 0;
 
   return (
-    baseModifier + signatureBonus + otherModifiers + useBonus + loadPenalty
+    baseModifier + signatureBonus + numericModifiers + useBonus + loadPenalty
   );
 }
 
@@ -419,6 +432,7 @@ export function calculateSkillUseRollFormula(
     keyAttribute: AttributeName;
     bonus: number;
     skillName: SkillName;
+    modifiers?: Modifier[];
   },
   baseSkill: {
     proficiencyLevel: ProficiencyLevel;
@@ -439,18 +453,29 @@ export function calculateSkillUseRollFormula(
 
   const attributeValue = attributes[skillUse.keyAttribute];
 
-  // Quantidade de dados
-  const diceCount = attributeValue;
+  // Combinar modificadores de dados: habilidade base + uso específico
+  const allModifiers = [
+    ...(baseSkill.modifiers || []),
+    ...(skillUse.modifiers || []),
+  ];
 
-  // Regra especial: atributo 0 = rolar 2d20 e escolher o menor
-  if (attributeValue === 0) {
-    const sign = modifier >= 0 ? '+' : '';
-    return modifier === 0 ? '2d20 (menor)' : `2d20 (menor)${sign}${modifier}`;
-  }
+  // Somar modificadores que afetam dados
+  const diceModifiers = allModifiers
+    .filter((mod) => mod.affectsDice === true)
+    .reduce((sum, mod) => sum + mod.value, 0);
 
-  // Fórmula normal
+  // Quantidade de dados = atributo + modificadores de dados
+  const baseDiceCount = attributeValue;
+  const finalDiceCount = baseDiceCount + diceModifiers;
+
+  // Para atributo 0, começa com 2d20 (pega menor)
+  // Com modificadores negativos: 2-1=1d20, 2-2=0d20, 2-3=-1d20, etc.
+  const displayDiceCount =
+    attributeValue === 0 ? 2 + diceModifiers : finalDiceCount;
+
+  // Fórmula sem indicador "(menor)"
   const sign = modifier >= 0 ? '+' : '';
   return modifier === 0
-    ? `${diceCount}d20`
-    : `${diceCount}d20${sign}${modifier}`;
+    ? `${displayDiceCount}d20`
+    : `${displayDiceCount}d20${sign}${modifier}`;
 }
