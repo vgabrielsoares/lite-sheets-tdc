@@ -95,3 +95,14 @@ export {
   requiresProficiency,
   isCombatSkill,
 } from './skillCalculations';
+
+// Proficiency calculation utilities
+export {
+  calculateMaxProficiencies,
+  countAcquiredProficiencies,
+  canAddProficiency,
+  validateProficienciesLimit,
+  getRemainingProficiencies,
+  getProficiencyInfo,
+  countProficienciesByLevel,
+} from './proficiencyCalculations';
