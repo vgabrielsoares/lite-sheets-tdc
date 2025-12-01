@@ -18,6 +18,7 @@ import type {
   SkillName,
   SkillUse,
   ProficiencyLevel,
+  Modifier,
 } from '@/types';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
@@ -251,6 +252,24 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Handler para atualizar modificadores de uma habilidade
+   */
+  const handleSkillModifiersChange = (
+    skillName: SkillName,
+    modifiers: Modifier[]
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          modifiers,
+        },
+      },
+    });
+  };
+
+  /**
    * Handler para atualizar usos customizados de uma habilidade
    */
   const handleUpdateCustomUses = (
@@ -287,6 +306,24 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Handler para atualizar modificadores de usos padrões de uma habilidade
+   */
+  const handleUpdateDefaultUseModifiers = (
+    skillName: SkillName,
+    overrides: Record<string, Modifier[]>
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          defaultUseModifierOverrides: overrides,
+        },
+      },
+    });
+  };
+
+  /**
    * Renderiza o conteúdo da aba atual
    */
   const renderTabContent = () => {
@@ -304,6 +341,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenSkill: handleOpenSkillSidebar,
       onSkillKeyAttributeChange: handleSkillKeyAttributeChange,
       onSkillProficiencyChange: handleSkillProficiencyChange,
+      onSkillModifiersChange: handleSkillModifiersChange,
     };
 
     switch (currentTab) {
@@ -524,6 +562,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 isOverloaded={false} // TODO: Calculate from inventory
                 onUpdateCustomUses={handleUpdateCustomUses}
                 onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
+                onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
+                onUpdateSkillModifiers={handleSkillModifiersChange}
               />
             )}
           </Box>
@@ -628,6 +668,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             isOverloaded={false} // TODO: Calculate from inventory
             onUpdateCustomUses={handleUpdateCustomUses}
             onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
+            onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
+            onUpdateSkillModifiers={handleSkillModifiersChange}
           />
         )}
       </Box>

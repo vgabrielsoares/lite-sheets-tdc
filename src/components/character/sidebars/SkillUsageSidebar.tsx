@@ -47,12 +47,20 @@ import {
 } from '@mui/icons-material';
 
 import { Sidebar } from '@/components/shared/Sidebar';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import {
+  InlineModifiers,
+  extractDiceModifier,
+  extractNumericModifier,
+  buildModifiersArray,
+} from '@/components/character/skills/ModifierManager';
 import type {
   SkillName,
   SkillUse,
   Skill,
   Attributes,
   AttributeName,
+  Modifier,
 } from '@/types';
 import { SKILL_LABELS, ATTRIBUTE_LABELS } from '@/constants';
 import { SKILL_DESCRIPTIONS } from '@/types/skills';
@@ -87,6 +95,16 @@ export interface SkillUsageSidebarProps {
     skillName: SkillName,
     overrides: Record<string, AttributeName>
   ) => void;
+  /** Callback quando modificadores de usos padrões são atualizados */
+  onUpdateDefaultUseModifiers?: (
+    skillName: SkillName,
+    overrides: Record<string, Modifier[]>
+  ) => void;
+  /** Callback quando modificadores da habilidade geral são atualizados */
+  onUpdateSkillModifiers?: (
+    skillName: SkillName,
+    modifiers: Modifier[]
+  ) => void;
 }
 
 interface EditingUse extends Partial<SkillUse> {
@@ -105,6 +123,8 @@ export function SkillUsageSidebar({
   isOverloaded,
   onUpdateCustomUses,
   onUpdateDefaultUseAttributes,
+  onUpdateDefaultUseModifiers,
+  onUpdateSkillModifiers,
 }: SkillUsageSidebarProps) {
   const [editingUse, setEditingUse] = useState<EditingUse | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -116,6 +136,15 @@ export function SkillUsageSidebar({
   const [localDefaultOverrides, setLocalDefaultOverrides] = useState<
     Record<string, AttributeName>
   >(skill.defaultUseAttributeOverrides || {});
+
+  // Estado para modificadores de uso padrão
+  const [localDefaultModifiers, setLocalDefaultModifiers] = useState<
+    Record<string, Modifier[]>
+  >(skill.defaultUseModifierOverrides || {});
+
+  // Estado para confirmação de exclusão
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [useToDelete, setUseToDelete] = useState<string | null>(null);
 
   const customUses = skill.customUses || [];
 
@@ -200,15 +229,36 @@ export function SkillUsageSidebar({
   };
 
   /**
-   * Remove uso customizado
+   * Abre diálogo de confirmação para remover uso customizado
    */
   const handleDelete = (useId: string) => {
-    const updatedUses = customUses.filter((use) => use.id !== useId);
+    setUseToDelete(useId);
+    setDeleteConfirmOpen(true);
+  };
+
+  /**
+   * Confirma e remove uso customizado
+   */
+  const handleConfirmDelete = () => {
+    if (!useToDelete) return;
+
+    const updatedUses = customUses.filter((use) => use.id !== useToDelete);
     onUpdateCustomUses(skill.name, updatedUses);
 
-    if (editingUse?.id === useId) {
+    if (editingUse?.id === useToDelete) {
       setEditingUse(null);
     }
+
+    setDeleteConfirmOpen(false);
+    setUseToDelete(null);
+  };
+
+  /**
+   * Cancela exclusão
+   */
+  const handleCancelDelete = () => {
+    setDeleteConfirmOpen(false);
+    setUseToDelete(null);
   };
 
   /**
@@ -253,6 +303,27 @@ export function SkillUsageSidebar({
     }
 
     setEditingDefaultUse(null);
+  };
+
+  /**
+   * Atualiza modificadores de uso padrão
+   */
+  const handleUpdateDefaultUseModifiers = (
+    useName: string,
+    diceModifier: number,
+    numericModifier: number
+  ) => {
+    const newModifiers = buildModifiersArray(diceModifier, numericModifier);
+    const newOverrides = {
+      ...localDefaultModifiers,
+      [useName]: newModifiers,
+    };
+
+    setLocalDefaultModifiers(newOverrides);
+
+    if (onUpdateDefaultUseModifiers) {
+      onUpdateDefaultUseModifiers(skill.name, newOverrides);
+    }
   };
 
   /**
@@ -304,21 +375,6 @@ export function SkillUsageSidebar({
           </FormControl>
 
           <TextField
-            label="Bônus Específico"
-            type="number"
-            value={editingUse.bonus || 0}
-            onChange={(e) =>
-              setEditingUse({
-                ...editingUse,
-                bonus: parseInt(e.target.value) || 0,
-              })
-            }
-            fullWidth
-            size="small"
-            helperText="Bônus adicional para este uso específico"
-          />
-
-          <TextField
             label="Descrição (opcional)"
             value={editingUse.description || ''}
             onChange={(e) =>
@@ -330,6 +386,23 @@ export function SkillUsageSidebar({
             size="small"
             placeholder="Notas sobre quando usar..."
           />
+
+          {/* Modificadores Inline */}
+          <Box>
+            <Typography variant="caption" color="text.secondary" gutterBottom>
+              Modificadores
+            </Typography>
+            <InlineModifiers
+              diceModifier={extractDiceModifier(editingUse.modifiers || [])}
+              numericModifier={extractNumericModifier(
+                editingUse.modifiers || []
+              )}
+              onUpdate={(dice, numeric) => {
+                const newModifiers = buildModifiersArray(dice, numeric);
+                setEditingUse({ ...editingUse, modifiers: newModifiers });
+              }}
+            />
+          </Box>
 
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
             <Button
@@ -412,18 +485,21 @@ export function SkillUsageSidebar({
             {use.name}
           </Typography>
           {use.description && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              noWrap
-              sx={{
-                display: 'block',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {use.description}
-            </Typography>
+            <Tooltip title={use.description} placement="top" arrow>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+                sx={{
+                  display: 'block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  cursor: 'help',
+                }}
+              >
+                {use.description}
+              </Typography>
+            </Tooltip>
           )}
         </Box>
 
@@ -444,6 +520,35 @@ export function SkillUsageSidebar({
             color={use.bonus > 0 ? 'success' : 'error'}
             sx={{ minWidth: 'fit-content' }}
           />
+        )}
+
+        {/* Modificadores inline - exibição compacta */}
+        {(extractDiceModifier(use.modifiers) !== 0 ||
+          extractNumericModifier(use.modifiers) !== 0) && (
+          <Box sx={{ display: 'flex', gap: 0.5, minWidth: 'fit-content' }}>
+            {extractDiceModifier(use.modifiers) !== 0 && (
+              <Chip
+                label={`${extractDiceModifier(use.modifiers) >= 0 ? '+' : ''}${extractDiceModifier(use.modifiers)}d20`}
+                size="small"
+                variant="outlined"
+                color={
+                  extractDiceModifier(use.modifiers) > 0 ? 'success' : 'error'
+                }
+              />
+            )}
+            {extractNumericModifier(use.modifiers) !== 0 && (
+              <Chip
+                label={`${extractNumericModifier(use.modifiers) >= 0 ? '+' : ''}${extractNumericModifier(use.modifiers)}`}
+                size="small"
+                variant="outlined"
+                color={
+                  extractNumericModifier(use.modifiers) > 0
+                    ? 'success'
+                    : 'error'
+                }
+              />
+            )}
+          </Box>
         )}
 
         {/* Modificador Total */}
@@ -520,11 +625,15 @@ export function SkillUsageSidebar({
     const useAttribute = customAttribute || skill.keyAttribute;
     const isEditing = editingDefaultUse === defaultUse.name;
 
+    // Verifica se há modificadores personalizados para este uso
+    const customModifiers = localDefaultModifiers[defaultUse.name] || [];
+
     // Usa padrão com atributo personalizado ou padrão da habilidade
     const tempUse = {
       keyAttribute: useAttribute,
       bonus: 0,
       skillName: skill.name,
+      modifiers: customModifiers,
     };
 
     const modifier = calculateSkillUseModifier(
@@ -648,6 +757,16 @@ export function SkillUsageSidebar({
                 </IconButton>
               </Tooltip>
             )}
+
+            {/* Modificadores inline */}
+            <InlineModifiers
+              diceModifier={extractDiceModifier(customModifiers)}
+              numericModifier={extractNumericModifier(customModifiers)}
+              onUpdate={(dice, numeric) =>
+                handleUpdateDefaultUseModifiers(defaultUse.name, dice, numeric)
+              }
+              disabled={!isAvailable}
+            />
           </>
         )}
 
@@ -748,6 +867,49 @@ export function SkillUsageSidebar({
 
         <Divider />
 
+        {/* Modificadores da Habilidade Geral */}
+        <Box>
+          <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+            Modificadores da Habilidade
+          </Typography>
+          <Typography variant="caption" color="text.secondary" paragraph>
+            Modificadores aplicados a todos os usos desta habilidade (geral,
+            padrões e customizados).
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2 }}>
+            <InlineModifiers
+              diceModifier={extractDiceModifier(skill.modifiers)}
+              numericModifier={extractNumericModifier(skill.modifiers)}
+              onUpdate={(dice, numeric) => {
+                const newModifiers = buildModifiersArray(dice, numeric);
+                if (onUpdateSkillModifiers) {
+                  onUpdateSkillModifiers(skill.name, newModifiers);
+                }
+              }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {extractDiceModifier(skill.modifiers) !== 0 && (
+                <>
+                  {extractDiceModifier(skill.modifiers) > 0 ? '+' : ''}
+                  {extractDiceModifier(skill.modifiers)}d20
+                  {extractNumericModifier(skill.modifiers) !== 0 ? ', ' : ''}
+                </>
+              )}
+              {extractNumericModifier(skill.modifiers) !== 0 && (
+                <>
+                  {extractNumericModifier(skill.modifiers) > 0 ? '+' : ''}
+                  {extractNumericModifier(skill.modifiers)} numérico
+                </>
+              )}
+              {extractDiceModifier(skill.modifiers) === 0 &&
+                extractNumericModifier(skill.modifiers) === 0 &&
+                'Nenhum modificador aplicado'}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Divider />
+
         {/* Formulário de Edição/Adição */}
         {(isAdding || (editingUse && !isAdding)) && (
           <>
@@ -841,6 +1003,17 @@ export function SkillUsageSidebar({
           </Stack>
         </Box>
       </Stack>
+
+      {/* Diálogo de Confirmação de Exclusão */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title="Remover Uso Customizado"
+        message="Tem certeza que deseja remover este uso customizado? Esta ação não pode ser desfeita."
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        confirmText="Remover"
+        cancelText="Cancelar"
+      />
     </Sidebar>
   );
 }
