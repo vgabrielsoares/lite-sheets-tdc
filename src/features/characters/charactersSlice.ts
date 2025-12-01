@@ -205,6 +205,40 @@ const charactersSlice = createSlice({
       });
       state.error = null;
     },
+
+    /**
+     * Atualiza a Habilidade de Assinatura do personagem
+     * Remove a assinatura da habilidade anterior e define a nova
+     */
+    updateSignatureAbility: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        skillName: import('@/types').SkillName | null;
+      }>
+    ) => {
+      const { characterId, skillName } = action.payload;
+      const character = state.entities[characterId];
+
+      if (!character) {
+        state.error = `Personagem com ID ${characterId} não encontrado`;
+        return;
+      }
+
+      // Remove a assinatura da habilidade anterior
+      Object.values(character.skills).forEach((skill) => {
+        skill.isSignature = false;
+      });
+
+      // Define a nova habilidade de assinatura (se fornecida)
+      if (skillName && character.skills[skillName]) {
+        character.skills[skillName].isSignature = true;
+      }
+
+      // Atualiza timestamp
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     // Load characters
@@ -318,6 +352,7 @@ export const {
   clearSelection,
   clearError,
   setCharacters,
+  updateSignatureAbility,
 } = charactersSlice.actions;
 
 /**
