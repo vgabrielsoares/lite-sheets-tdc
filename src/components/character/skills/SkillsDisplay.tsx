@@ -47,8 +47,14 @@ import type {
   AttributeName,
   Attributes,
   Skills,
+  Modifier,
 } from '@/types';
-import { SKILL_LIST, SKILL_LABELS, ATTRIBUTE_LABELS } from '@/constants';
+import {
+  SKILL_LIST,
+  SKILL_LABELS,
+  ATTRIBUTE_LABELS,
+  SKILL_METADATA,
+} from '@/constants';
 import { SkillRow } from './SkillRow';
 
 export interface SkillsDisplayProps {
@@ -70,6 +76,8 @@ export interface SkillsDisplayProps {
     skillName: SkillName,
     newProficiency: ProficiencyLevel
   ) => void;
+  /** Callback quando modificadores são alterados */
+  onModifiersChange?: (skillName: SkillName, modifiers: Modifier[]) => void;
   /** Callback quando habilidade é clicada (abre sidebar) */
   onSkillClick: (skillName: SkillName) => void;
 }
@@ -84,6 +92,7 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
   isOverloaded,
   onKeyAttributeChange,
   onProficiencyChange,
+  onModifiersChange,
   onSkillClick,
 }) => {
   // Estados locais
@@ -94,8 +103,8 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
   const [attributeFilter, setAttributeFilter] = useState<AttributeName | 'all'>(
     'all'
   );
-  const [combatFilter, setCombatFilter] = useState<
-    'all' | 'combat' | 'non-combat'
+  const [typeFilter, setTypeFilter] = useState<
+    'all' | 'combat' | 'load' | 'instrument' | 'proficiency'
   >('all');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -152,40 +161,29 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
         return false;
       }
 
-      // Filtro de combate/não-combate
-      if (combatFilter === 'combat' && !skill.isSignature) {
-        // Nota: isCombatSkill está na metadata, não na Skill
-        // Usar verificação simples baseada em lista conhecida
-        const combatSkills: SkillName[] = [
-          'acerto',
-          'determinacao',
-          'iniciativa',
-          'luta',
-          'natureza',
-          'reflexo',
-          'religiao',
-        ];
-        if (!combatSkills.includes(skillName)) {
+      // Filtro de tipo/característica
+      if (typeFilter !== 'all') {
+        const metadata = SKILL_METADATA[skillName];
+        if (typeFilter === 'combat' && !metadata.isCombatSkill) {
           return false;
-        }
-      } else if (combatFilter === 'non-combat') {
-        const combatSkills: SkillName[] = [
-          'acerto',
-          'determinacao',
-          'iniciativa',
-          'luta',
-          'natureza',
-          'reflexo',
-          'religiao',
-        ];
-        if (combatSkills.includes(skillName)) {
+        } else if (typeFilter === 'load' && !metadata.hasCargaPenalty) {
+          return false;
+        } else if (
+          typeFilter === 'instrument' &&
+          !metadata.requiresInstrument
+        ) {
+          return false;
+        } else if (
+          typeFilter === 'proficiency' &&
+          !metadata.requiresProficiency
+        ) {
           return false;
         }
       }
 
       return true;
     });
-  }, [searchQuery, proficiencyFilter, attributeFilter, combatFilter, skills]);
+  }, [searchQuery, proficiencyFilter, attributeFilter, typeFilter, skills]);
 
   // Handlers
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,22 +198,29 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
     setAttributeFilter(event.target.value as AttributeName | 'all');
   };
 
-  const handleCombatFilterChange = (event: SelectChangeEvent<string>) => {
-    setCombatFilter(event.target.value as 'all' | 'combat' | 'non-combat');
+  const handleTypeFilterChange = (event: SelectChangeEvent<string>) => {
+    setTypeFilter(
+      event.target.value as
+        | 'all'
+        | 'combat'
+        | 'load'
+        | 'instrument'
+        | 'proficiency'
+    );
   };
 
   const clearFilters = () => {
     setSearchQuery('');
     setProficiencyFilter('all');
     setAttributeFilter('all');
-    setCombatFilter('all');
+    setTypeFilter('all');
   };
 
   const activeFiltersCount =
     (searchQuery ? 1 : 0) +
     (proficiencyFilter !== 'all' ? 1 : 0) +
     (attributeFilter !== 'all' ? 1 : 0) +
-    (combatFilter !== 'all' ? 1 : 0);
+    (typeFilter !== 'all' ? 1 : 0);
 
   return (
     <Box>
@@ -223,7 +228,6 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Typography variant="h6">Habilidades</Typography>
-          <Chip label={`${filteredSkills.length} / 33`} size="small" />
           {isOverloaded && (
             <Tooltip title="Sobrecarregado: algumas habilidades sofrem penalidade de -5">
               <Chip label="Sobrecarregado" size="small" color="warning" />
@@ -250,25 +254,8 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
         )}
       </Box>
 
-      {/* Busca e Filtros */}
+      {/* Filtros */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        {/* Campo de busca */}
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Buscar habilidade..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2 }}
-        />
-
         {/* Toggle de filtros */}
         <Box
           sx={{
@@ -292,7 +279,7 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
                 }}
               />
             </IconButton>
-            <Typography variant="body2">Filtros avançados</Typography>
+            <Typography variant="body2">Filtros</Typography>
             {activeFiltersCount > 0 && (
               <Chip
                 label={`${activeFiltersCount} ativos`}
@@ -360,17 +347,19 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
               </Select>
             </FormControl>
 
-            {/* Filtro Combate/Não-combate */}
+            {/* Filtro por Característica */}
             <FormControl fullWidth size="small">
-              <InputLabel>Tipo</InputLabel>
+              <InputLabel>Característica</InputLabel>
               <Select
-                value={combatFilter}
-                label="Tipo"
-                onChange={handleCombatFilterChange}
+                value={typeFilter}
+                label="Característica"
+                onChange={handleTypeFilterChange}
               >
                 <MenuItem value="all">Todas</MenuItem>
                 <MenuItem value="combat">Combate</MenuItem>
-                <MenuItem value="non-combat">Não-combate</MenuItem>
+                <MenuItem value="load">Carga</MenuItem>
+                <MenuItem value="instrument">Ferramentas</MenuItem>
+                <MenuItem value="proficiency">Proficiência</MenuItem>
               </Select>
             </FormControl>
           </Stack>
@@ -403,6 +392,7 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
               isOverloaded={isOverloaded}
               onKeyAttributeChange={onKeyAttributeChange}
               onProficiencyChange={onProficiencyChange}
+              onModifiersChange={onModifiersChange}
               onClick={onSkillClick}
             />
           ))}

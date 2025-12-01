@@ -53,8 +53,15 @@ import {
   SKILL_METADATA,
   SKILL_PROFICIENCY_LABELS,
   ATTRIBUTE_LABELS,
+  ATTRIBUTE_ABBREVIATIONS,
 } from '@/constants';
 import { calculateSkillRoll } from '@/utils';
+import {
+  InlineModifiers,
+  extractDiceModifier,
+  extractNumericModifier,
+  buildModifiersArray,
+} from './ModifierManager';
 
 export interface SkillRowProps {
   /** Dados da habilidade */
@@ -75,6 +82,8 @@ export interface SkillRowProps {
     skillName: SkillName,
     newProficiency: ProficiencyLevel
   ) => void;
+  /** Callback quando modificadores são alterados */
+  onModifiersChange?: (skillName: SkillName, modifiers: Modifier[]) => void;
   /** Callback quando linha é clicada (abre sidebar) */
   onClick: (skillName: SkillName) => void;
 }
@@ -89,6 +98,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   isOverloaded,
   onKeyAttributeChange,
   onProficiencyChange,
+  onModifiersChange,
   onClick,
 }) => {
   const theme = useTheme();
@@ -122,6 +132,16 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   ) => {
     event.stopPropagation();
     onProficiencyChange(skill.name, event.target.value as ProficiencyLevel);
+  };
+
+  const handleModifiersChange = (
+    diceModifier: number,
+    numericModifier: number
+  ) => {
+    if (onModifiersChange) {
+      const newModifiers = buildModifiersArray(diceModifier, numericModifier);
+      onModifiersChange(skill.name, newModifiers);
+    }
   };
 
   const handleRowClick = () => {
@@ -183,11 +203,11 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         display: 'grid',
         gridTemplateColumns: {
           xs: '1fr auto',
-          sm: '2fr 1fr 1fr 1fr auto auto',
+          sm: '1.8fr 100px 100px 160px 1.2fr',
         },
-        gap: { xs: 1, sm: 2 },
+        gap: { xs: 1, sm: 1.2 },
         alignItems: 'center',
-        p: 2,
+        p: 1.5,
         borderRadius: 2,
         border: `1px solid ${theme.palette.divider}`,
         cursor: 'pointer',
@@ -205,24 +225,22 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       }}
     >
       {/* Nome da habilidade + Indicadores */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Typography variant="body1" fontWeight={skill.isSignature ? 600 : 400}>
-          {SKILL_LABELS[skill.name]}
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 0.5 }}>{indicators}</Box>
-      </Box>
-
-      {/* Atributo-chave padrão (referência) - Desktop only */}
-      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ textDecoration: isCustomAttribute ? 'line-through' : 'none' }}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Tooltip
+          title={
+            isCustomAttribute
+              ? `${SKILL_LABELS[skill.name]} - Atributo padrão: ${metadata.keyAttribute === 'especial' ? 'Especial' : ATTRIBUTE_LABELS[metadata.keyAttribute]} (customizado para ${ATTRIBUTE_LABELS[skill.keyAttribute]})`
+              : `${SKILL_LABELS[skill.name]} - Atributo: ${metadata.keyAttribute === 'especial' ? 'Especial' : ATTRIBUTE_LABELS[metadata.keyAttribute]}`
+          }
         >
-          {metadata.keyAttribute === 'especial'
-            ? 'Especial'
-            : ATTRIBUTE_LABELS[metadata.keyAttribute]}
-        </Typography>
+          <Typography
+            variant="body1"
+            fontWeight={skill.isSignature ? 600 : 500}
+          >
+            {SKILL_LABELS[skill.name]}
+          </Typography>
+        </Tooltip>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>{indicators}</Box>
       </Box>
 
       {/* Atributo-chave atual (editável) */}
@@ -230,7 +248,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         size="small"
         fullWidth
         onClick={(e) => e.stopPropagation()}
-        sx={{ minWidth: { xs: 100, sm: 120 } }}
+        sx={{ display: { xs: 'none', sm: 'block' } }}
       >
         <Select
           value={skill.keyAttribute}
@@ -238,7 +256,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           aria-label={`Atributo-chave para ${SKILL_LABELS[skill.name]}`}
           sx={{
             '& .MuiSelect-select': {
-              py: 0.5,
+              py: 0.75,
             },
             ...(isCustomAttribute && {
               borderColor: theme.palette.primary.main,
@@ -246,12 +264,12 @@ export const SkillRow: React.FC<SkillRowProps> = ({
             }),
           }}
         >
-          <MenuItem value="agilidade">Agilidade</MenuItem>
-          <MenuItem value="constituicao">Constituição</MenuItem>
-          <MenuItem value="forca">Força</MenuItem>
-          <MenuItem value="influencia">Influência</MenuItem>
-          <MenuItem value="mente">Mente</MenuItem>
-          <MenuItem value="presenca">Presença</MenuItem>
+          <MenuItem value="agilidade">AGI</MenuItem>
+          <MenuItem value="constituicao">CON</MenuItem>
+          <MenuItem value="forca">FOR</MenuItem>
+          <MenuItem value="influencia">INF</MenuItem>
+          <MenuItem value="mente">MEN</MenuItem>
+          <MenuItem value="presenca">PRE</MenuItem>
         </Select>
       </FormControl>
 
@@ -260,7 +278,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         size="small"
         fullWidth
         onClick={(e) => e.stopPropagation()}
-        sx={{ minWidth: { xs: 100, sm: 120 } }}
+        sx={{ display: { xs: 'none', sm: 'block' } }}
       >
         <Select
           value={skill.proficiencyLevel}
@@ -268,7 +286,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           aria-label={`Proficiência em ${SKILL_LABELS[skill.name]}`}
           sx={{
             '& .MuiSelect-select': {
-              py: 0.5,
+              py: 0.75,
             },
           }}
         >
@@ -279,27 +297,60 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         </Select>
       </FormControl>
 
-      {/* Modificador total */}
+      {/* Modificadores inline */}
       <Box
-        sx={{ display: { xs: 'none', sm: 'flex' }, justifyContent: 'center' }}
+        onClick={(e) => e.stopPropagation()}
+        sx={{ display: { xs: 'none', sm: 'block' } }}
       >
-        <Chip
-          label={
-            calculation.totalModifier >= 0
-              ? `+${calculation.totalModifier}`
-              : calculation.totalModifier
-          }
-          size="small"
-          color={calculation.totalModifier >= 0 ? 'success' : 'error'}
-          variant="outlined"
+        <InlineModifiers
+          diceModifier={extractDiceModifier(skill.modifiers)}
+          numericModifier={extractNumericModifier(skill.modifiers)}
+          onUpdate={handleModifiersChange}
         />
       </Box>
 
-      {/* Fórmula de rolagem */}
-      <Box sx={{ display: { xs: 'none', sm: 'block' }, textAlign: 'right' }}>
-        <Typography variant="body2" fontFamily="monospace" color="primary">
-          {rollFormula.formula}
-        </Typography>
+      {/* Resultado: Modificador + Fórmula (combinados) */}
+      <Box
+        sx={{
+          display: { xs: 'none', sm: 'flex' },
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          gap: 1.5,
+        }}
+      >
+        <Tooltip
+          title={`Modificador total: ${calculation.attributeValue} (atributo) × ${calculation.proficiencyMultiplier} (proficiência) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
+        >
+          <Chip
+            label={
+              calculation.totalModifier >= 0
+                ? `+${calculation.totalModifier}`
+                : calculation.totalModifier
+            }
+            size="small"
+            color={calculation.totalModifier >= 0 ? 'success' : 'error'}
+            variant="outlined"
+            sx={{ fontWeight: 600 }}
+          />
+        </Tooltip>
+
+        <Tooltip
+          title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+        >
+          <Typography
+            variant="body1"
+            fontFamily="monospace"
+            color="primary"
+            fontWeight={700}
+            sx={{
+              minWidth: 'fit-content',
+              fontSize: '1.25rem',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {rollFormula.formula}
+          </Typography>
+        </Tooltip>
       </Box>
 
       {/* Mobile: Modificador + Rolagem */}
@@ -310,19 +361,33 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           justifyContent: 'flex-end',
         }}
       >
-        <Chip
-          label={
-            calculation.totalModifier >= 0
-              ? `+${calculation.totalModifier}`
-              : calculation.totalModifier
-          }
-          size="small"
-          color={calculation.totalModifier >= 0 ? 'success' : 'error'}
-          variant="outlined"
-        />
-        <Typography variant="body2" fontFamily="monospace" color="primary">
-          {rollFormula.formula}
-        </Typography>
+        <Tooltip
+          title={`Modificador total: ${calculation.attributeValue} (atributo) × ${calculation.proficiencyMultiplier} (proficiência) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
+        >
+          <Chip
+            label={
+              calculation.totalModifier >= 0
+                ? `+${calculation.totalModifier}`
+                : calculation.totalModifier
+            }
+            size="small"
+            color={calculation.totalModifier >= 0 ? 'success' : 'error'}
+            variant="outlined"
+            sx={{ fontWeight: 600 }}
+          />
+        </Tooltip>
+        <Tooltip
+          title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+        >
+          <Typography
+            variant="body2"
+            fontFamily="monospace"
+            color="primary"
+            fontWeight={600}
+          >
+            {rollFormula.formula}
+          </Typography>
+        </Tooltip>
       </Box>
     </Box>
   );
