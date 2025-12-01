@@ -324,6 +324,37 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Handler para atualizar habilidade de assinatura
+   */
+  const handleSignatureAbilityChange = (skillName: SkillName | null) => {
+    // Remove assinatura de todas as habilidades
+    const updatedSkills = Object.entries(character.skills).reduce(
+      (acc, [key, skill]) => {
+        acc[key as SkillName] = {
+          ...skill,
+          isSignature: skillName === key,
+        };
+        return acc;
+      },
+      {} as typeof character.skills
+    );
+
+    onUpdate({
+      skills: updatedSkills,
+    });
+  };
+
+  /**
+   * Encontra qual habilidade é atualmente a assinatura
+   */
+  const getCurrentSignatureSkill = (): SkillName | null => {
+    const signatureEntry = Object.entries(character.skills).find(
+      ([, skill]) => skill.isSignature
+    );
+    return signatureEntry ? (signatureEntry[0] as SkillName) : null;
+  };
+
+  /**
    * Renderiza o conteúdo da aba atual
    */
   const renderTabContent = () => {
@@ -564,6 +595,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
                 onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
                 onUpdateSkillModifiers={handleSkillModifiersChange}
+                onSignatureAbilityChange={handleSignatureAbilityChange}
+                currentSignatureSkill={getCurrentSignatureSkill()}
               />
             )}
           </Box>
@@ -670,6 +703,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
             onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
             onUpdateSkillModifiers={handleSkillModifiersChange}
+            onSignatureAbilityChange={handleSignatureAbilityChange}
+            currentSignatureSkill={getCurrentSignatureSkill()}
           />
         )}
       </Box>
