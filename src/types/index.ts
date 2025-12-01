@@ -65,6 +65,8 @@ export type {
   SkillUse,
   SkillModifierCalculation,
   SkillRollFormula,
+  DefaultUseAttributeOverrides,
+  DefaultUseModifierOverrides,
 } from './skills';
 
 export {

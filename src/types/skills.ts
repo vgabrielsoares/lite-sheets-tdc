@@ -134,6 +134,8 @@ export interface SkillUse {
   bonus: number;
   /** Descrição ou notas sobre este uso */
   description?: string;
+  /** Modificadores específicos deste uso (numéricos e de dados) */
+  modifiers?: Modifier[];
 }
 
 /**
@@ -141,6 +143,12 @@ export interface SkillUse {
  * Permite que usos padrões usem atributos diferentes da habilidade base
  */
 export type DefaultUseAttributeOverrides = Record<string, AttributeName>;
+
+/**
+ * Mapa de modificadores personalizados por nome de uso padrão
+ * Permite que usos padrões tenham modificadores específicos
+ */
+export type DefaultUseModifierOverrides = Record<string, Modifier[]>;
 
 /**
  * Interface para uma habilidade do personagem
@@ -156,6 +164,8 @@ export interface Skill {
   isSignature: boolean;
   /** Atributos-chave personalizados para usos padrões */
   defaultUseAttributeOverrides?: DefaultUseAttributeOverrides;
+  /** Modificadores personalizados para usos padrões */
+  defaultUseModifierOverrides?: DefaultUseModifierOverrides;
   /** Modificadores adicionais aplicados à habilidade */
   modifiers: Modifier[];
   /** Usos customizados desta habilidade */
