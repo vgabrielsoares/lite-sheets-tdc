@@ -57,6 +57,7 @@ import {
 } from '@/constants';
 import { getProficiencyInfo } from '@/utils/proficiencyCalculations';
 import { SkillRow } from './SkillRow';
+import { SignatureAbility } from './SignatureAbility';
 
 export interface SkillsDisplayProps {
   /** Todas as habilidades do personagem */
@@ -81,6 +82,8 @@ export interface SkillsDisplayProps {
   onModifiersChange?: (skillName: SkillName, modifiers: Modifier[]) => void;
   /** Callback quando habilidade é clicada (abre sidebar) */
   onSkillClick: (skillName: SkillName) => void;
+  /** Callback quando habilidade de assinatura é alterada */
+  onSignatureAbilityChange?: (skillName: SkillName | null) => void;
 }
 
 /**
@@ -95,6 +98,7 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
   onProficiencyChange,
   onModifiersChange,
   onSkillClick,
+  onSignatureAbilityChange,
 }) => {
   // Estados locais
   const [searchQuery, setSearchQuery] = useState('');
@@ -250,6 +254,17 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
           </Alert>
         )}
       </Box>
+
+      {/* Habilidade de Assinatura */}
+      {onSignatureAbilityChange && (
+        <Box sx={{ mb: 3 }}>
+          <SignatureAbility
+            skills={skills}
+            characterLevel={characterLevel}
+            onSignatureChange={onSignatureAbilityChange}
+          />
+        </Box>
+      )}
 
       {/* Filtros */}
       <Paper sx={{ p: 2, mb: 3 }}>

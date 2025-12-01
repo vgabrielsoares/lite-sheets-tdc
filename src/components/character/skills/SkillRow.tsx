@@ -222,6 +222,12 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         p: 1.5,
         borderRadius: 2,
         border: `1px solid ${theme.palette.divider}`,
+        // Destaque visual para Habilidade de Assinatura
+        ...(skill.isSignature && {
+          borderColor: 'warning.main',
+          borderWidth: 2,
+          bgcolor: alpha(theme.palette.warning.main, 0.05),
+        }),
         cursor: 'pointer',
         // Otimização: apenas transições nas propriedades que mudam
         transition:
