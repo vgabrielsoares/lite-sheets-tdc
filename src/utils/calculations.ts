@@ -451,3 +451,56 @@ export function applyDeltaToPP(
   const recovered = Math.min(pp.current + delta, pp.max);
   return { ...pp, current: recovered };
 }
+
+/**
+ * Calculates the craft proficiency multiplier based on craft level
+ * Formula:
+ * - Level 0: x0
+ * - Level 1-2: x1
+ * - Level 3-4: x2
+ * - Level 5: x3
+ *
+ * @param level - The craft level (0-5)
+ * @returns The multiplier for the craft
+ *
+ * @example
+ * getCraftMultiplier(0); // 0
+ * getCraftMultiplier(1); // 1
+ * getCraftMultiplier(2); // 1
+ * getCraftMultiplier(3); // 2
+ * getCraftMultiplier(4); // 2
+ * getCraftMultiplier(5); // 3
+ */
+export function getCraftMultiplier(level: 0 | 1 | 2 | 3 | 4 | 5): number {
+  if (level === 0) return 0;
+  if (level <= 2) return 1;
+  if (level <= 4) return 2;
+  return 3;
+}
+
+/**
+ * Calculates the total craft modifier
+ * Formula: Atributo-chave × Multiplicador de Nível + Outros Modificadores
+ *
+ * @param attributeValue - The value of the key attribute for this craft
+ * @param level - The craft level (0-5)
+ * @param otherModifiers - Sum of other modifiers (default: 0)
+ * @returns The total calculated craft modifier
+ *
+ * @example
+ * calculateCraftModifier(2, 0); // 0 (2 × 0)
+ * calculateCraftModifier(2, 1); // 2 (2 × 1)
+ * calculateCraftModifier(2, 2); // 2 (2 × 1)
+ * calculateCraftModifier(3, 3); // 6 (3 × 2)
+ * calculateCraftModifier(3, 4); // 6 (3 × 2)
+ * calculateCraftModifier(4, 5); // 12 (4 × 3)
+ * calculateCraftModifier(2, 3, 2); // 8 (2 × 2 + 2)
+ */
+export function calculateCraftModifier(
+  attributeValue: number,
+  level: 0 | 1 | 2 | 3 | 4 | 5,
+  otherModifiers: number = 0
+): number {
+  const multiplier = getCraftMultiplier(level);
+  return attributeValue * multiplier + otherModifiers;
+}

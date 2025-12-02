@@ -58,7 +58,7 @@ import { calculateSignatureAbilityBonus } from './calculations';
  */
 export function calculateSkillTotalModifier(
   skillName: SkillName,
-  keyAttribute: AttributeName,
+  keyAttribute: AttributeName | 'especial',
   attributeValue: number,
   proficiencyLevel: ProficiencyLevel,
   isSignature: boolean,
@@ -219,7 +219,7 @@ export function calculateSkillRollFormula(
  */
 export function calculateSkillRoll(
   skillName: SkillName,
-  keyAttribute: AttributeName,
+  keyAttribute: AttributeName | 'especial',
   attributes: Attributes,
   proficiencyLevel: ProficiencyLevel,
   isSignature: boolean,
@@ -230,7 +230,10 @@ export function calculateSkillRoll(
   calculation: SkillModifierCalculation;
   rollFormula: SkillRollFormula;
 } {
-  const attributeValue = attributes[keyAttribute];
+  // Para habilidades especiais sem atributo definido (como "oficio" sem craft selecionado),
+  // usar 0 como valor padrão
+  const attributeValue =
+    keyAttribute === 'especial' ? 0 : attributes[keyAttribute];
 
   // Separar modificadores de valor e de dados
   const valueModifiers = modifiers.filter((mod) => !mod.affectsDice);
@@ -355,7 +358,7 @@ export function isCombatSkill(skillName: SkillName): boolean {
  */
 export function calculateSkillUseModifier(
   skillUse: {
-    keyAttribute: AttributeName;
+    keyAttribute: AttributeName | 'especial';
     bonus: number;
     skillName: SkillName;
     modifiers?: Modifier[];
@@ -371,8 +374,11 @@ export function calculateSkillUseModifier(
 ): number {
   const metadata = SKILL_METADATA[skillUse.skillName];
 
-  // Valor do atributo customizado
-  const attributeValue = attributes[skillUse.keyAttribute];
+  // Valor do atributo customizado (0 para 'especial')
+  const attributeValue =
+    skillUse.keyAttribute === 'especial'
+      ? 0
+      : attributes[skillUse.keyAttribute];
 
   // Usa a proficiência da habilidade base
   const proficiencyMultiplier =
@@ -429,7 +435,7 @@ export function calculateSkillUseModifier(
  */
 export function calculateSkillUseRollFormula(
   skillUse: {
-    keyAttribute: AttributeName;
+    keyAttribute: AttributeName | 'especial';
     bonus: number;
     skillName: SkillName;
     modifiers?: Modifier[];
@@ -451,7 +457,10 @@ export function calculateSkillUseRollFormula(
     isOverloaded
   );
 
-  const attributeValue = attributes[skillUse.keyAttribute];
+  const attributeValue =
+    skillUse.keyAttribute === 'especial'
+      ? 0
+      : attributes[skillUse.keyAttribute];
 
   // Combinar modificadores de dados: habilidade base + uso específico
   const allModifiers = [

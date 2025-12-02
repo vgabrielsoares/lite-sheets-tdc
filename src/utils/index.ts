@@ -28,6 +28,8 @@ export {
   getEncumbranceState,
   applyDeltaToHP,
   applyDeltaToPP,
+  getCraftMultiplier,
+  calculateCraftModifier,
 } from './calculations';
 
 // Validation utilities
@@ -107,3 +109,13 @@ export {
   getProficiencyInfo,
   countProficienciesByLevel,
 } from './proficiencyCalculations';
+
+// Craft sync utilities
+export {
+  craftToSkillUse,
+  skillUseToCraft,
+  syncCraftsToOficioSkill,
+  syncOficioSkillToCrafts,
+  calculateCraftBaseModifier,
+  calculateCraftTotalModifier,
+} from './craftSync';
