@@ -88,6 +88,15 @@ export interface SkillsDisplayProps {
   crafts?: import('@/types').Craft[];
   /** Callback quando ofício selecionado é alterado */
   onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
+  /** Dados de sorte do personagem (para habilidade "sorte") */
+  luck?: import('@/types').LuckLevel;
+  /** Callback quando nível de sorte é alterado */
+  onLuckLevelChange?: (level: number) => void;
+  /** Callback quando modificadores de sorte são alterados */
+  onLuckModifiersChange?: (
+    diceModifier: number,
+    numericModifier: number
+  ) => void;
 }
 
 /**
@@ -105,6 +114,9 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
   onSignatureAbilityChange,
   crafts = [],
   onSelectedCraftChange,
+  luck,
+  onLuckLevelChange,
+  onLuckModifiersChange,
 }) => {
   // Estados locais
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,8 +133,8 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
 
   // Calcular informações de proficiência usando utility
   const proficiencyInfo = useMemo(() => {
-    return getProficiencyInfo(skills, attributes.mente);
-  }, [skills, attributes.mente]);
+    return getProficiencyInfo(skills, attributes.mente, luck?.level || 0);
+  }, [skills, attributes.mente, luck?.level]);
 
   const { max: maxProficiencies, acquired: acquiredProficiencies } =
     proficiencyInfo;
@@ -414,6 +426,9 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
               onClick={onSkillClick}
               crafts={crafts}
               onSelectedCraftChange={onSelectedCraftChange}
+              luck={luck}
+              onLuckLevelChange={onLuckLevelChange}
+              onLuckModifiersChange={onLuckModifiersChange}
             />
           ))}
         </Stack>

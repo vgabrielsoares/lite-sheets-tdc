@@ -95,6 +95,15 @@ export interface SkillRowProps {
   crafts?: Craft[];
   /** Callback quando ofício selecionado é alterado (apenas para habilidade "oficio") */
   onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
+  /** Dados de sorte do personagem (apenas para habilidade "sorte") */
+  luck?: import('@/types').LuckLevel;
+  /** Callback quando nível de sorte é alterado (apenas para habilidade "sorte") */
+  onLuckLevelChange?: (level: number) => void;
+  /** Callback quando modificadores de sorte são alterados (apenas para habilidade "sorte") */
+  onLuckModifiersChange?: (
+    diceModifier: number,
+    numericModifier: number
+  ) => void;
 }
 
 /**
@@ -111,12 +120,16 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   onClick,
   crafts = [],
   onSelectedCraftChange,
+  luck,
+  onLuckLevelChange,
+  onLuckModifiersChange,
 }) => {
   const theme = useTheme();
   const metadata = SKILL_METADATA[skill.name];
 
-  // Detectar se é habilidade "oficio"
+  // Detectar se é habilidade "oficio" ou "sorte"
   const isOficioSkill = skill.name === 'oficio';
+  const isSorteSkill = skill.name === 'sorte';
 
   // Pegar o craft selecionado (se houver)
   const selectedCraft =
@@ -126,8 +139,61 @@ export const SkillRow: React.FC<SkillRowProps> = ({
 
   // Calcular modificador e rolagem
   // Para ofício, usar o craft selecionado se houver
+  // Para sorte, usar os dados de luck
   let calculation, rollFormula;
-  if (isOficioSkill && selectedCraft) {
+
+  if (isSorteSkill && luck) {
+    // Tabela de rolagens por nível de sorte
+    const LUCK_ROLL_TABLE: Record<number, { dice: number; bonus: number }> = {
+      0: { dice: 1, bonus: 0 },
+      1: { dice: 2, bonus: 0 },
+      2: { dice: 2, bonus: 2 },
+      3: { dice: 3, bonus: 3 },
+      4: { dice: 3, bonus: 6 },
+      5: { dice: 4, bonus: 8 },
+      6: { dice: 4, bonus: 12 },
+      7: { dice: 5, bonus: 15 },
+    };
+
+    // Obter dados do nível de sorte ou calcular para níveis > 7
+    const luckData = LUCK_ROLL_TABLE[luck.level] ?? {
+      dice: luck.level,
+      bonus: luck.level * 3,
+    };
+
+    // Calcular bônus de assinatura se aplicável
+    const signatureBonus = skill.isSignature
+      ? calculateSignatureAbilityBonus(characterLevel, metadata.isCombatSkill)
+      : 0;
+
+    // Calcular dados e modificadores totais
+    const baseDice = luckData.dice;
+    const baseBonus = luckData.bonus;
+    const totalDice = baseDice + (luck.diceModifier || 0);
+    const totalModifier =
+      baseBonus + (luck.numericModifier || 0) + signatureBonus;
+
+    // Criar cálculo customizado para sorte
+    calculation = {
+      attributeValue: luck.level,
+      proficiencyMultiplier: 0, // Sorte não usa proficiência
+      baseModifier: baseBonus,
+      signatureBonus,
+      otherModifiers: luck.numericModifier || 0,
+      totalModifier,
+    };
+
+    // Calcular fórmula de rolagem
+    const diceCount = Math.max(1, Math.abs(totalDice));
+    const takeLowest = totalDice < 1;
+
+    rollFormula = {
+      diceCount,
+      takeLowest,
+      modifier: totalModifier,
+      formula: `${diceCount}d20${takeLowest ? ' (menor)' : ''}${totalModifier >= 0 ? '+' : ''}${totalModifier}`,
+    };
+  } else if (isOficioSkill && selectedCraft) {
     // Calcular usando o craft selecionado
     const craftAttributeValue = attributes[selectedCraft.attributeKey];
     const craftMultiplier = getCraftMultiplier(selectedCraft.level);
@@ -208,6 +274,22 @@ export const SkillRow: React.FC<SkillRowProps> = ({
     event.stopPropagation();
     if (onSelectedCraftChange) {
       onSelectedCraftChange(skill.name, event.target.value);
+    }
+  };
+
+  const handleLuckLevelChange = (event: SelectChangeEvent<number>) => {
+    event.stopPropagation();
+    if (onLuckLevelChange) {
+      onLuckLevelChange(Number(event.target.value));
+    }
+  };
+
+  const handleLuckModifiersChange = (
+    diceModifier: number,
+    numericModifier: number
+  ) => {
+    if (onLuckModifiersChange) {
+      onLuckModifiersChange(diceModifier, numericModifier);
     }
   };
 
@@ -334,7 +416,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         <Box sx={{ display: 'flex', gap: 0.5 }}>{indicators}</Box>
       </Box>
 
-      {/* Atributo-chave atual (editável) OU Select de Ofício */}
+      {/* Atributo-chave atual (editável) OU Select de Ofício OU Select de Nível de Sorte */}
       {isOficioSkill ? (
         // Select de ofício (apenas para habilidade "oficio")
         <FormControl
@@ -363,6 +445,34 @@ export const SkillRow: React.FC<SkillRowProps> = ({
                 {craft.level})
               </MenuItem>
             ))}
+          </Select>
+        </FormControl>
+      ) : isSorteSkill && luck ? (
+        // Select de nível de sorte (apenas para habilidade "sorte")
+        <FormControl
+          size="small"
+          fullWidth
+          onClick={(e) => e.stopPropagation()}
+          sx={{ display: { xs: 'none', sm: 'block' }, gridColumn: 'span 2' }}
+        >
+          <Select
+            value={luck.level}
+            onChange={handleLuckLevelChange}
+            aria-label="Nível de sorte"
+            sx={{
+              '& .MuiSelect-select': {
+                py: 0.75,
+              },
+            }}
+          >
+            <MenuItem value={0}>Nível 0 (1d20)</MenuItem>
+            <MenuItem value={1}>Nível 1 (2d20)</MenuItem>
+            <MenuItem value={2}>Nível 2 (2d20+2)</MenuItem>
+            <MenuItem value={3}>Nível 3 (3d20+3)</MenuItem>
+            <MenuItem value={4}>Nível 4 (3d20+6)</MenuItem>
+            <MenuItem value={5}>Nível 5 (4d20+8)</MenuItem>
+            <MenuItem value={6}>Nível 6 (4d20+12)</MenuItem>
+            <MenuItem value={7}>Nível 7 (5d20+15)</MenuItem>
           </Select>
         </FormControl>
       ) : (
@@ -428,11 +538,19 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         onClick={(e) => e.stopPropagation()}
         sx={{ display: { xs: 'none', sm: 'block' } }}
       >
-        <InlineModifiers
-          diceModifier={extractDiceModifier(skill.modifiers)}
-          numericModifier={extractNumericModifier(skill.modifiers)}
-          onUpdate={handleModifiersChange}
-        />
+        {isSorteSkill && luck ? (
+          <InlineModifiers
+            diceModifier={luck.diceModifier || 0}
+            numericModifier={luck.numericModifier || 0}
+            onUpdate={handleLuckModifiersChange}
+          />
+        ) : (
+          <InlineModifiers
+            diceModifier={extractDiceModifier(skill.modifiers)}
+            numericModifier={extractNumericModifier(skill.modifiers)}
+            onUpdate={handleModifiersChange}
+          />
+        )}
       </Box>
 
       {/* Resultado: Modificador + Fórmula (combinados) */}
