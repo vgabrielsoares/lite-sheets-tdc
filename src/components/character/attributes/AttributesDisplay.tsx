@@ -1,7 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Divider, Paper } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Divider,
+  Paper,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import { AttributeCard } from './AttributeCard';
 import { PHYSICAL_ATTRIBUTES, MENTAL_ATTRIBUTES } from '@/constants';
 import type { Attributes, AttributeName } from '@/types';
@@ -48,8 +56,41 @@ export function AttributesDisplay({
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: 2,
+        position: 'relative',
       }}
     >
+      {/* Botão de informações no canto superior direito */}
+      <Tooltip
+        title={
+          <Typography variant="body2">
+            <strong>Importante:</strong> Atributos normalmente vão de 0 a 5, mas
+            podem ser superados em casos especiais. Com atributo 0, você rola
+            2d20 e escolhe o menor resultado. Com atributo 1-5, você rola aquela
+            quantidade de d20 e escolhe o maior resultado. Clique em um atributo
+            para abrir a sidebar e editar seu valor.
+          </Typography>
+        }
+        arrow
+        placement="left"
+      >
+        <IconButton
+          size="small"
+          aria-label="Informações sobre atributos"
+          sx={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            color: 'text.secondary',
+            '&:hover': {
+              color: 'primary.main',
+              bgcolor: 'action.hover',
+            },
+          }}
+        >
+          <InfoIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+
       <Typography
         variant="h5"
         component="h2"
@@ -133,26 +174,6 @@ export function AttributesDisplay({
             />
           ))}
         </Box>
-      </Box>
-
-      {/* Nota explicativa */}
-      <Box
-        sx={{
-          mt: 3,
-          p: 2,
-          bgcolor: 'action.hover',
-          borderRadius: 1,
-        }}
-      >
-        <Typography variant="caption" color="text.secondary">
-          <strong>Importante:</strong> Atributos normalmente vão de 0 a 5, mas
-          podem ser superados em casos especiais. Com atributo 0, você rola 2d20
-          e escolhe o menor resultado. Com atributo 1-5, você rola aquela
-          quantidade de d20 e escolhe o maior resultado.{' '}
-          <strong>
-            Clique em um atributo para abrir a sidebar e editar seu valor.
-          </strong>
-        </Typography>
       </Box>
     </Paper>
   );
