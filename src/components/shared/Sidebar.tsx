@@ -128,11 +128,22 @@ export function Sidebar({
       sx={{
         width: sidebarWidth,
         maxWidth: '100vw',
-        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
-        flexShrink: 0, // Não encolher a sidebar
+        flexShrink: 0,
+        // Position fixed para ficar fixo na tela independente do scroll
+        position: 'fixed',
+        // Offset do header (64px) + breadcrumb/tabs (~80px) + margem
+        top: 160,
+        // Alinhado com o container xl (1536px) + padding
+        right: {
+          xs: 16,
+          lg: 'calc((100vw - 1536px) / 2 + 24px)',
+        },
+        // Altura máxima: viewport - top offset - footer (~60px) - margens
+        maxHeight: 'calc(100vh - 220px)',
+        zIndex: 1000, // Acima do conteúdo mas abaixo de modais
+        overflow: 'hidden', // O scroll fica no conteúdo interno
       }}
     >
       {/* Header */}
@@ -173,14 +184,13 @@ export function Sidebar({
 
       <Divider />
 
-      {/* Área de Conteúdo com Scroll */}
+      {/* Área de Conteúdo */}
       <Box
         role="region"
         aria-labelledby="sidebar-title"
         sx={{
           flex: 1,
-          overflow: 'auto',
-          overflowX: 'hidden',
+          overflow: 'auto', // Scroll interno quando conteúdo exceder
           // Padding padrão de 3 (24px) seguindo LinhagemSidebar
           ...(contentPadding && { p: 3 }),
           // Scrollbar customizada
