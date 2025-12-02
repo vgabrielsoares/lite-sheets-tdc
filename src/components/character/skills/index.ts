@@ -6,6 +6,8 @@ export { SkillRow } from './SkillRow';
 export { SkillsDisplay } from './SkillsDisplay';
 export { ProficiencySelector } from './ProficiencySelector';
 export { SignatureAbility } from './SignatureAbility';
+export { CraftsDisplay } from './CraftsDisplay';
+export { CraftForm } from './CraftForm';
 export {
   InlineModifiers,
   extractDiceModifier,
