@@ -184,14 +184,20 @@ export const SkillRow: React.FC<SkillRowProps> = ({
     };
 
     // Calcular fórmula de rolagem
-    const diceCount = Math.max(1, Math.abs(totalDice));
-    const takeLowest = totalDice < 1;
+    // Quando dados < 1, converte: 0→2, -1→3, -2→4, etc.
+    let diceCount = totalDice;
+    let takeLowest = false;
+    if (totalDice < 1) {
+      diceCount = 2 - totalDice; // 0→2, -1→3, -2→4
+      takeLowest = true;
+    }
+    // Se totalDice >= 1, não usa takeLowest mesmo se partiu de 0
 
     rollFormula = {
       diceCount,
       takeLowest,
       modifier: totalModifier,
-      formula: `${diceCount}d20${takeLowest ? ' (menor)' : ''}${totalModifier >= 0 ? '+' : ''}${totalModifier}`,
+      formula: `${diceCount}d20${totalModifier >= 0 ? '+' : ''}${totalModifier}`,
     };
   } else if (isOficioSkill && selectedCraft) {
     // Calcular usando o craft selecionado
@@ -217,14 +223,20 @@ export const SkillRow: React.FC<SkillRowProps> = ({
 
     // Calcular fórmula de rolagem
     const totalDice = 1 + (selectedCraft.diceModifier || 0);
-    const diceCount = Math.abs(totalDice) || 1;
-    const takeLowest = totalDice < 1 || craftAttributeValue === 0;
+    // Quando dados < 1, converte: 0→2, -1→3, -2→4, etc.
+    let diceCount = totalDice;
+    let takeLowest = false;
+    if (totalDice < 1) {
+      diceCount = 2 - totalDice;
+      takeLowest = true;
+    }
+    // Se craft attribute é 0 mas totalDice >= 1, não usa takeLowest
 
     rollFormula = {
       diceCount,
       takeLowest,
       modifier: calculation.totalModifier,
-      formula: `${diceCount}d20${takeLowest ? ' (menor)' : ''}${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier}`,
+      formula: `${diceCount}d20${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier}`,
     };
   } else {
     // Cálculo normal para habilidades não-ofício ou ofício sem craft selecionado
@@ -425,27 +437,59 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           onClick={(e) => e.stopPropagation()}
           sx={{ display: { xs: 'none', sm: 'block' }, gridColumn: 'span 2' }}
         >
-          <Select
-            value={skill.selectedCraftId || ''}
-            onChange={handleSelectedCraftChange}
-            displayEmpty
-            aria-label="Selecionar ofício"
-            sx={{
-              '& .MuiSelect-select': {
-                py: 0.75,
-              },
-            }}
+          <Tooltip
+            title={
+              selectedCraft
+                ? `${selectedCraft.name} (${ATTRIBUTE_ABBREVIATIONS[selectedCraft.attributeKey]} Nv. ${selectedCraft.level})`
+                : 'Selecione um ofício...'
+            }
+            enterDelay={300}
+            placement="top"
           >
-            <MenuItem value="" disabled>
-              <em>Selecione um ofício...</em>
-            </MenuItem>
-            {crafts.map((craft) => (
-              <MenuItem key={craft.id} value={craft.id}>
-                {craft.name} ({ATTRIBUTE_ABBREVIATIONS[craft.attributeKey]} Nv.
-                {craft.level})
+            <Select
+              value={skill.selectedCraftId || ''}
+              onChange={handleSelectedCraftChange}
+              displayEmpty
+              aria-label="Selecionar ofício"
+              sx={{
+                '& .MuiSelect-select': {
+                  py: 0.75,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '150px',
+                },
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxWidth: '300px',
+                  },
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                <em>Selecione um ofício...</em>
               </MenuItem>
-            ))}
-          </Select>
+              {crafts.map((craft) => (
+                <MenuItem
+                  key={craft.id}
+                  value={craft.id}
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
+                  }}
+                  title={`${craft.name} (${ATTRIBUTE_ABBREVIATIONS[craft.attributeKey]} Nv. ${craft.level})`}
+                >
+                  {craft.name} ({ATTRIBUTE_ABBREVIATIONS[craft.attributeKey]}{' '}
+                  Nv.
+                  {craft.level})
+                </MenuItem>
+              ))}
+            </Select>
+          </Tooltip>
         </FormControl>
       ) : isSorteSkill && luck ? (
         // Select de nível de sorte (apenas para habilidade "sorte")
@@ -586,7 +630,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           <Typography
             variant="body1"
             fontFamily="monospace"
-            color="primary"
+            color={rollFormula.takeLowest ? 'error' : 'primary'}
             fontWeight={700}
             sx={{
               minWidth: 'fit-content',
@@ -630,7 +674,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           <Typography
             variant="body2"
             fontFamily="monospace"
-            color="primary"
+            color={rollFormula.takeLowest ? 'error' : 'primary'}
             fontWeight={600}
           >
             {rollFormula.formula}
