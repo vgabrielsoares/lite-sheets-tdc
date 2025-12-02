@@ -355,6 +355,70 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Handler para adicionar um novo ofício
+   */
+  const handleAddCraft = (craft: Omit<import('@/types').Craft, 'id'>) => {
+    const { v4: uuidv4 } = require('uuid');
+    const newCraft: import('@/types').Craft = {
+      ...craft,
+      id: uuidv4(),
+    };
+
+    onUpdate({
+      crafts: [...character.crafts, newCraft],
+    });
+  };
+
+  /**
+   * Handler para atualizar um ofício existente
+   */
+  const handleUpdateCraft = (
+    craftId: string,
+    updates: Partial<import('@/types').Craft>
+  ) => {
+    const updatedCrafts = character.crafts.map((craft) =>
+      craft.id === craftId ? { ...craft, ...updates } : craft
+    );
+
+    onUpdate({
+      crafts: updatedCrafts,
+    });
+  };
+
+  /**
+   * Handler para remover um ofício
+   */
+  const handleRemoveCraft = (craftId: string) => {
+    const updatedCrafts = character.crafts.filter(
+      (craft) => craft.id !== craftId
+    );
+
+    onUpdate({
+      crafts: updatedCrafts,
+    });
+  };
+
+  /**
+   * Handler para alterar o ofício selecionado na habilidade "oficio"
+   */
+  const handleSelectedCraftChange = (
+    skillName: import('@/types').SkillName,
+    craftId: string
+  ) => {
+    const updatedSkills = {
+      ...character.skills,
+      [skillName]: {
+        ...character.skills[skillName],
+        selectedCraftId: craftId,
+      },
+    };
+
+    onUpdate({
+      skills: updatedSkills,
+    });
+  };
+
+  /**
    * Renderiza o conteúdo da aba atual
    */
   const renderTabContent = () => {
@@ -373,6 +437,10 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onSkillKeyAttributeChange: handleSkillKeyAttributeChange,
       onSkillProficiencyChange: handleSkillProficiencyChange,
       onSkillModifiersChange: handleSkillModifiersChange,
+      onAddCraft: handleAddCraft,
+      onUpdateCraft: handleUpdateCraft,
+      onRemoveCraft: handleRemoveCraft,
+      onSelectedCraftChange: handleSelectedCraftChange,
     };
 
     switch (currentTab) {
@@ -597,6 +665,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 onUpdateSkillModifiers={handleSkillModifiersChange}
                 onSignatureAbilityChange={handleSignatureAbilityChange}
                 currentSignatureSkill={getCurrentSignatureSkill()}
+                crafts={character.crafts}
+                onUpdateCraft={handleUpdateCraft}
               />
             )}
           </Box>
@@ -705,6 +775,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             onUpdateSkillModifiers={handleSkillModifiersChange}
             onSignatureAbilityChange={handleSignatureAbilityChange}
             currentSignatureSkill={getCurrentSignatureSkill()}
+            crafts={character.crafts}
+            onUpdateCraft={handleUpdateCraft}
           />
         )}
       </Box>
