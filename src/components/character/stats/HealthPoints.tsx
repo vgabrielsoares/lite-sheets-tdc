@@ -10,6 +10,7 @@ import {
   Divider,
   Stack,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -58,6 +59,7 @@ export function HealthPoints({
   onUpdate,
   variant = 'default',
 }: HealthPointsProps) {
+  const theme = useTheme();
   // Incrementar/decrementar PV atual
   const adjustCurrent = (amount: number) => {
     const newCurrent = Math.max(0, Math.min(hp.max, hp.current + amount));
@@ -146,9 +148,12 @@ export function HealthPoints({
                 sx={{
                   width: `${temporaryPercentage}%`,
                   height: '100%',
-                  bgcolor: 'info.main',
-                  opacity: 0.7,
-                  transition: 'width 0.3s ease-in-out',
+                  // Cores com maior contraste que a barra atual
+                  bgcolor:
+                    theme.palette.mode === 'dark' ? 'info.light' : 'info.dark',
+                  opacity: theme.palette.mode === 'dark' ? 0.9 : 0.85,
+                  transition:
+                    'width 0.3s ease-in-out, opacity 0.3s ease-in-out, background-color 0.3s ease-in-out, left 0.3s ease-in-out',
                   position: 'absolute',
                   left: `${currentPercentage}%`,
                 }}
@@ -221,6 +226,7 @@ export function HealthPoints({
                     return null;
                   }}
                   textFieldProps={{ sx: { textAlign: 'center' } }}
+                  enableDoubleClick
                 />
               </Box>
 

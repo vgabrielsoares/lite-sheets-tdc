@@ -10,6 +10,7 @@ import {
   Divider,
   Stack,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -58,6 +59,7 @@ export function PowerPoints({
   onUpdate,
   variant = 'default',
 }: PowerPointsProps) {
+  const theme = useTheme();
   // Incrementar/decrementar PP atual
   const adjustCurrent = (amount: number) => {
     const newCurrent = Math.max(
@@ -147,9 +149,14 @@ export function PowerPoints({
                 sx={{
                   width: `${temporaryPercentage}%`,
                   height: '100%',
-                  bgcolor: 'secondary.main',
-                  opacity: 0.7,
-                  transition: 'width 0.3s ease-in-out',
+                  // Cores com maior contraste que a barra atual
+                  bgcolor:
+                    theme.palette.mode === 'dark'
+                      ? 'secondary.light'
+                      : 'secondary.dark',
+                  opacity: theme.palette.mode === 'dark' ? 0.9 : 0.85,
+                  transition:
+                    'width 0.3s ease-in-out, opacity 0.3s ease-in-out, background-color 0.3s ease-in-out, left 0.3s ease-in-out',
                   position: 'absolute',
                   left: `${currentPercentage}%`,
                 }}
@@ -212,6 +219,7 @@ export function PowerPoints({
                     return null;
                   }}
                   textFieldProps={{ sx: { textAlign: 'center' } }}
+                  enableDoubleClick
                 />
               </Box>
 

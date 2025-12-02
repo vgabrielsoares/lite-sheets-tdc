@@ -188,26 +188,6 @@ export function BasicStats({
               >
                 {character.lineage?.name || 'Nenhuma linhagem definida'}
               </Typography>
-              {character.lineage?.size && (
-                <Chip
-                  label={`Tamanho: ${character.lineage.size}`}
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenSize?.();
-                  }}
-                  sx={{
-                    mt: 1,
-                    cursor: onOpenSize ? 'pointer' : 'default',
-                    '&:hover': onOpenSize
-                      ? {
-                          bgcolor: 'primary.light',
-                          color: 'primary.contrastText',
-                        }
-                      : {},
-                  }}
-                />
-              )}
             </Box>
 
             <Box
