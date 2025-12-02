@@ -315,6 +315,24 @@ export function MainTab({
               onSkillClick={onOpenSkill}
               crafts={character.crafts}
               onSelectedCraftChange={onSelectedCraftChange}
+              luck={character.luck}
+              onLuckLevelChange={(level) =>
+                onUpdate({
+                  luck: {
+                    ...character.luck,
+                    level,
+                  },
+                })
+              }
+              onLuckModifiersChange={(diceModifier, numericModifier) =>
+                onUpdate({
+                  luck: {
+                    ...character.luck,
+                    diceModifier,
+                    numericModifier,
+                  },
+                })
+              }
             />
           )}
 
