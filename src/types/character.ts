@@ -106,19 +106,19 @@ export interface ClassImprovement {
  */
 export type LanguageName =
   | 'comum'
-  | 'anao'
-  | 'elfico'
-  | 'goblinoide'
-  | 'draconico'
-  | 'infernal'
   | 'primordial'
   | 'runico'
+  | 'anao'
   | 'aquatico'
+  | 'draconico'
+  | 'elfico'
   | 'gigante'
   | 'gnomico'
+  | 'infernal'
   | 'glasnee'
   | 'orc'
-  | 'silvestre';
+  | 'silvestre'
+  | 'goblinoide';
 
 /**
  * Proficiências do personagem
