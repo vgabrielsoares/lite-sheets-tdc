@@ -84,6 +84,10 @@ export interface SkillsDisplayProps {
   onSkillClick: (skillName: SkillName) => void;
   /** Callback quando habilidade de assinatura é alterada */
   onSignatureAbilityChange?: (skillName: SkillName | null) => void;
+  /** Lista de ofícios do personagem */
+  crafts?: import('@/types').Craft[];
+  /** Callback quando ofício selecionado é alterado */
+  onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
 }
 
 /**
@@ -99,6 +103,8 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
   onModifiersChange,
   onSkillClick,
   onSignatureAbilityChange,
+  crafts = [],
+  onSelectedCraftChange,
 }) => {
   // Estados locais
   const [searchQuery, setSearchQuery] = useState('');
@@ -406,6 +412,8 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
               onProficiencyChange={onProficiencyChange}
               onModifiersChange={onModifiersChange}
               onClick={onSkillClick}
+              crafts={crafts}
+              onSelectedCraftChange={onSelectedCraftChange}
             />
           ))}
         </Stack>

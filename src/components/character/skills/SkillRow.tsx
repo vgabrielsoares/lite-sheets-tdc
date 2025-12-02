@@ -47,6 +47,7 @@ import type {
   Attributes,
   Skill,
   Modifier,
+  Craft,
 } from '@/types';
 import {
   SKILL_LABELS,
@@ -55,7 +56,11 @@ import {
   ATTRIBUTE_LABELS,
   ATTRIBUTE_ABBREVIATIONS,
 } from '@/constants';
-import { calculateSkillRoll } from '@/utils';
+import {
+  calculateSkillRoll,
+  getCraftMultiplier,
+  calculateSignatureAbilityBonus,
+} from '@/utils';
 import {
   InlineModifiers,
   extractDiceModifier,
@@ -86,6 +91,10 @@ export interface SkillRowProps {
   onModifiersChange?: (skillName: SkillName, modifiers: Modifier[]) => void;
   /** Callback quando linha é clicada (abre sidebar) */
   onClick: (skillName: SkillName) => void;
+  /** Lista de ofícios (apenas para habilidade "oficio") */
+  crafts?: Craft[];
+  /** Callback quando ofício selecionado é alterado (apenas para habilidade "oficio") */
+  onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
 }
 
 /**
@@ -100,21 +109,72 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   onProficiencyChange,
   onModifiersChange,
   onClick,
+  crafts = [],
+  onSelectedCraftChange,
 }) => {
   const theme = useTheme();
   const metadata = SKILL_METADATA[skill.name];
 
+  // Detectar se é habilidade "oficio"
+  const isOficioSkill = skill.name === 'oficio';
+
+  // Pegar o craft selecionado (se houver)
+  const selectedCraft =
+    isOficioSkill && skill.selectedCraftId
+      ? crafts.find((c) => c.id === skill.selectedCraftId)
+      : null;
+
   // Calcular modificador e rolagem
-  const { calculation, rollFormula } = calculateSkillRoll(
-    skill.name,
-    skill.keyAttribute,
-    attributes,
-    skill.proficiencyLevel,
-    skill.isSignature,
-    characterLevel,
-    skill.modifiers,
-    isOverloaded
-  );
+  // Para ofício, usar o craft selecionado se houver
+  let calculation, rollFormula;
+  if (isOficioSkill && selectedCraft) {
+    // Calcular usando o craft selecionado
+    const craftAttributeValue = attributes[selectedCraft.attributeKey];
+    const craftMultiplier = getCraftMultiplier(selectedCraft.level);
+    const craftBaseModifier = craftAttributeValue * craftMultiplier;
+
+    // Calcular bônus de assinatura se aplicável
+    const signatureBonus = skill.isSignature
+      ? calculateSignatureAbilityBonus(characterLevel, metadata.isCombatSkill)
+      : 0;
+
+    // Criar um cálculo customizado para o craft
+    calculation = {
+      attributeValue: craftAttributeValue,
+      proficiencyMultiplier: craftMultiplier,
+      baseModifier: craftBaseModifier,
+      signatureBonus,
+      otherModifiers: selectedCraft.numericModifier,
+      totalModifier:
+        craftBaseModifier + signatureBonus + selectedCraft.numericModifier,
+    };
+
+    // Calcular fórmula de rolagem
+    const totalDice = 1 + (selectedCraft.diceModifier || 0);
+    const diceCount = Math.abs(totalDice) || 1;
+    const takeLowest = totalDice < 1 || craftAttributeValue === 0;
+
+    rollFormula = {
+      diceCount,
+      takeLowest,
+      modifier: calculation.totalModifier,
+      formula: `${diceCount}d20${takeLowest ? ' (menor)' : ''}${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier}`,
+    };
+  } else {
+    // Cálculo normal para habilidades não-ofício ou ofício sem craft selecionado
+    const result = calculateSkillRoll(
+      skill.name,
+      skill.keyAttribute,
+      attributes,
+      skill.proficiencyLevel,
+      skill.isSignature,
+      characterLevel,
+      skill.modifiers,
+      isOverloaded
+    );
+    calculation = result.calculation;
+    rollFormula = result.rollFormula;
+  }
 
   // Verificar se atributo foi customizado
   const isCustomAttribute = skill.keyAttribute !== metadata.keyAttribute;
@@ -141,6 +201,13 @@ export const SkillRow: React.FC<SkillRowProps> = ({
     if (onModifiersChange) {
       const newModifiers = buildModifiersArray(diceModifier, numericModifier);
       onModifiersChange(skill.name, newModifiers);
+    }
+  };
+
+  const handleSelectedCraftChange = (event: SelectChangeEvent<string>) => {
+    event.stopPropagation();
+    if (onSelectedCraftChange) {
+      onSelectedCraftChange(skill.name, event.target.value);
     }
   };
 
@@ -267,59 +334,94 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         <Box sx={{ display: 'flex', gap: 0.5 }}>{indicators}</Box>
       </Box>
 
-      {/* Atributo-chave atual (editável) */}
-      <FormControl
-        size="small"
-        fullWidth
-        onClick={(e) => e.stopPropagation()}
-        sx={{ display: { xs: 'none', sm: 'block' } }}
-      >
-        <Select
-          value={skill.keyAttribute}
-          onChange={handleKeyAttributeChange}
-          aria-label={`Atributo-chave para ${SKILL_LABELS[skill.name]}`}
-          sx={{
-            '& .MuiSelect-select': {
-              py: 0.75,
-            },
-            ...(isCustomAttribute && {
-              borderColor: theme.palette.primary.main,
-              backgroundColor: alpha(theme.palette.primary.main, 0.05),
-            }),
-          }}
+      {/* Atributo-chave atual (editável) OU Select de Ofício */}
+      {isOficioSkill ? (
+        // Select de ofício (apenas para habilidade "oficio")
+        <FormControl
+          size="small"
+          fullWidth
+          onClick={(e) => e.stopPropagation()}
+          sx={{ display: { xs: 'none', sm: 'block' }, gridColumn: 'span 2' }}
         >
-          <MenuItem value="agilidade">AGI</MenuItem>
-          <MenuItem value="constituicao">CON</MenuItem>
-          <MenuItem value="forca">FOR</MenuItem>
-          <MenuItem value="influencia">INF</MenuItem>
-          <MenuItem value="mente">MEN</MenuItem>
-          <MenuItem value="presenca">PRE</MenuItem>
-        </Select>
-      </FormControl>
+          <Select
+            value={skill.selectedCraftId || ''}
+            onChange={handleSelectedCraftChange}
+            displayEmpty
+            aria-label="Selecionar ofício"
+            sx={{
+              '& .MuiSelect-select': {
+                py: 0.75,
+              },
+            }}
+          >
+            <MenuItem value="" disabled>
+              <em>Selecione um ofício...</em>
+            </MenuItem>
+            {crafts.map((craft) => (
+              <MenuItem key={craft.id} value={craft.id}>
+                {craft.name} ({ATTRIBUTE_ABBREVIATIONS[craft.attributeKey]} Nv.
+                {craft.level})
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      ) : (
+        <>
+          {/* Atributo-chave atual (editável) */}
+          <FormControl
+            size="small"
+            fullWidth
+            onClick={(e) => e.stopPropagation()}
+            sx={{ display: { xs: 'none', sm: 'block' } }}
+          >
+            <Select
+              value={skill.keyAttribute}
+              onChange={handleKeyAttributeChange}
+              aria-label={`Atributo-chave para ${SKILL_LABELS[skill.name]}`}
+              sx={{
+                '& .MuiSelect-select': {
+                  py: 0.75,
+                },
+                ...(isCustomAttribute && {
+                  borderColor: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                }),
+              }}
+            >
+              <MenuItem value="agilidade">AGI</MenuItem>
+              <MenuItem value="constituicao">CON</MenuItem>
+              <MenuItem value="forca">FOR</MenuItem>
+              <MenuItem value="influencia">INF</MenuItem>
+              <MenuItem value="mente">MEN</MenuItem>
+              <MenuItem value="presenca">PRE</MenuItem>
+            </Select>
+          </FormControl>
 
-      {/* Grau de proficiência (editável) */}
-      <FormControl
-        size="small"
-        fullWidth
-        onClick={(e) => e.stopPropagation()}
-        sx={{ display: { xs: 'none', sm: 'block' } }}
-      >
-        <Select
-          value={skill.proficiencyLevel}
-          onChange={handleProficiencyChange}
-          aria-label={`Proficiência em ${SKILL_LABELS[skill.name]}`}
-          sx={{
-            '& .MuiSelect-select': {
-              py: 0.75,
-            },
-          }}
-        >
-          <MenuItem value="leigo">Leigo</MenuItem>
-          <MenuItem value="adepto">Adepto</MenuItem>
-          <MenuItem value="versado">Versado</MenuItem>
-          <MenuItem value="mestre">Mestre</MenuItem>
-        </Select>
-      </FormControl>
+          {/* Grau de proficiência (editável) */}
+          <FormControl
+            size="small"
+            fullWidth
+            onClick={(e) => e.stopPropagation()}
+            sx={{ display: { xs: 'none', sm: 'block' } }}
+          >
+            <Select
+              value={skill.proficiencyLevel}
+              onChange={handleProficiencyChange}
+              aria-label={`Proficiência em ${SKILL_LABELS[skill.name]}`}
+              sx={{
+                '& .MuiSelect-select': {
+                  py: 0.75,
+                },
+              }}
+            >
+              <MenuItem value="leigo">Leigo</MenuItem>
+              <MenuItem value="adepto">Adepto</MenuItem>
+              <MenuItem value="versado">Versado</MenuItem>
+              <MenuItem value="mestre">Mestre</MenuItem>
+            </Select>
+          </FormControl>
+        </>
+      )}
 
       {/* Modificadores inline */}
       <Box
