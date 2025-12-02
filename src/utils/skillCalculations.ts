@@ -141,44 +141,31 @@ export function calculateSkillRollFormula(
   totalModifier: number,
   diceModifiers: Modifier[] = []
 ): SkillRollFormula {
-  // 1. Calcular quantidade de dados base
-  let baseDiceCount = attributeValue;
-  let takeLowest = false;
-
-  // Atributo 0: 2d20 escolhendo o menor
-  if (attributeValue === 0) {
-    baseDiceCount = 2;
-    takeLowest = true;
-  }
-
-  // 2. Aplicar modificadores de dados
+  // 1. Aplicar modificadores de dados ao atributo
   const diceModifierTotal = diceModifiers
     .filter((mod) => mod.affectsDice === true)
     .reduce((sum, mod) => sum + (mod.value || 0), 0);
 
-  let finalDiceCount = baseDiceCount + diceModifierTotal;
+  // 2. Calcular quantidade de dados "real" (atributo + modificadores)
+  const realDiceCount = attributeValue + diceModifierTotal;
 
-  // 3. Se quantidade de dados ficar < 1, aplicar regra especial:
-  // Para atributo 0 (que vira 2d20) com penalidades:
-  // - 2 + (-1) = 1d20 (rola 1 e pega o menor, mas mostramos como 1d20)
-  // - 2 + (-2) = 0d20 (rola 0 dados e pega o menor, mostramos como 0d20)
-  // - 2 + (-3) = -1d20 (penalidade extra, mostramos como -1d20)
-  // Para qualquer caso, se ficar negativo, usamos o valor negativo direto
-  if (attributeValue === 0 && finalDiceCount < 2) {
+  // 3. Determinar quantidade final e se pega o menor
+  let finalDiceCount: number;
+  let takeLowest: boolean;
+
+  if (realDiceCount < 1) {
+    // Quando resultado real é < 1:
+    // 0 → 2d20 vermelho, -1 → 3d20 vermelho, -2 → 4d20 vermelho
+    finalDiceCount = 2 - realDiceCount; // 0→2, -1→3, -2→4
     takeLowest = true;
-    // Mantém o valor (pode ser 1, 0, -1, -2, etc.)
-  } else if (finalDiceCount < 1 && attributeValue !== 0) {
-    // Para outros casos (atributo não é 0), se ficar < 1:
-    // Rola valor absoluto e escolhe o menor
-    finalDiceCount = Math.abs(finalDiceCount) || 1;
-    takeLowest = true;
+  } else {
+    // Resultado real >= 1: rolagem normal
+    finalDiceCount = realDiceCount;
+    takeLowest = false;
   }
 
-  // 4. Gerar string da fórmula
+  // 4. Gerar string da fórmula (sem indicador de "menor" - cor vermelha indica isso)
   let formula = `${finalDiceCount}d20`;
-
-  // NÃO adicionamos indicador de "menor" na fórmula
-  // (a lógica interna ainda usa takeLowest para o cálculo)
 
   // Adicionar modificador
   if (totalModifier > 0) {
