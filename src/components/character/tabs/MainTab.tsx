@@ -8,6 +8,7 @@ import type {
   SkillName,
   ProficiencyLevel,
   Modifier,
+  Craft,
 } from '@/types';
 import {
   BasicStats,
@@ -17,7 +18,7 @@ import {
   MovementDisplay,
 } from '../stats';
 import { AttributesDisplay } from '../attributes';
-import { SkillsDisplay } from '../skills';
+import { SkillsDisplay, CraftsDisplay } from '../skills';
 import type { MovementType } from '@/types';
 import { getEncumbranceState, calculateCarryCapacity } from '@/utils';
 
@@ -98,6 +99,26 @@ export interface MainTabProps {
     skillName: SkillName,
     modifiers: Modifier[]
   ) => void;
+
+  /**
+   * Callback para adicionar ofício
+   */
+  onAddCraft?: (craft: Omit<Craft, 'id'>) => void;
+
+  /**
+   * Callback para atualizar ofício
+   */
+  onUpdateCraft?: (craftId: string, updates: Partial<Craft>) => void;
+
+  /**
+   * Callback para remover ofício
+   */
+  onRemoveCraft?: (craftId: string) => void;
+
+  /**
+   * Callback para alterar ofício selecionado
+   */
+  onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
 }
 
 /**
@@ -138,6 +159,10 @@ export function MainTab({
   onSkillKeyAttributeChange,
   onSkillProficiencyChange,
   onSkillModifiersChange,
+  onAddCraft,
+  onUpdateCraft,
+  onRemoveCraft,
+  onSelectedCraftChange,
 }: MainTabProps) {
   // Calcular se personagem está sobrecarregado
   const carryCapacity = calculateCarryCapacity(character.attributes.forca);
@@ -286,8 +311,21 @@ export function MainTab({
               onProficiencyChange={onSkillProficiencyChange}
               onModifiersChange={onSkillModifiersChange}
               onSkillClick={onOpenSkill}
+              crafts={character.crafts}
+              onSelectedCraftChange={onSelectedCraftChange}
             />
           )}
+
+        {/* Ofícios (Competências) */}
+        {onAddCraft && onUpdateCraft && onRemoveCraft && (
+          <CraftsDisplay
+            crafts={character.crafts}
+            attributes={character.attributes}
+            onAdd={onAddCraft}
+            onUpdate={onUpdateCraft}
+            onRemove={onRemoveCraft}
+          />
+        )}
       </Stack>
     </Box>
   );
