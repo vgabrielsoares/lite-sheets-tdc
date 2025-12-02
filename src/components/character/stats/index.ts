@@ -27,3 +27,6 @@ export type {
 export { DefenseDisplay } from './DefenseDisplay';
 
 export { MovementDisplay } from './MovementDisplay';
+
+export { LuckDisplay } from './LuckDisplay';
+export type { LuckDisplayProps } from './LuckDisplay';
