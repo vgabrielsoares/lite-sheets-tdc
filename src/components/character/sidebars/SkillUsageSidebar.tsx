@@ -63,7 +63,7 @@ import type {
   AttributeName,
   Modifier,
 } from '@/types';
-import { SKILL_LABELS, ATTRIBUTE_LABELS } from '@/constants';
+import { SKILL_LABELS, ATTRIBUTE_LABELS, SKILL_METADATA } from '@/constants';
 import { SKILL_DESCRIPTIONS } from '@/types/skills';
 import { ATTRIBUTE_LIST } from '@/constants/attributes';
 import {
@@ -75,7 +75,7 @@ import {
   calculateSkillUseModifier,
   calculateSkillUseRollFormula,
 } from '@/utils/skillCalculations';
-import { calculateSignatureAbilityBonus } from '@/utils';
+import { calculateSignatureAbilityBonus, getCraftMultiplier } from '@/utils';
 import { COMBAT_SKILLS } from '@/constants/skills';
 
 export interface SkillUsageSidebarProps {
@@ -112,6 +112,13 @@ export interface SkillUsageSidebarProps {
   onSignatureAbilityChange?: (skillName: SkillName | null) => void;
   /** Nome da habilidade que é atualmente a assinatura (se houver) */
   currentSignatureSkill?: SkillName | null;
+  /** Lista de of\u00edcios (apenas para habilidade "oficio") */
+  crafts?: import('@/types').Craft[];
+  /** Callback quando of\u00edcio \u00e9 atualizado */
+  onUpdateCraft?: (
+    craftId: string,
+    updates: Partial<import('@/types').Craft>
+  ) => void;
 }
 
 interface EditingUse extends Partial<SkillUse> {
@@ -134,9 +141,14 @@ export function SkillUsageSidebar({
   onUpdateSkillModifiers,
   onSignatureAbilityChange,
   currentSignatureSkill,
+  crafts = [],
+  onUpdateCraft,
 }: SkillUsageSidebarProps) {
   const [editingUse, setEditingUse] = useState<EditingUse | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+
+  // Detectar se é habilidade "oficio"
+  const isOficioSkill = skill.name === 'oficio';
 
   // Estado para editar atributo de uso padrão
   const [editingDefaultUse, setEditingDefaultUse] = useState<string | null>(
@@ -150,6 +162,7 @@ export function SkillUsageSidebar({
   const [localDefaultModifiers, setLocalDefaultModifiers] = useState<
     Record<string, Modifier[]>
   >(skill.defaultUseModifierOverrides || {});
+  skill.defaultUseModifierOverrides || {};
 
   // Estado para confirmação de exclusão
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -1079,7 +1092,7 @@ export function SkillUsageSidebar({
           );
         })()}
 
-        {/* Lista de Usos Customizados */}
+        {/* Lista de Usos Customizados ou Ofícios */}
         <Box>
           <Box
             sx={{
@@ -1090,10 +1103,12 @@ export function SkillUsageSidebar({
             }}
           >
             <Typography variant="subtitle1" fontWeight={600}>
-              Usos Customizados ({customUses.length})
+              {isOficioSkill
+                ? `Ofícios Cadastrados (${crafts.length})`
+                : `Usos Customizados (${customUses.length})`}
             </Typography>
 
-            {!isAdding && !editingUse && (
+            {!isOficioSkill && !isAdding && !editingUse && (
               <Button
                 variant="contained"
                 size="small"
@@ -1105,31 +1120,247 @@ export function SkillUsageSidebar({
             )}
           </Box>
 
-          {customUses.length === 0 && !isAdding && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                textAlign: 'center',
-                bgcolor: 'action.hover',
-                border: 1,
-                borderColor: 'divider',
-                borderStyle: 'dashed',
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                Nenhum uso customizado criado ainda.
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Clique em "Adicionar Uso" para criar um novo uso específico
-                desta habilidade.
-              </Typography>
-            </Paper>
-          )}
+          {isOficioSkill ? (
+            // Renderizar ofícios para habilidade "oficio"
+            <>
+              {crafts.length === 0 ? (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    textAlign: 'center',
+                    bgcolor: 'action.hover',
+                    border: 1,
+                    borderColor: 'divider',
+                    borderStyle: 'dashed',
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum ofício cadastrado ainda.
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Cadastre ofícios na seção "Ofícios (Competências)" abaixo
+                    para usá-los aqui.
+                  </Typography>
+                </Paper>
+              ) : (
+                <Stack spacing={1}>
+                  {crafts.map((craft) => {
+                    const attributeValue = attributes[craft.attributeKey];
+                    const multiplier = getCraftMultiplier(craft.level);
+                    const baseModifier = attributeValue * multiplier;
 
-          <Stack spacing={1}>
-            {customUses.map((use) => renderUseRow(use))}
-          </Stack>
+                    // Calcular bônus de assinatura se aplicável
+                    const signatureBonus = skill.isSignature
+                      ? calculateSignatureAbilityBonus(
+                          characterLevel,
+                          SKILL_METADATA[skill.name].isCombatSkill
+                        )
+                      : 0;
+
+                    const totalModifier =
+                      baseModifier + signatureBonus + craft.numericModifier;
+
+                    // Calcular fórmula de rolagem
+                    const totalDice = 1 + (craft.diceModifier || 0);
+                    const diceCount = Math.abs(totalDice) || 1;
+                    const takeLowest = totalDice < 1 || attributeValue === 0;
+                    const formula = `${diceCount}d20${takeLowest ? ' (menor)' : ''}${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+
+                    return (
+                      <Paper
+                        key={craft.id}
+                        elevation={1}
+                        sx={{
+                          p: 2,
+                          border: 1,
+                          borderColor: 'divider',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            boxShadow: 2,
+                          },
+                        }}
+                      >
+                        <Stack spacing={1.5}>
+                          {/* Cabeçalho do ofício */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                            }}
+                          >
+                            <Box>
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                {craft.name}
+                              </Typography>
+                              {craft.description && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {craft.description}
+                                </Typography>
+                              )}
+                            </Box>
+                            <Chip
+                              label={`Nível ${craft.level}`}
+                              size="small"
+                              color={
+                                craft.level === 0
+                                  ? 'default'
+                                  : craft.level < 3
+                                    ? 'primary'
+                                    : craft.level < 5
+                                      ? 'secondary'
+                                      : 'success'
+                              }
+                            />
+                          </Box>
+
+                          {/* Informações do ofício */}
+                          <Box
+                            sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}
+                          >
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Atributo:{' '}
+                              <strong>
+                                {ATTRIBUTE_LABELS[craft.attributeKey]}
+                              </strong>{' '}
+                              ({attributeValue})
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Multiplicador: <strong>×{multiplier}</strong>
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="primary"
+                              fontWeight={600}
+                            >
+                              Base: <strong>+{baseModifier}</strong>
+                            </Typography>
+                            {signatureBonus > 0 && (
+                              <Typography
+                                variant="caption"
+                                color="warning.main"
+                                fontWeight={600}
+                              >
+                                Assinatura: <strong>+{signatureBonus}</strong>
+                              </Typography>
+                            )}
+                          </Box>
+
+                          {/* Modificadores inline */}
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ mb: 0.5, display: 'block' }}
+                            >
+                              Modificadores Adicionais:
+                            </Typography>
+                            {onUpdateCraft && (
+                              <InlineModifiers
+                                diceModifier={craft.diceModifier}
+                                numericModifier={craft.numericModifier}
+                                onUpdate={(dice, numeric) => {
+                                  onUpdateCraft(craft.id, {
+                                    diceModifier: dice,
+                                    numericModifier: numeric,
+                                  });
+                                }}
+                              />
+                            )}
+                          </Box>
+
+                          {/* Resultado final */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              pt: 1,
+                              borderTop: 1,
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                gap: 1.5,
+                                alignItems: 'center',
+                              }}
+                            >
+                              <Chip
+                                label={
+                                  totalModifier >= 0
+                                    ? `+${totalModifier}`
+                                    : totalModifier
+                                }
+                                size="small"
+                                color={totalModifier >= 0 ? 'success' : 'error'}
+                                variant="outlined"
+                                sx={{ fontWeight: 600 }}
+                              />
+                              <Typography
+                                variant="body2"
+                                fontFamily="monospace"
+                                color="primary"
+                                fontWeight={700}
+                                sx={{ fontSize: '1.1rem' }}
+                              >
+                                {formula}
+                              </Typography>
+                            </Box>
+                            <Tooltip title="Rolar ofício (em breve)">
+                              <IconButton size="small" color="primary" disabled>
+                                <DiceIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </Stack>
+                      </Paper>
+                    );
+                  })}
+                </Stack>
+              )}
+            </>
+          ) : (
+            // Renderizar usos customizados normais
+            <>
+              {customUses.length === 0 && !isAdding && (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    textAlign: 'center',
+                    bgcolor: 'action.hover',
+                    border: 1,
+                    borderColor: 'divider',
+                    borderStyle: 'dashed',
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum uso customizado criado ainda.
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Clique em "Adicionar Uso" para criar um novo uso específico
+                    desta habilidade.
+                  </Typography>
+                </Paper>
+              )}
+
+              <Stack spacing={1}>
+                {customUses.map((use) => renderUseRow(use))}
+              </Stack>
+            </>
+          )}
         </Box>
       </Stack>
 
