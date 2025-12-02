@@ -119,3 +119,18 @@ export {
   calculateCraftBaseModifier,
   calculateCraftTotalModifier,
 } from './craftSync';
+
+// Language management utilities
+export {
+  getTotalLanguageSlots,
+  getLineageLanguages,
+  getMaxAllowedLanguages,
+  canAddLanguage,
+  addLanguage,
+  canRemoveLanguage,
+  removeLanguage,
+  getAvailableLanguages,
+  validateLanguageSelection,
+  ensureComumLanguage,
+  getLanguageSummary,
+} from './languageUtils';
