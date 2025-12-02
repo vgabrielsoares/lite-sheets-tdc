@@ -191,16 +191,118 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   /**
    * Handler para atualizar a linhagem do personagem
+   * Também aplica os modificadores de atributos da linhagem automaticamente
    */
   const handleUpdateLineage = (lineage: Character['lineage']) => {
-    onUpdate({ lineage });
+    if (!lineage) {
+      onUpdate({ lineage });
+      return;
+    }
+
+    // Calcula a diferença de modificadores entre linhagem antiga e nova
+    const oldModifiers = character.lineage?.attributeModifiers || [];
+    const newModifiers = lineage.attributeModifiers || [];
+
+    // Cria um mapa de atributos atualizado
+    const updatedAttributes = { ...character.attributes };
+
+    // Remove os modificadores antigos da linhagem
+    oldModifiers.forEach((mod) => {
+      if (mod.attribute in updatedAttributes) {
+        updatedAttributes[mod.attribute] = Math.max(
+          0,
+          updatedAttributes[mod.attribute] - mod.value
+        );
+      }
+    });
+
+    // Aplica os novos modificadores da linhagem
+    newModifiers.forEach((mod) => {
+      if (mod.attribute in updatedAttributes) {
+        updatedAttributes[mod.attribute] = Math.max(
+          0,
+          updatedAttributes[mod.attribute] + mod.value
+        );
+      }
+    });
+
+    // Atualiza linhagem e atributos juntos
+    onUpdate({ lineage, attributes: updatedAttributes });
   };
 
   /**
    * Handler para atualizar a origem do personagem
+   * Também aplica os modificadores de atributos e proficiências de habilidades da origem automaticamente
    */
   const handleUpdateOrigin = (origin: Character['origin']) => {
-    onUpdate({ origin });
+    if (!origin) {
+      onUpdate({ origin });
+      return;
+    }
+
+    // Calcula a diferença de modificadores entre origem antiga e nova
+    const oldModifiers = character.origin?.attributeModifiers || [];
+    const newModifiers = origin.attributeModifiers || [];
+
+    // Cria um mapa de atributos atualizado
+    const updatedAttributes = { ...character.attributes };
+
+    // Remove os modificadores antigos da origem
+    oldModifiers.forEach((mod) => {
+      if (mod.attribute in updatedAttributes) {
+        updatedAttributes[mod.attribute] = Math.max(
+          0,
+          updatedAttributes[mod.attribute] - mod.value
+        );
+      }
+    });
+
+    // Aplica os novos modificadores da origem
+    newModifiers.forEach((mod) => {
+      if (mod.attribute in updatedAttributes) {
+        updatedAttributes[mod.attribute] = Math.max(
+          0,
+          updatedAttributes[mod.attribute] + mod.value
+        );
+      }
+    });
+
+    // Atualiza proficiências de habilidades
+    const oldSkillProficiencies = character.origin?.skillProficiencies || [];
+    const newSkillProficiencies = origin.skillProficiencies || [];
+    const updatedSkills = { ...character.skills };
+
+    // Remove proficiências antigas da origem (volta para 'leigo' se a origem era a única fonte)
+    oldSkillProficiencies.forEach((skillName) => {
+      if (
+        skillName in updatedSkills &&
+        !newSkillProficiencies.includes(skillName)
+      ) {
+        // Só volta para 'leigo' se ainda está como 'adepto' (não foi melhorado manualmente)
+        if (updatedSkills[skillName].proficiencyLevel === 'adepto') {
+          updatedSkills[skillName] = {
+            ...updatedSkills[skillName],
+            proficiencyLevel: 'leigo',
+          };
+        }
+      }
+    });
+
+    // Aplica novas proficiências da origem (sobe para 'adepto' se estava 'leigo')
+    newSkillProficiencies.forEach((skillName) => {
+      if (skillName in updatedSkills) {
+        // Só sobe para 'adepto' se está como 'leigo'
+        if (updatedSkills[skillName].proficiencyLevel === 'leigo') {
+          updatedSkills[skillName] = {
+            ...updatedSkills[skillName],
+            proficiencyLevel: 'adepto',
+          };
+        }
+      }
+    });
+
+    // Atualiza origem, atributos e habilidades juntos
+    onUpdate({ origin, attributes: updatedAttributes, skills: updatedSkills });
   };
 
   /**
@@ -505,9 +607,6 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           flexDirection: isMobile ? 'column' : 'row',
           gap: 3,
           justifyContent: 'center', // Centraliza horizontalmente
-          // Altura fixa baseada na viewport para evitar alongamento
-          height: isMobile ? 'auto' : 'calc(100vh - 200px)',
-          maxHeight: isMobile ? 'none' : 'calc(100vh - 200px)',
         }}
       >
         {/* Container da ficha */}
@@ -517,7 +616,6 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             maxWidth: '800px',
             display: 'flex',
             flexDirection: 'column',
-            height: '100%',
           }}
         >
           {/* Navegação por abas */}
@@ -530,38 +628,25 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             aria-labelledby={`tab-${currentTab}`}
             sx={{
               flex: 1,
-              overflow: 'auto',
-              // Scrollbar customizada para o conteúdo da ficha
-              '&::-webkit-scrollbar': {
-                width: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                bgcolor: 'transparent',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                bgcolor: 'action.hover',
-                borderRadius: '4px',
-                '&:hover': {
-                  bgcolor: 'action.selected',
-                },
-              },
             }}
           >
             {renderTabContent()}
           </Box>
         </Box>
 
-        {/* Área reservada para sidebar */}
-        {!isMobile && (
+        {/* Área reservada para sidebar - agora position fixed, não precisa de espaço reservado */}
+        {!isMobile && activeSidebar && (
           <Box
             sx={{
-              flex: '0 0 640px', // Largura fixa da sidebar (lg)
+              flex: '0 0 640px', // Largura fixa da sidebar (lg) - reserva espaço no layout
               maxWidth: '640px',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
             }}
-          >
+          />
+        )}
+
+        {/* Sidebars - renderizadas com position fixed */}
+        {!isMobile && (
+          <>
             {/* Sidebar de Linhagem */}
             {activeSidebar === 'lineage' && (
               <LinhagemSidebar
@@ -669,7 +754,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 onUpdateCraft={handleUpdateCraft}
               />
             )}
-          </Box>
+          </>
         )}
 
         {/* Sidebar em modo mobile (overlay) */}
