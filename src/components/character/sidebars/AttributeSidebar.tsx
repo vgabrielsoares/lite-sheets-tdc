@@ -101,6 +101,19 @@ export function AttributeSidebar({
   const attributeValue = character.attributes[attribute];
   const attributeLabel = ATTRIBUTE_LABELS[attribute];
 
+  // Calcular modificadores de linhagem e origem para este atributo
+  const lineageModifier = character.lineage?.attributeModifiers?.find(
+    (mod) => mod.attribute === attribute
+  );
+  const originModifier = character.origin?.attributeModifiers?.find(
+    (mod) => mod.attribute === attribute
+  );
+
+  // Calcular valor base (sem modificadores de linhagem/origem)
+  const lineageValue = lineageModifier?.value || 0;
+  const originValue = originModifier?.value || 0;
+  const baseValue = attributeValue - lineageValue - originValue;
+
   // Filtrar habilidades que usam este atributo como chave padrão
   const relatedSkills = SKILL_LIST.filter((skillName) => {
     const defaultKey = SKILL_KEY_ATTRIBUTES[skillName];
@@ -127,6 +140,9 @@ export function AttributeSidebar({
       onUpdateAttribute(attribute, attributeValue - 1);
     }
   };
+
+  // Verifica se há modificadores de linhagem ou origem
+  const hasModifiers = lineageModifier || originModifier;
 
   return (
     <Sidebar open={open} onClose={onClose} title={attributeLabel} width="lg">
@@ -180,6 +196,105 @@ export function AttributeSidebar({
       </Box>
 
       <Divider sx={{ mb: 3 }} />
+
+      {/* Origem dos Modificadores */}
+      {hasModifiers && (
+        <>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Origem do Valor
+            </Typography>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                bgcolor: 'action.hover',
+                borderRadius: 1,
+              }}
+            >
+              <Stack spacing={1}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Valor Base
+                  </Typography>
+                  <Typography variant="body2" fontWeight="bold">
+                    {baseValue}
+                  </Typography>
+                </Box>
+
+                {lineageModifier && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Linhagem ({character.lineage?.name || 'Desconhecida'})
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      fontWeight="bold"
+                      color={lineageValue > 0 ? 'success.main' : 'error.main'}
+                    >
+                      {lineageValue > 0 ? '+' : ''}
+                      {lineageValue}
+                    </Typography>
+                  </Box>
+                )}
+
+                {originModifier && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Origem ({character.origin?.name || 'Desconhecida'})
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      fontWeight="bold"
+                      color={originValue > 0 ? 'success.main' : 'error.main'}
+                    >
+                      {originValue > 0 ? '+' : ''}
+                      {originValue}
+                    </Typography>
+                  </Box>
+                )}
+
+                <Divider sx={{ my: 1 }} />
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography variant="body2" fontWeight="bold">
+                    Valor Total
+                  </Typography>
+                  <Typography variant="h6" color="primary" fontWeight="bold">
+                    {attributeValue}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Paper>
+          </Box>
+
+          <Divider sx={{ mb: 3 }} />
+        </>
+      )}
 
       {/* Descrição do Atributo */}
       <Box sx={{ mb: 3 }}>
