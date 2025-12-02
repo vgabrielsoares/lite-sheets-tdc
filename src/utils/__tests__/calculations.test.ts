@@ -22,6 +22,8 @@ import {
   getEncumbranceState,
   applyDeltaToHP,
   applyDeltaToPP,
+  getCraftMultiplier,
+  calculateCraftModifier,
 } from '../calculations';
 
 describe('roundDown', () => {
@@ -430,5 +432,68 @@ describe('applyDeltaToPP', () => {
       const result = applyDeltaToPP(pp, 5);
       expect(result).toEqual({ max: 10, current: 7, temporary: 2 });
     });
+  });
+});
+
+describe('getCraftMultiplier', () => {
+  it('should return 0 for level 0 (Leigo)', () => {
+    expect(getCraftMultiplier(0)).toBe(0);
+  });
+
+  it('should return 1 for levels 1-2', () => {
+    expect(getCraftMultiplier(1)).toBe(1);
+    expect(getCraftMultiplier(2)).toBe(1);
+  });
+
+  it('should return 2 for levels 3-4', () => {
+    expect(getCraftMultiplier(3)).toBe(2);
+    expect(getCraftMultiplier(4)).toBe(2);
+  });
+
+  it('should return 3 for level 5 (Mestre)', () => {
+    expect(getCraftMultiplier(5)).toBe(3);
+  });
+});
+
+describe('calculateCraftModifier', () => {
+  it('should calculate correctly for level 0 (Leigo)', () => {
+    expect(calculateCraftModifier(3, 0)).toBe(0); // 3 × 0 = 0
+    expect(calculateCraftModifier(5, 0)).toBe(0); // 5 × 0 = 0
+  });
+
+  it('should calculate correctly for level 1-2 (×1)', () => {
+    expect(calculateCraftModifier(2, 1)).toBe(2); // 2 × 1 = 2
+    expect(calculateCraftModifier(3, 2)).toBe(3); // 3 × 1 = 3
+    expect(calculateCraftModifier(4, 1)).toBe(4); // 4 × 1 = 4
+  });
+
+  it('should calculate correctly for level 3-4 (×2)', () => {
+    expect(calculateCraftModifier(2, 3)).toBe(4); // 2 × 2 = 4
+    expect(calculateCraftModifier(3, 4)).toBe(6); // 3 × 2 = 6
+    expect(calculateCraftModifier(5, 3)).toBe(10); // 5 × 2 = 10
+  });
+
+  it('should calculate correctly for level 5 (×3)', () => {
+    expect(calculateCraftModifier(2, 5)).toBe(6); // 2 × 3 = 6
+    expect(calculateCraftModifier(4, 5)).toBe(12); // 4 × 3 = 12
+    expect(calculateCraftModifier(5, 5)).toBe(15); // 5 × 3 = 15
+  });
+
+  it('should add other modifiers correctly', () => {
+    expect(calculateCraftModifier(2, 3, 2)).toBe(6); // 2 × 2 + 2 = 6
+    expect(calculateCraftModifier(3, 5, 3)).toBe(12); // 3 × 3 + 3 = 12
+    expect(calculateCraftModifier(4, 1, -1)).toBe(3); // 4 × 1 - 1 = 3
+  });
+
+  it('should handle attribute value 0', () => {
+    expect(calculateCraftModifier(0, 0)).toBe(0); // 0 × 0 = 0
+    expect(calculateCraftModifier(0, 3)).toBe(0); // 0 × 2 = 0
+    expect(calculateCraftModifier(0, 5)).toBe(0); // 0 × 3 = 0
+  });
+
+  it('should handle multiple other modifiers via sum', () => {
+    // Exemplo: ofício com +2, +1, -1 de outros modificadores = +2 total
+    const otherModifiersSum = 2 + 1 - 1; // = 2
+    expect(calculateCraftModifier(3, 4, otherModifiersSum)).toBe(8); // 3 × 2 + 2 = 8
   });
 });
