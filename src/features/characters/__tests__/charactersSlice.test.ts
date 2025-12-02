@@ -110,6 +110,8 @@ const mockCharacter: Character = {
   luck: {
     level: 1,
     value: 1,
+    diceModifier: 0,
+    numericModifier: 0,
   },
   crafts: [],
   inventory: {
