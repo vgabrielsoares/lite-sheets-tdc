@@ -12,6 +12,9 @@ import charactersReducer, {
   setCharacters,
   loadCharacters,
   deleteCharacter,
+  addCraft,
+  updateCraft,
+  removeCraft,
   selectAllCharacters,
   selectSelectedCharacter,
   selectCharacterById,
@@ -449,6 +452,123 @@ describe('charactersSlice', () => {
     it('selectCharacterIds deve retornar todos os IDs', () => {
       const ids = selectCharacterIds(mockState);
       expect(ids).toEqual(['char-1', 'char-2']);
+    });
+  });
+
+  describe('Craft Actions', () => {
+    const initialStateWithCharacter = {
+      entities: {
+        'char-1': {
+          ...mockCharacter,
+          crafts: [],
+        },
+      },
+      ids: ['char-1'],
+      selectedCharacterId: null,
+      loading: false,
+      error: null,
+    };
+
+    it('addCraft deve adicionar um novo ofício ao personagem', () => {
+      const newCraft = {
+        id: 'craft-1',
+        name: 'Ferreiro',
+        level: 2 as const,
+        attributeKey: 'forca' as const,
+        diceModifier: 0,
+        numericModifier: 2,
+        description: 'Trabalha com metal',
+      };
+
+      const state = charactersReducer(
+        initialStateWithCharacter,
+        addCraft({ characterId: 'char-1', craft: newCraft })
+      );
+
+      expect(state.entities['char-1'].crafts).toHaveLength(1);
+      expect(state.entities['char-1'].crafts[0]).toEqual(newCraft);
+      expect(state.error).toBeNull();
+    });
+
+    it('updateCraft deve atualizar um ofício existente', () => {
+      const stateWithCraft = {
+        ...initialStateWithCharacter,
+        entities: {
+          'char-1': {
+            ...mockCharacter,
+            crafts: [
+              {
+                id: 'craft-1',
+                name: 'Ferreiro',
+                level: 2 as const,
+                attributeKey: 'forca' as const,
+                diceModifier: 0,
+                numericModifier: 0,
+              },
+            ],
+          },
+        },
+      };
+
+      const state = charactersReducer(
+        stateWithCraft,
+        updateCraft({
+          characterId: 'char-1',
+          craftId: 'craft-1',
+          updates: { name: 'Mestre Ferreiro', level: 5, numericModifier: 3 },
+        })
+      );
+
+      expect(state.entities['char-1'].crafts[0].name).toBe('Mestre Ferreiro');
+      expect(state.entities['char-1'].crafts[0].level).toBe(5);
+      expect(state.entities['char-1'].crafts[0].numericModifier).toBe(3);
+    });
+
+    it('removeCraft deve remover um ofício', () => {
+      const stateWithCraft = {
+        ...initialStateWithCharacter,
+        entities: {
+          'char-1': {
+            ...mockCharacter,
+            crafts: [
+              {
+                id: 'craft-1',
+                name: 'Ferreiro',
+                level: 2 as const,
+                attributeKey: 'forca' as const,
+                diceModifier: 0,
+                numericModifier: 0,
+              },
+            ],
+          },
+        },
+      };
+
+      const state = charactersReducer(
+        stateWithCraft,
+        removeCraft({ characterId: 'char-1', craftId: 'craft-1' })
+      );
+
+      expect(state.entities['char-1'].crafts).toHaveLength(0);
+    });
+
+    it('deve retornar erro se personagem não existe ao adicionar craft', () => {
+      const state = charactersReducer(
+        initialStateWithCharacter,
+        addCraft({
+          characterId: 'non-existent',
+          craft: {
+            id: 'craft-1',
+            name: 'Ferreiro',
+            level: 2,
+            attributeKey: 'forca',
+            diceModifier: 0,
+            numericModifier: 0,
+          },
+        })
+      );
+
+      expect(state.error).toBe('Personagem com ID non-existent não encontrado');
     });
   });
 });
