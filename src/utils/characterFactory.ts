@@ -409,6 +409,8 @@ export function createDefaultCharacter(
     luck: {
       level: 0,
       value: 0,
+      diceModifier: 0,
+      numericModifier: 0,
     },
     crafts: [],
 
