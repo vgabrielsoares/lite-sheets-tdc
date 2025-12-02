@@ -170,6 +170,8 @@ export interface Skill {
   modifiers: Modifier[];
   /** Usos customizados desta habilidade */
   customUses?: SkillUse[];
+  /** ID do ofício selecionado para rolagem (apenas para habilidade "oficio") */
+  selectedCraftId?: string;
 }
 
 /**

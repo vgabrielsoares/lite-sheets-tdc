@@ -241,12 +241,20 @@ export interface LuckLevel {
  * Ofício (Competência)
  */
 export interface Craft {
+  /** ID único do ofício */
+  id: string;
   /** Nome do ofício */
   name: string;
-  /** Nível no ofício (1-5) */
-  level: 1 | 2 | 3 | 4 | 5;
-  /** Modificador total do ofício */
-  modifier: number;
+  /** Descrição opcional do ofício */
+  description?: string;
+  /** Nível no ofício (0-5) */
+  level: 0 | 1 | 2 | 3 | 4 | 5;
+  /** Atributo-chave usado para calcular o modificador */
+  attributeKey: AttributeName;
+  /** Modificadores de dados (ex: +2d20, -1d20) */
+  diceModifier: number;
+  /** Modificador numérico (ex: +3, -2) */
+  numericModifier: number;
 }
 
 /**
