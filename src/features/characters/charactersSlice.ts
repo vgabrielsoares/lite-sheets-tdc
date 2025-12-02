@@ -239,6 +239,90 @@ const charactersSlice = createSlice({
       character.updatedAt = new Date().toISOString();
       state.error = null;
     },
+
+    /**
+     * Adiciona um novo ofício ao personagem
+     */
+    /**
+     * Adiciona um ofício ao personagem
+     */
+    addCraft: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        craft: import('@/types').Craft;
+      }>
+    ) => {
+      const { characterId, craft } = action.payload;
+      const character = state.entities[characterId];
+
+      if (!character) {
+        state.error = `Personagem com ID ${characterId} não encontrado`;
+        return;
+      }
+
+      character.crafts.push(craft);
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
+
+    /**
+     * Atualiza um ofício existente do personagem
+     */
+    updateCraft: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        craftId: string;
+        updates: Partial<import('@/types').Craft>;
+      }>
+    ) => {
+      const { characterId, craftId, updates } = action.payload;
+      const character = state.entities[characterId];
+
+      if (!character) {
+        state.error = `Personagem com ID ${characterId} não encontrado`;
+        return;
+      }
+
+      const craftIndex = character.crafts.findIndex((c) => c.id === craftId);
+      if (craftIndex === -1) {
+        state.error = `Ofício com ID ${craftId} não encontrado`;
+        return;
+      }
+
+      // Atualizar o ofício com os novos valores
+      character.crafts[craftIndex] = {
+        ...character.crafts[craftIndex],
+        ...updates,
+      };
+
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
+
+    /**
+     * Remove um ofício do personagem
+     */
+    removeCraft: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        craftId: string;
+      }>
+    ) => {
+      const { characterId, craftId } = action.payload;
+      const character = state.entities[characterId];
+
+      if (!character) {
+        state.error = `Personagem com ID ${characterId} não encontrado`;
+        return;
+      }
+
+      character.crafts = character.crafts.filter((c) => c.id !== craftId);
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     // Load characters
@@ -353,6 +437,9 @@ export const {
   clearError,
   setCharacters,
   updateSignatureAbility,
+  addCraft,
+  updateCraft,
+  removeCraft,
 } = charactersSlice.actions;
 
 /**
