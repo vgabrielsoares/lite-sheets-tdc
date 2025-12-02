@@ -11,19 +11,19 @@
  */
 export const LANGUAGE_LIST = [
   'comum',
-  'anao',
-  'elfico',
-  'goblinoide',
-  'draconico',
-  'infernal',
   'primordial',
   'runico',
+  'anao',
   'aquatico',
+  'draconico',
+  'elfico',
   'gigante',
   'gnomico',
+  'infernal',
   'glasnee',
   'orc',
   'silvestre',
+  'goblinoide',
 ] as const;
 
 /**
@@ -36,39 +36,49 @@ export type LanguageName = (typeof LANGUAGE_LIST)[number];
  */
 export const LANGUAGE_LABELS: Record<LanguageName, string> = {
   comum: 'Comum',
-  anao: 'Anão',
-  elfico: 'Élfico',
-  goblinoide: 'Goblinoide',
-  draconico: 'Dracônico',
-  infernal: 'Infernal',
   primordial: 'Primordial',
   runico: 'Rúnico',
-  aquatico: 'Aquático',
-  gigante: 'Gigante',
-  gnomico: 'Gnômico',
-  glasnee: 'Glasnee',
-  orc: 'Orc',
-  silvestre: 'Silvestre',
+  anao: 'Anão (Dvergur)',
+  aquatico: 'Aquático (Lang)',
+  draconico: 'Dracônico (Nyelv)',
+  elfico: 'Élfico (Aon-deug)',
+  gigante: 'Gigante (Yoksa)',
+  gnomico: 'Gnômico (Tgegh)',
+  infernal: 'Infernal (Jahanami)',
+  glasnee: "Oopar'neela (Glasnee)",
+  orc: 'Orc (Meehun)',
+  silvestre: 'Silvestre (Zerleg)',
+  goblinoide: 'Ururimi (Goblinóide)',
 };
 
 /**
  * Descrições dos idiomas
  */
 export const LANGUAGE_DESCRIPTIONS: Record<LanguageName, string> = {
-  comum: 'Idioma universal falado pela maioria das raças civilizadas.',
-  anao: 'Idioma dos anões, áspero e gutural, usado em suas fortalezas montanhosas.',
-  elfico: 'Idioma élfico, melódico e fluido, usado pelos elfos.',
-  goblinoide: 'Idioma dos goblins, hobgoblins e raças relacionadas.',
-  draconico: 'Idioma antigo dos dragões, poderoso e complexo.',
-  infernal: 'Idioma dos diabos e habitantes dos planos infernais.',
-  primordial: 'Idioma elemental, usado por criaturas dos planos elementais.',
-  runico: 'Idioma rúnico usado em inscrições e magias antigas.',
-  aquatico: 'Idioma das criaturas aquáticas e habitantes dos mares.',
-  gigante: 'Idioma dos gigantes e criaturas de grande porte.',
-  gnomico: 'Idioma dos gnomos, técnico e cheio de nuances.',
-  glasnee: 'Idioma da raça Glasnee, específico de sua cultura.',
-  orc: 'Idioma dos orcs, primitivo e agressivo.',
-  silvestre: 'Idioma das fadas e criaturas das florestas.',
+  comum:
+    'Idioma universal falado pela maioria das raças civilizadas. Todos os personagens conhecem este idioma.',
+  primordial:
+    'Idioma primordial, usado por criaturas mais antigas que o próprio tempo.',
+  runico:
+    'Idioma rúnico usado em inscrições antigas, magias e textos de poder. Não é falado, mas sinalizado e/ou escrito.',
+  anao: 'Dvergur - Idioma dos anões, áspero e gutural, usado em suas fortalezas montanhosas.',
+  aquatico:
+    'Lang - Idioma das criaturas aquáticas e habitantes dos oceanos profundos, repletos de sinais, vibrações e feições que substituem sons que não correm bem pela água.',
+  draconico:
+    'Nyelv - Idioma antigo dos dragões, poderoso, complexo e elegante.',
+  elfico:
+    'Aon-deug - Idioma élfico, fluido, usado pelos elfos e aqueles que seguem sua cultura.',
+  gigante: 'Yoksa - Idioma dos gigantes, com som forte e curto.',
+  gnomico: 'Tgegh - Idioma dos gnomos, técnico, cheio de nuances e precisão.',
+  infernal:
+    'Jahanami - Idioma dos habitantes dos planos infernais, cheio de particularidades.',
+  glasnee:
+    "Oopar'neela - Idioma da raça Glasnee, perfeito para diplomacia, textos e assuntos acadêmicos.",
+  orc: 'Meehun - Idioma dos orcs, direto e simples.',
+  silvestre:
+    'Zerleg - Idioma das criaturas das florestas selvagens, muito conhecido e disseminado.',
+  goblinoide:
+    'Ururimi - Idioma dos goblins, hobgoblins e raças goblinóides relacionadas, podendo haver diferentes refinações.',
 };
 
 /**
@@ -77,19 +87,19 @@ export const LANGUAGE_DESCRIPTIONS: Record<LanguageName, string> = {
  */
 export const LANGUAGE_ALPHABETS: Record<LanguageName, string> = {
   comum: 'Comum',
-  anao: 'Rúnico',
-  elfico: 'Élfico',
-  goblinoide: 'Comum',
-  draconico: 'Dracônico',
-  infernal: 'Infernal',
   primordial: 'Primordial',
   runico: 'Rúnico',
-  aquatico: 'Primordial',
-  gigante: 'Rúnico',
-  gnomico: 'Rúnico',
-  glasnee: 'Comum',
-  orc: 'Comum',
-  silvestre: 'Élfico',
+  anao: 'Gnômico',
+  aquatico: 'Let (Aquático)',
+  draconico: 'Irott (Dracônico)',
+  elfico: 'Litreachadh (Élfico)',
+  gigante: 'Aksaar (Gigante)',
+  gnomico: 'Gnômico',
+  infernal: 'Primordial',
+  glasnee: 'Vartanee (Glasnee)',
+  orc: 'Useg (Silvestre)',
+  silvestre: 'Useg (Silvestre)',
+  goblinoide: 'Useg (Silvestre)',
 };
 
 /**
