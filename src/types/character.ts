@@ -231,10 +231,14 @@ export interface Senses {
  * Nível de sorte
  */
 export interface LuckLevel {
-  /** Nível atual de sorte */
+  /** Nível atual de sorte (0-7) */
   level: number;
   /** Valor total de sorte disponível */
   value: number;
+  /** Modificador de dados adicionais (pode ser negativo) */
+  diceModifier: number;
+  /** Modificador numérico adicional */
+  numericModifier: number;
 }
 
 /**
