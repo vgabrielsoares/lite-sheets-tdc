@@ -9,6 +9,7 @@ import type {
   ProficiencyLevel,
   Modifier,
   Craft,
+  LanguageName,
 } from '@/types';
 import {
   BasicStats,
@@ -19,6 +20,7 @@ import {
 } from '../stats';
 import { AttributesDisplay } from '../attributes';
 import { SkillsDisplay, CraftsDisplay } from '../skills';
+import { LanguagesDisplay } from '../languages';
 import type { MovementType } from '@/types';
 import { getEncumbranceState, calculateCarryCapacity } from '@/utils';
 
@@ -326,6 +328,12 @@ export function MainTab({
             onRemove={onRemoveCraft}
           />
         )}
+
+        {/* Idiomas Conhecidos */}
+        <LanguagesDisplay
+          character={character}
+          onUpdate={(languages: LanguageName[]) => onUpdate({ languages })}
+        />
       </Stack>
     </Box>
   );
