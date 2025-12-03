@@ -134,3 +134,15 @@ export {
   ensureComumLanguage,
   getLanguageSummary,
 } from './languageUtils';
+
+// Sense calculation utilities
+export {
+  calculateSenseModifier,
+  calculateAllSenses,
+  getKeenSenseBonus,
+  PERCEPTION_USE_TO_SENSE,
+  SENSE_TO_PERCEPTION_USE,
+  SENSE_USE_LABELS,
+  SENSE_ICONS,
+} from './senseCalculations';
+export type { SenseCalculationResult } from './senseCalculations';

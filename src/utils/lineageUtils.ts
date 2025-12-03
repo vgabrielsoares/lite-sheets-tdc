@@ -173,7 +173,7 @@ export function getSizeModifierForSkill(
   if (normalizedSkillName === 'acrobacia') return skillModifiers.acrobacia;
   if (normalizedSkillName === 'atletismo') return skillModifiers.atletismo;
   if (normalizedSkillName === 'furtividade') return skillModifiers.furtividade;
-  if (normalizedSkillName === 'reflexos') return skillModifiers.reflexos;
+  if (normalizedSkillName === 'reflexo') return skillModifiers.reflexo;
   if (normalizedSkillName === 'tenacidade') return skillModifiers.tenacidade;
 
   return 0;
@@ -192,7 +192,7 @@ export function createDefaultLineage(): Lineage {
     size: 'medio',
     height: 170,
     weightKg: 70,
-    weightRPG: 70,
+    weightRPG: 10,
     age: 25,
     adulthood: undefined,
     lifeExpectancy: undefined,
