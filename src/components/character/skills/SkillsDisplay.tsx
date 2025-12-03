@@ -39,6 +39,7 @@ import {
   FilterList as FilterIcon,
   ExpandMore as ExpandMoreIcon,
   Info as InfoIcon,
+  HelpRounded as HelpRoundedIcon,
 } from '@mui/icons-material';
 
 import type {
@@ -245,13 +246,35 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
     <Box>
       {/* Header com título e estatísticas */}
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Typography variant="h6">Habilidades</Typography>
-          {isOverloaded && (
-            <Tooltip title="Sobrecarregado: algumas habilidades sofrem penalidade de -5">
-              <Chip label="Sobrecarregado" size="small" color="warning" />
-            </Tooltip>
-          )}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: 1,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6">Habilidades</Typography>
+            {isOverloaded && (
+              <Tooltip title="Sobrecarregado: algumas habilidades sofrem penalidade de -5">
+                <Chip label="Sobrecarregado" size="small" color="warning" />
+              </Tooltip>
+            )}
+          </Box>
+          <Tooltip
+            title="Clique em qualquer habilidade para ver detalhes, usos específicos e definir como Habilidade de Assinatura."
+            arrow
+            placement="left"
+          >
+            <IconButton
+              size="small"
+              aria-label="Informações sobre habilidades"
+              sx={{ color: 'info.main' }}
+            >
+              <HelpRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Box>
 
         <Typography variant="body2" color="text.secondary">
@@ -395,14 +418,6 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
           </Stack>
         </Collapse>
       </Paper>
-
-      {/* Info sobre Habilidade de Assinatura */}
-      <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          Clique em qualquer habilidade para ver detalhes, usos específicos e
-          definir como <strong>Habilidade de Assinatura</strong>.
-        </Typography>
-      </Alert>
 
       {/* Lista de habilidades */}
       {filteredSkills.length === 0 ? (

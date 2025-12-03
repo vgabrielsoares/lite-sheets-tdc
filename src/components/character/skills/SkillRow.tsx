@@ -1,21 +1,21 @@
-'use client';
+﻿'use client';
 
 /**
  * SkillRow - Componente para exibir uma linha de habilidade
  *
- * Exibe informações de uma habilidade com opções de edição:
- * - Nome da habilidade (label amigável)
- * - Atributo-chave padrão (referência, não editável)
- * - Atributo-chave atual (editável via select)
- * - Grau de proficiência (editável via select)
+ * Exibe informaÃ§Ãµes de uma habilidade com opÃ§Ãµes de ediÃ§Ã£o:
+ * - Nome da habilidade (label amigÃ¡vel)
+ * - Atributo-chave padrÃ£o (referÃªncia, nÃ£o editÃ¡vel)
+ * - Atributo-chave atual (editÃ¡vel via select)
+ * - Grau de proficiÃªncia (editÃ¡vel via select)
  * - Modificador total (calculado automaticamente)
- * - Fórmula de rolagem (Xd20+Y)
+ * - FÃ³rmula de rolagem (Xd20+Y)
  *
  * Funcionalidades:
  * - Clique na linha abre sidebar com detalhes e usos da habilidade
  * - Indicadores visuais para habilidades especiais (Assinatura, Combate, Carga)
  * - Destaque quando atributo-chave foi customizado
- * - Acessível por teclado (Tab, Enter, ESC)
+ * - AcessÃ­vel por teclado (Tab, Enter, ESC)
  */
 
 import React from 'react';
@@ -71,35 +71,35 @@ import {
 export interface SkillRowProps {
   /** Dados da habilidade */
   skill: Skill;
-  /** Atributos do personagem (para cálculos) */
+  /** Atributos do personagem (para cÃ¡lculos) */
   attributes: Attributes;
-  /** Nível do personagem (para bônus de assinatura) */
+  /** NÃ­vel do personagem (para bÃ´nus de assinatura) */
   characterLevel: number;
-  /** Se personagem está sobrecarregado */
+  /** Se personagem estÃ¡ sobrecarregado */
   isOverloaded: boolean;
-  /** Callback quando atributo-chave é alterado */
+  /** Callback quando atributo-chave Ã© alterado */
   onKeyAttributeChange: (
     skillName: SkillName,
     newAttribute: AttributeName
   ) => void;
-  /** Callback quando proficiência é alterada */
+  /** Callback quando proficiÃªncia Ã© alterada */
   onProficiencyChange: (
     skillName: SkillName,
     newProficiency: ProficiencyLevel
   ) => void;
-  /** Callback quando modificadores são alterados */
+  /** Callback quando modificadores sÃ£o alterados */
   onModifiersChange?: (skillName: SkillName, modifiers: Modifier[]) => void;
-  /** Callback quando linha é clicada (abre sidebar) */
+  /** Callback quando linha Ã© clicada (abre sidebar) */
   onClick: (skillName: SkillName) => void;
-  /** Lista de ofícios (apenas para habilidade "oficio") */
+  /** Lista de ofÃ­cios (apenas para habilidade "oficio") */
   crafts?: Craft[];
-  /** Callback quando ofício selecionado é alterado (apenas para habilidade "oficio") */
+  /** Callback quando ofÃ­cio selecionado Ã© alterado (apenas para habilidade "oficio") */
   onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
   /** Dados de sorte do personagem (apenas para habilidade "sorte") */
   luck?: import('@/types').LuckLevel;
-  /** Callback quando nível de sorte é alterado (apenas para habilidade "sorte") */
+  /** Callback quando nÃ­vel de sorte Ã© alterado (apenas para habilidade "sorte") */
   onLuckLevelChange?: (level: number) => void;
-  /** Callback quando modificadores de sorte são alterados (apenas para habilidade "sorte") */
+  /** Callback quando modificadores de sorte sÃ£o alterados (apenas para habilidade "sorte") */
   onLuckModifiersChange?: (
     diceModifier: number,
     numericModifier: number
@@ -107,7 +107,7 @@ export interface SkillRowProps {
 }
 
 /**
- * Componente SkillRow - Exibe uma linha de habilidade com cálculos e edição
+ * Componente SkillRow - Exibe uma linha de habilidade com cÃ¡lculos e ediÃ§Ã£o
  */
 export const SkillRow: React.FC<SkillRowProps> = ({
   skill,
@@ -127,7 +127,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   const theme = useTheme();
   const metadata = SKILL_METADATA[skill.name];
 
-  // Detectar se é habilidade "oficio" ou "sorte"
+  // Detectar se Ã© habilidade "oficio" ou "sorte"
   const isOficioSkill = skill.name === 'oficio';
   const isSorteSkill = skill.name === 'sorte';
 
@@ -138,12 +138,12 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       : null;
 
   // Calcular modificador e rolagem
-  // Para ofício, usar o craft selecionado se houver
+  // Para ofÃ­cio, usar o craft selecionado se houver
   // Para sorte, usar os dados de luck
   let calculation, rollFormula;
 
   if (isSorteSkill && luck) {
-    // Tabela de rolagens por nível de sorte
+    // Tabela de rolagens por nÃ­vel de sorte
     const LUCK_ROLL_TABLE: Record<number, { dice: number; bonus: number }> = {
       0: { dice: 1, bonus: 0 },
       1: { dice: 2, bonus: 0 },
@@ -155,13 +155,13 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       7: { dice: 5, bonus: 15 },
     };
 
-    // Obter dados do nível de sorte ou calcular para níveis > 7
+    // Obter dados do nÃ­vel de sorte ou calcular para nÃ­veis > 7
     const luckData = LUCK_ROLL_TABLE[luck.level] ?? {
       dice: luck.level,
       bonus: luck.level * 3,
     };
 
-    // Calcular bônus de assinatura se aplicável
+    // Calcular bÃ´nus de assinatura se aplicÃ¡vel
     const signatureBonus = skill.isSignature
       ? calculateSignatureAbilityBonus(characterLevel, metadata.isCombatSkill)
       : 0;
@@ -173,25 +173,25 @@ export const SkillRow: React.FC<SkillRowProps> = ({
     const totalModifier =
       baseBonus + (luck.numericModifier || 0) + signatureBonus;
 
-    // Criar cálculo customizado para sorte
+    // Criar cÃ¡lculo customizado para sorte
     calculation = {
       attributeValue: luck.level,
-      proficiencyMultiplier: 0, // Sorte não usa proficiência
+      proficiencyMultiplier: 0, // Sorte nÃ£o usa proficiÃªncia
       baseModifier: baseBonus,
       signatureBonus,
       otherModifiers: luck.numericModifier || 0,
       totalModifier,
     };
 
-    // Calcular fórmula de rolagem
-    // Quando dados < 1, converte: 0→2, -1→3, -2→4, etc.
+    // Calcular fÃ³rmula de rolagem
+    // Quando dados < 1, converte: 0â†’2, -1â†’3, -2â†’4, etc.
     let diceCount = totalDice;
     let takeLowest = false;
     if (totalDice < 1) {
-      diceCount = 2 - totalDice; // 0→2, -1→3, -2→4
+      diceCount = 2 - totalDice; // 0â†’2, -1â†’3, -2â†’4
       takeLowest = true;
     }
-    // Se totalDice >= 1, não usa takeLowest mesmo se partiu de 0
+    // Se totalDice >= 1, nÃ£o usa takeLowest mesmo se partiu de 0
 
     rollFormula = {
       diceCount,
@@ -205,12 +205,12 @@ export const SkillRow: React.FC<SkillRowProps> = ({
     const craftMultiplier = getCraftMultiplier(selectedCraft.level);
     const craftBaseModifier = craftAttributeValue * craftMultiplier;
 
-    // Calcular bônus de assinatura se aplicável
+    // Calcular bÃ´nus de assinatura se aplicÃ¡vel
     const signatureBonus = skill.isSignature
       ? calculateSignatureAbilityBonus(characterLevel, metadata.isCombatSkill)
       : 0;
 
-    // Criar um cálculo customizado para o craft
+    // Criar um cÃ¡lculo customizado para o craft
     calculation = {
       attributeValue: craftAttributeValue,
       proficiencyMultiplier: craftMultiplier,
@@ -221,16 +221,16 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         craftBaseModifier + signatureBonus + selectedCraft.numericModifier,
     };
 
-    // Calcular fórmula de rolagem
+    // Calcular fÃ³rmula de rolagem
     const totalDice = 1 + (selectedCraft.diceModifier || 0);
-    // Quando dados < 1, converte: 0→2, -1→3, -2→4, etc.
+    // Quando dados < 1, converte: 0â†’2, -1â†’3, -2â†’4, etc.
     let diceCount = totalDice;
     let takeLowest = false;
     if (totalDice < 1) {
       diceCount = 2 - totalDice;
       takeLowest = true;
     }
-    // Se craft attribute é 0 mas totalDice >= 1, não usa takeLowest
+    // Se craft attribute Ã© 0 mas totalDice >= 1, nÃ£o usa takeLowest
 
     rollFormula = {
       diceCount,
@@ -239,7 +239,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       formula: `${diceCount}d20${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier}`,
     };
   } else {
-    // Cálculo normal para habilidades não-ofício ou ofício sem craft selecionado
+    // CÃ¡lculo normal para habilidades nÃ£o-ofÃ­cio ou ofÃ­cio sem craft selecionado
     const result = calculateSkillRoll(
       skill.name,
       skill.keyAttribute,
@@ -316,7 +316,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       <Tooltip
         key="signature"
         title="Habilidade de Assinatura"
-        enterDelay={300}
+        enterDelay={150}
       >
         <StarIcon fontSize="small" color="warning" />
       </Tooltip>
@@ -324,7 +324,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   }
   if (metadata.isCombatSkill) {
     indicators.push(
-      <Tooltip key="combat" title="Habilidade de Combate" enterDelay={300}>
+      <Tooltip key="combat" title="Habilidade de Combate" enterDelay={150}>
         <CombatIcon fontSize="small" color="error" />
       </Tooltip>
     );
@@ -334,7 +334,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       <Tooltip
         key="load"
         title="Sofre penalidade quando Sobrecarregado"
-        enterDelay={300}
+        enterDelay={150}
       >
         <LoadIcon
           fontSize="small"
@@ -345,7 +345,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   }
   if (metadata.requiresInstrument) {
     indicators.push(
-      <Tooltip key="instrument" title="Requer instrumento" enterDelay={300}>
+      <Tooltip key="instrument" title="Requer instrumento" enterDelay={150}>
         <InstrumentIcon fontSize="small" color="action" />
       </Tooltip>
     );
@@ -354,8 +354,8 @@ export const SkillRow: React.FC<SkillRowProps> = ({
     indicators.push(
       <Tooltip
         key="proficiency"
-        title="Requer proficiência para uso efetivo"
-        enterDelay={300}
+        title="Requer proficiÃªncia para uso efetivo"
+        enterDelay={150}
       >
         <ProficiencyIcon fontSize="small" color="action" />
       </Tooltip>
@@ -363,7 +363,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   }
   if (isCustomAttribute) {
     indicators.push(
-      <Tooltip key="custom" title="Atributo-chave customizado" enterDelay={300}>
+      <Tooltip key="custom" title="Atributo-chave customizado" enterDelay={150}>
         <CustomIcon fontSize="small" color="primary" />
       </Tooltip>
     );
@@ -390,18 +390,18 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           bgcolor: alpha(theme.palette.warning.main, 0.05),
         }),
         cursor: 'pointer',
-        // Otimização: apenas transições nas propriedades que mudam
+        // OtimizaÃ§Ã£o: apenas transiÃ§Ãµes nas propriedades que mudam
         transition:
           'border-color 0.2s ease-in-out, background-color 0.2s ease-in-out',
         // Uso de will-change para otimizar rendering
         willChange: 'border-color, background-color',
-        // Forçar compositing layer para evitar repaints
+        // ForÃ§ar compositing layer para evitar repaints
         transform: 'translateZ(0)',
         '&:hover': {
           borderColor: theme.palette.primary.main,
           backgroundColor: alpha(theme.palette.primary.main, 0.05),
         },
-        // Destaque se é Habilidade de Assinatura
+        // Destaque se Ã© Habilidade de Assinatura
         ...(skill.isSignature && {
           backgroundColor: alpha(theme.palette.warning.main, 0.05),
           borderColor: theme.palette.warning.main,
@@ -413,10 +413,10 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         <Tooltip
           title={
             isCustomAttribute
-              ? `${SKILL_LABELS[skill.name]} - Atributo padrão: ${metadata.keyAttribute === 'especial' ? 'Especial' : ATTRIBUTE_LABELS[metadata.keyAttribute]} (customizado para ${ATTRIBUTE_LABELS[skill.keyAttribute]})`
+              ? `${SKILL_LABELS[skill.name]} - Atributo padrÃ£o: ${metadata.keyAttribute === 'especial' ? 'Especial' : ATTRIBUTE_LABELS[metadata.keyAttribute]} (customizado para ${ATTRIBUTE_LABELS[skill.keyAttribute]})`
               : `${SKILL_LABELS[skill.name]} - Atributo: ${metadata.keyAttribute === 'especial' ? 'Especial' : ATTRIBUTE_LABELS[metadata.keyAttribute]}`
           }
-          enterDelay={300}
+          enterDelay={150}
         >
           <Typography
             variant="body1"
@@ -428,9 +428,9 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         <Box sx={{ display: 'flex', gap: 0.5 }}>{indicators}</Box>
       </Box>
 
-      {/* Atributo-chave atual (editável) OU Select de Ofício OU Select de Nível de Sorte */}
+      {/* Atributo-chave atual (editÃ¡vel) OU Select de OfÃ­cio OU Select de NÃ­vel de Sorte */}
       {isOficioSkill ? (
-        // Select de ofício (apenas para habilidade "oficio")
+        // Select de ofÃ­cio (apenas para habilidade "oficio")
         <FormControl
           size="small"
           fullWidth
@@ -441,16 +441,16 @@ export const SkillRow: React.FC<SkillRowProps> = ({
             title={
               selectedCraft
                 ? `${selectedCraft.name} (${ATTRIBUTE_ABBREVIATIONS[selectedCraft.attributeKey]} Nv. ${selectedCraft.level})`
-                : 'Selecione um ofício...'
+                : 'Selecione um ofÃ­cio...'
             }
-            enterDelay={300}
+            enterDelay={150}
             placement="top"
           >
             <Select
               value={skill.selectedCraftId || ''}
               onChange={handleSelectedCraftChange}
               displayEmpty
-              aria-label="Selecionar ofício"
+              aria-label="Selecionar ofÃ­cio"
               sx={{
                 '& .MuiSelect-select': {
                   py: 0.75,
@@ -469,7 +469,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
               }}
             >
               <MenuItem value="" disabled>
-                <em>Selecione um ofício...</em>
+                <em>Selecione um ofÃ­cio...</em>
               </MenuItem>
               {crafts.map((craft) => (
                 <MenuItem
@@ -492,7 +492,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           </Tooltip>
         </FormControl>
       ) : isSorteSkill && luck ? (
-        // Select de nível de sorte (apenas para habilidade "sorte")
+        // Select de nÃ­vel de sorte (apenas para habilidade "sorte")
         <FormControl
           size="small"
           fullWidth
@@ -502,26 +502,26 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           <Select
             value={luck.level}
             onChange={handleLuckLevelChange}
-            aria-label="Nível de sorte"
+            aria-label="NÃ­vel de sorte"
             sx={{
               '& .MuiSelect-select': {
                 py: 0.75,
               },
             }}
           >
-            <MenuItem value={0}>Nível 0 (1d20)</MenuItem>
-            <MenuItem value={1}>Nível 1 (2d20)</MenuItem>
-            <MenuItem value={2}>Nível 2 (2d20+2)</MenuItem>
-            <MenuItem value={3}>Nível 3 (3d20+3)</MenuItem>
-            <MenuItem value={4}>Nível 4 (3d20+6)</MenuItem>
-            <MenuItem value={5}>Nível 5 (4d20+8)</MenuItem>
-            <MenuItem value={6}>Nível 6 (4d20+12)</MenuItem>
-            <MenuItem value={7}>Nível 7 (5d20+15)</MenuItem>
+            <MenuItem value={0}>NÃ­vel 0 (1d20)</MenuItem>
+            <MenuItem value={1}>NÃ­vel 1 (2d20)</MenuItem>
+            <MenuItem value={2}>NÃ­vel 2 (2d20+2)</MenuItem>
+            <MenuItem value={3}>NÃ­vel 3 (3d20+3)</MenuItem>
+            <MenuItem value={4}>NÃ­vel 4 (3d20+6)</MenuItem>
+            <MenuItem value={5}>NÃ­vel 5 (4d20+8)</MenuItem>
+            <MenuItem value={6}>NÃ­vel 6 (4d20+12)</MenuItem>
+            <MenuItem value={7}>NÃ­vel 7 (5d20+15)</MenuItem>
           </Select>
         </FormControl>
       ) : (
         <>
-          {/* Atributo-chave atual (editável) */}
+          {/* Atributo-chave atual (editÃ¡vel) */}
           <FormControl
             size="small"
             fullWidth
@@ -551,7 +551,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
             </Select>
           </FormControl>
 
-          {/* Grau de proficiência (editável) */}
+          {/* Grau de proficiÃªncia (editÃ¡vel) */}
           <FormControl
             size="small"
             fullWidth
@@ -561,7 +561,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
             <Select
               value={skill.proficiencyLevel}
               onChange={handleProficiencyChange}
-              aria-label={`Proficiência em ${SKILL_LABELS[skill.name]}`}
+              aria-label={`ProficiÃªncia em ${SKILL_LABELS[skill.name]}`}
               sx={{
                 '& .MuiSelect-select': {
                   py: 0.75,
@@ -597,7 +597,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         )}
       </Box>
 
-      {/* Resultado: Modificador + Fórmula (combinados) */}
+      {/* Resultado: Modificador + FÃ³rmula (combinados) */}
       <Box
         sx={{
           display: { xs: 'none', sm: 'flex' },
@@ -607,8 +607,8 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         }}
       >
         <Tooltip
-          title={`Modificador total: ${calculation.attributeValue} (atributo) × ${calculation.proficiencyMultiplier} (proficiência) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
-          enterDelay={300}
+          title={`Modificador total: ${calculation.attributeValue} (atributo) Ã— ${calculation.proficiencyMultiplier} (proficiÃªncia) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
+          enterDelay={150}
         >
           <Chip
             label={
@@ -624,8 +624,8 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         </Tooltip>
 
         <Tooltip
-          title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
-          enterDelay={300}
+          title={`FÃ³rmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+          enterDelay={150}
         >
           <Typography
             variant="body1"
@@ -652,8 +652,8 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         }}
       >
         <Tooltip
-          title={`Modificador total: ${calculation.attributeValue} (atributo) × ${calculation.proficiencyMultiplier} (proficiência) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
-          enterDelay={300}
+          title={`Modificador total: ${calculation.attributeValue} (atributo) Ã— ${calculation.proficiencyMultiplier} (proficiÃªncia) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
+          enterDelay={150}
         >
           <Chip
             label={
@@ -668,8 +668,8 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           />
         </Tooltip>
         <Tooltip
-          title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
-          enterDelay={300}
+          title={`FÃ³rmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+          enterDelay={150}
         >
           <Typography
             variant="body2"
@@ -686,3 +686,4 @@ export const SkillRow: React.FC<SkillRowProps> = ({
 };
 
 export default SkillRow;
+
