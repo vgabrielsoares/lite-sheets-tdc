@@ -154,13 +154,13 @@ const darkThemeOptions: ThemeOptions = {
   },
   transitions: {
     duration: {
-      shortest: 150,
-      shorter: 200,
-      short: 250,
-      standard: 300,
-      complex: 375,
-      enteringScreen: 225,
-      leavingScreen: 195,
+      shortest: 100,
+      shorter: 125,
+      short: 150,
+      standard: 150,
+      complex: 250,
+      enteringScreen: 150,
+      leavingScreen: 125,
     },
     easing: {
       easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
