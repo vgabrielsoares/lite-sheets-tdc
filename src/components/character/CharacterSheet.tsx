@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -11,6 +11,13 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
+import PersonIcon from '@mui/icons-material/Person';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import ShieldIcon from '@mui/icons-material/Shield';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import BuildIcon from '@mui/icons-material/Build';
+import TranslateIcon from '@mui/icons-material/Translate';
 import { useRouter } from 'next/navigation';
 import type {
   Character,
@@ -43,6 +50,7 @@ import { PPDetailSidebar } from './sidebars/PPDetailSidebar';
 import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
+import { TableOfContents, TOCSection } from '@/components/shared';
 
 export interface CharacterSheetProps {
   /**
@@ -87,6 +95,9 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   // Estado da aba atual
   const [currentTab, setCurrentTab] = useState<CharacterTabId>('main');
 
+  // Estado do Table of Contents
+  const [tocOpen, setTocOpen] = useState<boolean>(false);
+
   // Estado da sidebar (qual sidebar está aberta)
   const [activeSidebar, setActiveSidebar] = useState<
     | 'lineage'
@@ -107,6 +118,78 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   // Habilidade selecionada para a sidebar
   const [selectedSkill, setSelectedSkill] = useState<SkillName | null>(null);
+
+  /**
+   * Seções do TOC por aba
+   */
+  const tocSections = useMemo<Record<CharacterTabId, TOCSection[]>>(
+    () => ({
+      main: [
+        {
+          id: 'section-basic-stats',
+          label: 'Informações Básicas',
+          icon: <PersonIcon fontSize="small" />,
+        },
+        {
+          id: 'section-hp-pp',
+          label: 'PV e PP',
+          icon: <FavoriteIcon fontSize="small" />,
+        },
+        {
+          id: 'section-defense-movement',
+          label: 'Defesa e Deslocamento',
+          icon: <ShieldIcon fontSize="small" />,
+        },
+        {
+          id: 'section-attributes',
+          label: 'Atributos',
+          icon: <FitnessCenterIcon fontSize="small" />,
+        },
+        {
+          id: 'section-skills',
+          label: 'Habilidades',
+          icon: <PsychologyIcon fontSize="small" />,
+        },
+        {
+          id: 'section-crafts',
+          label: 'Ofícios',
+          icon: <BuildIcon fontSize="small" />,
+        },
+        {
+          id: 'section-languages',
+          label: 'Idiomas',
+          icon: <TranslateIcon fontSize="small" />,
+        },
+      ],
+      combat: [
+        { id: 'section-combat-stats', label: 'Status de Combate' },
+        { id: 'section-actions', label: 'Ações' },
+        { id: 'section-attacks', label: 'Ataques' },
+      ],
+      archetypes: [
+        { id: 'section-archetypes', label: 'Arquétipos' },
+        { id: 'section-classes', label: 'Classes' },
+      ],
+      resources: [
+        { id: 'section-luck', label: 'Sorte' },
+        { id: 'section-particularities', label: 'Particularidades' },
+      ],
+      inventory: [
+        { id: 'section-equipment', label: 'Equipamentos' },
+        { id: 'section-currency', label: 'Dinheiro' },
+      ],
+      spells: [
+        { id: 'section-known-spells', label: 'Feitiços Conhecidos' },
+        { id: 'section-spell-slots', label: 'Espaços de Feitiço' },
+      ],
+      description: [
+        { id: 'section-physical', label: 'Descrição Física' },
+        { id: 'section-definers', label: 'Definidores' },
+        { id: 'section-backstory', label: 'História' },
+      ],
+    }),
+    []
+  );
 
   /**
    * Navega de volta para a lista de fichas
@@ -600,20 +683,19 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         </Breadcrumbs>
       </Box>
 
-      {/* Layout principal - Centralizado */}
+      {/* Layout principal - Ficha sempre centralizada */}
       <Box
         sx={{
           display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: 3,
-          justifyContent: 'center', // Centraliza horizontalmente
+          flexDirection: 'column',
+          alignItems: 'center', // Centraliza a ficha horizontalmente
         }}
       >
         {/* Container da ficha */}
         <Box
           sx={{
-            flex: isMobile ? '1 1 auto' : '0 0 800px',
-            maxWidth: '800px',
+            width: isMobile ? '100%' : '900px',
+            maxWidth: '900px',
             display: 'flex',
             flexDirection: 'column',
           }}
@@ -633,238 +715,239 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             {renderTabContent()}
           </Box>
         </Box>
-
-        {/* Área reservada para sidebar - agora position fixed, não precisa de espaço reservado */}
-        {!isMobile && activeSidebar && (
-          <Box
-            sx={{
-              flex: '0 0 640px', // Largura fixa da sidebar (lg) - reserva espaço no layout
-              maxWidth: '640px',
-            }}
-          />
-        )}
-
-        {/* Sidebars - renderizadas com position fixed */}
-        {!isMobile && (
-          <>
-            {/* Sidebar de Linhagem */}
-            {activeSidebar === 'lineage' && (
-              <LinhagemSidebar
-                open={activeSidebar === 'lineage'}
-                lineage={character.lineage}
-                onUpdate={handleUpdateLineage}
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de Origem */}
-            {activeSidebar === 'origin' && (
-              <OrigemSidebar
-                open={activeSidebar === 'origin'}
-                origin={character.origin}
-                onUpdate={handleUpdateOrigin}
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de Tamanho */}
-            {activeSidebar === 'size' && character.lineage?.size && (
-              <SizeSidebar
-                open={activeSidebar === 'size'}
-                currentSize={character.lineage.size}
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de PV */}
-            {activeSidebar === 'hp' && (
-              <HPDetailSidebar
-                open={activeSidebar === 'hp'}
-                hp={character.combat.hp}
-                onChange={(hp: HealthPoints) =>
-                  onUpdate({
-                    combat: { ...character.combat, hp },
-                  })
-                }
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de PP */}
-            {activeSidebar === 'pp' && (
-              <PPDetailSidebar
-                open={activeSidebar === 'pp'}
-                pp={character.combat.pp}
-                onChange={(pp: PowerPoints) =>
-                  onUpdate({
-                    combat: { ...character.combat, pp },
-                  })
-                }
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de Defesa */}
-            {activeSidebar === 'defense' && (
-              <DefenseSidebar
-                open={activeSidebar === 'defense'}
-                character={character}
-                onUpdate={(updated) => onUpdate(updated)}
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de Deslocamento */}
-            {activeSidebar === 'movement' && (
-              <MovementSidebar
-                open={activeSidebar === 'movement'}
-                character={character}
-                onUpdate={(updated) => onUpdate(updated)}
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de Atributo */}
-            {activeSidebar === 'attribute' && selectedAttribute && (
-              <AttributeSidebar
-                open={activeSidebar === 'attribute'}
-                onClose={handleCloseSidebar}
-                attribute={selectedAttribute}
-                character={character}
-                onUpdateAttribute={handleUpdateAttribute}
-              />
-            )}
-
-            {/* Sidebar de Usos de Habilidade */}
-            {activeSidebar === 'skill' && selectedSkill && (
-              <SkillUsageSidebar
-                open={activeSidebar === 'skill'}
-                onClose={handleCloseSidebar}
-                skill={character.skills[selectedSkill]}
-                attributes={character.attributes}
-                characterLevel={character.level}
-                isOverloaded={false} // TODO: Calculate from inventory
-                onUpdateCustomUses={handleUpdateCustomUses}
-                onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
-                onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
-                onUpdateSkillModifiers={handleSkillModifiersChange}
-                onSignatureAbilityChange={handleSignatureAbilityChange}
-                currentSignatureSkill={getCurrentSignatureSkill()}
-                crafts={character.crafts}
-                onUpdateCraft={handleUpdateCraft}
-              />
-            )}
-          </>
-        )}
-
-        {/* Sidebar em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'lineage' && (
-          <LinhagemSidebar
-            open={activeSidebar === 'lineage'}
-            lineage={character.lineage}
-            onUpdate={handleUpdateLineage}
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de Origem em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'origin' && (
-          <OrigemSidebar
-            open={activeSidebar === 'origin'}
-            origin={character.origin}
-            onUpdate={handleUpdateOrigin}
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de Tamanho em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'size' && character.lineage?.size && (
-          <SizeSidebar
-            open={activeSidebar === 'size'}
-            currentSize={character.lineage.size}
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de PV em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'hp' && (
-          <HPDetailSidebar
-            open={activeSidebar === 'hp'}
-            hp={character.combat.hp}
-            onChange={(hp: HealthPoints) =>
-              onUpdate({
-                combat: { ...character.combat, hp },
-              })
-            }
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de PP em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'pp' && (
-          <PPDetailSidebar
-            open={activeSidebar === 'pp'}
-            pp={character.combat.pp}
-            onChange={(pp: PowerPoints) =>
-              onUpdate({
-                combat: { ...character.combat, pp },
-              })
-            }
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de Defesa em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'defense' && (
-          <DefenseSidebar
-            open={activeSidebar === 'defense'}
-            character={character}
-            onUpdate={(updated) => onUpdate(updated)}
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de Deslocamento em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'movement' && (
-          <MovementSidebar
-            open={activeSidebar === 'movement'}
-            character={character}
-            onUpdate={(updated) => onUpdate(updated)}
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de Atributo em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'attribute' && selectedAttribute && (
-          <AttributeSidebar
-            open={activeSidebar === 'attribute'}
-            onClose={handleCloseSidebar}
-            attribute={selectedAttribute}
-            character={character}
-            onUpdateAttribute={handleUpdateAttribute}
-          />
-        )}
-
-        {/* Sidebar de Usos de Habilidade em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'skill' && selectedSkill && (
-          <SkillUsageSidebar
-            open={activeSidebar === 'skill'}
-            onClose={handleCloseSidebar}
-            skill={character.skills[selectedSkill]}
-            attributes={character.attributes}
-            characterLevel={character.level}
-            isOverloaded={false} // TODO: Calculate from inventory
-            onUpdateCustomUses={handleUpdateCustomUses}
-            onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
-            onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
-            onUpdateSkillModifiers={handleSkillModifiersChange}
-            onSignatureAbilityChange={handleSignatureAbilityChange}
-            currentSignatureSkill={getCurrentSignatureSkill()}
-            crafts={character.crafts}
-            onUpdateCraft={handleUpdateCraft}
-          />
-        )}
       </Box>
+
+      {/* Table of Contents - lado esquerdo (somente desktop) */}
+      {!isMobile && (
+        <TableOfContents
+          open={tocOpen}
+          onOpen={() => setTocOpen(true)}
+          onClose={() => setTocOpen(false)}
+          sections={tocSections[currentTab] || []}
+          title="Índice"
+        />
+      )}
+
+      {/* Sidebars - renderizadas com position fixed à direita da ficha */}
+      {!isMobile && (
+        <>
+          {/* Sidebar de Linhagem */}
+          {activeSidebar === 'lineage' && (
+            <LinhagemSidebar
+              open={activeSidebar === 'lineage'}
+              lineage={character.lineage}
+              onUpdate={handleUpdateLineage}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Origem */}
+          {activeSidebar === 'origin' && (
+            <OrigemSidebar
+              open={activeSidebar === 'origin'}
+              origin={character.origin}
+              onUpdate={handleUpdateOrigin}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Tamanho */}
+          {activeSidebar === 'size' && character.lineage?.size && (
+            <SizeSidebar
+              open={activeSidebar === 'size'}
+              currentSize={character.lineage.size}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de PV */}
+          {activeSidebar === 'hp' && (
+            <HPDetailSidebar
+              open={activeSidebar === 'hp'}
+              hp={character.combat.hp}
+              onChange={(hp: HealthPoints) =>
+                onUpdate({
+                  combat: { ...character.combat, hp },
+                })
+              }
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de PP */}
+          {activeSidebar === 'pp' && (
+            <PPDetailSidebar
+              open={activeSidebar === 'pp'}
+              pp={character.combat.pp}
+              onChange={(pp: PowerPoints) =>
+                onUpdate({
+                  combat: { ...character.combat, pp },
+                })
+              }
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Defesa */}
+          {activeSidebar === 'defense' && (
+            <DefenseSidebar
+              open={activeSidebar === 'defense'}
+              character={character}
+              onUpdate={(updated) => onUpdate(updated)}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Deslocamento */}
+          {activeSidebar === 'movement' && (
+            <MovementSidebar
+              open={activeSidebar === 'movement'}
+              character={character}
+              onUpdate={(updated) => onUpdate(updated)}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Atributo */}
+          {activeSidebar === 'attribute' && selectedAttribute && (
+            <AttributeSidebar
+              open={activeSidebar === 'attribute'}
+              onClose={handleCloseSidebar}
+              attribute={selectedAttribute}
+              character={character}
+              onUpdateAttribute={handleUpdateAttribute}
+            />
+          )}
+
+          {/* Sidebar de Usos de Habilidade */}
+          {activeSidebar === 'skill' && selectedSkill && (
+            <SkillUsageSidebar
+              open={activeSidebar === 'skill'}
+              onClose={handleCloseSidebar}
+              skill={character.skills[selectedSkill]}
+              attributes={character.attributes}
+              characterLevel={character.level}
+              isOverloaded={false} // TODO: Calculate from inventory
+              onUpdateCustomUses={handleUpdateCustomUses}
+              onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
+              onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
+              onUpdateSkillModifiers={handleSkillModifiersChange}
+              onSignatureAbilityChange={handleSignatureAbilityChange}
+              currentSignatureSkill={getCurrentSignatureSkill()}
+              crafts={character.crafts}
+              onUpdateCraft={handleUpdateCraft}
+            />
+          )}
+        </>
+      )}
+
+      {/* Sidebar em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'lineage' && (
+        <LinhagemSidebar
+          open={activeSidebar === 'lineage'}
+          lineage={character.lineage}
+          onUpdate={handleUpdateLineage}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Origem em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'origin' && (
+        <OrigemSidebar
+          open={activeSidebar === 'origin'}
+          origin={character.origin}
+          onUpdate={handleUpdateOrigin}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Tamanho em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'size' && character.lineage?.size && (
+        <SizeSidebar
+          open={activeSidebar === 'size'}
+          currentSize={character.lineage.size}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de PV em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'hp' && (
+        <HPDetailSidebar
+          open={activeSidebar === 'hp'}
+          hp={character.combat.hp}
+          onChange={(hp: HealthPoints) =>
+            onUpdate({
+              combat: { ...character.combat, hp },
+            })
+          }
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de PP em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'pp' && (
+        <PPDetailSidebar
+          open={activeSidebar === 'pp'}
+          pp={character.combat.pp}
+          onChange={(pp: PowerPoints) =>
+            onUpdate({
+              combat: { ...character.combat, pp },
+            })
+          }
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Defesa em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'defense' && (
+        <DefenseSidebar
+          open={activeSidebar === 'defense'}
+          character={character}
+          onUpdate={(updated) => onUpdate(updated)}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Deslocamento em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'movement' && (
+        <MovementSidebar
+          open={activeSidebar === 'movement'}
+          character={character}
+          onUpdate={(updated) => onUpdate(updated)}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Atributo em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'attribute' && selectedAttribute && (
+        <AttributeSidebar
+          open={activeSidebar === 'attribute'}
+          onClose={handleCloseSidebar}
+          attribute={selectedAttribute}
+          character={character}
+          onUpdateAttribute={handleUpdateAttribute}
+        />
+      )}
+
+      {/* Sidebar de Usos de Habilidade em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'skill' && selectedSkill && (
+        <SkillUsageSidebar
+          open={activeSidebar === 'skill'}
+          onClose={handleCloseSidebar}
+          skill={character.skills[selectedSkill]}
+          attributes={character.attributes}
+          characterLevel={character.level}
+          isOverloaded={false} // TODO: Calculate from inventory
+          onUpdateCustomUses={handleUpdateCustomUses}
+          onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
+          onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
+          onUpdateSkillModifiers={handleSkillModifiersChange}
+          onSignatureAbilityChange={handleSignatureAbilityChange}
+          currentSignatureSkill={getCurrentSignatureSkill()}
+          crafts={character.crafts}
+          onUpdateCraft={handleUpdateCraft}
+        />
+      )}
     </Container>
   );
 }
