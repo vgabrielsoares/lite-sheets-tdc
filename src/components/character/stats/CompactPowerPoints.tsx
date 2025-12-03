@@ -15,13 +15,16 @@ export interface CompactPowerPointsProps {
 
 /**
  * Configuração específica para PP (Pontos de Poder)
+ * temporaryColor usa função para adaptar ao tema
  */
 const PP_CONFIG: ResourceConfig = {
   Icon: BoltIcon,
   iconColor: 'info',
   label: 'PP',
   progressColor: 'info',
-  temporaryColor: '#4dabf7dd', // Azul médio e saturado para PP temporários (visível em tema claro)
+  // Cores adaptativas: ciano escuro para light mode, ciano claro para dark mode
+  temporaryColorLight: '#00838f', // Ciano escuro - visível em fundo claro
+  temporaryColorDark: '#b2ebf2', // Ciano claro - visível em fundo escuro
   adjustValues: {
     small: 1,
     large: 2,
