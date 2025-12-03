@@ -28,5 +28,8 @@ export { DefenseDisplay } from './DefenseDisplay';
 
 export { MovementDisplay } from './MovementDisplay';
 
+export { SensesDisplay } from './SensesDisplay';
+export type { SensesDisplayProps } from './SensesDisplay';
+
 export { LuckDisplay } from './LuckDisplay';
 export type { LuckDisplayProps } from './LuckDisplay';
