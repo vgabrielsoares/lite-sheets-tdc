@@ -9,7 +9,7 @@
  * - Atributo-chave atual (editÃ¡vel via select)
  * - Grau de proficiÃªncia (editÃ¡vel via select)
  * - Modificador total (calculado automaticamente)
- * - FÃ³rmula de rolagem (Xd20+Y)
+ * - Fórmula de rolagem (Xd20+Y)
  *
  * Funcionalidades:
  * - Clique na linha abre sidebar com detalhes e usos da habilidade
@@ -97,17 +97,19 @@ export interface SkillRowProps {
   onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
   /** Dados de sorte do personagem (apenas para habilidade "sorte") */
   luck?: import('@/types').LuckLevel;
-  /** Callback quando nÃ­vel de sorte Ã© alterado (apenas para habilidade "sorte") */
+  /** Callback quando nível de sorte é alterado (apenas para habilidade "sorte") */
   onLuckLevelChange?: (level: number) => void;
-  /** Callback quando modificadores de sorte sÃ£o alterados (apenas para habilidade "sorte") */
+  /** Callback quando modificadores de sorte são alterados (apenas para habilidade "sorte") */
   onLuckModifiersChange?: (
     diceModifier: number,
     numericModifier: number
   ) => void;
+  /** Modificador de tamanho para esta habilidade específica (acrobacia, atletismo, furtividade, reflexos, tenacidade) */
+  sizeSkillModifier?: number;
 }
 
 /**
- * Componente SkillRow - Exibe uma linha de habilidade com cÃ¡lculos e ediÃ§Ã£o
+ * Componente SkillRow - Exibe uma linha de habilidade com cálculos e edição
  */
 export const SkillRow: React.FC<SkillRowProps> = ({
   skill,
@@ -123,6 +125,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
   luck,
   onLuckLevelChange,
   onLuckModifiersChange,
+  sizeSkillModifier,
 }) => {
   const theme = useTheme();
   const metadata = SKILL_METADATA[skill.name];
@@ -183,7 +186,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       totalModifier,
     };
 
-    // Calcular fÃ³rmula de rolagem
+    // Calcular fórmula de rolagem
     // Quando dados < 1, converte: 0â†’2, -1â†’3, -2â†’4, etc.
     let diceCount = totalDice;
     let takeLowest = false;
@@ -221,7 +224,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         craftBaseModifier + signatureBonus + selectedCraft.numericModifier,
     };
 
-    // Calcular fÃ³rmula de rolagem
+    // Calcular fórmula de rolagem
     const totalDice = 1 + (selectedCraft.diceModifier || 0);
     // Quando dados < 1, converte: 0â†’2, -1â†’3, -2â†’4, etc.
     let diceCount = totalDice;
@@ -239,7 +242,21 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       formula: `${diceCount}d20${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier}`,
     };
   } else {
-    // CÃ¡lculo normal para habilidades nÃ£o-ofÃ­cio ou ofÃ­cio sem craft selecionado
+    // Cálculo normal para habilidades não-ofício ou ofício sem craft selecionado
+    // Incluir modificador de tamanho se existir
+    const effectiveModifiers: Modifier[] =
+      sizeSkillModifier && sizeSkillModifier !== 0
+        ? [
+            ...skill.modifiers,
+            {
+              name: 'Tamanho',
+              value: sizeSkillModifier,
+              type: sizeSkillModifier > 0 ? 'bonus' : 'penalidade',
+              affectsDice: false,
+            },
+          ]
+        : skill.modifiers;
+
     const result = calculateSkillRoll(
       skill.name,
       skill.keyAttribute,
@@ -247,7 +264,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
       skill.proficiencyLevel,
       skill.isSignature,
       characterLevel,
-      skill.modifiers,
+      effectiveModifiers,
       isOverloaded
     );
     calculation = result.calculation;
@@ -597,7 +614,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         )}
       </Box>
 
-      {/* Resultado: Modificador + FÃ³rmula (combinados) */}
+      {/* Resultado: Modificador + Fórmula (combinados) */}
       <Box
         sx={{
           display: { xs: 'none', sm: 'flex' },
@@ -624,7 +641,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
         </Tooltip>
 
         <Tooltip
-          title={`FÃ³rmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+          title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
           enterDelay={150}
         >
           <Typography
@@ -668,7 +685,7 @@ export const SkillRow: React.FC<SkillRowProps> = ({
           />
         </Tooltip>
         <Tooltip
-          title={`FÃ³rmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+          title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
           enterDelay={150}
         >
           <Typography
@@ -686,4 +703,3 @@ export const SkillRow: React.FC<SkillRowProps> = ({
 };
 
 export default SkillRow;
-

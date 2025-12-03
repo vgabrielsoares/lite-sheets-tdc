@@ -98,6 +98,14 @@ export interface SkillsDisplayProps {
     diceModifier: number,
     numericModifier: number
   ) => void;
+  /** Modificadores de habilidades por tamanho (linhagem) */
+  sizeSkillModifiers?: {
+    acrobacia: number;
+    atletismo: number;
+    furtividade: number;
+    reflexo: number;
+    tenacidade: number;
+  };
 }
 
 /**
@@ -118,6 +126,7 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
   luck,
   onLuckLevelChange,
   onLuckModifiersChange,
+  sizeSkillModifiers,
 }) => {
   // Estados locais
   const [searchQuery, setSearchQuery] = useState('');
@@ -444,6 +453,11 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
               luck={luck}
               onLuckLevelChange={onLuckLevelChange}
               onLuckModifiersChange={onLuckModifiersChange}
+              sizeSkillModifier={
+                sizeSkillModifiers?.[
+                  skillName as keyof typeof sizeSkillModifiers
+                ]
+              }
             />
           ))}
         </Stack>
