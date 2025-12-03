@@ -75,6 +75,10 @@ import {
   calculateSkillUseModifier,
   calculateSkillUseRollFormula,
 } from '@/utils/skillCalculations';
+import {
+  getKeenSenseBonus,
+  PERCEPTION_USE_TO_SENSE,
+} from '@/utils/senseCalculations';
 import { calculateSignatureAbilityBonus, getCraftMultiplier } from '@/utils';
 import { COMBAT_SKILLS } from '@/constants/skills';
 
@@ -112,13 +116,15 @@ export interface SkillUsageSidebarProps {
   onSignatureAbilityChange?: (skillName: SkillName | null) => void;
   /** Nome da habilidade que é atualmente a assinatura (se houver) */
   currentSignatureSkill?: SkillName | null;
-  /** Lista de of\u00edcios (apenas para habilidade "oficio") */
+  /** Lista de ofícios (apenas para habilidade "oficio") */
   crafts?: import('@/types').Craft[];
-  /** Callback quando of\u00edcio \u00e9 atualizado */
+  /** Callback quando ofício é atualizado */
   onUpdateCraft?: (
     craftId: string,
     updates: Partial<import('@/types').Craft>
   ) => void;
+  /** Sentidos aguçados da linhagem (para usos de Percepção: Farejar, Observar, Ouvir) */
+  keenSenses?: import('@/types').KeenSense[];
 }
 
 interface EditingUse extends Partial<SkillUse> {
@@ -143,6 +149,7 @@ export function SkillUsageSidebar({
   currentSignatureSkill,
   crafts = [],
   onUpdateCraft,
+  keenSenses = [],
 }: SkillUsageSidebarProps) {
   const [editingUse, setEditingUse] = useState<EditingUse | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -696,12 +703,29 @@ export function SkillUsageSidebar({
     // Verifica se há modificadores personalizados para este uso
     const customModifiers = localDefaultModifiers[defaultUse.name] || [];
 
+    // Para usos de Percepção, adicionar bônus de sentido aguçado
+    const effectiveModifiers: Modifier[] = [...customModifiers];
+    if (skill.name === 'percepcao') {
+      const senseType = PERCEPTION_USE_TO_SENSE[defaultUse.name];
+      if (senseType) {
+        const keenSenseBonus = getKeenSenseBonus(keenSenses, senseType);
+        if (keenSenseBonus !== 0) {
+          effectiveModifiers.push({
+            name: 'Sentido Aguçado',
+            value: keenSenseBonus,
+            type: keenSenseBonus > 0 ? 'bonus' : 'penalidade',
+            affectsDice: false,
+          });
+        }
+      }
+    }
+
     // Usa padrão com atributo personalizado ou padrão da habilidade
     const tempUse = {
       keyAttribute: useAttribute,
       bonus: 0,
       skillName: skill.name,
-      modifiers: customModifiers,
+      modifiers: effectiveModifiers,
     };
 
     const modifier = calculateSkillUseModifier(

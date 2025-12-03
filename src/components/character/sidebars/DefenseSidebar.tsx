@@ -24,6 +24,7 @@ import { Sidebar } from '@/components/shared/Sidebar';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { Character } from '@/types/character';
 import type { Modifier } from '@/types/common';
+import { getSizeModifiers, SIZE_LABELS } from '@/constants/lineage';
 
 /**
  * Interface para armadura cadastrada
@@ -150,8 +151,18 @@ export default function DefenseSidebar({
       : agilityValue;
   const armorBonusValue = activeArmor?.armorBonus || 0;
   const otherBonusesTotal = otherBonuses.reduce((sum, m) => sum + m.value, 0);
+
+  // Obter modificador de defesa pelo tamanho
+  const sizeModifiers = getSizeModifiers(character.size);
+  const sizeDefenseBonus = sizeModifiers.defense;
+
   const totalDefense =
-    15 + effectiveAgility + armorBonusValue + shieldBonus + otherBonusesTotal;
+    15 +
+    effectiveAgility +
+    sizeDefenseBonus +
+    armorBonusValue +
+    shieldBonus +
+    otherBonusesTotal;
 
   // Estado combinado para debounce
   const defenseState = React.useMemo(
@@ -260,7 +271,15 @@ export default function DefenseSidebar({
             {activeArmor?.maxAgilityBonus !== null
               ? `, máx ${activeArmor?.maxAgilityBonus}`
               : ''}
-            ) + {armorBonusValue} (armadura) + {shieldBonus} (escudo) +{' '}
+            )
+            {sizeDefenseBonus !== 0 && (
+              <>
+                {' '}
+                {sizeDefenseBonus > 0 ? '+' : ''}
+                {sizeDefenseBonus} (tamanho: {SIZE_LABELS[character.size]})
+              </>
+            )}{' '}
+            + {armorBonusValue} (armadura) + {shieldBonus} (escudo) +{' '}
             {otherBonusesTotal} (outros)
           </Typography>
         </Paper>
