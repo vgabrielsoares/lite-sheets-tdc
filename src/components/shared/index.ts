@@ -5,6 +5,9 @@
 export { Sidebar } from './Sidebar';
 export type { SidebarProps, SidebarWidth } from './Sidebar';
 
+export { TableOfContents } from './TableOfContents';
+export type { TableOfContentsProps, TOCSection } from './TableOfContents';
+
 export { default as NotificationProvider } from './NotificationProvider';
 
 export { default as ConfirmDialog } from './ConfirmDialog';

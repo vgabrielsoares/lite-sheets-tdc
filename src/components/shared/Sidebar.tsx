@@ -133,15 +133,21 @@ export function Sidebar({
         flexShrink: 0,
         // Position fixed para ficar fixo na tela independente do scroll
         position: 'fixed',
-        // Offset do header (64px) + breadcrumb/tabs (~80px) + margem
-        top: 160,
-        // Alinhado com o container xl (1536px) + padding
+        // Alinhado com o topo das tabs da ficha (breadcrumb ~48px + tabs ~48px + padding 24px)
+        top: 120,
+        // Posicionado à direita da ficha (ficha = 900px, sidebar = sidebarWidth, espaço entre = 24px)
+        // Cálculo: centro + metade da ficha + gap
         right: {
           xs: 16,
-          lg: 'calc((100vw - 1536px) / 2 + 24px)',
+          lg: `calc((100vw - 900px) / 2 - ${sidebarWidth}px - 24px)`,
+          xl: `calc((100vw - 900px) / 2 - ${sidebarWidth}px - 24px)`,
+        },
+        left: {
+          lg: `calc((100vw + 900px) / 2 + 24px)`,
+          xl: `calc((100vw + 900px) / 2 + 24px)`,
         },
         // Altura máxima: viewport - top offset - footer (~60px) - margens
-        maxHeight: 'calc(100vh - 220px)',
+        maxHeight: 'calc(100vh - 180px)',
         zIndex: 1000, // Acima do conteúdo mas abaixo de modais
         overflow: 'hidden', // O scroll fica no conteúdo interno
       }}
