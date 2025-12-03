@@ -21,7 +21,6 @@ import {
 import { AttributesDisplay } from '../attributes';
 import { SkillsDisplay, CraftsDisplay } from '../skills';
 import { LanguagesDisplay } from '../languages';
-import type { MovementType } from '@/types';
 import { getEncumbranceState, calculateCarryCapacity } from '@/utils';
 
 export interface MainTabProps {
@@ -181,16 +180,19 @@ export function MainTab({
     <Box>
       <Stack spacing={3}>
         {/* Informações Básicas */}
-        <BasicStats
-          character={character}
-          onUpdate={onUpdate}
-          onOpenLineage={onOpenLineage}
-          onOpenOrigin={onOpenOrigin}
-          onOpenSize={onOpenSize}
-        />
+        <Box id="section-basic-stats">
+          <BasicStats
+            character={character}
+            onUpdate={onUpdate}
+            onOpenLineage={onOpenLineage}
+            onOpenOrigin={onOpenOrigin}
+            onOpenSize={onOpenSize}
+          />
+        </Box>
 
         {/* PV e PP lado a lado */}
         <Box
+          id="section-hp-pp"
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
@@ -228,6 +230,7 @@ export function MainTab({
 
         {/* Defesa e Deslocamento lado a lado */}
         <Box
+          id="section-defense-movement"
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
@@ -238,120 +241,85 @@ export function MainTab({
           <DefenseDisplay
             agilidade={character.attributes.agilidade}
             armorBonus={character.combat.defense.armorBonus}
+            shieldBonus={character.combat.defense.shieldBonus}
             maxAgilityBonus={character.combat.defense.maxAgilityBonus}
             otherBonuses={character.combat.defense.otherBonuses}
             onOpenDetails={onOpenDefense}
-            onArmorBonusChange={(value) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  defense: {
-                    ...character.combat.defense,
-                    armorBonus: value,
-                  },
-                },
-              })
-            }
-            onMaxAgilityBonusChange={(value) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  defense: {
-                    ...character.combat.defense,
-                    maxAgilityBonus: value,
-                  },
-                },
-              })
-            }
-            onOtherBonusesChange={(bonuses) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  defense: {
-                    ...character.combat.defense,
-                    otherBonuses: bonuses,
-                  },
-                },
-              })
-            }
           />
 
           {/* Deslocamento */}
           <MovementDisplay
             movement={character.movement.speeds}
             onOpenDetails={onOpenMovement}
-            onMovementChange={(type: MovementType, value: number) =>
-              onUpdate({
-                movement: {
-                  ...character.movement,
-                  speeds: {
-                    ...character.movement.speeds,
-                    [type]: value,
-                  },
-                },
-              })
-            }
           />
         </Box>
 
         {/* Atributos */}
-        <AttributesDisplay
-          attributes={character.attributes}
-          onAttributeClick={onOpenAttribute}
-        />
+        <Box id="section-attributes">
+          <AttributesDisplay
+            attributes={character.attributes}
+            onAttributeClick={onOpenAttribute}
+          />
+        </Box>
 
         {/* Habilidades */}
-        {onOpenSkill &&
-          onSkillKeyAttributeChange &&
-          onSkillProficiencyChange && (
-            <SkillsDisplay
-              skills={character.skills}
-              attributes={character.attributes}
-              characterLevel={character.level}
-              isOverloaded={isOverloaded}
-              onKeyAttributeChange={onSkillKeyAttributeChange}
-              onProficiencyChange={onSkillProficiencyChange}
-              onModifiersChange={onSkillModifiersChange}
-              onSkillClick={onOpenSkill}
-              crafts={character.crafts}
-              onSelectedCraftChange={onSelectedCraftChange}
-              luck={character.luck}
-              onLuckLevelChange={(level) =>
-                onUpdate({
-                  luck: {
-                    ...character.luck,
-                    level,
-                  },
-                })
-              }
-              onLuckModifiersChange={(diceModifier, numericModifier) =>
-                onUpdate({
-                  luck: {
-                    ...character.luck,
-                    diceModifier,
-                    numericModifier,
-                  },
-                })
-              }
-            />
-          )}
+        <Box id="section-skills">
+          {onOpenSkill &&
+            onSkillKeyAttributeChange &&
+            onSkillProficiencyChange && (
+              <SkillsDisplay
+                skills={character.skills}
+                attributes={character.attributes}
+                characterLevel={character.level}
+                isOverloaded={isOverloaded}
+                onKeyAttributeChange={onSkillKeyAttributeChange}
+                onProficiencyChange={onSkillProficiencyChange}
+                onModifiersChange={onSkillModifiersChange}
+                onSkillClick={onOpenSkill}
+                crafts={character.crafts}
+                onSelectedCraftChange={onSelectedCraftChange}
+                luck={character.luck}
+                onLuckLevelChange={(level) =>
+                  onUpdate({
+                    luck: {
+                      ...character.luck,
+                      level,
+                    },
+                  })
+                }
+                onLuckModifiersChange={(diceModifier, numericModifier) =>
+                  onUpdate({
+                    luck: {
+                      ...character.luck,
+                      diceModifier,
+                      numericModifier,
+                    },
+                  })
+                }
+              />
+            )}
+        </Box>
 
         {/* Ofícios (Competências) */}
-        {onAddCraft && onUpdateCraft && onRemoveCraft && (
-          <CraftsDisplay
-            crafts={character.crafts}
-            attributes={character.attributes}
-            onAdd={onAddCraft}
-            onUpdate={onUpdateCraft}
-            onRemove={onRemoveCraft}
-          />
-        )}
+        <Box id="section-crafts">
+          {onAddCraft && onUpdateCraft && onRemoveCraft && (
+            <CraftsDisplay
+              crafts={character.crafts}
+              attributes={character.attributes}
+              onAdd={onAddCraft}
+              onUpdate={onUpdateCraft}
+              onRemove={onRemoveCraft}
+            />
+          )}
+        </Box>
 
         {/* Idiomas Conhecidos */}
-        <LanguagesDisplay
-          character={character}
-          onUpdate={(languages: LanguageName[]) => onUpdate({ languages })}
-        />
+        <Box id="section-languages">
+          <LanguagesDisplay
+            character={character}
+            onUpdate={(languages: LanguageName[]) => onUpdate({ languages })}
+          />
+        </Box>
       </Stack>
     </Box>
   );
