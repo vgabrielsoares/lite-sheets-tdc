@@ -273,9 +273,16 @@ export function applyLineageToCharacter(
   // Atualiza tamanho
   updatedCharacter.size = lineage.size;
 
-  // Atualiza deslocamento
+  // Atualiza deslocamento - converte de número simples para estrutura base/bonus
+  const lineageMovement = lineage.movement;
   updatedCharacter.movement = {
-    speeds: lineage.movement,
+    speeds: {
+      andando: { base: lineageMovement.andando ?? 0, bonus: 0 },
+      voando: { base: lineageMovement.voando ?? 0, bonus: 0 },
+      escalando: { base: lineageMovement.escalando ?? 0, bonus: 0 },
+      escavando: { base: lineageMovement.escavando ?? 0, bonus: 0 },
+      nadando: { base: lineageMovement.nadando ?? 0, bonus: 0 },
+    },
     modifiers: 0,
   };
 
