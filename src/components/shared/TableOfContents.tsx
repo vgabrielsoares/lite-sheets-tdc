@@ -178,7 +178,7 @@ export function TableOfContents({
           elevation={2}
           sx={{
             position: 'fixed',
-            top: 120,
+            top: 150,
             left: {
               xs: 16,
               lg: `calc((100vw - 900px) / 2 - 60px)`,
@@ -215,13 +215,13 @@ export function TableOfContents({
         flexDirection: 'column',
         flexShrink: 0,
         position: 'fixed',
-        top: 120,
+        top: 150,
         // Posicionado à esquerda da ficha
         left: {
           xs: 16,
           lg: `calc((100vw - 900px) / 2 - ${TOC_WIDTH}px - 24px)`,
         },
-        maxHeight: 'calc(100vh - 180px)',
+        maxHeight: 'calc(100vh - 220px)',
         zIndex: 1000,
         overflow: 'hidden',
       }}
