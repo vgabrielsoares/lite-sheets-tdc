@@ -54,10 +54,7 @@ import {
   LINEAGE_ATTRIBUTE_MODIFIER_RULES,
   LINEAGE_VALIDATION,
 } from '@/constants/lineage';
-import {
-  ATTRIBUTE_LIST,
-  ATTRIBUTE_LABELS,
-} from '@/constants/attributes';
+import { ATTRIBUTE_LIST, ATTRIBUTE_LABELS } from '@/constants/attributes';
 import { LANGUAGE_LIST, LANGUAGE_LABELS } from '@/constants/languages';
 import { createDefaultLineage, validateLineage } from '@/utils/lineageUtils';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -131,7 +128,7 @@ export function LinhagemSidebar({
   );
 
   // Debounce para auto-save
-  const debouncedLineage = useDebounce(localLineage, 500);
+  const debouncedLineage = useDebounce(localLineage, 100);
 
   // Estado de validação
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -520,8 +517,8 @@ export function LinhagemSidebar({
             <Stack spacing={2}>
               <Alert severity="info" variant="outlined">
                 <Typography variant="body2" gutterBottom>
-                  A linhagem concede modificadores de atributos seguindo uma
-                  das opções:
+                  A linhagem concede modificadores de atributos seguindo uma das
+                  opções:
                 </Typography>
                 <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
                   <li>
@@ -546,62 +543,64 @@ export function LinhagemSidebar({
               </Alert>
 
               {/* Lista de modificadores */}
-              {(localLineage.attributeModifiers ?? []).map((modifier, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    gap: 1,
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <FormControl sx={{ flex: 2 }}>
-                    <InputLabel>Atributo</InputLabel>
-                    <Select
-                      value={modifier.attribute}
-                      onChange={(e) =>
-                        handleAttributeModifierAttributeChange(
-                          index,
-                          e as SelectChangeEvent<AttributeName>
-                        )
-                      }
-                      label="Atributo"
-                    >
-                      {ATTRIBUTE_LIST.map((attr) => (
-                        <MenuItem key={attr} value={attr}>
-                          {ATTRIBUTE_LABELS[attr]}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl sx={{ flex: 1 }}>
-                    <InputLabel>Valor</InputLabel>
-                    <Select
-                      value={modifier.value}
-                      onChange={(e) =>
-                        handleAttributeModifierValueChange(
-                          index,
-                          e as SelectChangeEvent<number>
-                        )
-                      }
-                      label="Valor"
-                    >
-                      <MenuItem value={2}>+2</MenuItem>
-                      <MenuItem value={1}>+1</MenuItem>
-                      <MenuItem value={-1}>-1</MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <IconButton
-                    color="error"
-                    onClick={() => handleRemoveAttributeModifier(index)}
-                    aria-label="Remover modificador"
+              {(localLineage.attributeModifiers ?? []).map(
+                (modifier, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: 'flex',
+                      gap: 1,
+                      alignItems: 'flex-start',
+                    }}
                   >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              ))}
+                    <FormControl sx={{ flex: 2 }}>
+                      <InputLabel>Atributo</InputLabel>
+                      <Select
+                        value={modifier.attribute}
+                        onChange={(e) =>
+                          handleAttributeModifierAttributeChange(
+                            index,
+                            e as SelectChangeEvent<AttributeName>
+                          )
+                        }
+                        label="Atributo"
+                      >
+                        {ATTRIBUTE_LIST.map((attr) => (
+                          <MenuItem key={attr} value={attr}>
+                            {ATTRIBUTE_LABELS[attr]}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl sx={{ flex: 1 }}>
+                      <InputLabel>Valor</InputLabel>
+                      <Select
+                        value={modifier.value}
+                        onChange={(e) =>
+                          handleAttributeModifierValueChange(
+                            index,
+                            e as SelectChangeEvent<number>
+                          )
+                        }
+                        label="Valor"
+                      >
+                        <MenuItem value={2}>+2</MenuItem>
+                        <MenuItem value={1}>+1</MenuItem>
+                        <MenuItem value={-1}>-1</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <IconButton
+                      color="error"
+                      onClick={() => handleRemoveAttributeModifier(index)}
+                      aria-label="Remover modificador"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                )
+              )}
 
               {/* Botão para adicionar modificador */}
               <Button
@@ -736,7 +735,7 @@ export function LinhagemSidebar({
               inputProps={{ min: 1, max: 10000 }}
             />
             <TextField
-              label='Peso'
+              label="Peso"
               type="number"
               value={localLineage.weightRPG}
               onChange={handleNumberChange('weightRPG')}
@@ -745,7 +744,11 @@ export function LinhagemSidebar({
               inputProps={{ min: 1, max: 10000 }}
             />
           </Stack>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            sx={{ mt: 2 }}
+          >
             <TextField
               label="Idade"
               type="number"

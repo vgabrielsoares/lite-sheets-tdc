@@ -107,7 +107,7 @@ export const OrigemSidebar: React.FC<OrigemSidebarProps> = ({
   const hasSyncedRef = useRef(false);
 
   // Debounce do estado local para auto-save
-  const debouncedOrigin = useDebounce(localOrigin, 500);
+  const debouncedOrigin = useDebounce(localOrigin, 100);
 
   /**
    * Sincroniza origem externa com estado local APENAS quando abre
