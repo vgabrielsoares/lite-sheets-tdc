@@ -11,7 +11,9 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Checkbox,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
   Paper,
   Tooltip,
   Button,
@@ -212,7 +214,7 @@ export default function DefenseSidebar({
     setArmors(
       armors.map((a) => ({
         ...a,
-        isActive: a.id === id ? !a.isActive : false, // Apenas uma ativa por vez
+        isActive: a.id === id, // Apenas uma ativa por vez (Radio behavior)
       }))
     );
   };
@@ -276,38 +278,46 @@ export default function DefenseSidebar({
           </Typography>
 
           {armors.length > 0 ? (
-            <List dense sx={{ mb: 2 }}>
-              {armors.map((armor) => (
-                <ListItem
-                  key={armor.id}
-                  sx={{
-                    bgcolor: armor.isActive ? 'action.selected' : 'transparent',
-                    borderRadius: 1,
-                    mb: 0.5,
-                  }}
-                >
-                  <Checkbox
-                    checked={armor.isActive}
-                    onChange={() => handleToggleArmor(armor.id)}
-                    size="small"
-                  />
-                  <ListItemText
-                    primary={armor.name}
-                    secondary={`+${armor.armorBonus} defesa${armor.maxAgilityBonus !== null ? `, máx agilidade: ${armor.maxAgilityBonus}` : ', sem limite de agilidade'}`}
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      onClick={() => handleRemoveArmor(armor.id)}
-                      color="error"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
+            <RadioGroup
+              value={armors.find((a) => a.isActive)?.id || ''}
+              onChange={(e) => handleToggleArmor(e.target.value)}
+            >
+              <List dense sx={{ mb: 2 }}>
+                {armors.map((armor) => (
+                  <ListItem
+                    key={armor.id}
+                    sx={{
+                      bgcolor: armor.isActive
+                        ? 'action.selected'
+                        : 'transparent',
+                      borderRadius: 1,
+                      mb: 0.5,
+                    }}
+                  >
+                    <FormControlLabel
+                      value={armor.id}
+                      control={<Radio size="small" />}
+                      label=""
+                      sx={{ mr: 0 }}
+                    />
+                    <ListItemText
+                      primary={armor.name}
+                      secondary={`+${armor.armorBonus} defesa${armor.maxAgilityBonus !== null ? `, máx agilidade: ${armor.maxAgilityBonus}` : ', sem limite de agilidade'}`}
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        edge="end"
+                        size="small"
+                        onClick={() => handleRemoveArmor(armor.id)}
+                        color="error"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
+            </RadioGroup>
           ) : (
             <Typography
               variant="body2"
