@@ -206,12 +206,22 @@ export interface Lineage {
 }
 
 /**
+ * Velocidade de deslocamento com base e bônus
+ */
+export interface MovementSpeed {
+  /** Valor base do deslocamento */
+  base: number;
+  /** Bônus de deslocamento (pode ser negativo) */
+  bonus: number;
+}
+
+/**
  * Deslocamento do personagem
  */
 export interface Movement {
-  /** Deslocamento base por tipo */
-  speeds: Record<MovementType, number>;
-  /** Modificadores de deslocamento */
+  /** Deslocamento por tipo (base + bônus) */
+  speeds: Record<MovementType, MovementSpeed>;
+  /** Modificadores globais de deslocamento (deprecated, usar bonus em speeds) */
   modifiers: number;
 }
 

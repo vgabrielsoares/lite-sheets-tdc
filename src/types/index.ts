@@ -165,6 +165,7 @@ export type {
   Origin,
   AncestryTrait,
   Lineage,
+  MovementSpeed,
   Movement,
   Senses,
   LuckLevel,
