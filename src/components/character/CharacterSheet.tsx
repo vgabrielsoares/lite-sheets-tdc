@@ -274,7 +274,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   /**
    * Handler para atualizar a linhagem do personagem
-   * Também aplica os modificadores de atributos da linhagem automaticamente
+   * Também aplica automaticamente:
+   * - Modificadores de atributos
+   * - Tamanho
+   * - Deslocamento (base)
+   * - Visão e sentidos aguçados
    */
   const handleUpdateLineage = (lineage: Character['lineage']) => {
     if (!lineage) {
@@ -309,8 +313,64 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       }
     });
 
-    // Atualiza linhagem e atributos juntos
-    onUpdate({ lineage, attributes: updatedAttributes });
+    // Sincroniza o tamanho da linhagem com o personagem
+    const updatedSize = lineage.size;
+
+    // Sincroniza o deslocamento da linhagem com o personagem (valores base)
+    // O bônus é mantido do personagem, apenas o base vem da linhagem
+    const lineageMovement = lineage.movement;
+    const currentMovement = character.movement;
+    const updatedMovement = {
+      ...currentMovement,
+      speeds: {
+        andando: {
+          base: lineageMovement.andando ?? 0,
+          bonus: currentMovement.speeds?.andando?.bonus ?? 0,
+        },
+        voando: {
+          base: lineageMovement.voando ?? 0,
+          bonus: currentMovement.speeds?.voando?.bonus ?? 0,
+        },
+        escalando: {
+          base: lineageMovement.escalando ?? 0,
+          bonus: currentMovement.speeds?.escalando?.bonus ?? 0,
+        },
+        escavando: {
+          base: lineageMovement.escavando ?? 0,
+          bonus: currentMovement.speeds?.escavando?.bonus ?? 0,
+        },
+        nadando: {
+          base: lineageMovement.nadando ?? 0,
+          bonus: currentMovement.speeds?.nadando?.bonus ?? 0,
+        },
+      },
+    };
+
+    // Sincroniza a visão e sentidos aguçados da linhagem com o personagem
+    const updatedSenses = {
+      ...character.senses,
+      vision: lineage.vision,
+      keenSenses: lineage.keenSenses || [],
+      perceptionModifiers: {
+        visao: 0,
+        olfato: 0,
+        audicao: 0,
+      },
+    };
+
+    // Calcula os modificadores de percepção baseado nos sentidos aguçados
+    (lineage.keenSenses || []).forEach((sense) => {
+      updatedSenses.perceptionModifiers[sense.type] = sense.bonus;
+    });
+
+    // Atualiza linhagem, atributos, tamanho, deslocamento e sentidos juntos
+    onUpdate({
+      lineage,
+      attributes: updatedAttributes,
+      size: updatedSize,
+      movement: updatedMovement,
+      senses: updatedSenses,
+    });
   };
 
   /**
@@ -836,6 +896,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               currentSignatureSkill={getCurrentSignatureSkill()}
               crafts={character.crafts}
               onUpdateCraft={handleUpdateCraft}
+              keenSenses={character.senses?.keenSenses}
             />
           )}
         </>
@@ -946,6 +1007,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           currentSignatureSkill={getCurrentSignatureSkill()}
           crafts={character.crafts}
           onUpdateCraft={handleUpdateCraft}
+          keenSenses={character.senses?.keenSenses}
         />
       )}
     </Container>
