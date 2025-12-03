@@ -2,13 +2,15 @@
  * MovementDisplay Component
  *
  * Displays the character's movement speeds by type
- * Shows all movement types: Andando (Walking), Voando (Flying), Escalando (Climbing),
- * Escavando (Burrowing), Nadando (Swimming)
+ * Shows only movement types with total (base + bonus) > 0
  *
  * According to RPG rules:
  * - Default movement comes from Lineage
  * - Can be modified by abilities, spells, equipment
  * - Measured in meters (m) or squares (quadrados)
+ *
+ * This component shows only non-zero movement speeds.
+ * Click to open the Movement Sidebar for editing all movement types.
  */
 
 'use client';
@@ -28,27 +30,54 @@ import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
 import FlightIcon from '@mui/icons-material/Flight';
 import TerrainIcon from '@mui/icons-material/Terrain';
 import WavesIcon from '@mui/icons-material/Waves';
-import type { MovementType } from '@/types';
-import { EditableNumber } from '@/components/shared';
+import type { MovementType, MovementSpeed } from '@/types';
 
 interface MovementDisplayProps {
-  /** Movement speeds by type */
-  movement: Record<MovementType, number>;
-  /** Callback when movement speed changes */
-  onMovementChange?: (type: MovementType, value: number) => void;
-  /** Whether the component is in edit mode */
-  editable?: boolean;
+  /** Movement speeds by type (supports old format with number or new with MovementSpeed) */
+  movement: Record<MovementType, MovementSpeed | number>;
   /** Callback to open a sidebar for detailed editing */
   onOpenDetails?: () => void;
 }
 
+// Helper to get total speed from MovementSpeed or number
+function getTotalSpeed(speed: MovementSpeed | number | undefined): number {
+  if (typeof speed === 'number') {
+    return speed;
+  }
+  if (speed && typeof speed === 'object') {
+    return Math.max(0, speed.base + speed.bonus);
+  }
+  return 0;
+}
+
+// Helper to get speed details for tooltip
+function getSpeedDetails(speed: MovementSpeed | number | undefined): {
+  base: number;
+  bonus: number;
+  total: number;
+} {
+  if (typeof speed === 'number') {
+    return { base: speed, bonus: 0, total: speed };
+  }
+  if (speed && typeof speed === 'object') {
+    return {
+      base: speed.base,
+      bonus: speed.bonus,
+      total: Math.max(0, speed.base + speed.bonus),
+    };
+  }
+  return { base: 0, bonus: 0, total: 0 };
+}
+
 // Icons for each movement type
 const MOVEMENT_ICONS: Record<MovementType, React.ReactNode> = {
-  andando: <DirectionsWalkIcon />,
-  voando: <FlightIcon />,
-  escalando: <TerrainIcon />,
-  escavando: <TerrainIcon sx={{ transform: 'rotate(180deg)' }} />,
-  nadando: <WavesIcon />,
+  andando: <DirectionsWalkIcon fontSize="small" />,
+  voando: <FlightIcon fontSize="small" />,
+  escalando: <TerrainIcon fontSize="small" />,
+  escavando: (
+    <TerrainIcon fontSize="small" sx={{ transform: 'rotate(180deg)' }} />
+  ),
+  nadando: <WavesIcon fontSize="small" />,
 };
 
 // Labels for each movement type
@@ -60,50 +89,59 @@ const MOVEMENT_LABELS: Record<MovementType, string> = {
   nadando: 'Nadando',
 };
 
+// Descriptions for tooltips
+const MOVEMENT_DESCRIPTIONS: Record<MovementType, string> = {
+  andando: 'Deslocamento ao caminhar ou correr no solo',
+  voando: 'Deslocamento ao voar pelo ar',
+  escalando: 'Deslocamento ao escalar superfícies verticais',
+  escavando: 'Deslocamento ao cavar através do solo',
+  nadando: 'Deslocamento ao nadar na água',
+};
+
 // Color for each movement type
 const MOVEMENT_COLORS: Record<
   MovementType,
   'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
 > = {
-  andando: 'primary',
+  andando: 'success',
   voando: 'info',
-  escalando: 'success',
-  escavando: 'warning',
-  nadando: 'secondary',
+  escalando: 'warning',
+  escavando: 'secondary',
+  nadando: 'primary',
 };
 
 export const MovementDisplay: React.FC<MovementDisplayProps> = ({
   movement,
-  onMovementChange,
-  editable = true,
   onOpenDetails,
 }) => {
-  // Get primary movement (andando/walking) for main display
-  const primaryMovement = movement.andando || 0;
-
-  // Get available secondary movements (non-zero values)
-  const secondaryMovements = (
-    Object.entries(movement) as [MovementType, number][]
-  ).filter(([type, speed]) => type !== 'andando' && speed > 0);
-
-  const hasSecondaryMovement = secondaryMovements.length > 0;
-
-  const tooltipText = `
-Deslocamento do Personagem:
-
-${Object.entries(movement)
-  .filter(([_, speed]) => speed > 0)
-  .map(
-    ([type, speed]) => `• ${MOVEMENT_LABELS[type as MovementType]}: ${speed}m`
+  // Get all non-zero movements with their totals
+  const activeMovements = (
+    Object.entries(movement) as [MovementType, MovementSpeed | number][]
   )
-  .join('\n')}
+    .map(([type, speed]) => ({
+      type,
+      ...getSpeedDetails(speed),
+    }))
+    .filter(({ total }) => total > 0);
 
-${
-  Object.values(movement).every((speed) => speed === 0)
-    ? 'Nenhum deslocamento configurado'
-    : ''
-}
-  `.trim();
+  // Check if there are any movements
+  const hasMovement = activeMovements.length > 0;
+
+  // Build tooltip text showing all active movements
+  const tooltipLines = hasMovement
+    ? [
+        'Deslocamento do Personagem:',
+        ...activeMovements.map(({ type, base, bonus, total }) => {
+          if (bonus !== 0) {
+            const bonusSign = bonus > 0 ? '+' : '';
+            return `• ${MOVEMENT_LABELS[type]}: ${base}${bonusSign}${bonus} = ${total}m`;
+          }
+          return `• ${MOVEMENT_LABELS[type]}: ${total}m`;
+        }),
+      ]
+    : ['Nenhum deslocamento configurado'];
+
+  const tooltipText = tooltipLines.join('\n');
 
   return (
     <Paper
@@ -118,6 +156,13 @@ ${
         border: onOpenDetails ? 1 : 0,
         borderColor: onOpenDetails ? 'primary.main' : 'transparent',
         cursor: onOpenDetails ? 'pointer' : 'default',
+        transition: 'all 0.15s ease-in-out',
+        '&:hover': onOpenDetails
+          ? {
+              borderColor: 'primary.dark',
+              bgcolor: 'action.hover',
+            }
+          : {},
       }}
       onClick={onOpenDetails}
     >
@@ -129,8 +174,16 @@ ${
         <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
           Deslocamento
         </Typography>
-        <Tooltip title={tooltipText} arrow>
-          <IconButton size="small">
+        <Tooltip
+          title={
+            <Typography sx={{ whiteSpace: 'pre-line' }}>
+              {tooltipText}
+            </Typography>
+          }
+          arrow
+          enterDelay={150}
+        >
+          <IconButton size="small" onClick={(e) => e.stopPropagation()}>
             <InfoIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -138,166 +191,64 @@ ${
 
       <Divider sx={{ width: '100%' }} />
 
-      {/* Primary Movement (Walking) */}
+      {/* Movement Chips */}
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 1,
+          flexWrap: 'wrap',
           gap: 1,
+          py: 2,
+          justifyContent: 'center',
+          width: '100%',
         }}
       >
-        {editable ? (
-          <>
-            <Typography
-              variant="h4"
-              component="div"
-              sx={{ fontWeight: 'bold' }}
+        {hasMovement ? (
+          activeMovements.map(({ type, base, bonus, total }) => (
+            <Tooltip
+              key={type}
+              title={
+                <Box>
+                  <Typography variant="body2" fontWeight="bold">
+                    {MOVEMENT_LABELS[type]}
+                  </Typography>
+                  <Typography variant="caption">
+                    {MOVEMENT_DESCRIPTIONS[type]}
+                  </Typography>
+                  {bonus !== 0 && (
+                    <Typography
+                      variant="caption"
+                      display="block"
+                      sx={{ mt: 0.5 }}
+                    >
+                      Base: {base}m {bonus > 0 ? '+' : ''}
+                      {bonus}m bônus
+                    </Typography>
+                  )}
+                </Box>
+              }
+              arrow
+              enterDelay={150}
             >
-              <EditableNumber
-                value={primaryMovement}
-                onChange={(value) => onMovementChange?.('andando', value)}
-                min={0}
-                max={100}
-                variant="h4"
-                autoSave
+              <Chip
+                icon={MOVEMENT_ICONS[type] as React.ReactElement}
+                label={`${total}m`}
+                color={MOVEMENT_COLORS[type]}
+                variant="outlined"
+                size="medium"
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: type === 'andando' ? '1.1rem' : '0.9rem',
+                  py: type === 'andando' ? 2 : 1,
+                }}
               />
-            </Typography>
-            <Typography variant="h6" color="text.secondary">
-              m
-            </Typography>
-          </>
+            </Tooltip>
+          ))
         ) : (
-          <>
-            <Typography
-              variant="h4"
-              component="div"
-              sx={{ fontWeight: 'bold', color: 'primary.main' }}
-            >
-              {primaryMovement}
-            </Typography>
-            <Typography variant="h6" color="text.secondary">
-              m
-            </Typography>
-          </>
+          <Typography variant="body2" color="text.secondary">
+            Nenhum deslocamento
+          </Typography>
         )}
       </Box>
-
-      {/* Secondary Movements */}
-      {hasSecondaryMovement && (
-        <>
-          <Divider sx={{ width: '100%' }} />
-          <Box
-            sx={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1,
-            }}
-          >
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ mb: 0.5 }}
-            >
-              Outros Deslocamentos:
-            </Typography>
-            {secondaryMovements.map(([type, speed]) => (
-              <Box
-                key={type}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {MOVEMENT_ICONS[type]}
-                  <Typography variant="body2">
-                    {MOVEMENT_LABELS[type]}:
-                  </Typography>
-                </Box>
-                {editable ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <EditableNumber
-                      value={speed}
-                      onChange={(value) => onMovementChange?.(type, value)}
-                      min={0}
-                      max={100}
-                      variant="body2"
-                      autoSave
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      m
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Chip
-                    label={`${speed}m`}
-                    size="small"
-                    color={MOVEMENT_COLORS[type]}
-                    variant="outlined"
-                  />
-                )}
-              </Box>
-            ))}
-          </Box>
-        </>
-      )}
-
-      {/* All Movement Types (Expandable) */}
-      {editable && (
-        <>
-          <Divider sx={{ width: '100%' }} />
-          <Box
-            sx={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1,
-            }}
-          >
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ mb: 0.5 }}
-            >
-              Configurar Todos os Deslocamentos:
-            </Typography>
-            {(Object.entries(MOVEMENT_LABELS) as [MovementType, string][]).map(
-              ([type, label]) => (
-                <Box
-                  key={type}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {MOVEMENT_ICONS[type]}
-                    <Typography variant="body2">{label}:</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <EditableNumber
-                      value={movement[type]}
-                      onChange={(value) => onMovementChange?.(type, value)}
-                      min={0}
-                      max={100}
-                      variant="body2"
-                      autoSave
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      m
-                    </Typography>
-                  </Box>
-                </Box>
-              )
-            )}
-          </Box>
-        </>
-      )}
     </Paper>
   );
 };

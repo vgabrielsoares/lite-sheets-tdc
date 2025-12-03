@@ -106,19 +106,19 @@ export interface ClassImprovement {
  */
 export type LanguageName =
   | 'comum'
-  | 'anao'
-  | 'elfico'
-  | 'goblinoide'
-  | 'draconico'
-  | 'infernal'
   | 'primordial'
   | 'runico'
+  | 'anao'
   | 'aquatico'
+  | 'draconico'
+  | 'elfico'
   | 'gigante'
   | 'gnomico'
+  | 'infernal'
   | 'glasnee'
   | 'orc'
-  | 'silvestre';
+  | 'silvestre'
+  | 'goblinoide';
 
 /**
  * Proficiências do personagem
@@ -206,12 +206,22 @@ export interface Lineage {
 }
 
 /**
+ * Velocidade de deslocamento com base e bônus
+ */
+export interface MovementSpeed {
+  /** Valor base do deslocamento */
+  base: number;
+  /** Bônus de deslocamento (pode ser negativo) */
+  bonus: number;
+}
+
+/**
  * Deslocamento do personagem
  */
 export interface Movement {
-  /** Deslocamento base por tipo */
-  speeds: Record<MovementType, number>;
-  /** Modificadores de deslocamento */
+  /** Deslocamento por tipo (base + bônus) */
+  speeds: Record<MovementType, MovementSpeed>;
+  /** Modificadores globais de deslocamento (deprecated, usar bonus em speeds) */
   modifiers: number;
 }
 
@@ -231,22 +241,34 @@ export interface Senses {
  * Nível de sorte
  */
 export interface LuckLevel {
-  /** Nível atual de sorte */
+  /** Nível atual de sorte (0-7) */
   level: number;
   /** Valor total de sorte disponível */
   value: number;
+  /** Modificador de dados adicionais (pode ser negativo) */
+  diceModifier: number;
+  /** Modificador numérico adicional */
+  numericModifier: number;
 }
 
 /**
  * Ofício (Competência)
  */
 export interface Craft {
+  /** ID único do ofício */
+  id: string;
   /** Nome do ofício */
   name: string;
-  /** Nível no ofício (1-5) */
-  level: 1 | 2 | 3 | 4 | 5;
-  /** Modificador total do ofício */
-  modifier: number;
+  /** Descrição opcional do ofício */
+  description?: string;
+  /** Nível no ofício (0-5) */
+  level: 0 | 1 | 2 | 3 | 4 | 5;
+  /** Atributo-chave usado para calcular o modificador */
+  attributeKey: AttributeName;
+  /** Modificadores de dados (ex: +2d20, -1d20) */
+  diceModifier: number;
+  /** Modificador numérico (ex: +3, -2) */
+  numericModifier: number;
 }
 
 /**

@@ -9,6 +9,9 @@
  * - Agility bonus: Full Agilidade attribute value
  * - Armor bonus: Limited by armor's max Agility bonus
  * - Other bonuses: From spells, abilities, etc.
+ *
+ * This component shows only the total defense value with a tooltip breakdown.
+ * Click to open the Defense Sidebar for editing all defense components.
  */
 
 'use client';
@@ -21,17 +24,9 @@ import {
   Divider,
   Tooltip,
   IconButton,
-  TextField,
-  Button,
-  List,
-  ListItem,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import ShieldIcon from '@mui/icons-material/Shield';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { calculateDefense } from '@/utils/calculations';
-import { EditableNumber } from '@/components/shared';
 import type { Modifier } from '@/types';
 
 interface DefenseDisplayProps {
@@ -39,18 +34,12 @@ interface DefenseDisplayProps {
   agilidade: number;
   /** Armor bonus (already limited by armor's max Agility if applicable) */
   armorBonus?: number;
+  /** Shield bonus */
+  shieldBonus?: number;
   /** Maximum Agility bonus allowed by armor (0 = no armor, undefined = no limit) */
   maxAgilityBonus?: number;
   /** Other bonuses from spells, abilities, etc. */
   otherBonuses?: Modifier[];
-  /** Callback when armor bonus changes */
-  onArmorBonusChange?: (value: number) => void;
-  /** Callback when max agility bonus changes */
-  onMaxAgilityBonusChange?: (value: number | undefined) => void;
-  /** Callback when other bonuses change */
-  onOtherBonusesChange?: (bonuses: Modifier[]) => void;
-  /** Whether the component is in edit mode */
-  editable?: boolean;
   /** Callback to open a sidebar for detailed editing */
   onOpenDetails?: () => void;
 }
@@ -58,12 +47,9 @@ interface DefenseDisplayProps {
 export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
   agilidade,
   armorBonus = 0,
+  shieldBonus = 0,
   maxAgilityBonus,
   otherBonuses = [],
-  onArmorBonusChange,
-  onMaxAgilityBonusChange,
-  onOtherBonusesChange,
-  editable = true,
   onOpenDetails,
 }) => {
   // Calculate the effective agility bonus (limited by armor if applicable)
@@ -80,47 +66,33 @@ export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
 
   // Calculate total defense
   const totalDefense =
-    15 + effectiveAgilityBonus + armorBonus + otherBonusesTotal;
+    15 + effectiveAgilityBonus + armorBonus + shieldBonus + otherBonusesTotal;
 
   // Build tooltip text
-  const tooltipText = `
-Cálculo de Defesa:
-• Base: 15
-• Agilidade: ${agilidade}${maxAgilityBonus !== undefined ? ` (limitado a ${maxAgilityBonus} pela armadura)` : ''}
-• Bônus de Armadura: ${armorBonus > 0 ? `+${armorBonus}` : armorBonus}
-• Outros Bônus: ${otherBonusesTotal > 0 ? `+${otherBonusesTotal}` : otherBonusesTotal}
-━━━━━━━━━━━━━━━━━
-Total: ${totalDefense}
-  `.trim();
+  const tooltipLines = [
+    'Cálculo de Defesa:',
+    '• Base: 15',
+    `• Agilidade: ${agilidade > 0 ? '+' : ''}${agilidade}${maxAgilityBonus !== undefined && agilidade > maxAgilityBonus ? ` (limitado a ${maxAgilityBonus})` : ''}`,
+  ];
 
-  const handleAddBonus = () => {
-    if (onOtherBonusesChange) {
-      onOtherBonusesChange([
-        ...otherBonuses,
-        {
-          name: 'Novo Bônus',
-          value: 1,
-          type: 'bonus',
-        },
-      ]);
-    }
-  };
+  if (armorBonus !== 0) {
+    tooltipLines.push(`• Armadura: ${armorBonus > 0 ? '+' : ''}${armorBonus}`);
+  }
 
-  const handleRemoveBonus = (index: number) => {
-    if (onOtherBonusesChange) {
-      onOtherBonusesChange(otherBonuses.filter((_, i) => i !== index));
-    }
-  };
+  if (shieldBonus !== 0) {
+    tooltipLines.push(`• Escudo: ${shieldBonus > 0 ? '+' : ''}${shieldBonus}`);
+  }
 
-  const handleUpdateBonus = (index: number, updates: Partial<Modifier>) => {
-    if (onOtherBonusesChange) {
-      onOtherBonusesChange(
-        otherBonuses.map((bonus, i) =>
-          i === index ? { ...bonus, ...updates } : bonus
-        )
-      );
-    }
-  };
+  if (otherBonusesTotal !== 0) {
+    tooltipLines.push(
+      `• Outros: ${otherBonusesTotal > 0 ? '+' : ''}${otherBonusesTotal}`
+    );
+  }
+
+  tooltipLines.push('━━━━━━━━━━━━━━━━━');
+  tooltipLines.push(`Total: ${totalDefense}`);
+
+  const tooltipText = tooltipLines.join('\n');
 
   return (
     <Paper
@@ -135,6 +107,13 @@ Total: ${totalDefense}
         border: onOpenDetails ? 1 : 0,
         borderColor: onOpenDetails ? 'primary.main' : 'transparent',
         cursor: onOpenDetails ? 'pointer' : 'default',
+        transition: 'all 0.15s ease-in-out',
+        '&:hover': onOpenDetails
+          ? {
+              borderColor: 'primary.dark',
+              bgcolor: 'action.hover',
+            }
+          : {},
       }}
       onClick={onOpenDetails}
     >
@@ -146,8 +125,16 @@ Total: ${totalDefense}
         <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
           Defesa
         </Typography>
-        <Tooltip title={tooltipText} arrow>
-          <IconButton size="small">
+        <Tooltip
+          title={
+            <Typography sx={{ whiteSpace: 'pre-line' }}>
+              {tooltipText}
+            </Typography>
+          }
+          arrow
+          enterDelay={150}
+        >
+          <IconButton size="small" onClick={(e) => e.stopPropagation()}>
             <InfoIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -171,187 +158,6 @@ Total: ${totalDefense}
         >
           {totalDefense}
         </Typography>
-      </Box>
-
-      <Divider sx={{ width: '100%' }} />
-
-      {/* Breakdown */}
-      <Box
-        sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}
-      >
-        {/* Base Defense */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="body2" color="text.secondary">
-            Base:
-          </Typography>
-          <Typography variant="body2" fontWeight="medium">
-            15
-          </Typography>
-        </Box>
-
-        {/* Agility */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="body2" color="text.secondary">
-            Agilidade:
-          </Typography>
-          <Typography
-            variant="body2"
-            fontWeight="medium"
-            color={
-              effectiveAgilityBonus < agilidade ? 'warning.main' : 'inherit'
-            }
-          >
-            {effectiveAgilityBonus > 0 ? '+' : ''}
-            {effectiveAgilityBonus}
-            {maxAgilityBonus !== undefined &&
-              effectiveAgilityBonus < agilidade && (
-                <Typography
-                  component="span"
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ ml: 0.5 }}
-                >
-                  (máx {maxAgilityBonus})
-                </Typography>
-              )}
-          </Typography>
-        </Box>
-
-        {/* Armor Bonus */}
-        {editable ? (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Bônus de Armadura:
-            </Typography>
-            <EditableNumber
-              value={armorBonus}
-              onChange={onArmorBonusChange || (() => {})}
-              min={0}
-              max={20}
-              showSign
-              variant="body2"
-              autoSave
-            />
-          </Box>
-        ) : (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              Bônus de Armadura:
-            </Typography>
-            <Typography variant="body2" fontWeight="medium">
-              {armorBonus > 0 ? '+' : ''}
-              {armorBonus}
-            </Typography>
-          </Box>
-        )}
-
-        {/* Max Agility Bonus (armor limitation) */}
-        {editable && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Limite de Agilidade:
-            </Typography>
-            <TextField
-              type="number"
-              value={maxAgilityBonus ?? ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (onMaxAgilityBonusChange) {
-                  onMaxAgilityBonusChange(
-                    val === '' ? undefined : parseInt(val, 10)
-                  );
-                }
-              }}
-              size="small"
-              sx={{ width: 80 }}
-              inputProps={{
-                min: 0,
-                max: 10,
-                style: { textAlign: 'right' },
-              }}
-              placeholder="Sem limite"
-            />
-          </Box>
-        )}
-
-        {/* Other Bonuses */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="body2" color="text.secondary">
-            Outros Bônus:
-          </Typography>
-          <Typography variant="body2" fontWeight="medium">
-            {otherBonusesTotal > 0 ? '+' : ''}
-            {otherBonusesTotal}
-          </Typography>
-        </Box>
-
-        {/* List of Other Bonuses (editable) */}
-        {editable && otherBonuses.length > 0 && (
-          <List dense sx={{ width: '100%', p: 0 }}>
-            {otherBonuses.map((bonus, index) => (
-              <ListItem
-                key={index}
-                sx={{
-                  px: 0,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  gap: 1,
-                }}
-              >
-                <TextField
-                  value={bonus.name}
-                  onChange={(e) =>
-                    handleUpdateBonus(index, { name: e.target.value })
-                  }
-                  size="small"
-                  sx={{ flexGrow: 1, minWidth: 100 }}
-                  placeholder="Nome do bônus"
-                />
-                <EditableNumber
-                  value={bonus.value}
-                  onChange={(value) => handleUpdateBonus(index, { value })}
-                  min={-10}
-                  max={20}
-                  showSign
-                  variant="body2"
-                  autoSave
-                />
-                <IconButton
-                  size="small"
-                  onClick={() => handleRemoveBonus(index)}
-                  color="error"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </ListItem>
-            ))}
-          </List>
-        )}
-
-        {/* Add Bonus Button */}
-        {editable && (
-          <Button
-            startIcon={<AddIcon />}
-            onClick={handleAddBonus}
-            size="small"
-            fullWidth
-            variant="outlined"
-          >
-            Adicionar Bônus
-          </Button>
-        )}
       </Box>
     </Paper>
   );

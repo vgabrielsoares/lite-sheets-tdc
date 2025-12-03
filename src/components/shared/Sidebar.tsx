@@ -128,11 +128,28 @@ export function Sidebar({
       sx={{
         width: sidebarWidth,
         maxWidth: '100vw',
-        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
-        flexShrink: 0, // Não encolher a sidebar
+        flexShrink: 0,
+        // Position fixed para ficar fixo na tela independente do scroll
+        position: 'fixed',
+        // Alinhado com o topo das tabs da ficha (breadcrumb ~48px + tabs ~48px + padding 24px)
+        top: 120,
+        // Posicionado à direita da ficha (ficha = 900px, sidebar = sidebarWidth, espaço entre = 24px)
+        // Cálculo: centro + metade da ficha + gap
+        right: {
+          xs: 16,
+          lg: `calc((100vw - 900px) / 2 - ${sidebarWidth}px - 24px)`,
+          xl: `calc((100vw - 900px) / 2 - ${sidebarWidth}px - 24px)`,
+        },
+        left: {
+          lg: `calc((100vw + 900px) / 2 + 24px)`,
+          xl: `calc((100vw + 900px) / 2 + 24px)`,
+        },
+        // Altura máxima: viewport - top offset - footer (~60px) - margens
+        maxHeight: 'calc(100vh - 180px)',
+        zIndex: 1000, // Acima do conteúdo mas abaixo de modais
+        overflow: 'hidden', // O scroll fica no conteúdo interno
       }}
     >
       {/* Header */}
@@ -173,14 +190,13 @@ export function Sidebar({
 
       <Divider />
 
-      {/* Área de Conteúdo com Scroll */}
+      {/* Área de Conteúdo */}
       <Box
         role="region"
         aria-labelledby="sidebar-title"
         sx={{
           flex: 1,
-          overflow: 'auto',
-          overflowX: 'hidden',
+          overflow: 'auto', // Scroll interno quando conteúdo exceder
           // Padding padrão de 3 (24px) seguindo LinhagemSidebar
           ...(contentPadding && { p: 3 }),
           // Scrollbar customizada

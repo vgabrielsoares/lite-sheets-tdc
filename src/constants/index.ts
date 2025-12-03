@@ -14,6 +14,9 @@ export * from './attributes';
 // Habilidades (Perícias)
 export * from './skills';
 
+// Usos de Habilidades
+export * from './skillUses';
+
 // Idiomas
 export * from './languages';
 

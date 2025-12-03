@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -11,8 +11,22 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
+import PersonIcon from '@mui/icons-material/Person';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import ShieldIcon from '@mui/icons-material/Shield';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import BuildIcon from '@mui/icons-material/Build';
+import TranslateIcon from '@mui/icons-material/Translate';
 import { useRouter } from 'next/navigation';
-import type { Character } from '@/types';
+import type {
+  Character,
+  AttributeName,
+  SkillName,
+  SkillUse,
+  ProficiencyLevel,
+  Modifier,
+} from '@/types';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
@@ -25,11 +39,18 @@ import {
   SpellsTab,
   DescriptionTab,
 } from './tabs';
-import { LinhagemSidebar, OrigemSidebar, SizeSidebar } from './sidebars';
+import {
+  LinhagemSidebar,
+  OrigemSidebar,
+  SizeSidebar,
+  AttributeSidebar,
+} from './sidebars';
 import { HPDetailSidebar } from './sidebars/HPDetailSidebar';
 import { PPDetailSidebar } from './sidebars/PPDetailSidebar';
 import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
+import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
+import { TableOfContents, TOCSection } from '@/components/shared';
 
 export interface CharacterSheetProps {
   /**
@@ -74,10 +95,101 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   // Estado da aba atual
   const [currentTab, setCurrentTab] = useState<CharacterTabId>('main');
 
+  // Estado do Table of Contents
+  const [tocOpen, setTocOpen] = useState<boolean>(false);
+
   // Estado da sidebar (qual sidebar está aberta)
   const [activeSidebar, setActiveSidebar] = useState<
-    'lineage' | 'origin' | 'size' | 'hp' | 'pp' | 'defense' | 'movement' | null
+    | 'lineage'
+    | 'origin'
+    | 'size'
+    | 'hp'
+    | 'pp'
+    | 'defense'
+    | 'movement'
+    | 'attribute'
+    | 'skill'
+    | null
   >(null);
+
+  // Atributo selecionado para a sidebar
+  const [selectedAttribute, setSelectedAttribute] =
+    useState<AttributeName | null>(null);
+
+  // Habilidade selecionada para a sidebar
+  const [selectedSkill, setSelectedSkill] = useState<SkillName | null>(null);
+
+  /**
+   * Seções do TOC por aba
+   */
+  const tocSections = useMemo<Record<CharacterTabId, TOCSection[]>>(
+    () => ({
+      main: [
+        {
+          id: 'section-basic-stats',
+          label: 'Informações Básicas',
+          icon: <PersonIcon fontSize="small" />,
+        },
+        {
+          id: 'section-hp-pp',
+          label: 'PV e PP',
+          icon: <FavoriteIcon fontSize="small" />,
+        },
+        {
+          id: 'section-defense-movement',
+          label: 'Defesa e Deslocamento',
+          icon: <ShieldIcon fontSize="small" />,
+        },
+        {
+          id: 'section-attributes',
+          label: 'Atributos',
+          icon: <FitnessCenterIcon fontSize="small" />,
+        },
+        {
+          id: 'section-skills',
+          label: 'Habilidades',
+          icon: <PsychologyIcon fontSize="small" />,
+        },
+        {
+          id: 'section-crafts',
+          label: 'Ofícios',
+          icon: <BuildIcon fontSize="small" />,
+        },
+        {
+          id: 'section-languages',
+          label: 'Idiomas',
+          icon: <TranslateIcon fontSize="small" />,
+        },
+      ],
+      combat: [
+        { id: 'section-combat-stats', label: 'Status de Combate' },
+        { id: 'section-actions', label: 'Ações' },
+        { id: 'section-attacks', label: 'Ataques' },
+      ],
+      archetypes: [
+        { id: 'section-archetypes', label: 'Arquétipos' },
+        { id: 'section-classes', label: 'Classes' },
+      ],
+      resources: [
+        { id: 'section-luck', label: 'Sorte' },
+        { id: 'section-particularities', label: 'Particularidades' },
+      ],
+      inventory: [
+        { id: 'section-equipment', label: 'Equipamentos' },
+        { id: 'section-currency', label: 'Dinheiro' },
+      ],
+      spells: [
+        { id: 'section-known-spells', label: 'Feitiços Conhecidos' },
+        { id: 'section-spell-slots', label: 'Espaços de Feitiço' },
+      ],
+      description: [
+        { id: 'section-physical', label: 'Descrição Física' },
+        { id: 'section-definers', label: 'Definidores' },
+        { id: 'section-backstory', label: 'História' },
+      ],
+    }),
+    []
+  );
 
   /**
    * Navega de volta para a lista de fichas
@@ -136,24 +248,359 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Abre a sidebar de detalhes de um atributo
+   */
+  const handleOpenAttributeSidebar = (attribute: AttributeName) => {
+    setSelectedAttribute(attribute);
+    setActiveSidebar('attribute');
+  };
+
+  /**
+   * Abre a sidebar de detalhes de uma habilidade
+   */
+  const handleOpenSkillSidebar = (skillName: SkillName) => {
+    setSelectedSkill(skillName);
+    setActiveSidebar('skill');
+  };
+
+  /**
    * Fecha qualquer sidebar aberta
    */
   const handleCloseSidebar = () => {
     setActiveSidebar(null);
+    setSelectedAttribute(null);
+    setSelectedSkill(null);
   };
 
   /**
    * Handler para atualizar a linhagem do personagem
+   * Também aplica os modificadores de atributos da linhagem automaticamente
    */
   const handleUpdateLineage = (lineage: Character['lineage']) => {
-    onUpdate({ lineage });
+    if (!lineage) {
+      onUpdate({ lineage });
+      return;
+    }
+
+    // Calcula a diferença de modificadores entre linhagem antiga e nova
+    const oldModifiers = character.lineage?.attributeModifiers || [];
+    const newModifiers = lineage.attributeModifiers || [];
+
+    // Cria um mapa de atributos atualizado
+    const updatedAttributes = { ...character.attributes };
+
+    // Remove os modificadores antigos da linhagem
+    oldModifiers.forEach((mod) => {
+      if (mod.attribute in updatedAttributes) {
+        updatedAttributes[mod.attribute] = Math.max(
+          0,
+          updatedAttributes[mod.attribute] - mod.value
+        );
+      }
+    });
+
+    // Aplica os novos modificadores da linhagem
+    newModifiers.forEach((mod) => {
+      if (mod.attribute in updatedAttributes) {
+        updatedAttributes[mod.attribute] = Math.max(
+          0,
+          updatedAttributes[mod.attribute] + mod.value
+        );
+      }
+    });
+
+    // Atualiza linhagem e atributos juntos
+    onUpdate({ lineage, attributes: updatedAttributes });
   };
 
   /**
    * Handler para atualizar a origem do personagem
+   * Também aplica os modificadores de atributos e proficiências de habilidades da origem automaticamente
    */
   const handleUpdateOrigin = (origin: Character['origin']) => {
-    onUpdate({ origin });
+    if (!origin) {
+      onUpdate({ origin });
+      return;
+    }
+
+    // Calcula a diferença de modificadores entre origem antiga e nova
+    const oldModifiers = character.origin?.attributeModifiers || [];
+    const newModifiers = origin.attributeModifiers || [];
+
+    // Cria um mapa de atributos atualizado
+    const updatedAttributes = { ...character.attributes };
+
+    // Remove os modificadores antigos da origem
+    oldModifiers.forEach((mod) => {
+      if (mod.attribute in updatedAttributes) {
+        updatedAttributes[mod.attribute] = Math.max(
+          0,
+          updatedAttributes[mod.attribute] - mod.value
+        );
+      }
+    });
+
+    // Aplica os novos modificadores da origem
+    newModifiers.forEach((mod) => {
+      if (mod.attribute in updatedAttributes) {
+        updatedAttributes[mod.attribute] = Math.max(
+          0,
+          updatedAttributes[mod.attribute] + mod.value
+        );
+      }
+    });
+
+    // Atualiza proficiências de habilidades
+    const oldSkillProficiencies = character.origin?.skillProficiencies || [];
+    const newSkillProficiencies = origin.skillProficiencies || [];
+    const updatedSkills = { ...character.skills };
+
+    // Remove proficiências antigas da origem (volta para 'leigo' se a origem era a única fonte)
+    oldSkillProficiencies.forEach((skillName) => {
+      if (
+        skillName in updatedSkills &&
+        !newSkillProficiencies.includes(skillName)
+      ) {
+        // Só volta para 'leigo' se ainda está como 'adepto' (não foi melhorado manualmente)
+        if (updatedSkills[skillName].proficiencyLevel === 'adepto') {
+          updatedSkills[skillName] = {
+            ...updatedSkills[skillName],
+            proficiencyLevel: 'leigo',
+          };
+        }
+      }
+    });
+
+    // Aplica novas proficiências da origem (sobe para 'adepto' se estava 'leigo')
+    newSkillProficiencies.forEach((skillName) => {
+      if (skillName in updatedSkills) {
+        // Só sobe para 'adepto' se está como 'leigo'
+        if (updatedSkills[skillName].proficiencyLevel === 'leigo') {
+          updatedSkills[skillName] = {
+            ...updatedSkills[skillName],
+            proficiencyLevel: 'adepto',
+          };
+        }
+      }
+    });
+
+    // Atualiza origem, atributos e habilidades juntos
+    onUpdate({ origin, attributes: updatedAttributes, skills: updatedSkills });
+  };
+
+  /**
+   * Handler para atualizar um atributo do personagem
+   */
+  const handleUpdateAttribute = (attribute: AttributeName, value: number) => {
+    onUpdate({
+      attributes: {
+        ...character.attributes,
+        [attribute]: value,
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar atributo-chave de uma habilidade
+   */
+  const handleSkillKeyAttributeChange = (
+    skillName: SkillName,
+    newAttribute: AttributeName
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          keyAttribute: newAttribute,
+        },
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar proficiência de uma habilidade
+   */
+  const handleSkillProficiencyChange = (
+    skillName: SkillName,
+    newProficiency: ProficiencyLevel
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          proficiencyLevel: newProficiency,
+        },
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar modificadores de uma habilidade
+   */
+  const handleSkillModifiersChange = (
+    skillName: SkillName,
+    modifiers: Modifier[]
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          modifiers,
+        },
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar usos customizados de uma habilidade
+   */
+  const handleUpdateCustomUses = (
+    skillName: SkillName,
+    customUses: SkillUse[]
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          customUses,
+        },
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar atributos personalizados de usos padrões
+   */
+  const handleUpdateDefaultUseAttributes = (
+    skillName: SkillName,
+    overrides: Record<string, AttributeName>
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          defaultUseAttributeOverrides: overrides,
+        },
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar modificadores de usos padrões de uma habilidade
+   */
+  const handleUpdateDefaultUseModifiers = (
+    skillName: SkillName,
+    overrides: Record<string, Modifier[]>
+  ) => {
+    onUpdate({
+      skills: {
+        ...character.skills,
+        [skillName]: {
+          ...character.skills[skillName],
+          defaultUseModifierOverrides: overrides,
+        },
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar habilidade de assinatura
+   */
+  const handleSignatureAbilityChange = (skillName: SkillName | null) => {
+    // Remove assinatura de todas as habilidades
+    const updatedSkills = Object.entries(character.skills).reduce(
+      (acc, [key, skill]) => {
+        acc[key as SkillName] = {
+          ...skill,
+          isSignature: skillName === key,
+        };
+        return acc;
+      },
+      {} as typeof character.skills
+    );
+
+    onUpdate({
+      skills: updatedSkills,
+    });
+  };
+
+  /**
+   * Encontra qual habilidade é atualmente a assinatura
+   */
+  const getCurrentSignatureSkill = (): SkillName | null => {
+    const signatureEntry = Object.entries(character.skills).find(
+      ([, skill]) => skill.isSignature
+    );
+    return signatureEntry ? (signatureEntry[0] as SkillName) : null;
+  };
+
+  /**
+   * Handler para adicionar um novo ofício
+   */
+  const handleAddCraft = (craft: Omit<import('@/types').Craft, 'id'>) => {
+    const { v4: uuidv4 } = require('uuid');
+    const newCraft: import('@/types').Craft = {
+      ...craft,
+      id: uuidv4(),
+    };
+
+    onUpdate({
+      crafts: [...character.crafts, newCraft],
+    });
+  };
+
+  /**
+   * Handler para atualizar um ofício existente
+   */
+  const handleUpdateCraft = (
+    craftId: string,
+    updates: Partial<import('@/types').Craft>
+  ) => {
+    const updatedCrafts = character.crafts.map((craft) =>
+      craft.id === craftId ? { ...craft, ...updates } : craft
+    );
+
+    onUpdate({
+      crafts: updatedCrafts,
+    });
+  };
+
+  /**
+   * Handler para remover um ofício
+   */
+  const handleRemoveCraft = (craftId: string) => {
+    const updatedCrafts = character.crafts.filter(
+      (craft) => craft.id !== craftId
+    );
+
+    onUpdate({
+      crafts: updatedCrafts,
+    });
+  };
+
+  /**
+   * Handler para alterar o ofício selecionado na habilidade "oficio"
+   */
+  const handleSelectedCraftChange = (
+    skillName: import('@/types').SkillName,
+    craftId: string
+  ) => {
+    const updatedSkills = {
+      ...character.skills,
+      [skillName]: {
+        ...character.skills[skillName],
+        selectedCraftId: craftId,
+      },
+    };
+
+    onUpdate({
+      skills: updatedSkills,
+    });
   };
 
   /**
@@ -170,6 +617,15 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenPP: handleOpenPPSidebar,
       onOpenDefense: handleOpenDefenseSidebar,
       onOpenMovement: handleOpenMovementSidebar,
+      onOpenAttribute: handleOpenAttributeSidebar,
+      onOpenSkill: handleOpenSkillSidebar,
+      onSkillKeyAttributeChange: handleSkillKeyAttributeChange,
+      onSkillProficiencyChange: handleSkillProficiencyChange,
+      onSkillModifiersChange: handleSkillModifiersChange,
+      onAddCraft: handleAddCraft,
+      onUpdateCraft: handleUpdateCraft,
+      onRemoveCraft: handleRemoveCraft,
+      onSelectedCraftChange: handleSelectedCraftChange,
     };
 
     switch (currentTab) {
@@ -227,26 +683,21 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         </Breadcrumbs>
       </Box>
 
-      {/* Layout principal - Centralizado */}
+      {/* Layout principal - Ficha sempre centralizada */}
       <Box
         sx={{
           display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: 3,
-          justifyContent: 'center', // Centraliza horizontalmente
-          // Altura fixa baseada na viewport para evitar alongamento
-          height: isMobile ? 'auto' : 'calc(100vh - 200px)',
-          maxHeight: isMobile ? 'none' : 'calc(100vh - 200px)',
+          flexDirection: 'column',
+          alignItems: 'center', // Centraliza a ficha horizontalmente
         }}
       >
         {/* Container da ficha */}
         <Box
           sx={{
-            flex: isMobile ? '1 1 auto' : '0 0 800px',
-            maxWidth: '800px',
+            width: isMobile ? '100%' : '900px',
+            maxWidth: '900px',
             display: 'flex',
             flexDirection: 'column',
-            height: '100%',
           }}
         >
           {/* Navegação por abas */}
@@ -259,194 +710,244 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             aria-labelledby={`tab-${currentTab}`}
             sx={{
               flex: 1,
-              overflow: 'auto',
-              // Scrollbar customizada para o conteúdo da ficha
-              '&::-webkit-scrollbar': {
-                width: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                bgcolor: 'transparent',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                bgcolor: 'action.hover',
-                borderRadius: '4px',
-                '&:hover': {
-                  bgcolor: 'action.selected',
-                },
-              },
             }}
           >
             {renderTabContent()}
           </Box>
         </Box>
-
-        {/* Área reservada para sidebar */}
-        {!isMobile && (
-          <Box
-            sx={{
-              flex: '0 0 640px', // Largura fixa da sidebar (lg)
-              maxWidth: '640px',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {/* Sidebar de Linhagem */}
-            {activeSidebar === 'lineage' && (
-              <LinhagemSidebar
-                open={activeSidebar === 'lineage'}
-                lineage={character.lineage}
-                onUpdate={handleUpdateLineage}
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de Origem */}
-            {activeSidebar === 'origin' && (
-              <OrigemSidebar
-                open={activeSidebar === 'origin'}
-                origin={character.origin}
-                onUpdate={handleUpdateOrigin}
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de Tamanho */}
-            {activeSidebar === 'size' && character.lineage?.size && (
-              <SizeSidebar
-                open={activeSidebar === 'size'}
-                currentSize={character.lineage.size}
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de PV */}
-            {activeSidebar === 'hp' && (
-              <HPDetailSidebar
-                open={activeSidebar === 'hp'}
-                hp={character.combat.hp}
-                onChange={(hp: HealthPoints) =>
-                  onUpdate({
-                    combat: { ...character.combat, hp },
-                  })
-                }
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de PP */}
-            {activeSidebar === 'pp' && (
-              <PPDetailSidebar
-                open={activeSidebar === 'pp'}
-                pp={character.combat.pp}
-                onChange={(pp: PowerPoints) =>
-                  onUpdate({
-                    combat: { ...character.combat, pp },
-                  })
-                }
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de Defesa */}
-            {activeSidebar === 'defense' && (
-              <DefenseSidebar
-                open={activeSidebar === 'defense'}
-                character={character}
-                onUpdate={(updated) => onUpdate(updated)}
-                onClose={handleCloseSidebar}
-              />
-            )}
-
-            {/* Sidebar de Deslocamento */}
-            {activeSidebar === 'movement' && (
-              <MovementSidebar
-                open={activeSidebar === 'movement'}
-                character={character}
-                onUpdate={(updated) => onUpdate(updated)}
-                onClose={handleCloseSidebar}
-              />
-            )}
-          </Box>
-        )}
-
-        {/* Sidebar em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'lineage' && (
-          <LinhagemSidebar
-            open={activeSidebar === 'lineage'}
-            lineage={character.lineage}
-            onUpdate={handleUpdateLineage}
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de Origem em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'origin' && (
-          <OrigemSidebar
-            open={activeSidebar === 'origin'}
-            origin={character.origin}
-            onUpdate={handleUpdateOrigin}
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de Tamanho em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'size' && character.lineage?.size && (
-          <SizeSidebar
-            open={activeSidebar === 'size'}
-            currentSize={character.lineage.size}
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de PV em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'hp' && (
-          <HPDetailSidebar
-            open={activeSidebar === 'hp'}
-            hp={character.combat.hp}
-            onChange={(hp: HealthPoints) =>
-              onUpdate({
-                combat: { ...character.combat, hp },
-              })
-            }
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de PP em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'pp' && (
-          <PPDetailSidebar
-            open={activeSidebar === 'pp'}
-            pp={character.combat.pp}
-            onChange={(pp: PowerPoints) =>
-              onUpdate({
-                combat: { ...character.combat, pp },
-              })
-            }
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de Defesa em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'defense' && (
-          <DefenseSidebar
-            open={activeSidebar === 'defense'}
-            character={character}
-            onUpdate={(updated) => onUpdate(updated)}
-            onClose={handleCloseSidebar}
-          />
-        )}
-
-        {/* Sidebar de Deslocamento em modo mobile (overlay) */}
-        {isMobile && activeSidebar === 'movement' && (
-          <MovementSidebar
-            open={activeSidebar === 'movement'}
-            character={character}
-            onUpdate={(updated) => onUpdate(updated)}
-            onClose={handleCloseSidebar}
-          />
-        )}
       </Box>
+
+      {/* Table of Contents - lado esquerdo (somente desktop) */}
+      {!isMobile && (
+        <TableOfContents
+          open={tocOpen}
+          onOpen={() => setTocOpen(true)}
+          onClose={() => setTocOpen(false)}
+          sections={tocSections[currentTab] || []}
+          title="Índice"
+        />
+      )}
+
+      {/* Sidebars - renderizadas com position fixed à direita da ficha */}
+      {!isMobile && (
+        <>
+          {/* Sidebar de Linhagem */}
+          {activeSidebar === 'lineage' && (
+            <LinhagemSidebar
+              open={activeSidebar === 'lineage'}
+              lineage={character.lineage}
+              onUpdate={handleUpdateLineage}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Origem */}
+          {activeSidebar === 'origin' && (
+            <OrigemSidebar
+              open={activeSidebar === 'origin'}
+              origin={character.origin}
+              onUpdate={handleUpdateOrigin}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Tamanho */}
+          {activeSidebar === 'size' && character.lineage?.size && (
+            <SizeSidebar
+              open={activeSidebar === 'size'}
+              currentSize={character.lineage.size}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de PV */}
+          {activeSidebar === 'hp' && (
+            <HPDetailSidebar
+              open={activeSidebar === 'hp'}
+              hp={character.combat.hp}
+              onChange={(hp: HealthPoints) =>
+                onUpdate({
+                  combat: { ...character.combat, hp },
+                })
+              }
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de PP */}
+          {activeSidebar === 'pp' && (
+            <PPDetailSidebar
+              open={activeSidebar === 'pp'}
+              pp={character.combat.pp}
+              onChange={(pp: PowerPoints) =>
+                onUpdate({
+                  combat: { ...character.combat, pp },
+                })
+              }
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Defesa */}
+          {activeSidebar === 'defense' && (
+            <DefenseSidebar
+              open={activeSidebar === 'defense'}
+              character={character}
+              onUpdate={(updated) => onUpdate(updated)}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Deslocamento */}
+          {activeSidebar === 'movement' && (
+            <MovementSidebar
+              open={activeSidebar === 'movement'}
+              character={character}
+              onUpdate={(updated) => onUpdate(updated)}
+              onClose={handleCloseSidebar}
+            />
+          )}
+
+          {/* Sidebar de Atributo */}
+          {activeSidebar === 'attribute' && selectedAttribute && (
+            <AttributeSidebar
+              open={activeSidebar === 'attribute'}
+              onClose={handleCloseSidebar}
+              attribute={selectedAttribute}
+              character={character}
+              onUpdateAttribute={handleUpdateAttribute}
+            />
+          )}
+
+          {/* Sidebar de Usos de Habilidade */}
+          {activeSidebar === 'skill' && selectedSkill && (
+            <SkillUsageSidebar
+              open={activeSidebar === 'skill'}
+              onClose={handleCloseSidebar}
+              skill={character.skills[selectedSkill]}
+              attributes={character.attributes}
+              characterLevel={character.level}
+              isOverloaded={false} // TODO: Calculate from inventory
+              onUpdateCustomUses={handleUpdateCustomUses}
+              onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
+              onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
+              onUpdateSkillModifiers={handleSkillModifiersChange}
+              onSignatureAbilityChange={handleSignatureAbilityChange}
+              currentSignatureSkill={getCurrentSignatureSkill()}
+              crafts={character.crafts}
+              onUpdateCraft={handleUpdateCraft}
+            />
+          )}
+        </>
+      )}
+
+      {/* Sidebar em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'lineage' && (
+        <LinhagemSidebar
+          open={activeSidebar === 'lineage'}
+          lineage={character.lineage}
+          onUpdate={handleUpdateLineage}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Origem em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'origin' && (
+        <OrigemSidebar
+          open={activeSidebar === 'origin'}
+          origin={character.origin}
+          onUpdate={handleUpdateOrigin}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Tamanho em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'size' && character.lineage?.size && (
+        <SizeSidebar
+          open={activeSidebar === 'size'}
+          currentSize={character.lineage.size}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de PV em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'hp' && (
+        <HPDetailSidebar
+          open={activeSidebar === 'hp'}
+          hp={character.combat.hp}
+          onChange={(hp: HealthPoints) =>
+            onUpdate({
+              combat: { ...character.combat, hp },
+            })
+          }
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de PP em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'pp' && (
+        <PPDetailSidebar
+          open={activeSidebar === 'pp'}
+          pp={character.combat.pp}
+          onChange={(pp: PowerPoints) =>
+            onUpdate({
+              combat: { ...character.combat, pp },
+            })
+          }
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Defesa em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'defense' && (
+        <DefenseSidebar
+          open={activeSidebar === 'defense'}
+          character={character}
+          onUpdate={(updated) => onUpdate(updated)}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Deslocamento em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'movement' && (
+        <MovementSidebar
+          open={activeSidebar === 'movement'}
+          character={character}
+          onUpdate={(updated) => onUpdate(updated)}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {/* Sidebar de Atributo em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'attribute' && selectedAttribute && (
+        <AttributeSidebar
+          open={activeSidebar === 'attribute'}
+          onClose={handleCloseSidebar}
+          attribute={selectedAttribute}
+          character={character}
+          onUpdateAttribute={handleUpdateAttribute}
+        />
+      )}
+
+      {/* Sidebar de Usos de Habilidade em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'skill' && selectedSkill && (
+        <SkillUsageSidebar
+          open={activeSidebar === 'skill'}
+          onClose={handleCloseSidebar}
+          skill={character.skills[selectedSkill]}
+          attributes={character.attributes}
+          characterLevel={character.level}
+          isOverloaded={false} // TODO: Calculate from inventory
+          onUpdateCustomUses={handleUpdateCustomUses}
+          onUpdateDefaultUseAttributes={handleUpdateDefaultUseAttributes}
+          onUpdateDefaultUseModifiers={handleUpdateDefaultUseModifiers}
+          onUpdateSkillModifiers={handleSkillModifiersChange}
+          onSignatureAbilityChange={handleSignatureAbilityChange}
+          currentSignatureSkill={getCurrentSignatureSkill()}
+          crafts={character.crafts}
+          onUpdateCraft={handleUpdateCraft}
+        />
+      )}
     </Container>
   );
 }

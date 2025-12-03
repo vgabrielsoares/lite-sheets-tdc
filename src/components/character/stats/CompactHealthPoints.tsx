@@ -15,13 +15,16 @@ export interface CompactHealthPointsProps {
 
 /**
  * Configuração específica para PV (Pontos de Vida)
+ * temporaryColor usa função para adaptar ao tema
  */
 const HP_CONFIG: ResourceConfig = {
   Icon: FavoriteIcon,
   iconColor: 'error',
   label: 'PV',
   progressColor: 'error',
-  temporaryColor: '#ff6b6bdd', // Vermelho médio e saturado para PV temporários (visível em tema claro)
+  // Cores adaptativas: dourado escuro para light mode, dourado claro para dark mode
+  temporaryColorLight: '#e65100', // Laranja escuro - visível em fundo claro
+  temporaryColorDark: '#ffcc80', // Laranja claro - visível em fundo escuro
   adjustValues: {
     small: 1,
     large: 5,

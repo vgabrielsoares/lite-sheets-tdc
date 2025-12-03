@@ -2,7 +2,15 @@
 
 import React from 'react';
 import { Box, Stack } from '@mui/material';
-import type { Character } from '@/types';
+import type {
+  Character,
+  AttributeName,
+  SkillName,
+  ProficiencyLevel,
+  Modifier,
+  Craft,
+  LanguageName,
+} from '@/types';
 import {
   BasicStats,
   CompactHealthPoints,
@@ -10,7 +18,10 @@ import {
   DefenseDisplay,
   MovementDisplay,
 } from '../stats';
-import type { MovementType } from '@/types';
+import { AttributesDisplay } from '../attributes';
+import { SkillsDisplay, CraftsDisplay } from '../skills';
+import { LanguagesDisplay } from '../languages';
+import { getEncumbranceState, calculateCarryCapacity } from '@/utils';
 
 export interface MainTabProps {
   /**
@@ -55,6 +66,60 @@ export interface MainTabProps {
    * Callback para abrir detalhes de Deslocamento
    */
   onOpenMovement?: () => void;
+
+  /**
+   * Callback para abrir detalhes de um atributo
+   */
+  onOpenAttribute?: (attribute: AttributeName) => void;
+
+  /**
+   * Callback para abrir detalhes de uma habilidade
+   */
+  onOpenSkill?: (skillName: SkillName) => void;
+
+  /**
+   * Callback para alterar atributo-chave de uma habilidade
+   */
+  onSkillKeyAttributeChange?: (
+    skillName: SkillName,
+    newAttribute: AttributeName
+  ) => void;
+
+  /**
+   * Callback para alterar proficiência de uma habilidade
+   */
+  onSkillProficiencyChange?: (
+    skillName: SkillName,
+    newProficiency: ProficiencyLevel
+  ) => void;
+
+  /**
+   * Callback para alterar modificadores de uma habilidade
+   */
+  onSkillModifiersChange?: (
+    skillName: SkillName,
+    modifiers: Modifier[]
+  ) => void;
+
+  /**
+   * Callback para adicionar ofício
+   */
+  onAddCraft?: (craft: Omit<Craft, 'id'>) => void;
+
+  /**
+   * Callback para atualizar ofício
+   */
+  onUpdateCraft?: (craftId: string, updates: Partial<Craft>) => void;
+
+  /**
+   * Callback para remover ofício
+   */
+  onRemoveCraft?: (craftId: string) => void;
+
+  /**
+   * Callback para alterar ofício selecionado
+   */
+  onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
 }
 
 /**
@@ -90,21 +155,44 @@ export function MainTab({
   onOpenPP,
   onOpenDefense,
   onOpenMovement,
+  onOpenAttribute,
+  onOpenSkill,
+  onSkillKeyAttributeChange,
+  onSkillProficiencyChange,
+  onSkillModifiersChange,
+  onAddCraft,
+  onUpdateCraft,
+  onRemoveCraft,
+  onSelectedCraftChange,
 }: MainTabProps) {
+  // Calcular se personagem está sobrecarregado
+  const carryCapacity = calculateCarryCapacity(character.attributes.forca);
+  // Calcular carga atual somando peso de todos os itens
+  const currentLoad = character.inventory.items.reduce(
+    (total, item) => total + (item.weight || 0) * (item.quantity || 1),
+    0
+  );
+  const encumbranceState = getEncumbranceState(currentLoad, carryCapacity);
+  const isOverloaded =
+    encumbranceState === 'sobrecarregado' || encumbranceState === 'imobilizado';
+
   return (
     <Box>
       <Stack spacing={3}>
         {/* Informações Básicas */}
-        <BasicStats
-          character={character}
-          onUpdate={onUpdate}
-          onOpenLineage={onOpenLineage}
-          onOpenOrigin={onOpenOrigin}
-          onOpenSize={onOpenSize}
-        />
+        <Box id="section-basic-stats">
+          <BasicStats
+            character={character}
+            onUpdate={onUpdate}
+            onOpenLineage={onOpenLineage}
+            onOpenOrigin={onOpenOrigin}
+            onOpenSize={onOpenSize}
+          />
+        </Box>
 
         {/* PV e PP lado a lado */}
         <Box
+          id="section-hp-pp"
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
@@ -142,6 +230,7 @@ export function MainTab({
 
         {/* Defesa e Deslocamento lado a lado */}
         <Box
+          id="section-defense-movement"
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
@@ -152,59 +241,83 @@ export function MainTab({
           <DefenseDisplay
             agilidade={character.attributes.agilidade}
             armorBonus={character.combat.defense.armorBonus}
+            shieldBonus={character.combat.defense.shieldBonus}
             maxAgilityBonus={character.combat.defense.maxAgilityBonus}
             otherBonuses={character.combat.defense.otherBonuses}
             onOpenDetails={onOpenDefense}
-            onArmorBonusChange={(value) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  defense: {
-                    ...character.combat.defense,
-                    armorBonus: value,
-                  },
-                },
-              })
-            }
-            onMaxAgilityBonusChange={(value) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  defense: {
-                    ...character.combat.defense,
-                    maxAgilityBonus: value,
-                  },
-                },
-              })
-            }
-            onOtherBonusesChange={(bonuses) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  defense: {
-                    ...character.combat.defense,
-                    otherBonuses: bonuses,
-                  },
-                },
-              })
-            }
           />
 
           {/* Deslocamento */}
           <MovementDisplay
             movement={character.movement.speeds}
             onOpenDetails={onOpenMovement}
-            onMovementChange={(type: MovementType, value: number) =>
-              onUpdate({
-                movement: {
-                  ...character.movement,
-                  speeds: {
-                    ...character.movement.speeds,
-                    [type]: value,
-                  },
-                },
-              })
-            }
+          />
+        </Box>
+
+        {/* Atributos */}
+        <Box id="section-attributes">
+          <AttributesDisplay
+            attributes={character.attributes}
+            onAttributeClick={onOpenAttribute}
+          />
+        </Box>
+
+        {/* Habilidades */}
+        <Box id="section-skills">
+          {onOpenSkill &&
+            onSkillKeyAttributeChange &&
+            onSkillProficiencyChange && (
+              <SkillsDisplay
+                skills={character.skills}
+                attributes={character.attributes}
+                characterLevel={character.level}
+                isOverloaded={isOverloaded}
+                onKeyAttributeChange={onSkillKeyAttributeChange}
+                onProficiencyChange={onSkillProficiencyChange}
+                onModifiersChange={onSkillModifiersChange}
+                onSkillClick={onOpenSkill}
+                crafts={character.crafts}
+                onSelectedCraftChange={onSelectedCraftChange}
+                luck={character.luck}
+                onLuckLevelChange={(level) =>
+                  onUpdate({
+                    luck: {
+                      ...character.luck,
+                      level,
+                    },
+                  })
+                }
+                onLuckModifiersChange={(diceModifier, numericModifier) =>
+                  onUpdate({
+                    luck: {
+                      ...character.luck,
+                      diceModifier,
+                      numericModifier,
+                    },
+                  })
+                }
+              />
+            )}
+        </Box>
+
+        {/* Ofícios (Competências) */}
+        <Box id="section-crafts">
+          {onAddCraft && onUpdateCraft && onRemoveCraft && (
+            <CraftsDisplay
+              crafts={character.crafts}
+              attributes={character.attributes}
+              onAdd={onAddCraft}
+              onUpdate={onUpdateCraft}
+              onRemove={onRemoveCraft}
+            />
+          )}
+        </Box>
+
+        {/* Idiomas Conhecidos */}
+        <Box id="section-languages">
+          <LanguagesDisplay
+            character={character}
+            onUpdate={(languages: LanguageName[]) => onUpdate({ languages })}
           />
         </Box>
       </Stack>

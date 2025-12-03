@@ -10,12 +10,36 @@ export interface HPDetailSidebarProps {
   onChange: (hp: HealthPoints) => void;
 }
 
-export function HPDetailSidebar({ open, onClose, hp, onChange }: HPDetailSidebarProps) {
+export function HPDetailSidebar({
+  open,
+  onClose,
+  hp,
+  onChange,
+}: HPDetailSidebarProps) {
   return (
     <Sidebar open={open} onClose={onClose} title="Detalhes de PV">
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2 }}>
         <Box>
-          <Typography variant="caption" color="text.secondary">PV Máximo</Typography>
+          <Typography variant="caption" color="text.secondary">
+            PV Atual
+          </Typography>
+          <EditableNumber
+            value={hp.current}
+            onChange={(current) => onChange({ ...hp, current })}
+            min={0}
+            max={hp.max}
+            validate={(value) => {
+              if (value < 0) return 'PV não pode ser negativo';
+              if (value > hp.max)
+                return `PV atual não pode exceder PV máximo (${hp.max})`;
+              return null;
+            }}
+          />
+        </Box>
+        <Box>
+          <Typography variant="caption" color="text.secondary">
+            PV Máximo
+          </Typography>
           <EditableNumber
             value={hp.max}
             onChange={(max) => onChange({ ...hp, max })}
@@ -24,7 +48,9 @@ export function HPDetailSidebar({ open, onClose, hp, onChange }: HPDetailSidebar
           />
         </Box>
         <Box>
-          <Typography variant="caption" color="text.secondary">PV Temporário</Typography>
+          <Typography variant="caption" color="text.secondary">
+            PV Temporário
+          </Typography>
           <EditableNumber
             value={hp.temporary}
             onChange={(temporary) => onChange({ ...hp, temporary })}

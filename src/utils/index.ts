@@ -12,6 +12,7 @@ export {
   roundDown,
   calculateDefense,
   calculateSkillModifier,
+  calculateTotalSkillModifier,
   calculateCarryCapacity,
   calculateMaxDyingRounds,
   calculatePPPerRound,
@@ -27,6 +28,8 @@ export {
   getEncumbranceState,
   applyDeltaToHP,
   applyDeltaToPP,
+  getCraftMultiplier,
+  calculateCraftModifier,
 } from './calculations';
 
 // Validation utilities
@@ -72,3 +75,62 @@ export {
   applyOriginAttributeModifiers,
   createExampleOrigin,
 } from './originUtils';
+
+// Attribute update utilities
+export {
+  getAvailableLanguageSlots,
+  validateLanguages,
+  getAvailableLanguageSlotsForCharacter,
+  getAvailableSkillProficiencySlots,
+  validateSkillProficiencies,
+  getAvailableSkillProficiencySlotsForCharacter,
+  handleAttributeChange,
+  getAttributeWarnings,
+} from './attributeUpdates';
+
+// Skill calculation utilities
+export {
+  calculateSkillTotalModifier,
+  calculateSkillRollFormula,
+  calculateSkillRoll,
+  hasLoadPenalty,
+  requiresInstrument,
+  requiresProficiency,
+  isCombatSkill,
+} from './skillCalculations';
+
+// Proficiency calculation utilities
+export {
+  calculateMaxProficiencies,
+  countAcquiredProficiencies,
+  canAddProficiency,
+  validateProficienciesLimit,
+  getRemainingProficiencies,
+  getProficiencyInfo,
+  countProficienciesByLevel,
+} from './proficiencyCalculations';
+
+// Craft sync utilities
+export {
+  craftToSkillUse,
+  skillUseToCraft,
+  syncCraftsToOficioSkill,
+  syncOficioSkillToCrafts,
+  calculateCraftBaseModifier,
+  calculateCraftTotalModifier,
+} from './craftSync';
+
+// Language management utilities
+export {
+  getTotalLanguageSlots,
+  getLineageLanguages,
+  getMaxAllowedLanguages,
+  canAddLanguage,
+  addLanguage,
+  canRemoveLanguage,
+  removeLanguage,
+  getAvailableLanguages,
+  validateLanguageSelection,
+  ensureComumLanguage,
+  getLanguageSummary,
+} from './languageUtils';

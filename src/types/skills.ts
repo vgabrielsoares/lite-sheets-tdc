@@ -114,6 +114,43 @@ export const COMBAT_SKILLS: SkillName[] = [
 ];
 
 /**
+ * Uso customizado de uma habilidade
+ *
+ * Permite criar variações de uma habilidade com diferentes atributos-chave
+ * e bônus específicos para situações particulares.
+ *
+ * Exemplo: "Acrobacia para Equilíbrio em Combate" usando Agilidade + bônus de +2
+ */
+export interface SkillUse {
+  /** ID único do uso */
+  id: string;
+  /** Nome do uso customizado */
+  name: string;
+  /** Habilidade base à qual este uso pertence */
+  skillName: SkillName;
+  /** Atributo-chave customizado para este uso */
+  keyAttribute: AttributeName;
+  /** Bônus específico deste uso */
+  bonus: number;
+  /** Descrição ou notas sobre este uso */
+  description?: string;
+  /** Modificadores específicos deste uso (numéricos e de dados) */
+  modifiers?: Modifier[];
+}
+
+/**
+ * Mapa de atributo-chave personalizado por nome de uso padrão
+ * Permite que usos padrões usem atributos diferentes da habilidade base
+ */
+export type DefaultUseAttributeOverrides = Record<string, AttributeName>;
+
+/**
+ * Mapa de modificadores personalizados por nome de uso padrão
+ * Permite que usos padrões tenham modificadores específicos
+ */
+export type DefaultUseModifierOverrides = Record<string, Modifier[]>;
+
+/**
  * Interface para uma habilidade do personagem
  */
 export interface Skill {
@@ -125,8 +162,16 @@ export interface Skill {
   proficiencyLevel: ProficiencyLevel;
   /** Se esta é a Habilidade de Assinatura do personagem */
   isSignature: boolean;
+  /** Atributos-chave personalizados para usos padrões */
+  defaultUseAttributeOverrides?: DefaultUseAttributeOverrides;
+  /** Modificadores personalizados para usos padrões */
+  defaultUseModifierOverrides?: DefaultUseModifierOverrides;
   /** Modificadores adicionais aplicados à habilidade */
   modifiers: Modifier[];
+  /** Usos customizados desta habilidade */
+  customUses?: SkillUse[];
+  /** ID do ofício selecionado para rolagem (apenas para habilidade "oficio") */
+  selectedCraftId?: string;
 }
 
 /**

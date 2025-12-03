@@ -61,6 +61,20 @@ export default function AppLayout({
         flexDirection: 'column',
         minHeight: '100vh',
         backgroundColor: 'background.default',
+        // Scrollbar customizada para toda a página
+        '& ::-webkit-scrollbar': {
+          width: '12px',
+        },
+        '& ::-webkit-scrollbar-track': {
+          bgcolor: 'transparent',
+        },
+        '& ::-webkit-scrollbar-thumb': {
+          bgcolor: 'action.hover',
+          borderRadius: '6px',
+          '&:hover': {
+            bgcolor: 'action.selected',
+          },
+        },
       }}
     >
       {/* Header fixo no topo */}

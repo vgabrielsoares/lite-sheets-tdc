@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -9,6 +9,8 @@ import {
   IconButton,
   Tooltip,
   LinearProgress,
+  TextField,
+  useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -41,8 +43,12 @@ export interface ResourceConfig {
     | 'success'
     | 'primary'
     | 'secondary';
-  /** Cor customizada para valores temporários (CSS color) */
+  /** Cor customizada para valores temporários (CSS color) - usado se temporaryColorLight/Dark não forem definidos */
   temporaryColor?: string;
+  /** Cor para valores temporários em tema claro (CSS color) */
+  temporaryColorLight?: string;
+  /** Cor para valores temporários em tema escuro (CSS color) */
+  temporaryColorDark?: string;
   /** Valores de ajuste rápido */
   adjustValues: {
     /** Valor pequeno (ex: -1, +1) */
@@ -78,6 +84,7 @@ export interface CompactResourcePointsProps {
  * Este componente unifica a lógica de exibição de recursos com:
  * - Barra visual dupla (atual + temporário)
  * - Botões de ajuste rápido com tooltips explicativos
+ * - Double-click no valor atual para edição direta
  * - Suporte a teclado e acessibilidade
  * - Configurável para diferentes tipos de recursos
  *
@@ -112,8 +119,36 @@ export function CompactResourcePoints({
   onOpenDetails,
   applyDelta,
 }: CompactResourcePointsProps) {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
   const { Icon, iconColor, label, progressColor, adjustValues, buttonLabels } =
     config;
+
+  // Determina a cor temporária com base no tema
+  const temporaryColor = isDarkMode
+    ? config.temporaryColorDark || config.temporaryColor || 'secondary.main'
+    : config.temporaryColorLight || config.temporaryColor || 'secondary.main';
+
+  // Estado para edição direta do valor
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(String(resource.current));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Foca no input quando entra em modo de edição
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  // Atualiza editValue quando resource.current muda externamente
+  useEffect(() => {
+    if (!isEditing) {
+      setEditValue(String(resource.current));
+    }
+  }, [resource.current, isEditing]);
 
   /**
    * Aplica ajuste ao recurso
@@ -132,6 +167,45 @@ export function CompactResourcePoints({
       } else if (delta > 0) {
         onChange({ ...resource, current: resource.current + delta });
       }
+    }
+  };
+
+  /**
+   * Inicia edição no double-click
+   */
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditing(true);
+    setEditValue(String(resource.current));
+  };
+
+  /**
+   * Confirma a edição
+   */
+  const handleConfirmEdit = () => {
+    const newValue = parseInt(editValue, 10);
+    if (!isNaN(newValue) && newValue >= 0) {
+      onChange({ ...resource, current: newValue });
+    }
+    setIsEditing(false);
+  };
+
+  /**
+   * Cancela a edição
+   */
+  const handleCancelEdit = () => {
+    setEditValue(String(resource.current));
+    setIsEditing(false);
+  };
+
+  /**
+   * Trata eventos de teclado no input
+   */
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleConfirmEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
     }
   };
 
@@ -168,6 +242,7 @@ export function CompactResourcePoints({
         border: onOpenDetails
           ? `1px solid ${theme.palette.primary.main}`
           : undefined,
+        transition: 'all 0.15s ease-in-out',
         '&:hover': onOpenDetails
           ? {
               borderColor: 'primary.dark',
@@ -188,7 +263,7 @@ export function CompactResourcePoints({
         {/* Controles de ajuste */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {/* Botão: Diminuir grande */}
-          <Tooltip title={buttonLabels.decreaseLarge} arrow>
+          <Tooltip title={buttonLabels.decreaseLarge} arrow enterDelay={150}>
             <IconButton
               aria-label={buttonLabels.decreaseLarge}
               size="small"
@@ -202,7 +277,7 @@ export function CompactResourcePoints({
           </Tooltip>
 
           {/* Botão: Diminuir pequeno */}
-          <Tooltip title={buttonLabels.decreaseSmall} arrow>
+          <Tooltip title={buttonLabels.decreaseSmall} arrow enterDelay={150}>
             <IconButton
               aria-label={buttonLabels.decreaseSmall}
               size="small"
@@ -215,13 +290,50 @@ export function CompactResourcePoints({
             </IconButton>
           </Tooltip>
 
-          {/* Valor atual */}
-          <Typography variant="h5" sx={{ minWidth: 56, textAlign: 'center' }}>
-            {resource.current}
-          </Typography>
+          {/* Valor atual - com double-click para editar */}
+          {isEditing ? (
+            <TextField
+              inputRef={inputRef}
+              type="number"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={handleConfirmEdit}
+              onKeyDown={handleKeyDown}
+              onClick={(e) => e.stopPropagation()}
+              size="small"
+              sx={{
+                width: 70,
+                '& input': {
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '1.25rem',
+                },
+              }}
+              inputProps={{ min: 0 }}
+            />
+          ) : (
+            <Tooltip title="Clique duplo para editar" arrow enterDelay={150}>
+              <Typography
+                variant="h5"
+                sx={{
+                  minWidth: 56,
+                  textAlign: 'center',
+                  cursor: 'text',
+                  userSelect: 'none',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                    borderRadius: 1,
+                  },
+                }}
+                onDoubleClick={handleDoubleClick}
+              >
+                {resource.current}
+              </Typography>
+            </Tooltip>
+          )}
 
           {/* Botão: Aumentar pequeno */}
-          <Tooltip title={buttonLabels.increaseSmall} arrow>
+          <Tooltip title={buttonLabels.increaseSmall} arrow enterDelay={150}>
             <IconButton
               aria-label={buttonLabels.increaseSmall}
               size="small"
@@ -235,7 +347,7 @@ export function CompactResourcePoints({
           </Tooltip>
 
           {/* Botão: Aumentar grande */}
-          <Tooltip title={buttonLabels.increaseLarge} arrow>
+          <Tooltip title={buttonLabels.increaseLarge} arrow enterDelay={150}>
             <IconButton
               aria-label={buttonLabels.increaseLarge}
               size="small"
@@ -253,6 +365,7 @@ export function CompactResourcePoints({
         <Tooltip
           title={`Atual: ${resource.current} | Temporários: ${resource.temporary} | Máximo: ${resource.max}`}
           arrow
+          enterDelay={150}
         >
           <Box sx={{ position: 'relative', mt: 1 }}>
             {/* Barra base (valores atuais) */}
@@ -272,7 +385,7 @@ export function CompactResourcePoints({
                   width: `${percentTotal - percentCurrent}%`,
                   height: 8,
                   borderRadius: 999,
-                  backgroundColor: config.temporaryColor || 'secondary.main',
+                  backgroundColor: temporaryColor,
                   opacity: 0.85,
                 }}
               />

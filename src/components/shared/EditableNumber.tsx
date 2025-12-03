@@ -78,6 +78,12 @@ export interface EditableNumberProps {
   showSign?: boolean;
 
   /**
+   * Habilita edição com duplo clique (ao invés de clique simples)
+   * @default false
+   */
+  enableDoubleClick?: boolean;
+
+  /**
    * Props adicionais do TextField
    */
   textFieldProps?: Partial<TextFieldProps>;
@@ -113,6 +119,7 @@ export function EditableNumber({
   autoSave = true,
   debounceMs = 500,
   showSign = false,
+  enableDoubleClick = false,
   textFieldProps,
 }: EditableNumberProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -237,7 +244,8 @@ export function EditableNumber({
             opacity: 1,
           },
         }}
-        onClick={() => setIsEditing(true)}
+        onClick={enableDoubleClick ? undefined : () => setIsEditing(true)}
+        onDoubleClick={enableDoubleClick ? () => setIsEditing(true) : undefined}
       >
         <Box sx={{ flex: 1 }}>
           {label && (

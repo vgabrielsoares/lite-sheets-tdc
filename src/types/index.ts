@@ -62,8 +62,11 @@ export type {
   SkillName,
   Skill,
   Skills,
+  SkillUse,
   SkillModifierCalculation,
   SkillRollFormula,
+  DefaultUseAttributeOverrides,
+  DefaultUseModifierOverrides,
 } from './skills';
 
 export {
@@ -162,6 +165,7 @@ export type {
   Origin,
   AncestryTrait,
   Lineage,
+  MovementSpeed,
   Movement,
   Senses,
   LuckLevel,

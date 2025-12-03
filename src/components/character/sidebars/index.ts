@@ -12,3 +12,6 @@ export type { OrigemSidebarProps } from './OrigemSidebar';
 
 export { SizeSidebar } from './SizeSidebar';
 export type { SizeSidebarProps } from './SizeSidebar';
+
+export { AttributeSidebar } from './AttributeSidebar';
+export type { AttributeSidebarProps } from './AttributeSidebar';

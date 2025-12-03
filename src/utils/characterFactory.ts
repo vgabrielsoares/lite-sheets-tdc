@@ -232,11 +232,11 @@ function createDefaultInventory(): Inventory {
 function createDefaultMovement(): Movement {
   return {
     speeds: {
-      andando: 5, // Padrão
-      voando: 0,
-      escalando: 0,
-      escavando: 0,
-      nadando: 0,
+      andando: { base: 5, bonus: 0 }, // Padrão 5m
+      voando: { base: 0, bonus: 0 },
+      escalando: { base: 0, bonus: 0 },
+      escavando: { base: 0, bonus: 0 },
+      nadando: { base: 0, bonus: 0 },
     },
     modifiers: 0,
   };
@@ -409,6 +409,8 @@ export function createDefaultCharacter(
     luck: {
       level: 0,
       value: 0,
+      diceModifier: 0,
+      numericModifier: 0,
     },
     crafts: [],
 

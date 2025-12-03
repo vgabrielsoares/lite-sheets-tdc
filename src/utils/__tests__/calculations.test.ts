@@ -6,6 +6,7 @@ import {
   roundDown,
   calculateDefense,
   calculateSkillModifier,
+  calculateTotalSkillModifier,
   calculateCarryCapacity,
   calculateMaxDyingRounds,
   calculatePPPerRound,
@@ -21,6 +22,8 @@ import {
   getEncumbranceState,
   applyDeltaToHP,
   applyDeltaToPP,
+  getCraftMultiplier,
+  calculateCraftModifier,
 } from '../calculations';
 
 describe('roundDown', () => {
@@ -150,6 +153,48 @@ describe('calculateSignatureAbilityBonus', () => {
     expect(calculateSignatureAbilityBonus(6, true)).toBe(2); // 6 ÷ 3 = 2
     expect(calculateSignatureAbilityBonus(9, true)).toBe(3); // 9 ÷ 3 = 3
     expect(calculateSignatureAbilityBonus(10, true)).toBe(3); // 10 ÷ 3 = 3.33, round down
+  });
+});
+
+describe('calculateTotalSkillModifier', () => {
+  it('should calculate basic skill modifier without signature bonus', () => {
+    expect(calculateTotalSkillModifier(2, 'versado', false, 1, false)).toBe(4); // 2 × 2 + 0
+    expect(calculateTotalSkillModifier(3, 'adepto', false, 1, false)).toBe(3); // 3 × 1 + 0
+    expect(calculateTotalSkillModifier(4, 'mestre', false, 1, false)).toBe(12); // 4 × 3 + 0
+  });
+
+  it('should add signature bonus for non-combat skills (= level)', () => {
+    expect(calculateTotalSkillModifier(2, 'versado', true, 5, false)).toBe(9); // 2 × 2 + 5
+    expect(calculateTotalSkillModifier(3, 'adepto', true, 7, false)).toBe(10); // 3 × 1 + 7
+    expect(calculateTotalSkillModifier(1, 'leigo', true, 10, false)).toBe(10); // 1 × 0 + 10
+  });
+
+  it('should add signature bonus for combat skills (= level ÷ 3, min 1)', () => {
+    expect(calculateTotalSkillModifier(2, 'versado', true, 9, true)).toBe(7); // 2 × 2 + 3
+    expect(calculateTotalSkillModifier(3, 'adepto', true, 6, true)).toBe(5); // 3 × 1 + 2
+    expect(calculateTotalSkillModifier(4, 'mestre', true, 3, true)).toBe(13); // 4 × 3 + 1
+  });
+
+  it('should include other modifiers', () => {
+    expect(calculateTotalSkillModifier(2, 'versado', false, 1, false, 5)).toBe(
+      9
+    ); // 2 × 2 + 0 + 5
+    expect(calculateTotalSkillModifier(3, 'adepto', true, 5, false, 3)).toBe(
+      11
+    ); // 3 × 1 + 5 + 3
+    expect(calculateTotalSkillModifier(4, 'mestre', true, 9, true, -2)).toBe(
+      13
+    ); // 4 × 3 + 3 - 2
+  });
+
+  it('should handle attribute value 0', () => {
+    expect(calculateTotalSkillModifier(0, 'adepto', false, 1, false)).toBe(0); // 0 × 1 + 0
+    expect(calculateTotalSkillModifier(0, 'versado', true, 5, false)).toBe(5); // 0 × 2 + 5
+  });
+
+  it('should handle leigo proficiency (multiplier 0)', () => {
+    expect(calculateTotalSkillModifier(3, 'leigo', false, 1, false)).toBe(0); // 3 × 0 + 0
+    expect(calculateTotalSkillModifier(3, 'leigo', true, 8, false)).toBe(8); // 3 × 0 + 8
   });
 });
 
@@ -387,5 +432,68 @@ describe('applyDeltaToPP', () => {
       const result = applyDeltaToPP(pp, 5);
       expect(result).toEqual({ max: 10, current: 7, temporary: 2 });
     });
+  });
+});
+
+describe('getCraftMultiplier', () => {
+  it('should return 0 for level 0 (Leigo)', () => {
+    expect(getCraftMultiplier(0)).toBe(0);
+  });
+
+  it('should return 1 for levels 1-2', () => {
+    expect(getCraftMultiplier(1)).toBe(1);
+    expect(getCraftMultiplier(2)).toBe(1);
+  });
+
+  it('should return 2 for levels 3-4', () => {
+    expect(getCraftMultiplier(3)).toBe(2);
+    expect(getCraftMultiplier(4)).toBe(2);
+  });
+
+  it('should return 3 for level 5 (Mestre)', () => {
+    expect(getCraftMultiplier(5)).toBe(3);
+  });
+});
+
+describe('calculateCraftModifier', () => {
+  it('should calculate correctly for level 0 (Leigo)', () => {
+    expect(calculateCraftModifier(3, 0)).toBe(0); // 3 × 0 = 0
+    expect(calculateCraftModifier(5, 0)).toBe(0); // 5 × 0 = 0
+  });
+
+  it('should calculate correctly for level 1-2 (×1)', () => {
+    expect(calculateCraftModifier(2, 1)).toBe(2); // 2 × 1 = 2
+    expect(calculateCraftModifier(3, 2)).toBe(3); // 3 × 1 = 3
+    expect(calculateCraftModifier(4, 1)).toBe(4); // 4 × 1 = 4
+  });
+
+  it('should calculate correctly for level 3-4 (×2)', () => {
+    expect(calculateCraftModifier(2, 3)).toBe(4); // 2 × 2 = 4
+    expect(calculateCraftModifier(3, 4)).toBe(6); // 3 × 2 = 6
+    expect(calculateCraftModifier(5, 3)).toBe(10); // 5 × 2 = 10
+  });
+
+  it('should calculate correctly for level 5 (×3)', () => {
+    expect(calculateCraftModifier(2, 5)).toBe(6); // 2 × 3 = 6
+    expect(calculateCraftModifier(4, 5)).toBe(12); // 4 × 3 = 12
+    expect(calculateCraftModifier(5, 5)).toBe(15); // 5 × 3 = 15
+  });
+
+  it('should add other modifiers correctly', () => {
+    expect(calculateCraftModifier(2, 3, 2)).toBe(6); // 2 × 2 + 2 = 6
+    expect(calculateCraftModifier(3, 5, 3)).toBe(12); // 3 × 3 + 3 = 12
+    expect(calculateCraftModifier(4, 1, -1)).toBe(3); // 4 × 1 - 1 = 3
+  });
+
+  it('should handle attribute value 0', () => {
+    expect(calculateCraftModifier(0, 0)).toBe(0); // 0 × 0 = 0
+    expect(calculateCraftModifier(0, 3)).toBe(0); // 0 × 2 = 0
+    expect(calculateCraftModifier(0, 5)).toBe(0); // 0 × 3 = 0
+  });
+
+  it('should handle multiple other modifiers via sum', () => {
+    // Exemplo: ofício com +2, +1, -1 de outros modificadores = +2 total
+    const otherModifiersSum = 2 + 1 - 1; // = 2
+    expect(calculateCraftModifier(3, 4, otherModifiersSum)).toBe(8); // 3 × 2 + 2 = 8
   });
 });

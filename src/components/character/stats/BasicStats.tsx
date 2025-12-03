@@ -1,15 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Stack,
-  Typography,
-  Divider,
-  Chip,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography, Divider } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import HomeIcon from '@mui/icons-material/Home';
@@ -56,6 +48,10 @@ export interface BasicStatsProps {
  * - Nível
  * - XP
  *
+ * Layout: 3 colunas x 2 linhas
+ * - Linha 1: Nome do Personagem | Linhagem | Origem
+ * - Linha 2: Nome do Jogador | Nível | XP
+ *
  * @example
  * ```tsx
  * <BasicStats
@@ -88,268 +84,220 @@ export function BasicStats({
 
         <Divider sx={{ mb: 3 }} />
 
-        <Stack spacing={3}>
-          {/* Nome do Personagem e Jogador */}
+        {/* Grid 3x2: Linha 1 - Nome, Linhagem, Origem */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' },
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          {/* Nome do Personagem */}
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 2,
+              p: 2,
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              bgcolor: 'background.paper',
             }}
           >
-            <Box
-              sx={{
-                p: 2,
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 1,
-                bgcolor: 'background.paper',
+            <EditableText
+              value={character.name}
+              onChange={(name) => onUpdate({ name })}
+              label="Nome do Personagem"
+              placeholder="Digite o nome do personagem"
+              variant="h5"
+              required
+              validate={(value) => {
+                if (!value.trim()) return 'Nome obrigatório';
+                if (value.length > 100)
+                  return 'Nome muito longo (máx. 100 caracteres)';
+                return null;
               }}
-            >
-              <EditableText
-                value={character.name}
-                onChange={(name) => onUpdate({ name })}
-                label="Nome do Personagem"
-                placeholder="Digite o nome do personagem"
-                variant="h5"
-                required
-                validate={(value) => {
-                  if (!value.trim()) return 'Nome obrigatório';
-                  if (value.length > 100)
-                    return 'Nome muito longo (máx. 100 caracteres)';
-                  return null;
-                }}
-              />
-            </Box>
-
-            <Box
-              sx={{
-                p: 2,
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 1,
-                bgcolor: 'background.paper',
-              }}
-            >
-              <EditableText
-                value={character.playerName || ''}
-                onChange={(playerName) => onUpdate({ playerName })}
-                label="Nome do Jogador"
-                placeholder="Digite o nome do jogador"
-                variant="h6"
-                validate={(value) => {
-                  if (value.length > 100)
-                    return 'Nome muito longo (máx. 100 caracteres)';
-                  return null;
-                }}
-              />
-            </Box>
+            />
           </Box>
 
-          {/* Linhagem e Origem */}
+          {/* Linhagem */}
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 2,
+              p: 2,
+              border: 1,
+              borderColor: onOpenLineage ? 'primary.main' : 'divider',
+              borderRadius: 1,
+              bgcolor: 'background.paper',
+              cursor: onOpenLineage ? 'pointer' : 'default',
+              transition: 'all 0.15s ease-in-out',
+              '&:hover': onOpenLineage
+                ? {
+                    borderColor: 'primary.dark',
+                    bgcolor: 'action.hover',
+                  }
+                : {},
             }}
+            onClick={onOpenLineage}
           >
-            <Box
-              sx={{
-                p: 2,
-                border: 1,
-                borderColor: onOpenLineage ? 'primary.main' : 'divider',
-                borderRadius: 1,
-                bgcolor: 'background.paper',
-                cursor: onOpenLineage ? 'pointer' : 'default',
-                transition: 'all 0.2s',
-                '&:hover': onOpenLineage
-                  ? {
-                      borderColor: 'primary.dark',
-                      bgcolor: 'action.hover',
-                    }
-                  : {},
-              }}
-              onClick={onOpenLineage}
-            >
-              <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
-              >
-                <AutoAwesomeIcon color="primary" />
-                <Typography variant="caption" color="text.secondary">
-                  Linhagem
-                </Typography>
-              </Box>
-              <Typography
-                variant="h6"
-                color={
-                  character.lineage?.name ? 'text.primary' : 'text.disabled'
-                }
-              >
-                {character.lineage?.name || 'Nenhuma linhagem definida'}
-              </Typography>
-              {character.lineage?.size && (
-                <Chip
-                  label={`Tamanho: ${character.lineage.size}`}
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenSize?.();
-                  }}
-                  sx={{
-                    mt: 1,
-                    cursor: onOpenSize ? 'pointer' : 'default',
-                    '&:hover': onOpenSize
-                      ? {
-                          bgcolor: 'primary.light',
-                          color: 'primary.contrastText',
-                        }
-                      : {},
-                  }}
-                />
-              )}
-            </Box>
-
-            <Box
-              sx={{
-                p: 2,
-                border: 1,
-                borderColor: onOpenOrigin ? 'primary.main' : 'divider',
-                borderRadius: 1,
-                bgcolor: 'background.paper',
-                cursor: onOpenOrigin ? 'pointer' : 'default',
-                transition: 'all 0.2s',
-                '&:hover': onOpenOrigin
-                  ? {
-                      borderColor: 'primary.dark',
-                      bgcolor: 'action.hover',
-                    }
-                  : {},
-              }}
-              onClick={onOpenOrigin}
-            >
-              <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
-              >
-                <HomeIcon color="primary" />
-                <Typography variant="caption" color="text.secondary">
-                  Origem
-                </Typography>
-              </Box>
-              <Typography
-                variant="h6"
-                color={
-                  character.origin?.name ? 'text.primary' : 'text.disabled'
-                }
-              >
-                {character.origin?.name || 'Nenhuma origem definida'}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <AutoAwesomeIcon color="primary" />
+              <Typography variant="caption" color="text.secondary">
+                Linhagem
               </Typography>
             </Box>
+            <Typography
+              variant="h6"
+              color={character.lineage?.name ? 'text.primary' : 'text.disabled'}
+            >
+              {character.lineage?.name || 'Nenhuma'}
+            </Typography>
           </Box>
 
-          {/* Nível e XP */}
+          {/* Origem */}
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 2,
+              p: 2,
+              border: 1,
+              borderColor: onOpenOrigin ? 'primary.main' : 'divider',
+              borderRadius: 1,
+              bgcolor: 'background.paper',
+              cursor: onOpenOrigin ? 'pointer' : 'default',
+              transition: 'all 0.15s ease-in-out',
+              '&:hover': onOpenOrigin
+                ? {
+                    borderColor: 'primary.dark',
+                    bgcolor: 'action.hover',
+                  }
+                : {},
+            }}
+            onClick={onOpenOrigin}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <HomeIcon color="primary" />
+              <Typography variant="caption" color="text.secondary">
+                Origem
+              </Typography>
+            </Box>
+            <Typography
+              variant="h6"
+              color={character.origin?.name ? 'text.primary' : 'text.disabled'}
+            >
+              {character.origin?.name || 'Nenhuma'}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Grid 3x2: Linha 2 - Jogador, Nível, XP */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' },
+            gap: 2,
+          }}
+        >
+          {/* Nome do Jogador */}
+          <Box
+            sx={{
+              p: 2,
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              bgcolor: 'background.paper',
             }}
           >
-            <Box
-              sx={{
-                p: 2,
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 1,
-                bgcolor: 'background.paper',
+            <EditableText
+              value={character.playerName || ''}
+              onChange={(playerName) => onUpdate({ playerName })}
+              label="Nome do Jogador"
+              placeholder="Digite o nome do jogador"
+              variant="h6"
+              validate={(value) => {
+                if (value.length > 100)
+                  return 'Nome muito longo (máx. 100 caracteres)';
+                return null;
               }}
-            >
-              <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
-              >
-                <TrendingUpIcon color="primary" />
-                <Typography variant="caption" color="text.secondary">
-                  Nível do Personagem
-                </Typography>
-              </Box>
+            />
+          </Box>
+
+          {/* Nível */}
+          <Box
+            sx={{
+              p: 2,
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              bgcolor: 'background.paper',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <TrendingUpIcon color="primary" />
+              <Typography variant="caption" color="text.secondary">
+                Nível do Personagem
+              </Typography>
+            </Box>
+            <EditableNumber
+              value={character.level}
+              onChange={(level) => onUpdate({ level })}
+              variant="h4"
+              min={1}
+              max={30}
+              validate={(value) => {
+                if (value < 1) return 'Nível mínimo: 1';
+                if (value > 30) return 'Nível máximo: 30';
+                return null;
+              }}
+            />
+          </Box>
+
+          {/* Experiência (XP) */}
+          <Box
+            sx={{
+              p: 2,
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              bgcolor: 'background.paper',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <StarIcon color="warning" />
+              <Typography variant="caption" color="text.secondary">
+                Experiência (XP)
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
               <EditableNumber
-                value={character.level}
-                onChange={(level) => onUpdate({ level })}
+                value={character.experience.current}
+                onChange={(current) =>
+                  onUpdate({
+                    experience: {
+                      ...character.experience,
+                      current,
+                    },
+                  })
+                }
                 variant="h4"
+                min={0}
+              />
+              <Typography variant="body2" color="text.secondary">
+                /
+              </Typography>
+              <EditableNumber
+                value={character.experience.toNextLevel ?? 50}
+                onChange={(toNextLevel) =>
+                  onUpdate({
+                    experience: {
+                      ...character.experience,
+                      toNextLevel,
+                    },
+                  })
+                }
+                variant="h6"
                 min={1}
-                max={30}
-                validate={(value) => {
-                  if (value < 1) return 'Nível mínimo: 1';
-                  if (value > 30) return 'Nível máximo: 30';
-                  return null;
-                }}
+                max={999999}
               />
             </Box>
-
-            <Box
-              sx={{
-                p: 2,
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 1,
-                bgcolor: 'background.paper',
-              }}
-            >
-              <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
-              >
-                <StarIcon color="warning" />
-                <Typography variant="caption" color="text.secondary">
-                  Experiência (XP)
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                  <EditableNumber
-                    value={character.experience.current}
-                    onChange={(current) =>
-                      onUpdate({
-                        experience: {
-                          ...character.experience,
-                          current,
-                        },
-                      })
-                    }
-                    variant="h4"
-                    min={0}
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    / {character.experience.toNextLevel ?? '—'} XP
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Próximo Nível:
-                  </Typography>
-                  <EditableNumber
-                    value={character.experience.toNextLevel ?? 50}
-                    onChange={(toNextLevel) =>
-                      onUpdate({
-                        experience: {
-                          ...character.experience,
-                          toNextLevel,
-                        },
-                      })
-                    }
-                    variant="h6"
-                    min={1}
-                    max={999999}
-                    validate={(value) => {
-                      if (value < 1) return 'Mínimo: 1 XP';
-                      if (value > 999999) return 'Máximo: 999.999 XP';
-                      return null;
-                    }}
-                  />
-                </Box>
-              </Box>
-            </Box>
           </Box>
-        </Stack>
+        </Box>
       </CardContent>
     </Card>
   );

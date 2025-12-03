@@ -1,9 +1,23 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, TextField, Button } from '@mui/material';
+import {
+  Box,
+  Typography,
+  TextField,
+  Divider,
+  Paper,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
+import FlightIcon from '@mui/icons-material/Flight';
+import TerrainIcon from '@mui/icons-material/Terrain';
+import WavesIcon from '@mui/icons-material/Waves';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Sidebar } from '@/components/shared/Sidebar';
-import type { Character } from '@/types/character';
+import { useDebounce } from '@/hooks/useDebounce';
+import type { Character, MovementSpeed } from '@/types/character';
 import type { MovementType } from '@/types/common';
 
 const MOVEMENT_TYPES: MovementType[] = [
@@ -14,11 +28,54 @@ const MOVEMENT_TYPES: MovementType[] = [
   'nadando',
 ];
 
+// Labels for each movement type
+const MOVEMENT_LABELS: Record<MovementType, string> = {
+  andando: 'Andando',
+  voando: 'Voando',
+  escalando: 'Escalando',
+  escavando: 'Escavando',
+  nadando: 'Nadando',
+};
+
+// Icons for each movement type
+const MOVEMENT_ICONS: Record<MovementType, React.ReactNode> = {
+  andando: <DirectionsWalkIcon fontSize="small" />,
+  voando: <FlightIcon fontSize="small" />,
+  escalando: <TerrainIcon fontSize="small" />,
+  escavando: (
+    <TerrainIcon fontSize="small" sx={{ transform: 'rotate(180deg)' }} />
+  ),
+  nadando: <WavesIcon fontSize="small" />,
+};
+
+// Descriptions for each movement type
+const MOVEMENT_DESCRIPTIONS: Record<MovementType, string> = {
+  andando: 'Deslocamento padrão ao caminhar ou correr no solo',
+  voando: 'Deslocamento ao voar, requer habilidade especial ou magia',
+  escalando: 'Deslocamento ao escalar superfícies verticais',
+  escavando: 'Deslocamento ao cavar através do solo ou areia',
+  nadando: 'Deslocamento ao nadar na água',
+};
+
 export interface MovementSidebarProps {
   open: boolean;
   character: Character;
   onClose: () => void;
   onUpdate: (character: Character) => void;
+}
+
+// Helper para obter MovementSpeed de forma segura (suporta estrutura antiga e nova)
+function getMovementSpeed(
+  speed: MovementSpeed | number | undefined
+): MovementSpeed {
+  if (typeof speed === 'number') {
+    // Estrutura antiga: converter para nova
+    return { base: speed, bonus: 0 };
+  }
+  if (speed && typeof speed === 'object') {
+    return speed;
+  }
+  return { base: 0, bonus: 0 };
 }
 
 export default function MovementSidebar({
@@ -27,47 +84,168 @@ export default function MovementSidebar({
   onClose,
   onUpdate,
 }: MovementSidebarProps) {
-  const [speeds, setSpeeds] = React.useState<Record<MovementType, number>>(
-    character.movement.speeds
-  );
+  // Initialize with values from character speeds (supports old and new structure)
+  const [movementValues, setMovementValues] = React.useState<
+    Record<MovementType, MovementSpeed>
+  >(() => {
+    const values: Record<MovementType, MovementSpeed> = {} as Record<
+      MovementType,
+      MovementSpeed
+    >;
+    MOVEMENT_TYPES.forEach((type) => {
+      values[type] = getMovementSpeed(character.movement.speeds[type]);
+    });
+    return values;
+  });
 
-  const handleChange = (type: MovementType, value: number) => {
-    setSpeeds((prev) => ({ ...prev, [type]: Math.max(0, value) }));
+  // Reset values when sidebar opens or character changes
+  React.useEffect(() => {
+    if (open) {
+      const values: Record<MovementType, MovementSpeed> = {} as Record<
+        MovementType,
+        MovementSpeed
+      >;
+      MOVEMENT_TYPES.forEach((type) => {
+        values[type] = getMovementSpeed(character.movement.speeds[type]);
+      });
+      setMovementValues(values);
+    }
+  }, [character.id, open]);
+
+  const handleBaseChange = (type: MovementType, value: number) => {
+    setMovementValues((prev) => ({
+      ...prev,
+      [type]: { ...prev[type], base: Math.max(0, value) },
+    }));
   };
 
-  const handleSave = () => {
+  const handleBonusChange = (type: MovementType, value: number) => {
+    setMovementValues((prev) => ({
+      ...prev,
+      [type]: { ...prev[type], bonus: value },
+    }));
+  };
+
+  const getTotalSpeed = (type: MovementType): number => {
+    const values = movementValues[type];
+    return Math.max(0, values.base + values.bonus);
+  };
+
+  // Debounce do estado para auto-save
+  const debouncedMovementValues = useDebounce(movementValues, 100);
+
+  // Auto-save: quando o estado muda, salva BASE e BONUS separadamente
+  React.useEffect(() => {
+    if (!open) return;
+
+    const newSpeeds: Record<MovementType, MovementSpeed> = {} as Record<
+      MovementType,
+      MovementSpeed
+    >;
+    MOVEMENT_TYPES.forEach((type) => {
+      newSpeeds[type] = {
+        base: debouncedMovementValues[type].base,
+        bonus: debouncedMovementValues[type].bonus,
+      };
+    });
+
     const updated = { ...character };
-    updated.movement = { ...updated.movement, speeds: { ...speeds } };
+    updated.movement = { ...updated.movement, speeds: newSpeeds };
     onUpdate(updated);
-    onClose();
-  };
+  }, [debouncedMovementValues, open]);
 
   return (
     <Sidebar open={open} onClose={onClose} title="Deslocamento">
-      <Box sx={{ display: 'grid', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Typography variant="body2" color="text.secondary">
-          Ajuste os deslocamentos por tipo. Valores em metros.
+          Configure o deslocamento base e bônus para cada tipo de movimento. O
+          valor total é a soma de base + bônus.
         </Typography>
+
         {MOVEMENT_TYPES.map((type) => (
-          <TextField
+          <Paper
             key={type}
-            type="number"
-            label={type.charAt(0).toUpperCase() + type.slice(1)}
-            value={speeds[type] ?? 0}
-            onChange={(e) => handleChange(type, Number(e.target.value))}
-            inputProps={{ min: 0 }}
-          />
+            elevation={1}
+            sx={{
+              p: 2,
+              bgcolor: 'background.default',
+            }}
+          >
+            {/* Movement Type Header */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              {MOVEMENT_ICONS[type]}
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                sx={{ flexGrow: 1 }}
+              >
+                {MOVEMENT_LABELS[type]}
+              </Typography>
+              <Tooltip
+                title={MOVEMENT_DESCRIPTIONS[type]}
+                arrow
+                enterDelay={150}
+              >
+                <IconButton size="small">
+                  <InfoOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            {/* Base and Bonus Fields */}
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <TextField
+                type="number"
+                label="Base"
+                value={movementValues[type]?.base ?? 0}
+                onChange={(e) => handleBaseChange(type, Number(e.target.value))}
+                inputProps={{ min: 0, step: 1.5 }}
+                size="small"
+                sx={{ flex: 1 }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                +
+              </Typography>
+              <TextField
+                type="number"
+                label="Bônus"
+                value={movementValues[type]?.bonus ?? 0}
+                onChange={(e) =>
+                  handleBonusChange(type, Number(e.target.value))
+                }
+                inputProps={{ step: 1.5 }}
+                size="small"
+                sx={{ flex: 1 }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                =
+              </Typography>
+              <Typography
+                variant="h6"
+                fontWeight="bold"
+                sx={{
+                  minWidth: 50,
+                  textAlign: 'center',
+                  color:
+                    getTotalSpeed(type) > 0 ? 'success.main' : 'text.disabled',
+                }}
+              >
+                {getTotalSpeed(type)}m
+              </Typography>
+            </Box>
+          </Paper>
         ))}
-        <Box
-          sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}
+
+        <Divider sx={{ my: 1 }} />
+
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ textAlign: 'center' }}
         >
-          <Button variant="text" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button variant="contained" onClick={handleSave}>
-            Salvar
-          </Button>
-        </Box>
+          Alterações são salvas automaticamente. Base e bônus são armazenados
+          separadamente.
+        </Typography>
       </Box>
     </Sidebar>
   );
