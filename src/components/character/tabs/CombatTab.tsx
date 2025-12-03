@@ -10,6 +10,7 @@ import {
   DefenseDisplay,
 } from '../stats';
 import { DyingRounds, PPLimit } from '../combat';
+import { getSizeModifiers } from '@/constants/lineage';
 
 export interface CombatTabProps {
   /** Dados do personagem */
@@ -59,6 +60,10 @@ export function CombatTab({
   onOpenDefense,
   onOpenPPLimit,
 }: CombatTabProps) {
+  // Obter modificador de defesa pelo tamanho
+  const sizeModifiers = getSizeModifiers(character.size);
+  const sizeDefenseBonus = sizeModifiers.defense;
+
   /**
    * Handler para atualizar estado morrendo
    */
@@ -217,6 +222,7 @@ export function CombatTab({
             {/* Defesa */}
             <DefenseDisplay
               agilidade={character.attributes.agilidade}
+              sizeBonus={sizeDefenseBonus}
               armorBonus={character.combat.defense.armorBonus}
               shieldBonus={character.combat.defense.shieldBonus}
               maxAgilityBonus={character.combat.defense.maxAgilityBonus}
