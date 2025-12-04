@@ -296,11 +296,11 @@ describe('characterFactory', () => {
       });
 
       it('deve ter todas as ações disponíveis', () => {
-        expect(character.combat.actionEconomy.mainAction).toBe(true);
-        expect(character.combat.actionEconomy.movementAction).toBe(true);
-        expect(character.combat.actionEconomy.quickAction).toBe(true);
-        expect(character.combat.actionEconomy.freeAction).toBe(true);
+        expect(character.combat.actionEconomy.majorAction).toBe(true);
+        expect(character.combat.actionEconomy.minorAction1).toBe(true);
+        expect(character.combat.actionEconomy.minorAction2).toBe(true);
         expect(character.combat.actionEconomy.reaction).toBe(true);
+        expect(character.combat.actionEconomy.defensiveReaction).toBe(true);
       });
 
       it('deve ter defesa base de 15', () => {
