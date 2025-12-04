@@ -56,29 +56,37 @@ export interface DyingState {
 
 /**
  * Economia de ações em combate
+ *
+ * O sistema Tabuleiro do Caos usa:
+ * - 1 Ação Maior por turno
+ * - 2 Ações Menores por turno
+ * - 1 Reação por rodada
+ * - 1 Reação Defensiva por rodada
+ * - Ações Livres ilimitadas
  */
 export interface ActionEconomy {
-  /** Ação principal disponível */
-  mainAction: boolean;
-  /** Ação de movimento disponível */
-  movementAction: boolean;
-  /** Ação rápida disponível */
-  quickAction: boolean;
-  /** Ação livre disponível (geralmente sempre true) */
-  freeAction: boolean;
-  /** Reação disponível */
+  /** Ação Maior disponível (1 por turno) */
+  majorAction: boolean;
+  /** Primeira Ação Menor disponível (2 por turno) */
+  minorAction1: boolean;
+  /** Segunda Ação Menor disponível (2 por turno) */
+  minorAction2: boolean;
+  /** Reação disponível (1 por rodada) */
   reaction: boolean;
+  /** Reação Defensiva disponível (1 por rodada) */
+  defensiveReaction: boolean;
+  /** Ações Livres são sempre infinitas - não precisa rastrear */
 }
 
 /**
  * Tipos de ação em combate
  */
 export type ActionType =
-  | 'principal'
-  | 'movimento'
-  | 'rapida'
+  | 'maior'
+  | 'menor'
   | 'livre'
-  | 'reacao';
+  | 'reacao'
+  | 'reacao-defensiva';
 
 /**
  * Defesa do personagem
