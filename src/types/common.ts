@@ -132,20 +132,23 @@ export const CURRENCY_CONVERSION: Record<CurrencyType, number> = {
 } as const;
 
 /**
- * Tipos de dano no sistema
+ * Tipos de dano no sistema Tabuleiro do Caos RPG
  */
 export type DamageType =
   | 'acido'
-  | 'contundente'
-  | 'cortante'
   | 'eletrico'
+  | 'fisico'
+  | 'corte'
+  | 'perfuracao'
+  | 'impacto'
   | 'fogo'
   | 'frio'
-  | 'necrotico'
-  | 'perfurante'
-  | 'psiquico'
-  | 'radiante'
-  | 'trovao'
+  | 'interno'
+  | 'mental'
+  | 'mistico'
+  | 'profano'
+  | 'sagrado'
+  | 'sonoro'
   | 'veneno';
 
 /**

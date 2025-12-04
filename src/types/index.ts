@@ -94,6 +94,7 @@ export type {
   SavingThrowType,
   SavingThrow,
   Resistances,
+  DamageReductionEntry,
   Condition,
   Initiative,
   CombatData,

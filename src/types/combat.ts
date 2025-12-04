@@ -182,16 +182,29 @@ export interface SavingThrow {
  * Resistências do personagem
  */
 export interface Resistances {
-  /** Resistências a tipos de dano */
+  /** Reduções de Dano (RD) - reduz dano recebido por valor fixo */
+  damageReduction: DamageReductionEntry[];
+  /** Resistências Aprimoradas a tipos de dano - divide dano por 2 */
   damageResistances: DamageType[];
-  /** Imunidades a tipos de dano */
+  /** Imunidades a tipos de dano - anula todo o dano */
   damageImmunities: DamageType[];
-  /** Vulnerabilidades a tipos de dano */
+  /** Vulnerabilidades a tipos de dano - dobra o dano */
   damageVulnerabilities: DamageType[];
-  /** Resistências a condições */
-  conditionResistances: string[];
   /** Imunidades a condições */
   conditionImmunities: string[];
+}
+
+/**
+ * Entrada de Redução de Dano (RD)
+ * Ex: RD 5 Fogo (reduz 5 pontos de dano de fogo)
+ */
+export interface DamageReductionEntry {
+  /** Tipo de dano que é reduzido */
+  type: DamageType;
+  /** Valor da redução */
+  value: number;
+  /** Fonte da RD (opcional) */
+  source?: string;
 }
 
 /**
