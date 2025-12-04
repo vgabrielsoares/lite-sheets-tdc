@@ -51,6 +51,10 @@ import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 import { TableOfContents, TOCSection } from '@/components/shared';
+import {
+  calculateArchetypeHPBreakdown,
+  calculateArchetypePPBreakdown,
+} from './archetypes';
 
 export interface CharacterSheetProps {
   /**
@@ -831,6 +835,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 })
               }
               onClose={handleCloseSidebar}
+              archetypeBreakdown={calculateArchetypeHPBreakdown(
+                character.archetypes ?? [],
+                character.attributes.constituicao
+              )}
+              baseHP={15}
             />
           )}
 
@@ -845,6 +854,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 })
               }
               onClose={handleCloseSidebar}
+              archetypeBreakdown={calculateArchetypePPBreakdown(
+                character.archetypes ?? [],
+                character.attributes.presenca
+              )}
+              basePP={2}
             />
           )}
 
@@ -942,6 +956,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             })
           }
           onClose={handleCloseSidebar}
+          archetypeBreakdown={calculateArchetypeHPBreakdown(
+            character.archetypes ?? [],
+            character.attributes.constituicao
+          )}
+          baseHP={15}
         />
       )}
 
@@ -956,6 +975,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             })
           }
           onClose={handleCloseSidebar}
+          archetypeBreakdown={calculateArchetypePPBreakdown(
+            character.archetypes ?? [],
+            character.attributes.presenca
+          )}
+          basePP={2}
         />
       )}
 
