@@ -140,7 +140,7 @@ describe('SizeSidebar', () => {
       expect(screen.getByText('Acrobacia')).toBeInTheDocument();
       expect(screen.getByText('Atletismo')).toBeInTheDocument();
       expect(screen.getByText('Furtividade')).toBeInTheDocument();
-      expect(screen.getByText('Reflexos')).toBeInTheDocument();
+      expect(screen.getByText('Reflexo')).toBeInTheDocument();
       expect(screen.getByText('Tenacidade')).toBeInTheDocument();
     });
 
