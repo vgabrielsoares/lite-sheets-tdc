@@ -260,6 +260,17 @@ export interface Initiative {
 }
 
 /**
+ * Estado das penalidades de combate
+ * Rastreia penalidades por erros de ataques e sucessos em testes de resistência
+ */
+export interface CombatPenalties {
+  /** Penalidade atual na defesa (valor negativo, ex: -2) */
+  defensePenalty: number;
+  /** Penalidades nos testes de resistência (-1d20 por sucesso, rastreado por tipo) */
+  savingThrowPenalties: Record<SavingThrowType, number>;
+}
+
+/**
  * Dados completos de combate do personagem
  */
 export interface CombatData {
@@ -287,6 +298,8 @@ export interface CombatData {
   conditions: Condition[];
   /** Iniciativa */
   initiative: Initiative;
+  /** Penalidades de combate */
+  penalties: CombatPenalties;
 }
 
 /**
