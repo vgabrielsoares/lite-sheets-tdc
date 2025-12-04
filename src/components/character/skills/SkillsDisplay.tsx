@@ -110,8 +110,9 @@ export interface SkillsDisplayProps {
 
 /**
  * Componente SkillsDisplay - Lista completa de habilidades com busca e filtros
+ * Memoizado para evitar re-renders desnecessários
  */
-export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
+export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(({
   skills,
   attributes,
   characterLevel,
@@ -464,6 +465,9 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = ({
       )}
     </Box>
   );
-};
+});
+
+// Display name para debugging
+SkillsDisplay.displayName = 'SkillsDisplay';
 
 export default SkillsDisplay;

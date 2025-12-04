@@ -112,7 +112,7 @@ export interface CompactResourcePointsProps {
  * />
  * ```
  */
-export function CompactResourcePoints({
+export const CompactResourcePoints = React.memo(function CompactResourcePoints({
   resource,
   config,
   onChange,
@@ -402,6 +402,9 @@ export function CompactResourcePoints({
       </CardContent>
     </Card>
   );
-}
+});
+
+// Display name para debugging
+CompactResourcePoints.displayName = 'CompactResourcePoints';
 
 export default CompactResourcePoints;

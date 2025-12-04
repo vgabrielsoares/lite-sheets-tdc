@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import {
   Card,
   CardContent,
@@ -86,7 +86,7 @@ export interface LanguagesDisplayProps {
  * />
  * ```
  */
-export function LanguagesDisplay({
+export const LanguagesDisplay = memo(function LanguagesDisplay({
   character,
   onUpdate,
   defaultExpanded = false,
@@ -335,4 +335,6 @@ export function LanguagesDisplay({
       </CardContent>
     </Card>
   );
-}
+});
+
+LanguagesDisplay.displayName = 'LanguagesDisplay';

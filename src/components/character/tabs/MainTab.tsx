@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Stack } from '@mui/material';
 import type {
   Character,
@@ -152,7 +152,7 @@ export interface MainTabProps {
  * />
  * ```
  */
-export function MainTab({
+export const MainTab = React.memo(function MainTab({
   character,
   onUpdate,
   onOpenLineage,
@@ -342,4 +342,7 @@ export function MainTab({
       </Stack>
     </Box>
   );
-}
+});
+
+// Display name para debugging
+MainTab.displayName = 'MainTab';

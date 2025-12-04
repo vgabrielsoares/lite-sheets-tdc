@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense, lazy, useTransition } from 'react';
 import {
   Box,
   Container,
@@ -9,6 +9,8 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
+  CircularProgress,
+  Fade,
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
 import PersonIcon from '@mui/icons-material/Person';
@@ -30,15 +32,29 @@ import type {
 import type { HealthPoints, PowerPoints } from '@/types/combat';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
-import {
-  MainTab,
-  CombatTab,
-  ArchetypesTab,
-  ResourcesTab,
-  InventoryTab,
-  SpellsTab,
-  DescriptionTab,
-} from './tabs';
+
+// Lazy load tabs for better performance
+const MainTab = lazy(() =>
+  import('./tabs/MainTab').then((m) => ({ default: m.MainTab }))
+);
+const CombatTab = lazy(() =>
+  import('./tabs/CombatTab').then((m) => ({ default: m.CombatTab }))
+);
+const ArchetypesTab = lazy(() =>
+  import('./tabs/ArchetypesTab').then((m) => ({ default: m.ArchetypesTab }))
+);
+const ResourcesTab = lazy(() =>
+  import('./tabs/ResourcesTab').then((m) => ({ default: m.ResourcesTab }))
+);
+const InventoryTab = lazy(() =>
+  import('./tabs/InventoryTab').then((m) => ({ default: m.InventoryTab }))
+);
+const SpellsTab = lazy(() =>
+  import('./tabs/SpellsTab').then((m) => ({ default: m.SpellsTab }))
+);
+const DescriptionTab = lazy(() =>
+  import('./tabs/DescriptionTab').then((m) => ({ default: m.DescriptionTab }))
+);
 import {
   LinhagemSidebar,
   OrigemSidebar,
@@ -96,8 +112,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Estado da aba atual
+  // Estado da aba atual com transição para mostrar loading
   const [currentTab, setCurrentTab] = useState<CharacterTabId>('main');
+  const [isPending, startTransition] = useTransition();
+
+  // Handler para mudança de aba com transição
+  const handleTabChange = (tab: CharacterTabId) => {
+    startTransition(() => {
+      setCurrentTab(tab);
+    });
+  };
 
   // Estado do Table of Contents
   const [tocOpen, setTocOpen] = useState<boolean>(false);
@@ -765,18 +789,75 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           }}
         >
           {/* Navegação por abas */}
-          <TabNavigation currentTab={currentTab} onTabChange={setCurrentTab} />
+          <TabNavigation
+            currentTab={currentTab}
+            onTabChange={handleTabChange}
+          />
 
-          {/* Conteúdo da aba atual */}
+          {/* Conteúdo da aba atual com loading */}
           <Box
             role="tabpanel"
             id={`tabpanel-${currentTab}`}
             aria-labelledby={`tab-${currentTab}`}
             sx={{
               flex: 1,
+              position: 'relative',
+              minHeight: 400,
             }}
           >
-            {renderTabContent()}
+            {/* Overlay de loading durante transição */}
+            <Fade in={isPending} timeout={150}>
+              <Box
+                sx={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: 'rgba(0, 0, 0, 0.3)',
+                  zIndex: 1300, // Acima de modais e outros overlays
+                  backdropFilter: 'blur(2px)',
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 3,
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    boxShadow: 3,
+                  }}
+                >
+                  <CircularProgress size={40} />
+                </Box>
+              </Box>
+            </Fade>
+
+            {/* Conteúdo da aba */}
+            <Suspense
+              fallback={
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 400,
+                    bgcolor: 'background.paper',
+                    borderRadius: 1,
+                  }}
+                >
+                  <CircularProgress size={40} />
+                </Box>
+              }
+            >
+              {renderTabContent()}
+            </Suspense>
           </Box>
         </Box>
       </Box>

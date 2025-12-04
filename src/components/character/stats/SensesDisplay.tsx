@@ -14,7 +14,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Box, Typography, Paper, Tooltip, Chip } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import HearingIcon from '@mui/icons-material/Hearing';
@@ -199,91 +199,93 @@ const VisionCard: React.FC<VisionCardProps> = ({ vision }) => {
   );
 };
 
-export const SensesDisplay: React.FC<SensesDisplayProps> = ({
-  character,
-  onOpenDetails,
-}) => {
-  // Calculate encumbrance state
-  const carryCapacity = calculateCarryCapacity(character.attributes.forca);
-  const currentLoad = character.inventory.items.reduce(
-    (total, item) => total + (item.weight || 0) * (item.quantity || 1),
-    0
-  );
-  const encumbranceState = getEncumbranceState(currentLoad, carryCapacity);
-  const isOverloaded =
-    encumbranceState === 'sobrecarregado' || encumbranceState === 'imobilizado';
+export const SensesDisplay: React.FC<SensesDisplayProps> = memo(
+  ({ character, onOpenDetails }) => {
+    // Calculate encumbrance state
+    const carryCapacity = calculateCarryCapacity(character.attributes.forca);
+    const currentLoad = character.inventory.items.reduce(
+      (total, item) => total + (item.weight || 0) * (item.quantity || 1),
+      0
+    );
+    const encumbranceState = getEncumbranceState(currentLoad, carryCapacity);
+    const isOverloaded =
+      encumbranceState === 'sobrecarregado' ||
+      encumbranceState === 'imobilizado';
 
-  // Calculate all senses
-  const senses = calculateAllSenses(character, isOverloaded);
+    // Calculate all senses
+    const senses = calculateAllSenses(character, isOverloaded);
 
-  // Get individual senses
-  const observar = senses.find((s) => s.useName === 'Observar')!;
-  const farejar = senses.find((s) => s.useName === 'Farejar')!;
-  const ouvir = senses.find((s) => s.useName === 'Ouvir')!;
+    // Get individual senses
+    const observar = senses.find((s) => s.useName === 'Observar')!;
+    const farejar = senses.find((s) => s.useName === 'Farejar')!;
+    const ouvir = senses.find((s) => s.useName === 'Ouvir')!;
 
-  // Get keen senses for bonus display
-  const keenSenses = character.senses?.keenSenses || [];
+    // Get keen senses for bonus display
+    const keenSenses = character.senses?.keenSenses || [];
 
-  // Get vision type
-  const vision =
-    character.senses?.vision || character.lineage?.vision || 'normal';
+    // Get vision type
+    const vision =
+      character.senses?.vision || character.lineage?.vision || 'normal';
 
-  return (
-    <Paper
-      elevation={2}
-      sx={{
-        p: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1.5,
-        border: onOpenDetails ? 1 : 0,
-        borderColor: onOpenDetails ? 'primary.main' : 'transparent',
-        cursor: onOpenDetails ? 'pointer' : 'default',
-        transition: 'all 0.15s ease-in-out',
-        '&:hover': onOpenDetails
-          ? {
-              borderColor: 'primary.dark',
-              bgcolor: 'action.hover',
-            }
-          : {},
-      }}
-      onClick={onOpenDetails}
-    >
-      {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <VisibilityIcon color="info" />
-        <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
-          Sentidos
-        </Typography>
-      </Box>
-
-      {/* 2x2 Grid Layout */}
-      <Box
+    return (
+      <Paper
+        elevation={2}
         sx={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 1,
+          p: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+          border: onOpenDetails ? 1 : 0,
+          borderColor: onOpenDetails ? 'primary.main' : 'transparent',
+          cursor: onOpenDetails ? 'pointer' : 'default',
+          transition: 'all 0.15s ease-in-out',
+          '&:hover': onOpenDetails
+            ? {
+                borderColor: 'primary.dark',
+                bgcolor: 'action.hover',
+              }
+            : {},
         }}
+        onClick={onOpenDetails}
       >
-        {/* Row 1: Observar | Visão */}
-        <SenseCard
-          sense={observar}
-          keenSenseBonus={getKeenSenseBonus(keenSenses, 'visao')}
-        />
-        <VisionCard vision={vision} />
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <VisibilityIcon color="info" />
+          <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
+            Sentidos
+          </Typography>
+        </Box>
 
-        {/* Row 2: Farejar | Ouvir */}
-        <SenseCard
-          sense={farejar}
-          keenSenseBonus={getKeenSenseBonus(keenSenses, 'olfato')}
-        />
-        <SenseCard
-          sense={ouvir}
-          keenSenseBonus={getKeenSenseBonus(keenSenses, 'audicao')}
-        />
-      </Box>
-    </Paper>
-  );
-};
+        {/* 2x2 Grid Layout */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 1,
+          }}
+        >
+          {/* Row 1: Observar | Visão */}
+          <SenseCard
+            sense={observar}
+            keenSenseBonus={getKeenSenseBonus(keenSenses, 'visao')}
+          />
+          <VisionCard vision={vision} />
+
+          {/* Row 2: Farejar | Ouvir */}
+          <SenseCard
+            sense={farejar}
+            keenSenseBonus={getKeenSenseBonus(keenSenses, 'olfato')}
+          />
+          <SenseCard
+            sense={ouvir}
+            keenSenseBonus={getKeenSenseBonus(keenSenses, 'audicao')}
+          />
+        </Box>
+      </Paper>
+    );
+  }
+);
+
+SensesDisplay.displayName = 'SensesDisplay';
 
 export default SensesDisplay;

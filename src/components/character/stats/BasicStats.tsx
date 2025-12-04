@@ -95,7 +95,7 @@ export interface BasicStatsProps {
  * />
  * ```
  */
-export function BasicStats({
+export const BasicStats = React.memo(function BasicStats({
   character,
   onUpdate,
   onOpenLineage,
@@ -367,4 +367,7 @@ export function BasicStats({
       </CardContent>
     </Card>
   );
-}
+});
+
+// Display name para debugging
+BasicStats.displayName = 'BasicStats';

@@ -47,7 +47,7 @@ interface DefenseDisplayProps {
   onOpenDetails?: () => void;
 }
 
-export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
+export const DefenseDisplay: React.FC<DefenseDisplayProps> = React.memo(function DefenseDisplay({
   agilidade,
   sizeBonus = 0,
   armorBonus = 0,
@@ -55,7 +55,7 @@ export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
   maxAgilityBonus,
   otherBonuses = [],
   onOpenDetails,
-}) => {
+}) {
   // Calculate the effective agility bonus (limited by armor if applicable)
   const effectiveAgilityBonus =
     maxAgilityBonus !== undefined
@@ -174,6 +174,9 @@ export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
       </Box>
     </Paper>
   );
-};
+});
+
+// Display name para debugging
+DefenseDisplay.displayName = 'DefenseDisplay';
 
 export default DefenseDisplay;

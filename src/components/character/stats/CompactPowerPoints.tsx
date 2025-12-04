@@ -55,7 +55,7 @@ const PP_CONFIG: ResourceConfig = {
  * />
  * ```
  */
-export function CompactPowerPoints({
+export const CompactPowerPoints = React.memo(function CompactPowerPoints({
   pp,
   onChange,
   onOpenDetails,
@@ -69,6 +69,9 @@ export function CompactPowerPoints({
       applyDelta={applyDeltaToPP} // PP usa mesma lógica de PV: subtrai de temporários primeiro
     />
   );
-}
+});
+
+// Display name para debugging
+CompactPowerPoints.displayName = 'CompactPowerPoints';
 
 export default CompactPowerPoints;

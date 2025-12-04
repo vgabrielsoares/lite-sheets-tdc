@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Box,
   Typography,
@@ -134,7 +134,7 @@ const MENTAIS_ATTRIBUTES: AttributeName[] = MENTAL_ATTRIBUTES;
  * />
  * ```
  */
-export function AttributesDisplay({
+export const AttributesDisplay = React.memo(function AttributesDisplay({
   attributes,
   onAttributeClick,
 }: AttributesDisplayProps) {
@@ -257,4 +257,7 @@ export function AttributesDisplay({
       </Box>
     </Paper>
   );
-}
+});
+
+// Display name para debugging
+AttributesDisplay.displayName = 'AttributesDisplay';
