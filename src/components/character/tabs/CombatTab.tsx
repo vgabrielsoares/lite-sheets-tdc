@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Typography, Stack, Divider } from '@mui/material';
-import type { Character, Resistances } from '@/types';
+import type { Character, Resistances, SkillName } from '@/types';
 import type {
   Attack,
   DyingState,
@@ -20,6 +20,7 @@ import {
   DyingRounds,
   PPLimit,
   ResistancesDisplay,
+  SavingThrows,
 } from '../combat';
 import { getSizeModifiers } from '@/constants/lineage';
 
@@ -74,6 +75,22 @@ export function CombatTab({
   // Obter modificador de defesa pelo tamanho
   const sizeModifiers = getSizeModifiers(character.size);
   const sizeDefenseBonus = sizeModifiers.defense;
+
+  /**
+   * Encontra qual habilidade é atualmente a assinatura
+   * Verifica tanto o campo signatureSkill quanto o flag isSignature nas skills
+   */
+  const currentSignatureSkill = useMemo((): SkillName | undefined => {
+    // Primeiro, verifica se alguma skill tem a flag isSignature
+    const signatureEntry = Object.entries(character.skills).find(
+      ([, skill]) => skill.isSignature
+    );
+    if (signatureEntry) {
+      return signatureEntry[0] as SkillName;
+    }
+    // Fallback para o campo signatureSkill do personagem
+    return character.signatureSkill;
+  }, [character.skills, character.signatureSkill]);
 
   /**
    * Handler para atualizar estado morrendo
@@ -325,8 +342,19 @@ export function CombatTab({
           />
         </Box>
 
+        <Divider />
+
+        {/* Seção: Testes de Resistência */}
+        <Box id="section-saving-throws">
+          <SavingThrows
+            attributes={character.attributes}
+            skills={character.skills}
+            characterLevel={character.level}
+            signatureSkill={currentSignatureSkill}
+          />
+        </Box>
+
         {/* Nota: Seções adicionais serão implementadas nas próximas issues:
-            - Issue 5.5: Testes de Resistência
             - Issue 5.6: Sistema de Penalidade por Erros
         */}
       </Stack>
