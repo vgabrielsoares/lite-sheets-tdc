@@ -4,6 +4,7 @@ import React from 'react';
 import { Box, Typography, Stack, Divider } from '@mui/material';
 import type { Character, Resistances } from '@/types';
 import type {
+  Attack,
   DyingState,
   PPLimit as PPLimitType,
   ActionEconomy as ActionEconomyType,
@@ -15,6 +16,7 @@ import {
 } from '../stats';
 import {
   ActionEconomy,
+  AttacksDisplay,
   DyingRounds,
   PPLimit,
   ResistancesDisplay,
@@ -125,6 +127,18 @@ export function CombatTab({
       combat: {
         ...character.combat,
         actionEconomy,
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar ataques
+   */
+  const handleAttacksChange = (attacks: Attack[]) => {
+    onUpdate({
+      combat: {
+        ...character.combat,
+        attacks,
       },
     });
   };
@@ -301,8 +315,17 @@ export function CombatTab({
           />
         </Box>
 
+        <Divider />
+
+        {/* Seção: Ataques */}
+        <Box id="section-attacks">
+          <AttacksDisplay
+            attacks={character.combat.attacks}
+            onChange={handleAttacksChange}
+          />
+        </Box>
+
         {/* Nota: Seções adicionais serão implementadas nas próximas issues:
-            - Issue 5.4: Sistema de Ataques
             - Issue 5.5: Testes de Resistência
             - Issue 5.6: Sistema de Penalidade por Erros
         */}
