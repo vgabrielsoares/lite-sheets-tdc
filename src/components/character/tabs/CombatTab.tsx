@@ -180,8 +180,18 @@ export function CombatTab({
   /**
    * Calcula a defesa base (sem penalidades de erro)
    * Soma todos os bônus: tamanho, armadura, escudo, outros
+   * Aplica o limite de agilidade da armadura se houver
    */
   const baseDefense = useMemo(() => {
+    const agilidade = character.attributes.agilidade;
+    const maxAgilityBonus = character.combat.defense.maxAgilityBonus;
+
+    // Aplica o limite de agilidade da armadura se houver
+    const effectiveAgilityBonus =
+      maxAgilityBonus !== undefined
+        ? Math.min(agilidade, maxAgilityBonus)
+        : agilidade;
+
     const otherBonusesTotal = character.combat.defense.otherBonuses.reduce(
       (sum, mod) => sum + mod.value,
       0
@@ -191,7 +201,7 @@ export function CombatTab({
       character.combat.defense.armorBonus +
       character.combat.defense.shieldBonus +
       otherBonusesTotal;
-    return calculateDefense(character.attributes.agilidade, totalBonuses);
+    return calculateDefense(effectiveAgilityBonus, totalBonuses);
   }, [
     character.attributes.agilidade,
     sizeDefenseBonus,
