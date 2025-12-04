@@ -113,7 +113,7 @@ const CATEGORY_INFO: CategoryInfo[] = [
   {
     key: 'damageVulnerabilities',
     label: 'Vulnerabilidade',
-    description: 'Dobra o dano recebido',
+    description: 'Multiplica o dano recebido por 1.5x',
     icon: <WarningAmberIcon fontSize="small" />,
     color: 'error',
     chipColor: 'error',
