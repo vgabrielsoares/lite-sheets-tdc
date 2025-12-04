@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { Box, Typography, Stack, Divider } from '@mui/material';
-import type { Character } from '@/types';
+import type { Character, Resistances } from '@/types';
 import type { DyingState, PPLimit as PPLimitType } from '@/types/combat';
 import {
   CompactHealthPoints,
   CompactPowerPoints,
   DefenseDisplay,
 } from '../stats';
-import { DyingRounds, PPLimit } from '../combat';
+import { DyingRounds, PPLimit, ResistancesDisplay } from '../combat';
 import { getSizeModifiers } from '@/constants/lineage';
 
 export interface CombatTabProps {
@@ -92,6 +92,18 @@ export function CombatTab({
       combat: {
         ...character.combat,
         ppLimit,
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar resistências
+   */
+  const handleResistancesChange = (resistances: Resistances) => {
+    onUpdate({
+      combat: {
+        ...character.combat,
+        resistances,
       },
     });
   };
@@ -232,8 +244,25 @@ export function CombatTab({
           </Box>
         </Box>
 
+        <Divider />
+
+        {/* Seção: Resistências */}
+        <Box id="section-resistances">
+          <Typography
+            variant="h6"
+            component="h3"
+            gutterBottom
+            color="text.secondary"
+          >
+            Resistências e Vulnerabilidades
+          </Typography>
+          <ResistancesDisplay
+            resistances={character.combat.resistances}
+            onChange={handleResistancesChange}
+          />
+        </Box>
+
         {/* Nota: Seções adicionais serão implementadas nas próximas issues:
-            - Issue 5.2: Sistema de Resistências
             - Issue 5.3: Economia de Ações
             - Issue 5.4: Sistema de Ataques
             - Issue 5.5: Testes de Resistência
