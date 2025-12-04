@@ -17,6 +17,9 @@ export type { AttacksDisplayProps } from './AttacksDisplay';
 export { DyingRounds } from './DyingRounds';
 export type { DyingRoundsProps } from './DyingRounds';
 
+export { MissPenalties } from './MissPenalties';
+export type { MissPenaltiesProps } from './MissPenalties';
+
 export { PPLimit } from './PPLimit';
 export type { PPLimitProps } from './PPLimit';
 

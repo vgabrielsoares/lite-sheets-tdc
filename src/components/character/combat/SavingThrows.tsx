@@ -19,7 +19,7 @@ import {
 import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName } from '@/types/skills';
 import type { ProficiencyLevel, Modifier } from '@/types/common';
-import type { SavingThrowType } from '@/types/combat';
+import type { SavingThrowType, CombatPenalties } from '@/types/combat';
 import { SKILL_PROFICIENCY_LEVELS } from '@/constants/skills';
 import { ATTRIBUTE_LABELS } from '@/constants/attributes';
 import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
@@ -33,6 +33,8 @@ export interface SavingThrowsProps {
   characterLevel: number;
   /** Habilidade de assinatura do personagem */
   signatureSkill?: SkillName;
+  /** Penalidades de combate (opcional, para aplicar -1d20 por sucesso) */
+  penalties?: CombatPenalties;
 }
 
 /**
@@ -148,12 +150,14 @@ export function SavingThrows({
   skills,
   characterLevel,
   signatureSkill,
+  penalties,
 }: SavingThrowsProps) {
   /**
    * Calcula o modificador total de um teste de resistência usando o uso específico
    * (ex: "Resistir" ou "Resistir Mentalmente")
    *
    * Separamos modificadores de dados (affectsDice: true) dos modificadores numéricos
+   * e aplicamos penalidades de combate se existirem
    */
   const calculateSavingThrow = (
     info: SavingThrowInfo
@@ -198,7 +202,12 @@ export function SavingThrows({
       (sum, mod) => sum + (mod.value || 0),
       0
     );
-    const effectiveDiceCount = attributeValue + diceModifiersTotal;
+
+    // Aplica penalidade de combate se existir (-1d20 por sucesso)
+    const combatPenalty = penalties?.savingThrowPenalties[info.type] ?? 0;
+
+    const effectiveDiceCount =
+      attributeValue + diceModifiersTotal + combatPenalty;
 
     // Se effectiveDiceCount <= 0, rola 2 - effectiveDiceCount dados e pega o menor
     let diceCount: number;
