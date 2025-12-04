@@ -10,11 +10,7 @@ import type {
   ActionEconomy as ActionEconomyType,
   CombatPenalties,
 } from '@/types/combat';
-import {
-  CompactHealthPoints,
-  CompactPowerPoints,
-  DefenseDisplay,
-} from '../stats';
+import { CompactHealthPoints, CompactPowerPoints } from '../stats';
 import {
   ActionEconomy,
   AttacksDisplay,
@@ -52,10 +48,12 @@ export interface CombatTabProps {
  * Exibe informações de combate:
  * - PV (atual/máximo/temporário) - reutiliza CompactHealthPoints
  * - PP (atual/máximo/temporário) - reutiliza CompactPowerPoints
- * - Rodadas Máximas Morrendo (2 + Constituição + modificadores)
- * - Rodadas Atuais Morrendo (editável, contador)
- * - Limite de PP por Rodada (Nível + Presença + modificadores)
- * - Defesa (reutiliza DefenseDisplay)
+ * - Economia de Ações
+ * - Defesa com Penalidades de Erro (MissPenalties)
+ * - Testes de Resistência (SavingThrows)
+ * - Ataques
+ * - Condições de Combate (Rodadas Morrendo, Limite de PP)
+ * - Resistências e Vulnerabilidades
  *
  * Os componentes seguem o princípio DRY, reutilizando componentes
  * existentes de stats quando possível.
@@ -213,7 +211,7 @@ export function CombatTab({
       </Typography>
 
       <Stack spacing={3}>
-        {/* Seção: Pontos de Vida e Poder */}
+        {/* Seção 1: Recursos Vitais */}
         <Box id="section-combat-stats">
           <Typography
             variant="h6"
@@ -269,7 +267,64 @@ export function CombatTab({
 
         <Divider />
 
-        {/* Seção: Estado Morrendo e Limite de PP */}
+        {/* Seção 2: Economia de Ações */}
+        <Box id="section-action-economy">
+          <Typography
+            variant="h6"
+            component="h3"
+            gutterBottom
+            color="text.secondary"
+          >
+            Economia de Ações
+          </Typography>
+          <ActionEconomy
+            actionEconomy={character.combat.actionEconomy}
+            onChange={handleActionEconomyChange}
+          />
+        </Box>
+
+        <Divider />
+
+        {/* Seção 3: Defesa (com penalidades de erro - Issue 5.6) */}
+        <Box id="section-defense">
+          <MissPenalties
+            penalties={
+              character.combat.penalties ?? createDefaultCombatPenalties()
+            }
+            baseDefense={baseDefense}
+            onChange={handlePenaltiesChange}
+            onOpenDetails={onOpenDefense}
+          />
+        </Box>
+
+        <Divider />
+
+        {/* Seção 4: Testes de Resistência */}
+        <Box id="section-saving-throws">
+          <SavingThrows
+            attributes={character.attributes}
+            skills={character.skills}
+            characterLevel={character.level}
+            signatureSkill={currentSignatureSkill}
+            penalties={
+              character.combat.penalties ?? createDefaultCombatPenalties()
+            }
+          />
+        </Box>
+
+        <Divider />
+
+        {/* Seção 5: Ataques */}
+        <Box id="section-attacks">
+          <AttacksDisplay
+            attacks={character.combat.attacks}
+            onChange={handleAttacksChange}
+          />
+        </Box>
+
+        <Divider />
+
+        {/* Seção 6: Condições de Combate */}
         <Box id="section-dying-and-pplimit">
           <Typography
             variant="h6"
@@ -306,39 +361,7 @@ export function CombatTab({
 
         <Divider />
 
-        {/* Seção: Defesa */}
-        <Box id="section-defense">
-          <Typography
-            variant="h6"
-            component="h3"
-            gutterBottom
-            color="text.secondary"
-          >
-            Defesas
-          </Typography>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 2,
-            }}
-          >
-            {/* Defesa */}
-            <DefenseDisplay
-              agilidade={character.attributes.agilidade}
-              sizeBonus={sizeDefenseBonus}
-              armorBonus={character.combat.defense.armorBonus}
-              shieldBonus={character.combat.defense.shieldBonus}
-              maxAgilityBonus={character.combat.defense.maxAgilityBonus}
-              otherBonuses={character.combat.defense.otherBonuses}
-              onOpenDetails={onOpenDefense}
-            />
-          </Box>
-        </Box>
-
-        <Divider />
-
-        {/* Seção: Resistências */}
+        {/* Seção 7: Resistências e Vulnerabilidades */}
         <Box id="section-resistances">
           <Typography
             variant="h6"
@@ -351,62 +374,6 @@ export function CombatTab({
           <ResistancesDisplay
             resistances={character.combat.resistances}
             onChange={handleResistancesChange}
-          />
-        </Box>
-
-        <Divider />
-
-        {/* Seção: Economia de Ações */}
-        <Box id="section-action-economy">
-          <Typography
-            variant="h6"
-            component="h3"
-            gutterBottom
-            color="text.secondary"
-          >
-            Economia de Ações
-          </Typography>
-          <ActionEconomy
-            actionEconomy={character.combat.actionEconomy}
-            onChange={handleActionEconomyChange}
-          />
-        </Box>
-
-        <Divider />
-
-        {/* Seção: Ataques */}
-        <Box id="section-attacks">
-          <AttacksDisplay
-            attacks={character.combat.attacks}
-            onChange={handleAttacksChange}
-          />
-        </Box>
-
-        <Divider />
-
-        {/* Seção: Testes de Resistência */}
-        <Box id="section-saving-throws">
-          <SavingThrows
-            attributes={character.attributes}
-            skills={character.skills}
-            characterLevel={character.level}
-            signatureSkill={currentSignatureSkill}
-            penalties={
-              character.combat.penalties ?? createDefaultCombatPenalties()
-            }
-          />
-        </Box>
-
-        <Divider />
-
-        {/* Seção: Penalidades de Erro (Issue 5.6) */}
-        <Box id="section-miss-penalties">
-          <MissPenalties
-            penalties={
-              character.combat.penalties ?? createDefaultCombatPenalties()
-            }
-            baseDefense={baseDefense}
-            onChange={handlePenaltiesChange}
           />
         </Box>
       </Stack>
