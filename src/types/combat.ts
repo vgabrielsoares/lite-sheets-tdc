@@ -52,6 +52,8 @@ export interface DyingState {
   currentRounds: number;
   /** Rodadas máximas antes da morte (2 + Constituição + modificadores) */
   maxRounds: number;
+  /** Modificadores adicionais para rodadas máximas (de habilidades, itens, etc.) */
+  otherModifiers?: number;
 }
 
 /**
