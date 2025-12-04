@@ -14,10 +14,12 @@ import type { SkillName } from './skills';
 export interface HealthPoints extends Resource {
   /** PV atual */
   current: number;
-  /** PV máximo */
+  /** PV máximo (calculado: 15 + arquétipos + modificadores) */
   max: number;
   /** PV temporário */
   temporary: number;
+  /** Modificadores adicionais ao PV máximo (habilidades especiais, itens, etc.) */
+  maxModifiers?: Modifier[];
 }
 
 /**
@@ -26,10 +28,12 @@ export interface HealthPoints extends Resource {
 export interface PowerPoints extends Resource {
   /** PP atual */
   current: number;
-  /** PP máximo */
+  /** PP máximo (calculado: 2 + arquétipos + modificadores) */
   max: number;
   /** PP temporário */
   temporary: number;
+  /** Modificadores adicionais ao PP máximo (habilidades especiais, itens, etc.) */
+  maxModifiers?: Modifier[];
 }
 
 /**
