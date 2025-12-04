@@ -150,10 +150,10 @@ function createDefaultCombat(): CombatData {
       },
     ],
     resistances: {
+      damageReduction: [],
       damageResistances: [],
       damageImmunities: [],
       damageVulnerabilities: [],
-      conditionResistances: [],
       conditionImmunities: [],
     },
     conditions: [],
