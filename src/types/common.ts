@@ -80,7 +80,16 @@ export type CreatureSize =
 /**
  * Tipos de dados disponíveis
  */
-export type DiceType = 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20' | 'd100';
+export type DiceType =
+  | 'd2'
+  | 'd3'
+  | 'd4'
+  | 'd6'
+  | 'd8'
+  | 'd10'
+  | 'd12'
+  | 'd20'
+  | 'd100';
 
 /**
  * Representação de uma rolagem de dados

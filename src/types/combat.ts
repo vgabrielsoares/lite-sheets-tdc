@@ -101,6 +101,7 @@ export interface ExtraAction {
 export type ActionType =
   | 'maior'
   | 'menor'
+  | '2-menores'
   | 'livre'
   | 'reacao'
   | 'reacao-defensiva';
