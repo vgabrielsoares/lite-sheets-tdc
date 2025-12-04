@@ -37,3 +37,9 @@ export * from './lineage';
 
 // Origens
 export * from './origins';
+
+// Tipos de Dano
+export * from './damageTypes';
+
+// Condições
+export * from './conditions';
