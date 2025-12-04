@@ -71,6 +71,8 @@ export interface MissPenaltiesProps {
   penalties: CombatPenalties;
   /** Callback quando as penalidades mudam */
   onChange: (penalties: CombatPenalties) => void;
+  /** Callback para abrir detalhes da defesa no sidebar */
+  onOpenDetails?: () => void;
 }
 
 /**
@@ -120,6 +122,7 @@ export function MissPenalties({
   baseDefense,
   penalties,
   onChange,
+  onOpenDetails,
 }: MissPenaltiesProps) {
   /**
    * Aplica penalidade de defesa (ataque errou)
@@ -206,8 +209,23 @@ export function MissPenalties({
             mb: 2,
           }}
         >
-          <Typography variant="h6" component="h3" color="text.secondary">
-            Penalidades por Erros
+          <Typography
+            variant="h6"
+            component="h3"
+            color="text.secondary"
+            onClick={onOpenDetails}
+            sx={
+              onOpenDetails
+                ? {
+                    cursor: 'pointer',
+                    borderBottom: 2,
+                    borderColor: 'primary.main',
+                    '&:hover': { color: 'primary.main' },
+                  }
+                : undefined
+            }
+          >
+            Defesa
           </Typography>
 
           <Tooltip title="Resetar todas as penalidades (início do turno)">

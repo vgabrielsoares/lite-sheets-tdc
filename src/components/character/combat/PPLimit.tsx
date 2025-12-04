@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -8,6 +8,8 @@ import {
   Typography,
   Tooltip,
   Chip,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import BoltIcon from '@mui/icons-material/Bolt';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -63,6 +65,10 @@ export function PPLimit({
   onChange,
   onOpenDetails,
 }: PPLimitProps) {
+  // Estado local para edição do modificador
+  const [isEditingModifier, setIsEditingModifier] = useState(false);
+  const [modifierInput, setModifierInput] = useState('');
+
   // Calcular limite total usando a fórmula centralizada
   const baseLimit = calculatePPPerRound(characterLevel, presenca, 0);
 
@@ -77,7 +83,53 @@ export function PPLimit({
   // Estado visual
   const ppRemaining = totalLimit - ppSpentThisRound;
   const isAtLimit = ppRemaining <= 0;
-  const isNearLimit = ppRemaining <= 2 && ppRemaining > 0;
+
+  /**
+   * Inicia edição do modificador
+   */
+  const handleStartEditModifier = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation(); // Evitar abrir sidebar
+      setModifierInput(String(modifiersTotal));
+      setIsEditingModifier(true);
+    },
+    [modifiersTotal]
+  );
+
+  /**
+   * Confirma edição do modificador
+   */
+  const handleConfirmModifier = useCallback(() => {
+    const value = parseInt(modifierInput, 10);
+    if (!isNaN(value) && onChange) {
+      // Atualizar modificadores - usar um único modificador "Outros"
+      const newModifiers: Modifier[] =
+        value !== 0
+          ? [
+              {
+                name: 'Outros',
+                value,
+                type: value >= 0 ? 'bonus' : 'penalidade',
+              },
+            ]
+          : [];
+
+      onChange({
+        ...ppLimit,
+        modifiers: newModifiers,
+        total: baseLimit + value,
+      });
+    }
+    setIsEditingModifier(false);
+  }, [modifierInput, baseLimit, ppLimit, onChange]);
+
+  /**
+   * Cancela edição do modificador
+   */
+  const handleCancelModifier = useCallback(() => {
+    setIsEditingModifier(false);
+    setModifierInput('');
+  }, []);
 
   // Tooltip com breakdown
   const tooltipLines = [
@@ -159,11 +211,6 @@ export function PPLimit({
               <WarningAmberIcon color="error" />
             </Tooltip>
           )}
-          {isNearLimit && !isAtLimit && (
-            <Tooltip title="Próximo do limite" arrow enterDelay={150}>
-              <WarningAmberIcon color="warning" />
-            </Tooltip>
-          )}
         </Box>
 
         {/* Valor principal */}
@@ -179,13 +226,7 @@ export function PPLimit({
           <Typography
             variant="h3"
             fontWeight="bold"
-            color={
-              isAtLimit
-                ? 'error.main'
-                : isNearLimit
-                  ? 'warning.main'
-                  : 'info.main'
-            }
+            color={isAtLimit ? 'error.main' : 'info.main'}
           >
             {totalLimit}
           </Typography>
@@ -220,14 +261,70 @@ export function PPLimit({
               variant="outlined"
             />
           </Tooltip>
-          {modifiersTotal !== 0 && (
-            <Tooltip title="Bônus de outras fontes" arrow enterDelay={150}>
-              <Chip
-                size="small"
-                label={`Outros ${modifiersTotal > 0 ? '+' : ''}${modifiersTotal}`}
-                color={modifiersTotal > 0 ? 'success' : 'error'}
-                variant="outlined"
-              />
+        </Box>
+
+        {/* Campo de modificador adicional */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 1,
+            mt: 2,
+          }}
+        >
+          {isEditingModifier ? (
+            <TextField
+              size="small"
+              type="number"
+              value={modifierInput}
+              onChange={(e) => setModifierInput(e.target.value)}
+              onBlur={handleConfirmModifier}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleConfirmModifier();
+                if (e.key === 'Escape') handleCancelModifier();
+              }}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">Mod:</InputAdornment>
+                  ),
+                },
+                htmlInput: {
+                  style: { width: 60, textAlign: 'center' },
+                },
+              }}
+              sx={{ maxWidth: 120 }}
+            />
+          ) : (
+            <Tooltip
+              title="Clique para editar modificadores adicionais (habilidades, itens, etc.)"
+              arrow
+              enterDelay={150}
+            >
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                onClick={handleStartEditModifier}
+                sx={{
+                  cursor: 'pointer',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1,
+                  bgcolor: 'action.hover',
+                  '&:hover': {
+                    bgcolor: 'action.selected',
+                  },
+                }}
+              >
+                Mod. adicional:{' '}
+                <strong>
+                  {modifiersTotal >= 0 ? '+' : ''}
+                  {modifiersTotal}
+                </strong>
+              </Typography>
             </Tooltip>
           )}
         </Box>
@@ -251,13 +348,7 @@ export function PPLimit({
             <Typography
               variant="body1"
               fontWeight="bold"
-              color={
-                isAtLimit
-                  ? 'error.main'
-                  : isNearLimit
-                    ? 'warning.main'
-                    : 'text.primary'
-              }
+              color={isAtLimit ? 'error.main' : 'text.primary'}
             >
               {ppSpentThisRound} / {totalLimit}
             </Typography>

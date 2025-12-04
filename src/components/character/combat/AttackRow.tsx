@@ -207,36 +207,14 @@ export function AttackRow({ attack, onEdit, onDelete, index }: AttackRowProps) {
           />
         </Tooltip>
 
-        {/* Ações */}
-        <Stack direction="row" spacing={0.5} sx={{ ml: 'auto' }}>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(attack);
-            }}
-            aria-label={`Editar ${attack.name}`}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(attack.name);
-            }}
-            color="error"
-            aria-label={`Remover ${attack.name}`}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            aria-label={expanded ? 'Recolher' : 'Expandir'}
-          >
-            {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </IconButton>
-        </Stack>
+        {/* Botão expandir */}
+        <IconButton
+          size="small"
+          aria-label={expanded ? 'Recolher' : 'Expandir'}
+          sx={{ ml: 'auto' }}
+        >
+          {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
       </Box>
 
       {/* Detalhes expandidos */}
@@ -319,6 +297,42 @@ export function AttackRow({ attack, onEdit, onDelete, index }: AttackRowProps) {
                 </Typography>
               </Box>
             )}
+
+            {/* Ações - Editar e Excluir */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1,
+                justifyContent: 'flex-end',
+                pt: 1,
+                borderTop: 1,
+                borderColor: 'divider',
+                mt: 1,
+              }}
+            >
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(attack);
+                }}
+                aria-label={`Editar ${attack.name}`}
+                color="primary"
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(attack.name);
+                }}
+                color="error"
+                aria-label={`Remover ${attack.name}`}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
           </Stack>
         </Box>
       </Collapse>
