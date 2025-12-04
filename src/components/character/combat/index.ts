@@ -22,3 +22,6 @@ export type { PPLimitProps } from './PPLimit';
 
 export { ResistancesDisplay } from './ResistancesDisplay';
 export type { ResistancesDisplayProps } from './ResistancesDisplay';
+
+export { SavingThrows } from './SavingThrows';
+export type { SavingThrowsProps } from './SavingThrows';
