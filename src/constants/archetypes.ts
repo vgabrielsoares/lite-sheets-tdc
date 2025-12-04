@@ -72,36 +72,74 @@ export const ARCHETYPE_HP_PER_LEVEL: Record<ArchetypeName, number> = {
  * Nota: Valores baseados no contexto do sistema (não especificados nas regras básicas)
  */
 export const ARCHETYPE_PP_PER_LEVEL: Record<ArchetypeName, number> = {
-  feiticeiro: 3,
-  acolito: 2,
-  natural: 2,
-  academico: 1,
-  ladino: 1,
-  combatente: 0,
+  feiticeiro: 5,
+  academico: 4,
+  acolito: 3,
+  natural: 3,
+  ladino: 2,
+  combatente: 1,
 };
 
 /**
- * Atributo primário sugerido para cada arquétipo
+ * Tipo para atributo
  */
-export const ARCHETYPE_PRIMARY_ATTRIBUTE: Record<
+type AttributeKey =
+  | 'agilidade'
+  | 'constituicao'
+  | 'forca'
+  | 'influencia'
+  | 'mente'
+  | 'presenca';
+
+/**
+ * Atributos relevantes por arquétipo
+ * Alguns arquétipos usam múltiplos atributos, com opções alternativas (usando |)
+ */
+export const ARCHETYPE_RELEVANT_ATTRIBUTES: Record<
   ArchetypeName,
-  'agilidade' | 'constituicao' | 'forca' | 'influencia' | 'mente' | 'presenca'
+  AttributeKey[]
 > = {
-  academico: 'mente',
-  acolito: 'presenca',
-  combatente: 'constituicao',
-  feiticeiro: 'presenca',
-  ladino: 'agilidade',
-  natural: 'presenca',
+  academico: ['mente'],
+  acolito: ['presenca', 'influencia'],
+  combatente: ['agilidade', 'forca', 'constituicao'], // Agilidade OU Força, + Constituição
+  feiticeiro: ['mente', 'presenca'],
+  ladino: ['agilidade'],
+  natural: ['presenca'],
 };
+
+/**
+ * Descrição dos atributos relevantes para exibição
+ */
+export const ARCHETYPE_ATTRIBUTE_DESCRIPTION: Record<ArchetypeName, string> = {
+  academico: 'Mente',
+  acolito: 'Presença e Influência',
+  combatente: 'Agilidade ou Força, Constituição',
+  feiticeiro: 'Mente e Presença',
+  ladino: 'Agilidade',
+  natural: 'Presença',
+};
+
+/**
+ * @deprecated Use ARCHETYPE_RELEVANT_ATTRIBUTES instead
+ * Atributo primário sugerido para cada arquétipo (compatibilidade)
+ */
+export const ARCHETYPE_PRIMARY_ATTRIBUTE: Record<ArchetypeName, AttributeKey> =
+  {
+    academico: 'mente',
+    acolito: 'presenca',
+    combatente: 'constituicao',
+    feiticeiro: 'presenca',
+    ladino: 'agilidade',
+    natural: 'presenca',
+  };
 
 /**
  * Indica se o arquétipo é focado em magia
  */
 export const ARCHETYPE_IS_SPELLCASTER: Record<ArchetypeName, boolean> = {
   feiticeiro: true,
-  acolito: true,
-  natural: true,
+  acolito: false,
+  natural: false,
   academico: false,
   ladino: false,
   combatente: false,
