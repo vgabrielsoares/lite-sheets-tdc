@@ -161,6 +161,15 @@ function createDefaultCombat(): CombatData {
     initiative: {
       modifier: 0,
     },
+    penalties: {
+      defensePenalty: 0,
+      savingThrowPenalties: {
+        determinacao: 0,
+        reflexo: 0,
+        tenacidade: 0,
+        vigor: 0,
+      },
+    },
   };
 }
 
