@@ -301,6 +301,7 @@ describe('characterFactory', () => {
         expect(character.combat.actionEconomy.minorAction2).toBe(true);
         expect(character.combat.actionEconomy.reaction).toBe(true);
         expect(character.combat.actionEconomy.defensiveReaction).toBe(true);
+        expect(character.combat.actionEconomy.extraActions).toEqual([]);
       });
 
       it('deve ter defesa base de 15', () => {

@@ -63,6 +63,8 @@ export interface DyingState {
  * - 1 Reação por rodada
  * - 1 Reação Defensiva por rodada
  * - Ações Livres ilimitadas
+ *
+ * Habilidades especiais podem conceder ações extras
  */
 export interface ActionEconomy {
   /** Ação Maior disponível (1 por turno) */
@@ -75,7 +77,22 @@ export interface ActionEconomy {
   reaction: boolean;
   /** Reação Defensiva disponível (1 por rodada) */
   defensiveReaction: boolean;
-  /** Ações Livres são sempre infinitas - não precisa rastrear */
+  /** Ações extras concedidas por habilidades especiais */
+  extraActions?: ExtraAction[];
+}
+
+/**
+ * Ação extra concedida por habilidade especial
+ */
+export interface ExtraAction {
+  /** ID único da ação extra */
+  id: string;
+  /** Tipo da ação extra */
+  type: 'maior' | 'menor' | 'reacao' | 'reacao-defensiva';
+  /** Se a ação está disponível */
+  available: boolean;
+  /** Fonte da ação extra (nome da habilidade) */
+  source: string;
 }
 
 /**

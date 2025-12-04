@@ -113,6 +113,7 @@ function createDefaultCombat(): CombatData {
       minorAction2: true,
       reaction: true,
       defensiveReaction: true,
+      extraActions: [],
     },
     defense: {
       base: 15,
