@@ -103,11 +103,15 @@ describe('DyingRounds', () => {
     });
 
     it('should include other modifiers in calculation', () => {
+      const dyingStateWithModifiers: DyingState = {
+        ...defaultDyingState,
+        otherModifiers: 2,
+      };
+
       renderWithTheme(
         <DyingRounds
-          dyingState={defaultDyingState}
+          dyingState={dyingStateWithModifiers}
           constituicao={1}
-          otherModifiers={2}
           onChange={mockOnChange}
         />
       );
