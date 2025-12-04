@@ -8,6 +8,7 @@ import type {
   DyingState,
   PPLimit as PPLimitType,
   ActionEconomy as ActionEconomyType,
+  CombatPenalties,
 } from '@/types/combat';
 import {
   CompactHealthPoints,
@@ -18,11 +19,17 @@ import {
   ActionEconomy,
   AttacksDisplay,
   DyingRounds,
+  MissPenalties,
   PPLimit,
   ResistancesDisplay,
   SavingThrows,
 } from '../combat';
 import { getSizeModifiers } from '@/constants/lineage';
+import { calculateDefense } from '@/utils/calculations';
+import {
+  createDefaultCombatPenalties,
+  type CombatPenaltiesState,
+} from '@/utils/combatPenalties';
 
 export interface CombatTabProps {
   /** Dados do personagem */
@@ -159,6 +166,39 @@ export function CombatTab({
       },
     });
   };
+
+  /**
+   * Handler para atualizar penalidades de combate
+   */
+  const handlePenaltiesChange = (penalties: CombatPenaltiesState) => {
+    onUpdate({
+      combat: {
+        ...character.combat,
+        penalties,
+      },
+    });
+  };
+
+  /**
+   * Calcula a defesa base (sem penalidades de erro)
+   * Soma todos os bônus: tamanho, armadura, escudo, outros
+   */
+  const baseDefense = useMemo(() => {
+    const otherBonusesTotal = character.combat.defense.otherBonuses.reduce(
+      (sum, mod) => sum + mod.value,
+      0
+    );
+    const totalBonuses =
+      sizeDefenseBonus +
+      character.combat.defense.armorBonus +
+      character.combat.defense.shieldBonus +
+      otherBonusesTotal;
+    return calculateDefense(character.attributes.agilidade, totalBonuses);
+  }, [
+    character.attributes.agilidade,
+    sizeDefenseBonus,
+    character.combat.defense,
+  ]);
 
   return (
     <Box>
@@ -351,12 +391,24 @@ export function CombatTab({
             skills={character.skills}
             characterLevel={character.level}
             signatureSkill={currentSignatureSkill}
+            penalties={
+              character.combat.penalties ?? createDefaultCombatPenalties()
+            }
           />
         </Box>
 
-        {/* Nota: Seções adicionais serão implementadas nas próximas issues:
-            - Issue 5.6: Sistema de Penalidade por Erros
-        */}
+        <Divider />
+
+        {/* Seção: Penalidades de Erro (Issue 5.6) */}
+        <Box id="section-miss-penalties">
+          <MissPenalties
+            penalties={
+              character.combat.penalties ?? createDefaultCombatPenalties()
+            }
+            baseDefense={baseDefense}
+            onChange={handlePenaltiesChange}
+          />
+        </Box>
       </Stack>
     </Box>
   );
