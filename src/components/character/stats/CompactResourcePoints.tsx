@@ -261,7 +261,14 @@ export function CompactResourcePoints({
         </Box>
 
         {/* Controles de ajuste */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+          }}
+        >
           {/* Botão: Diminuir grande */}
           <Tooltip title={buttonLabels.decreaseLarge} arrow enterDelay={150}>
             <IconButton
