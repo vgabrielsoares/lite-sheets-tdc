@@ -108,11 +108,11 @@ function createDefaultCombat(): CombatData {
       maxRounds: 3, // 2 + Constituição (1)
     },
     actionEconomy: {
-      mainAction: true,
-      movementAction: true,
-      quickAction: true,
-      freeAction: true,
+      majorAction: true,
+      minorAction1: true,
+      minorAction2: true,
       reaction: true,
+      defensiveReaction: true,
     },
     defense: {
       base: 15,
