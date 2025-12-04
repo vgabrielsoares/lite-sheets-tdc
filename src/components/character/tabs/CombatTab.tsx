@@ -3,13 +3,22 @@
 import React from 'react';
 import { Box, Typography, Stack, Divider } from '@mui/material';
 import type { Character, Resistances } from '@/types';
-import type { DyingState, PPLimit as PPLimitType } from '@/types/combat';
+import type {
+  DyingState,
+  PPLimit as PPLimitType,
+  ActionEconomy as ActionEconomyType,
+} from '@/types/combat';
 import {
   CompactHealthPoints,
   CompactPowerPoints,
   DefenseDisplay,
 } from '../stats';
-import { DyingRounds, PPLimit, ResistancesDisplay } from '../combat';
+import {
+  ActionEconomy,
+  DyingRounds,
+  PPLimit,
+  ResistancesDisplay,
+} from '../combat';
 import { getSizeModifiers } from '@/constants/lineage';
 
 export interface CombatTabProps {
@@ -104,6 +113,18 @@ export function CombatTab({
       combat: {
         ...character.combat,
         resistances,
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar economia de ações
+   */
+  const handleActionEconomyChange = (actionEconomy: ActionEconomyType) => {
+    onUpdate({
+      combat: {
+        ...character.combat,
+        actionEconomy,
       },
     });
   };
@@ -262,8 +283,25 @@ export function CombatTab({
           />
         </Box>
 
+        <Divider />
+
+        {/* Seção: Economia de Ações */}
+        <Box id="section-action-economy">
+          <Typography
+            variant="h6"
+            component="h3"
+            gutterBottom
+            color="text.secondary"
+          >
+            Economia de Ações
+          </Typography>
+          <ActionEconomy
+            actionEconomy={character.combat.actionEconomy}
+            onChange={handleActionEconomyChange}
+          />
+        </Box>
+
         {/* Nota: Seções adicionais serão implementadas nas próximas issues:
-            - Issue 5.3: Economia de Ações
             - Issue 5.4: Sistema de Ataques
             - Issue 5.5: Testes de Resistência
             - Issue 5.6: Sistema de Penalidade por Erros
