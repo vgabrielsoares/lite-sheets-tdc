@@ -152,7 +152,9 @@ export type ArchetypeLevelGainType =
   | 'caracteristica' // Características de Arquétipo (níveis 1, 5, 10, 15)
   | 'poder' // Poderes de Arquétipo (níveis 2, 4, 6, 8, 9, 11, 13, 14)
   | 'competencia' // Competências/Proficiências (níveis 3, 7, 12)
-  | 'atributo'; // Aumentos de Atributo (níveis 4, 8, 13)
+  | 'atributo' // Aumentos de Atributo (níveis 4, 8, 13)
+  | 'grau_habilidade' // Grau de Habilidade (níveis 5, 9, 14)
+  | 'defesa_etapa'; // Defesa por Etapa (níveis 5, 10, 15)
 
 /**
  * Configuração de ganhos por nível
@@ -207,12 +209,25 @@ export const ARCHETYPE_LEVEL_GAINS: ArchetypeLevelGain[] = [
     label: 'Aumento de Atributo',
     description: 'Você pode aumentar um atributo em +1.',
   },
-  // Nível 5 - Característica de Arquétipo
+  // Nível 5 - Característica de Arquétipo + Grau de Habilidade
   {
     level: 5,
     type: 'caracteristica',
     label: 'Característica de Arquétipo',
     description: 'Você ganha uma característica avançada do arquétipo.',
+  },
+  {
+    level: 5,
+    type: 'grau_habilidade',
+    label: 'Grau de Habilidade',
+    description:
+      'Você pode melhorar uma habilidade para o próximo grau de proficiência.',
+  },
+  {
+    level: 5,
+    type: 'defesa_etapa',
+    label: 'Defesa por Etapa',
+    description: 'Você ganha um bônus de defesa por etapa do seu arquétipo.',
   },
   // Nível 6 - Poder de Arquétipo
   {
@@ -241,19 +256,32 @@ export const ARCHETYPE_LEVEL_GAINS: ArchetypeLevelGain[] = [
     label: 'Aumento de Atributo',
     description: 'Você pode aumentar um atributo em +1.',
   },
-  // Nível 9 - Poder de Arquétipo
+  // Nível 9 - Poder de Arquétipo + Grau de Habilidade
   {
     level: 9,
     type: 'poder',
     label: 'Poder de Arquétipo',
     description: 'Você ganha um poder especial do seu arquétipo.',
   },
-  // Nível 10 - Característica de Arquétipo
+  {
+    level: 9,
+    type: 'grau_habilidade',
+    label: 'Grau de Habilidade',
+    description:
+      'Você pode melhorar uma habilidade para o próximo grau de proficiência.',
+  },
+  // Nível 10 - Característica de Arquétipo + Defesa por Etapa
   {
     level: 10,
     type: 'caracteristica',
     label: 'Característica de Arquétipo',
     description: 'Você ganha uma característica poderosa do arquétipo.',
+  },
+  {
+    level: 10,
+    type: 'defesa_etapa',
+    label: 'Defesa por Etapa',
+    description: 'Você ganha um bônus de defesa por etapa do seu arquétipo.',
   },
   // Nível 11 - Poder de Arquétipo
   {
@@ -282,19 +310,32 @@ export const ARCHETYPE_LEVEL_GAINS: ArchetypeLevelGain[] = [
     label: 'Aumento de Atributo',
     description: 'Você pode aumentar um atributo em +1.',
   },
-  // Nível 14 - Poder de Arquétipo
+  // Nível 14 - Poder de Arquétipo + Grau de Habilidade
   {
     level: 14,
     type: 'poder',
     label: 'Poder de Arquétipo',
     description: 'Você ganha um poder especial do seu arquétipo.',
   },
-  // Nível 15 - Característica de Arquétipo
+  {
+    level: 14,
+    type: 'grau_habilidade',
+    label: 'Grau de Habilidade',
+    description:
+      'Você pode melhorar uma habilidade para o próximo grau de proficiência.',
+  },
+  // Nível 15 - Característica de Arquétipo + Defesa por Etapa
   {
     level: 15,
     type: 'caracteristica',
     label: 'Característica de Arquétipo',
     description: 'Você ganha a característica máxima do arquétipo.',
+  },
+  {
+    level: 15,
+    type: 'defesa_etapa',
+    label: 'Defesa por Etapa',
+    description: 'Você ganha um bônus de defesa por etapa do seu arquétipo.',
   },
 ];
 
@@ -306,6 +347,8 @@ export const ARCHETYPE_GAIN_LEVELS: Record<ArchetypeLevelGainType, number[]> = {
   poder: [2, 4, 6, 8, 9, 11, 13, 14],
   competencia: [3, 7, 12],
   atributo: [4, 8, 13],
+  grau_habilidade: [5, 9, 14],
+  defesa_etapa: [5, 10, 15],
 };
 
 /**
@@ -330,6 +373,8 @@ export const GAIN_TYPE_LABELS: Record<ArchetypeLevelGainType, string> = {
   poder: 'Poder',
   competencia: 'Competência',
   atributo: 'Aumento de Atributo',
+  grau_habilidade: 'Grau de Habilidade',
+  defesa_etapa: 'Defesa por Etapa',
 };
 
 /**
@@ -343,4 +388,6 @@ export const GAIN_TYPE_COLORS: Record<
   poder: 'secondary',
   competencia: 'success',
   atributo: 'warning',
+  grau_habilidade: 'info',
+  defesa_etapa: 'error',
 };
