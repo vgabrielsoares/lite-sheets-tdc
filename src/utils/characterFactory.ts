@@ -397,6 +397,7 @@ export function createDefaultCharacter(
     // Habilidades
     skills: createDefaultSkills(),
     signatureSkill: 'acerto' as SkillName, // Default, deve ser escolhido pelo jogador
+    skillProficiencyBonusSlots: 0, // Bônus de slots de proficiência (poderes, arquétipos, classes)
 
     // Combate
     combat: createDefaultCombat(),

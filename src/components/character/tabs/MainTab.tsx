@@ -315,6 +315,12 @@ export const MainTab = React.memo(function MainTab({
                   })
                 }
                 sizeSkillModifiers={sizeModifiers.skillModifiers}
+                skillProficiencyBonusSlots={
+                  character.skillProficiencyBonusSlots ?? 0
+                }
+                onSkillProficiencyBonusSlotsChange={(bonusSlots) =>
+                  onUpdate({ skillProficiencyBonusSlots: bonusSlots })
+                }
               />
             )}
         </Box>

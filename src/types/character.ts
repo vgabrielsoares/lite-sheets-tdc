@@ -406,6 +406,13 @@ export interface Character extends BaseEntity {
   skills: Skills;
   /** Habilidade de assinatura */
   signatureSkill: SkillName;
+  /**
+   * Bônus de proficiências de habilidades
+   * Modificador adicional ao número de proficiências disponíveis,
+   * concedido por poderes, arquétipos, classes, ou outros efeitos.
+   * Fórmula final: 3 + Mente + skillProficiencyBonusSlots
+   */
+  skillProficiencyBonusSlots: number;
 
   // Combate
   /** Dados de combate */
