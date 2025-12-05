@@ -144,3 +144,203 @@ export const ARCHETYPE_IS_SPELLCASTER: Record<ArchetypeName, boolean> = {
   ladino: false,
   combatente: false,
 };
+
+/**
+ * Tipos de ganhos por nível de arquétipo
+ */
+export type ArchetypeLevelGainType =
+  | 'caracteristica' // Características de Arquétipo (níveis 1, 5, 10, 15)
+  | 'poder' // Poderes de Arquétipo (níveis 2, 4, 6, 8, 9, 11, 13, 14)
+  | 'competencia' // Competências/Proficiências (níveis 3, 7, 12)
+  | 'atributo'; // Aumentos de Atributo (níveis 4, 8, 13)
+
+/**
+ * Configuração de ganhos por nível
+ */
+export interface ArchetypeLevelGain {
+  /** Nível em que o ganho ocorre */
+  level: number;
+  /** Tipo de ganho */
+  type: ArchetypeLevelGainType;
+  /** Label amigável */
+  label: string;
+  /** Descrição do ganho */
+  description: string;
+}
+
+/**
+ * Mapeamento de ganhos por nível (1-15)
+ * Baseado nas regras do Tabuleiro do Caos RPG
+ */
+export const ARCHETYPE_LEVEL_GAINS: ArchetypeLevelGain[] = [
+  // Nível 1 - Característica de Arquétipo
+  {
+    level: 1,
+    type: 'caracteristica',
+    label: 'Característica de Arquétipo',
+    description: 'Você ganha a característica inicial do arquétipo escolhido.',
+  },
+  // Nível 2 - Poder de Arquétipo
+  {
+    level: 2,
+    type: 'poder',
+    label: 'Poder de Arquétipo',
+    description: 'Você ganha um poder especial do seu arquétipo.',
+  },
+  // Nível 3 - Competência
+  {
+    level: 3,
+    type: 'competencia',
+    label: 'Competência',
+    description: 'Você ganha uma habilidade especial completa e poderosa.',
+  },
+  // Nível 4 - Poder + Aumento de Atributo
+  {
+    level: 4,
+    type: 'poder',
+    label: 'Poder de Arquétipo',
+    description: 'Você ganha um poder especial do seu arquétipo.',
+  },
+  {
+    level: 4,
+    type: 'atributo',
+    label: 'Aumento de Atributo',
+    description: 'Você pode aumentar um atributo em +1.',
+  },
+  // Nível 5 - Característica de Arquétipo
+  {
+    level: 5,
+    type: 'caracteristica',
+    label: 'Característica de Arquétipo',
+    description: 'Você ganha uma característica avançada do arquétipo.',
+  },
+  // Nível 6 - Poder de Arquétipo
+  {
+    level: 6,
+    type: 'poder',
+    label: 'Poder de Arquétipo',
+    description: 'Você ganha um poder especial do seu arquétipo.',
+  },
+  // Nível 7 - Competência
+  {
+    level: 7,
+    type: 'competencia',
+    label: 'Competência',
+    description: 'Você ganha uma habilidade especial completa e poderosa.',
+  },
+  // Nível 8 - Poder + Aumento de Atributo
+  {
+    level: 8,
+    type: 'poder',
+    label: 'Poder de Arquétipo',
+    description: 'Você ganha um poder especial do seu arquétipo.',
+  },
+  {
+    level: 8,
+    type: 'atributo',
+    label: 'Aumento de Atributo',
+    description: 'Você pode aumentar um atributo em +1.',
+  },
+  // Nível 9 - Poder de Arquétipo
+  {
+    level: 9,
+    type: 'poder',
+    label: 'Poder de Arquétipo',
+    description: 'Você ganha um poder especial do seu arquétipo.',
+  },
+  // Nível 10 - Característica de Arquétipo
+  {
+    level: 10,
+    type: 'caracteristica',
+    label: 'Característica de Arquétipo',
+    description: 'Você ganha uma característica poderosa do arquétipo.',
+  },
+  // Nível 11 - Poder de Arquétipo
+  {
+    level: 11,
+    type: 'poder',
+    label: 'Poder de Arquétipo',
+    description: 'Você ganha um poder especial do seu arquétipo.',
+  },
+  // Nível 12 - Competência
+  {
+    level: 12,
+    type: 'competencia',
+    label: 'Competência',
+    description: 'Você ganha uma habilidade especial completa e poderosa.',
+  },
+  // Nível 13 - Poder + Aumento de Atributo
+  {
+    level: 13,
+    type: 'poder',
+    label: 'Poder de Arquétipo',
+    description: 'Você ganha um poder especial do seu arquétipo.',
+  },
+  {
+    level: 13,
+    type: 'atributo',
+    label: 'Aumento de Atributo',
+    description: 'Você pode aumentar um atributo em +1.',
+  },
+  // Nível 14 - Poder de Arquétipo
+  {
+    level: 14,
+    type: 'poder',
+    label: 'Poder de Arquétipo',
+    description: 'Você ganha um poder especial do seu arquétipo.',
+  },
+  // Nível 15 - Característica de Arquétipo
+  {
+    level: 15,
+    type: 'caracteristica',
+    label: 'Característica de Arquétipo',
+    description: 'Você ganha a característica máxima do arquétipo.',
+  },
+];
+
+/**
+ * Níveis em que cada tipo de ganho ocorre
+ */
+export const ARCHETYPE_GAIN_LEVELS: Record<ArchetypeLevelGainType, number[]> = {
+  caracteristica: [1, 5, 10, 15],
+  poder: [2, 4, 6, 8, 9, 11, 13, 14],
+  competencia: [3, 7, 12],
+  atributo: [4, 8, 13],
+};
+
+/**
+ * Retorna os ganhos disponíveis para um determinado nível
+ */
+export function getGainsForLevel(level: number): ArchetypeLevelGain[] {
+  return ARCHETYPE_LEVEL_GAINS.filter((gain) => gain.level === level);
+}
+
+/**
+ * Retorna os ganhos disponíveis até um determinado nível (inclusive)
+ */
+export function getGainsUpToLevel(maxLevel: number): ArchetypeLevelGain[] {
+  return ARCHETYPE_LEVEL_GAINS.filter((gain) => gain.level <= maxLevel);
+}
+
+/**
+ * Labels amigáveis para tipos de ganho
+ */
+export const GAIN_TYPE_LABELS: Record<ArchetypeLevelGainType, string> = {
+  caracteristica: 'Característica',
+  poder: 'Poder',
+  competencia: 'Competência',
+  atributo: 'Aumento de Atributo',
+};
+
+/**
+ * Cores para cada tipo de ganho (MUI color)
+ */
+export const GAIN_TYPE_COLORS: Record<
+  ArchetypeLevelGainType,
+  'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error'
+> = {
+  caracteristica: 'primary',
+  poder: 'secondary',
+  competencia: 'success',
+  atributo: 'warning',
+};
