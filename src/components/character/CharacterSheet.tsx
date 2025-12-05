@@ -20,6 +20,16 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import BuildIcon from '@mui/icons-material/Build';
 import TranslateIcon from '@mui/icons-material/Translate';
+// Ícones para TOC - Combate
+import FlashOnIcon from '@mui/icons-material/FlashOn';
+import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
+import GavelIcon from '@mui/icons-material/Gavel';
+import SecurityIcon from '@mui/icons-material/Security';
+// Ícones para TOC - Arquétipos
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import StarIcon from '@mui/icons-material/Star';
+import SchoolIcon from '@mui/icons-material/School';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { useRouter } from 'next/navigation';
 import type {
   Character,
@@ -190,13 +200,63 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         },
       ],
       combat: [
-        { id: 'section-combat-stats', label: 'Status de Combate' },
-        { id: 'section-actions', label: 'Ações' },
-        { id: 'section-attacks', label: 'Ataques' },
+        {
+          id: 'section-combat-stats',
+          label: 'Recursos Vitais',
+          icon: <FavoriteIcon fontSize="small" />,
+        },
+        {
+          id: 'section-action-economy',
+          label: 'Economia de Ações',
+          icon: <FlashOnIcon fontSize="small" />,
+        },
+        {
+          id: 'section-defense',
+          label: 'Defesa',
+          icon: <ShieldIcon fontSize="small" />,
+        },
+        {
+          id: 'section-saving-throws',
+          label: 'Testes de Resistência',
+          icon: <GavelIcon fontSize="small" />,
+        },
+        {
+          id: 'section-attacks',
+          label: 'Ataques',
+          icon: <SportsKabaddiIcon fontSize="small" />,
+        },
+        {
+          id: 'section-dying-and-pplimit',
+          label: 'Condições de Combate',
+          icon: <SecurityIcon fontSize="small" />,
+        },
+        {
+          id: 'section-resistances',
+          label: 'Resistências',
+          icon: <SecurityIcon fontSize="small" />,
+        },
       ],
       archetypes: [
-        { id: 'section-archetypes', label: 'Arquétipos' },
-        { id: 'section-classes', label: 'Classes' },
+        {
+          id: 'section-archetypes',
+          label: 'Arquétipos',
+          icon: <AutoAwesomeIcon fontSize="small" />,
+        },
+        {
+          id: 'section-archetype-features',
+          label: 'Características',
+          icon: <StarIcon fontSize="small" />,
+        },
+        {
+          id: 'section-classes',
+          label: 'Classes',
+          icon: <SchoolIcon fontSize="small" />,
+        },
+        {
+          id: 'section-progression',
+          label: 'Progressão',
+          icon: <TrendingUpIcon fontSize="small" />,
+        },
       ],
       resources: [
         { id: 'section-luck', label: 'Sorte' },

@@ -50,43 +50,52 @@ export function ArchetypesTab({ character, onUpdate }: ArchetypesTabProps) {
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
-        Arquétipos
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Distribua seus níveis entre os 6 arquétipos. Cada arquétipo contribui
-        para seu PV e PP máximos e desbloqueia habilidades específicas.
-      </Typography>
+      {/* Seção 1: Arquétipos */}
+      <Box id="section-archetypes">
+        <Typography variant="h5" gutterBottom>
+          Arquétipos
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Distribua seus níveis entre os 6 arquétipos. Cada arquétipo contribui
+          para seu PV e PP máximos e desbloqueia habilidades específicas.
+        </Typography>
 
-      <ArchetypeDisplay
-        archetypes={character.archetypes ?? []}
-        characterLevel={character.level}
-        attributes={character.attributes}
-        onArchetypeChange={handleArchetypeChange}
-      />
-
-      <Divider sx={{ my: 4 }} />
-
-      {/* Características e Poderes de Arquétipo */}
-      <ArchetypeFeatures
-        archetypes={character.archetypes ?? []}
-        characterLevel={character.level}
-        onFeaturesChange={handleFeaturesChange}
-      />
+        <ArchetypeDisplay
+          archetypes={character.archetypes ?? []}
+          characterLevel={character.level}
+          attributes={character.attributes}
+          onArchetypeChange={handleArchetypeChange}
+        />
+      </Box>
 
       <Divider sx={{ my: 4 }} />
 
-      {/* Sistema de Classes */}
-      <ClassesDisplay
-        classes={character.classes ?? []}
-        characterLevel={character.level}
-        onClassesChange={handleClassesChange}
-      />
+      {/* Seção 2: Características e Poderes de Arquétipo */}
+      <Box id="section-archetype-features">
+        <ArchetypeFeatures
+          archetypes={character.archetypes ?? []}
+          characterLevel={character.level}
+          onFeaturesChange={handleFeaturesChange}
+        />
+      </Box>
 
       <Divider sx={{ my: 4 }} />
 
-      {/* Tabela de Progressão */}
-      <ProgressionTable currentLevel={character.level} />
+      {/* Seção 3: Sistema de Classes */}
+      <Box id="section-classes">
+        <ClassesDisplay
+          classes={character.classes ?? []}
+          characterLevel={character.level}
+          onClassesChange={handleClassesChange}
+        />
+      </Box>
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Seção 4: Tabela de Progressão */}
+      <Box id="section-progression">
+        <ProgressionTable currentLevel={character.level} />
+      </Box>
     </Box>
   );
 }
