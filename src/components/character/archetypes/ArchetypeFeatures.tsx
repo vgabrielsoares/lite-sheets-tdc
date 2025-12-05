@@ -25,6 +25,8 @@ import {
   FlashOn as PowerIcon,
   School as CompetenceIcon,
   TrendingUp as AttributeIcon,
+  WorkspacePremium as SkillGradeIcon,
+  Shield as DefenseIcon,
 } from '@mui/icons-material';
 import type { Archetype, ArchetypeFeature, ArchetypeName } from '@/types';
 import {
@@ -61,6 +63,10 @@ function GainTypeIcon({ type }: { type: ArchetypeLevelGainType }) {
       return <CompetenceIcon fontSize="small" />;
     case 'atributo':
       return <AttributeIcon fontSize="small" />;
+    case 'grau_habilidade':
+      return <SkillGradeIcon fontSize="small" />;
+    case 'defesa_etapa':
+      return <DefenseIcon fontSize="small" />;
     default:
       return null;
   }
@@ -103,6 +109,10 @@ function FeatureCard({
       )
         return 'competencia';
       if (lowerName.includes('atributo')) return 'atributo';
+      if (lowerName.includes('grau') || lowerName.includes('habilidade'))
+        return 'grau_habilidade';
+      if (lowerName.includes('defesa') || lowerName.includes('etapa'))
+        return 'defesa_etapa';
       return 'caracteristica';
     }
     return gains[0]?.type ?? 'caracteristica';
