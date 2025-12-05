@@ -29,6 +29,10 @@ import {
   ExpandMore as ExpandMoreIcon,
   TrendingUp as TrendingUpIcon,
   InfoOutlined as InfoIcon,
+  AutoAwesome as ArchetypeIcon,
+  Shield as ClassIcon,
+  Favorite as HPIcon,
+  FlashOn as PPIcon,
 } from '@mui/icons-material';
 import LevelRow from './LevelRow';
 
@@ -234,8 +238,13 @@ export default function ProgressionTable({
         <Stack spacing={2}>
           {/* Ganhos de Arquétipo */}
           <Box>
-            <Typography variant="body2" fontWeight={500} sx={{ mb: 0.5 }}>
-              📜 Ganhos de Arquétipo
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}
+            >
+              <ArchetypeIcon fontSize="small" color="primary" />
+              Ganhos de Arquétipo
             </Typography>
             <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
               <Typography variant="caption" color="text.secondary">
@@ -261,8 +270,13 @@ export default function ProgressionTable({
 
           {/* Ganhos de Classe */}
           <Box>
-            <Typography variant="body2" fontWeight={500} sx={{ mb: 0.5 }}>
-              🛡️ Ganhos de Classe
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}
+            >
+              <ClassIcon fontSize="small" color="info" />
+              Ganhos de Classe
             </Typography>
             <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
               <Typography variant="caption" color="text.secondary">
@@ -279,8 +293,14 @@ export default function ProgressionTable({
 
           {/* PV/PP */}
           <Box>
-            <Typography variant="body2" fontWeight={500} sx={{ mb: 0.5 }}>
-              ❤️⚡ PV/PP por Nível
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}
+            >
+              <HPIcon fontSize="small" color="error" />
+              <PPIcon fontSize="small" color="info" />
+              PV/PP por Nível
             </Typography>
             <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
               <Typography variant="caption" color="text.secondary">
