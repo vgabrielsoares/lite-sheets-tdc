@@ -23,6 +23,9 @@ export * from './languages';
 // Arquétipos
 export * from './archetypes';
 
+// Classes
+export * from './classes';
+
 // Proficiências
 export * from './proficiencies';
 
