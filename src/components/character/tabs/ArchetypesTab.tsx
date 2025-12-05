@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react';
 import { Alert, Box, Divider, Typography } from '@mui/material';
 import type { Character, Archetype } from '@/types';
-import { ArchetypeDisplay } from '../archetypes';
+import { ArchetypeDisplay, ArchetypeFeatures } from '../archetypes';
 
 export interface ArchetypesTabProps {
   character: Character;
@@ -19,15 +19,22 @@ export interface ArchetypesTabProps {
  * - Distribuição de níveis entre arquétipos
  * - Cálculo de PV e PP baseado nos arquétipos
  * - Descrição de cada arquétipo
+ * - Características e Poderes de arquétipo
  *
  * Futuramente incluirá:
- * - Características de arquétipo
  * - Classes compostas
  * - Habilidades de classe
  * - Melhorias de habilidade
  */
 export function ArchetypesTab({ character, onUpdate }: ArchetypesTabProps) {
   const handleArchetypeChange = useCallback(
+    (archetypes: Archetype[]) => {
+      onUpdate({ archetypes });
+    },
+    [onUpdate]
+  );
+
+  const handleFeaturesChange = useCallback(
     (archetypes: Archetype[]) => {
       onUpdate({ archetypes });
     },
@@ -49,6 +56,15 @@ export function ArchetypesTab({ character, onUpdate }: ArchetypesTabProps) {
         characterLevel={character.level}
         attributes={character.attributes}
         onArchetypeChange={handleArchetypeChange}
+      />
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Características e Poderes de Arquétipo */}
+      <ArchetypeFeatures
+        archetypes={character.archetypes ?? []}
+        characterLevel={character.level}
+        onFeaturesChange={handleFeaturesChange}
       />
 
       <Divider sx={{ my: 4 }} />
