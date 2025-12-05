@@ -5,6 +5,7 @@ import { Box, Divider, Typography } from '@mui/material';
 import type { Character, Archetype, CharacterClass } from '@/types';
 import { ArchetypeDisplay, ArchetypeFeatures } from '../archetypes';
 import { ClassesDisplay } from '../classes';
+import { ProgressionTable } from '../progression';
 
 export interface ArchetypesTabProps {
   character: Character;
@@ -81,6 +82,11 @@ export function ArchetypesTab({ character, onUpdate }: ArchetypesTabProps) {
         characterLevel={character.level}
         onClassesChange={handleClassesChange}
       />
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Tabela de Progressão */}
+      <ProgressionTable currentLevel={character.level} />
     </Box>
   );
 }
