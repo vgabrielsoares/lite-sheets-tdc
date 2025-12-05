@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { Alert, Box, Divider, Typography } from '@mui/material';
-import type { Character, Archetype } from '@/types';
+import { Box, Divider, Typography } from '@mui/material';
+import type { Character, Archetype, CharacterClass } from '@/types';
 import { ArchetypeDisplay, ArchetypeFeatures } from '../archetypes';
+import { ClassesDisplay } from '../classes';
 
 export interface ArchetypesTabProps {
   character: Character;
@@ -20,9 +21,7 @@ export interface ArchetypesTabProps {
  * - Cálculo de PV e PP baseado nos arquétipos
  * - Descrição de cada arquétipo
  * - Características e Poderes de arquétipo
- *
- * Futuramente incluirá:
- * - Classes compostas
+ * - Sistema de classes (até 3 classes)
  * - Habilidades de classe
  * - Melhorias de habilidade
  */
@@ -37,6 +36,13 @@ export function ArchetypesTab({ character, onUpdate }: ArchetypesTabProps) {
   const handleFeaturesChange = useCallback(
     (archetypes: Archetype[]) => {
       onUpdate({ archetypes });
+    },
+    [onUpdate]
+  );
+
+  const handleClassesChange = useCallback(
+    (classes: CharacterClass[]) => {
+      onUpdate({ classes });
     },
     [onUpdate]
   );
@@ -69,17 +75,12 @@ export function ArchetypesTab({ character, onUpdate }: ArchetypesTabProps) {
 
       <Divider sx={{ my: 4 }} />
 
-      {/* Placeholder para Classes - implementação futura */}
-      <Typography variant="h5" gutterBottom>
-        Classes
-      </Typography>
-      <Alert severity="info" sx={{ mt: 2 }}>
-        <Typography variant="body2">
-          <strong>Em desenvolvimento:</strong> O sistema de classes compostas
-          será implementado em uma fase futura. Classes são formadas pela
-          combinação de dois ou mais arquétipos.
-        </Typography>
-      </Alert>
+      {/* Sistema de Classes */}
+      <ClassesDisplay
+        classes={character.classes ?? []}
+        characterLevel={character.level}
+        onClassesChange={handleClassesChange}
+      />
     </Box>
   );
 }
