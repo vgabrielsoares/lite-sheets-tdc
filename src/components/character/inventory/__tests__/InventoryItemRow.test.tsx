@@ -196,6 +196,55 @@ describe('InventoryItemRow', () => {
       expect(mockOnRemove).toHaveBeenCalledTimes(1);
     });
 
+    it('deve chamar onClick quando o container é clicado', () => {
+      const item = createItem();
+      const mockOnClick = jest.fn();
+
+      render(
+        <InventoryItemRow
+          item={item}
+          onEdit={mockOnEdit}
+          onRemove={mockOnRemove}
+          onClick={mockOnClick}
+        />
+      );
+
+      // Clicar no nome do item
+      const itemName = screen.getByText(item.name);
+      fireEvent.click(itemName);
+
+      expect(mockOnClick).toHaveBeenCalledWith(item);
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('não deve chamar onClick ao clicar nos botões de ação', () => {
+      const item = createItem();
+      const mockOnClick = jest.fn();
+
+      render(
+        <InventoryItemRow
+          item={item}
+          onEdit={mockOnEdit}
+          onRemove={mockOnRemove}
+          onClick={mockOnClick}
+        />
+      );
+
+      // Clicar no botão de editar
+      const editButton = screen.getByRole('button', { name: /editar/i });
+      fireEvent.click(editButton);
+
+      // Clicar no botão de remover
+      const removeButton = screen.getByRole('button', { name: /remover/i });
+      fireEvent.click(removeButton);
+
+      // onClick não deve ter sido chamado
+      expect(mockOnClick).not.toHaveBeenCalled();
+      // onEdit e onRemove devem ter sido chamados
+      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      expect(mockOnRemove).toHaveBeenCalledTimes(1);
+    });
+
     it('não deve chamar onEdit quando disabled', () => {
       const item = createItem();
 
