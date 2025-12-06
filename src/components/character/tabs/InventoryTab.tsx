@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Alert } from '@mui/material';
+import { Box, Typography, Stack, Divider } from '@mui/material';
+import InventoryIcon from '@mui/icons-material/Inventory2';
 import type { Character } from '@/types';
+import { CurrencyManager } from '../inventory';
 
 export interface InventoryTabProps {
   character: Character;
@@ -13,30 +15,55 @@ export interface InventoryTabProps {
  * Aba de Inventário
  *
  * Exibe inventário e riquezas:
- * - Capacidade de carga
- * - Estado de carga
- * - Listagem de itens
  * - Cunhagem (moedas físicas e banco)
  * - Riquezas totais
- * - Conversor de moedas
- * - Indicador de peso em moedas
- * - Indicador de empurrar/levantar
- *
- * Será implementada na FASE 6.
+ * - Peso de moedas
+ * - Capacidade de carga (a ser implementado)
+ * - Estado de carga (a ser implementado)
+ * - Listagem de itens (a ser implementado)
+ * - Conversor de moedas (a ser implementado na Issue 6.2)
+ * - Indicador de empurrar/levantar (a ser implementado na Issue 6.3)
  */
 export function InventoryTab({ character, onUpdate }: InventoryTabProps) {
+  /**
+   * Handler para atualizar as moedas do personagem
+   */
+  const handleCurrencyUpdate = (
+    currency: Character['inventory']['currency']
+  ) => {
+    onUpdate({
+      inventory: {
+        ...character.inventory,
+        currency,
+      },
+    });
+  };
+
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+      >
+        <InventoryIcon color="primary" />
         Inventário
       </Typography>
 
-      <Alert severity="info" sx={{ mt: 2 }}>
-        <Typography variant="body2">
-          <strong>Em desenvolvimento:</strong> Esta aba será implementada na
-          FASE 6 com componentes para gerenciar inventário, itens e riquezas.
-        </Typography>
-      </Alert>
+      <Divider sx={{ mb: 3 }} />
+
+      <Stack spacing={3}>
+        {/* Gerenciador de Moedas */}
+        <CurrencyManager
+          currency={character.inventory.currency}
+          onUpdate={handleCurrencyUpdate}
+        />
+
+        {/* Placeholder para componentes futuros */}
+        {/* Issue 6.2: CurrencyConverter */}
+        {/* Issue 6.3: CarryCapacityDisplay */}
+        {/* Issue 6.4: InventoryItemList */}
+      </Stack>
     </Box>
   );
 }
