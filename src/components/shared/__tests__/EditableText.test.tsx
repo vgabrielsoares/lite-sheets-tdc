@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EditableText } from '../EditableText';
 
@@ -7,6 +13,11 @@ describe('EditableText', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
   });
 
   it('renders with initial value', () => {
@@ -38,6 +49,9 @@ describe('EditableText', () => {
   });
 
   it('calls onChange with debounce in autoSave mode', async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
     render(
       <EditableText
         value="Original"
@@ -47,29 +61,30 @@ describe('EditableText', () => {
       />
     );
 
-    await userEvent.click(screen.getByText('Original'));
+    await user.click(screen.getByText('Original'));
     const input = screen.getByRole('textbox');
 
-    await userEvent.clear(input);
-    await userEvent.type(input, 'New Value');
+    await user.clear(input);
+    await user.type(input, 'New Value');
 
     // Não deve chamar onChange imediatamente
     expect(mockOnChange).not.toHaveBeenCalled();
 
-    // Aguardar debounce
-    await waitFor(
-      () => {
-        expect(mockOnChange).toHaveBeenCalledWith('New Value');
-      },
-      { timeout: 1000 }
-    );
+    // Avançar o tempo para o debounce disparar
+    act(() => {
+      jest.advanceTimersByTime(150);
+    });
+
+    expect(mockOnChange).toHaveBeenCalledWith('New Value');
   });
 
   it('validates required field', async () => {
+    const localMockOnChange = jest.fn();
+
     render(
       <EditableText
         value=""
-        onChange={mockOnChange}
+        onChange={localMockOnChange}
         required
         autoSave={false}
       />
@@ -84,7 +99,7 @@ describe('EditableText', () => {
     expect(
       await screen.findByText('Este campo é obrigatório')
     ).toBeInTheDocument();
-    expect(mockOnChange).not.toHaveBeenCalled();
+    expect(localMockOnChange).not.toHaveBeenCalled();
   });
 
   it('validates with custom validator', async () => {

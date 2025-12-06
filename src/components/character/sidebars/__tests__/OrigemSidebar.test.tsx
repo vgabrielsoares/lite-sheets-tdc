@@ -83,7 +83,8 @@ describe('OrigemSidebar', () => {
         />
       );
 
-      const closeButton = screen.getByLabelText('Fechar sidebar');
+      // O aria-label segue o padrão "Fechar {título}"
+      const closeButton = screen.getByLabelText('Fechar Origem do Personagem');
       fireEvent.click(closeButton);
 
       expect(mockOnClose).toHaveBeenCalledTimes(1);

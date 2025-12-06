@@ -1,5 +1,12 @@
 /**
  * Testes para useCharacterSync hook
+ *
+ * O hook useCharacterSync foi simplificado para apenas:
+ * - Carregar personagens do IndexedDB na inicialização
+ * - Expor estados de loading/error
+ * - Manter forceSync() por compatibilidade (deprecated)
+ *
+ * A sincronização real é feita pelos thunks do Redux diretamente.
  */
 
 import { renderHook, waitFor } from '@testing-library/react';
@@ -7,10 +14,7 @@ import { act } from 'react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { useCharacterSync } from '../useCharacterSync';
-import charactersReducer, {
-  loadCharacters,
-  addCharacter,
-} from '@/features/characters/charactersSlice';
+import charactersReducer from '@/features/characters/charactersSlice';
 import notificationsReducer from '@/features/app/notificationsSlice';
 import { characterService } from '@/services/characterService';
 import type { Character } from '@/types';
@@ -27,10 +31,12 @@ jest.mock('@/services/characterService', () => ({
 }));
 
 // Mock do useNotifications
+const mockShowError = jest.fn();
+const mockShowSuccess = jest.fn();
 jest.mock('../useNotifications', () => ({
   useNotifications: () => ({
-    showError: jest.fn(),
-    showSuccess: jest.fn(),
+    showError: mockShowError,
+    showSuccess: mockShowSuccess,
     showWarning: jest.fn(),
     showInfo: jest.fn(),
   }),
@@ -102,11 +108,12 @@ function renderHookWithProvider() {
 }
 
 describe('useCharacterSync', () => {
+  let consoleWarnSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     // Reset explícito dos mocks do characterService
@@ -115,12 +122,26 @@ describe('useCharacterSync', () => {
     (characterService.delete as jest.Mock).mockReset();
     (characterService.getAll as jest.Mock).mockReset();
     (characterService.getById as jest.Mock).mockReset();
+    mockShowError.mockReset();
+    mockShowSuccess.mockReset();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    consoleWarnSpy.mockRestore();
     consoleErrorSpy.mockRestore();
+  });
+
+  describe('Interface do Hook', () => {
+    it('deve retornar isLoading, error e forceSync', async () => {
+      (characterService.getAll as jest.Mock).mockResolvedValue([]);
+
+      const { result } = renderHookWithProvider();
+
+      expect(result.current).toHaveProperty('isLoading');
+      expect(result.current).toHaveProperty('error');
+      expect(result.current).toHaveProperty('forceSync');
+      expect(typeof result.current.forceSync).toBe('function');
+    });
   });
 
   describe('Carregamento Inicial', () => {
@@ -161,6 +182,38 @@ describe('useCharacterSync', () => {
       expect(characterService.getAll).toHaveBeenCalledTimes(1);
     });
 
+    it('deve exibir notificação de erro quando falha ao carregar', async () => {
+      const mockError = new Error('Database error');
+      (characterService.getAll as jest.Mock).mockRejectedValue(mockError);
+
+      const { result } = renderHookWithProvider();
+
+      await waitFor(() => {
+        expect(result.current.error).toBeTruthy();
+      });
+
+      // Verificar que showError foi chamado
+      expect(mockShowError).toHaveBeenCalled();
+    });
+
+    it('deve carregar apenas uma vez mesmo com múltiplas re-renderizações', async () => {
+      (characterService.getAll as jest.Mock).mockResolvedValue([]);
+
+      const { result, rerender } = renderHookWithProvider();
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Re-renderizar múltiplas vezes
+      rerender();
+      rerender();
+      rerender();
+
+      // getAll deve ter sido chamado apenas uma vez
+      expect(characterService.getAll).toHaveBeenCalledTimes(1);
+    });
+
     it('não deve sincronizar durante carregamento inicial', async () => {
       (characterService.getAll as jest.Mock).mockResolvedValue([]);
 
@@ -176,304 +229,156 @@ describe('useCharacterSync', () => {
     });
   });
 
-  describe('Sincronização com Debounce', () => {
-    it('deve sincronizar mudanças com debounce de 500ms', async () => {
-      (characterService.getAll as jest.Mock).mockResolvedValue([]);
-      (characterService.getById as jest.Mock).mockResolvedValue(null);
-      (characterService.create as jest.Mock).mockResolvedValue(undefined);
+  describe('Estado de Loading', () => {
+    it('deve retornar isLoading true enquanto carrega', async () => {
+      let resolvePromise: (value: Character[]) => void;
+      const loadPromise = new Promise<Character[]>((resolve) => {
+        resolvePromise = resolve;
+      });
 
-      const { result, store } = renderHookWithProvider();
+      (characterService.getAll as jest.Mock).mockReturnValue(loadPromise);
 
-      // Aguardar carregamento inicial
+      const { result } = renderHookWithProvider();
+
+      expect(result.current.isLoading).toBe(true);
+
+      // Resolver a promise
+      await act(async () => {
+        resolvePromise!([]);
+      });
+
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
-
-      // Adicionar personagem ao Redux
-      const newCharacter = createTestCharacter({
-        id: 'new-char',
-        name: 'New Character',
-      });
-
-      await act(async () => {
-        await store.dispatch(addCharacter(newCharacter));
-      });
-
-      // Não deve sincronizar imediatamente
-      expect(characterService.create).not.toHaveBeenCalled();
-
-      // Avançar timers em menos de 500ms
-      act(() => {
-        jest.advanceTimersByTime(300);
-      });
-
-      expect(characterService.create).not.toHaveBeenCalled();
-
-      // Avançar timers para completar o debounce
-      await act(async () => {
-        jest.advanceTimersByTime(200);
-      });
-
-      // Aguardar sincronização
-      await waitFor(() => {
-        expect(characterService.create).toHaveBeenCalledTimes(1);
-      });
     });
 
-    it('deve resetar debounce ao fazer múltiplas mudanças', async () => {
-      (characterService.getAll as jest.Mock).mockResolvedValue([]);
-      (characterService.getById as jest.Mock).mockResolvedValue(null);
-      (characterService.create as jest.Mock).mockResolvedValue(undefined);
+    it('deve retornar isLoading false após carregamento bem-sucedido', async () => {
+      (characterService.getAll as jest.Mock).mockResolvedValue([
+        createTestCharacter(),
+      ]);
 
-      const { result, store } = renderHookWithProvider();
+      const { result } = renderHookWithProvider();
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      const char1 = createTestCharacter({ id: 'char-1', name: 'Char 1' });
-      const char2 = createTestCharacter({ id: 'char-2', name: 'Char 2' });
-
-      // Adicionar primeiro personagem
-      await act(async () => {
-        await store.dispatch(addCharacter(char1));
-      });
-
-      // Avançar tempo parcial
-      act(() => {
-        jest.advanceTimersByTime(300);
-      });
-
-      // Adicionar segundo personagem (deve resetar debounce)
-      await act(async () => {
-        await store.dispatch(addCharacter(char2));
-      });
-
-      // Avançar mais 300ms (total de 600ms desde primeira mudança, mas só 300ms desde segunda)
-      act(() => {
-        jest.advanceTimersByTime(300);
-      });
-
-      // Ainda não deve ter sincronizado
-      expect(characterService.create).not.toHaveBeenCalled();
-
-      // Completar debounce
-      await act(async () => {
-        jest.advanceTimersByTime(200);
-      });
-
-      // Agora deve sincronizar ambos
-      await waitFor(() => {
-        expect(characterService.create).toHaveBeenCalledTimes(2);
-      });
-    });
-  });
-
-  describe('Sincronização Forçada', () => {
-    it('deve forçar sincronização imediata sem debounce', async () => {
-      (characterService.getAll as jest.Mock).mockResolvedValue([]);
-      (characterService.getById as jest.Mock).mockResolvedValue(null);
-      (characterService.create as jest.Mock).mockResolvedValue(undefined);
-
-      const { result, store } = renderHookWithProvider();
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      // Adicionar personagem
-      const newCharacter = createTestCharacter();
-      await act(async () => {
-        await store.dispatch(addCharacter(newCharacter));
-      });
-
-      // Forçar sincronização
-      await act(async () => {
-        result.current.forceSync();
-      });
-
-      // Deve sincronizar imediatamente
-      await waitFor(() => {
-        expect(characterService.create).toHaveBeenCalledTimes(1);
-      });
+      expect(result.current.error).toBeNull();
     });
 
-    it('deve cancelar timer de debounce ao forçar sincronização', async () => {
-      (characterService.getAll as jest.Mock).mockResolvedValue([]);
-      (characterService.getById as jest.Mock).mockResolvedValue(null);
-      (characterService.create as jest.Mock).mockResolvedValue(undefined);
-
-      const { result, store } = renderHookWithProvider();
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      const newCharacter = createTestCharacter();
-      await act(async () => {
-        await store.dispatch(addCharacter(newCharacter));
-      });
-
-      // Avançar tempo parcial
-      act(() => {
-        jest.advanceTimersByTime(300);
-      });
-
-      // Forçar sincronização
-      await act(async () => {
-        result.current.forceSync();
-      });
-
-      await waitFor(() => {
-        expect(characterService.create).toHaveBeenCalledTimes(1);
-      });
-
-      // Avançar tempo restante do debounce
-      act(() => {
-        jest.advanceTimersByTime(200);
-      });
-
-      // Não deve sincronizar novamente
-      expect(characterService.create).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('Detecção de Mudanças', () => {
-    it('não deve sincronizar se não houve mudanças', async () => {
-      const mockCharacters = [createTestCharacter()];
-      (characterService.getAll as jest.Mock).mockResolvedValue(mockCharacters);
-
-      renderHookWithProvider();
-
-      await waitFor(() => {
-        expect(characterService.getAll).toHaveBeenCalledTimes(1);
-      });
-
-      // Avançar tempo
-      act(() => {
-        jest.advanceTimersByTime(1000);
-      });
-
-      // Não deve tentar sincronizar
-      expect(characterService.create).not.toHaveBeenCalled();
-      expect(characterService.update).not.toHaveBeenCalled();
-    });
-
-    it('deve sincronizar apenas quando houver mudanças reais', async () => {
-      (characterService.getAll as jest.Mock).mockResolvedValue([]);
-      (characterService.getById as jest.Mock).mockResolvedValue(null);
-      (characterService.create as jest.Mock).mockResolvedValue(undefined);
-
-      const { result, store } = renderHookWithProvider();
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
-      });
-
-      // Adicionar personagem
-      const newCharacter = createTestCharacter();
-      await act(async () => {
-        await store.dispatch(addCharacter(newCharacter));
-      });
-
-      // Completar debounce
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      await waitFor(() => {
-        expect(characterService.create).toHaveBeenCalledTimes(1);
-      });
-
-      // Limpar mock
-      (characterService.create as jest.Mock).mockClear();
-
-      // Avançar tempo sem mudanças
-      act(() => {
-        jest.advanceTimersByTime(1000);
-      });
-
-      // Não deve sincronizar novamente
-      expect(characterService.create).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Tratamento de Erros', () => {
-    it('deve tratar erro ao sincronizar e exibir notificação', async () => {
-      (characterService.getAll as jest.Mock).mockResolvedValue([]);
-      (characterService.getById as jest.Mock).mockResolvedValue(null);
-      (characterService.create as jest.Mock).mockRejectedValue(
-        new Error('Erro ao salvar')
+    it('deve retornar isLoading false após erro', async () => {
+      (characterService.getAll as jest.Mock).mockRejectedValue(
+        new Error('Erro')
       );
 
-      const { result, store } = renderHookWithProvider();
+      const { result } = renderHookWithProvider();
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Adicionar personagem
-      const newCharacter = createTestCharacter();
-      await act(async () => {
-        await store.dispatch(addCharacter(newCharacter));
-      });
-
-      // Completar debounce
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      // Aguardar tentativa de sincronização
-      await waitFor(() => {
-        expect(characterService.create).toHaveBeenCalled();
-      });
-
-      // Verificar que erro foi logado (console.error)
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(result.current.error).toBeTruthy();
     });
   });
 
-  describe('Atualização vs Criação', () => {
-    it('deve atualizar personagem existente', async () => {
-      const existingChar = createTestCharacter({ id: 'existing-char' });
+  describe('Estado de Erro', () => {
+    it('deve retornar error null quando carregamento bem-sucedido', async () => {
+      (characterService.getAll as jest.Mock).mockResolvedValue([]);
 
-      (characterService.getAll as jest.Mock).mockResolvedValue([existingChar]);
-      (characterService.getById as jest.Mock).mockResolvedValue(existingChar);
-      (characterService.update as jest.Mock).mockResolvedValue(undefined);
-
-      const { result, store } = renderHookWithProvider();
+      const { result } = renderHookWithProvider();
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Modificar personagem existente
-      const updatedChar = { ...existingChar, name: 'Updated Name' };
-
-      await act(async () => {
-        // Usar setCharacters para simular atualização
-        store.dispatch({
-          type: 'characters/setCharacters',
-          payload: [updatedChar],
-        });
-      });
-
-      // Completar debounce
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
-
-      // Deve chamar update, não create
-      await waitFor(() => {
-        expect(characterService.update).toHaveBeenCalled();
-        expect(characterService.create).not.toHaveBeenCalled();
-      });
+      expect(result.current.error).toBeNull();
     });
 
-    it('deve criar personagem novo', async () => {
+    it('deve retornar error com mensagem quando falha', async () => {
+      (characterService.getAll as jest.Mock).mockRejectedValue(
+        new Error('Falha ao conectar')
+      );
+
+      const { result } = renderHookWithProvider();
+
+      await waitFor(() => {
+        expect(result.current.error).not.toBeNull();
+      });
+    });
+  });
+
+  describe('forceSync (Deprecated)', () => {
+    it('deve logar warning quando forceSync é chamado', async () => {
       (characterService.getAll as jest.Mock).mockResolvedValue([]);
-      (characterService.getById as jest.Mock).mockResolvedValue(null);
-      (characterService.create as jest.Mock).mockResolvedValue(undefined);
+
+      const { result } = renderHookWithProvider();
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Chamar forceSync
+      act(() => {
+        result.current.forceSync();
+      });
+
+      // Deve logar warning sobre deprecation
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('deprecated')
+      );
+    });
+
+    it('forceSync não deve chamar serviços de persistência', async () => {
+      (characterService.getAll as jest.Mock).mockResolvedValue([]);
+
+      const { result } = renderHookWithProvider();
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Limpar mocks
+      jest.clearAllMocks();
+
+      // Chamar forceSync
+      act(() => {
+        result.current.forceSync();
+      });
+
+      // Não deve chamar serviços
+      expect(characterService.create).not.toHaveBeenCalled();
+      expect(characterService.update).not.toHaveBeenCalled();
+      expect(characterService.delete).not.toHaveBeenCalled();
+    });
+
+    it('forceSync pode ser chamado múltiplas vezes sem erro', async () => {
+      (characterService.getAll as jest.Mock).mockResolvedValue([]);
+
+      const { result } = renderHookWithProvider();
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Chamar forceSync múltiplas vezes
+      expect(() => {
+        act(() => {
+          result.current.forceSync();
+          result.current.forceSync();
+          result.current.forceSync();
+        });
+      }).not.toThrow();
+    });
+  });
+
+  describe('Integração com Store', () => {
+    it('deve refletir estado do store após carregamento', async () => {
+      const mockCharacters = [
+        createTestCharacter({ id: 'char-1' }),
+        createTestCharacter({ id: 'char-2' }),
+      ];
+
+      (characterService.getAll as jest.Mock).mockResolvedValue(mockCharacters);
 
       const { result, store } = renderHookWithProvider();
 
@@ -481,23 +386,61 @@ describe('useCharacterSync', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Adicionar novo personagem
-      const newChar = createTestCharacter({ id: 'new-char' });
+      // Verificar que personagens foram carregados no store
+      const state = store.getState();
+      expect(state.characters.ids).toHaveLength(2);
+    });
 
-      await act(async () => {
-        await store.dispatch(addCharacter(newChar));
-      });
+    it('não deve alterar store se getAll retorna array vazio', async () => {
+      (characterService.getAll as jest.Mock).mockResolvedValue([]);
 
-      // Completar debounce
-      await act(async () => {
-        jest.advanceTimersByTime(500);
-      });
+      const { result, store } = renderHookWithProvider();
 
-      // Deve chamar create
       await waitFor(() => {
-        expect(characterService.create).toHaveBeenCalled();
-        expect(characterService.update).not.toHaveBeenCalled();
+        expect(result.current.isLoading).toBe(false);
       });
+
+      const state = store.getState();
+      expect(state.characters.ids).toHaveLength(0);
+    });
+  });
+
+  describe('Comportamento de Cleanup', () => {
+    it('deve manter estado consistente após unmount', async () => {
+      (characterService.getAll as jest.Mock).mockResolvedValue([]);
+
+      const { result, unmount } = renderHookWithProvider();
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Unmount não deve causar erro
+      expect(() => unmount()).not.toThrow();
+    });
+  });
+
+  describe('Documentação do Comportamento Atual', () => {
+    it('sincronização é feita pelos thunks, não pelo hook', async () => {
+      // Este teste documenta o comportamento esperado:
+      // O hook NÃO faz sincronização automática
+      // Os thunks (addCharacter, updateCharacter, deleteCharacter)
+      // já chamam o characterService diretamente
+
+      (characterService.getAll as jest.Mock).mockResolvedValue([]);
+
+      const { result } = renderHookWithProvider();
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Hook não deve ter observadores de mudanças
+      // Apenas carrega dados iniciais e expõe estados
+
+      expect(characterService.getAll).toHaveBeenCalledTimes(1);
+      expect(characterService.create).not.toHaveBeenCalled();
+      expect(characterService.update).not.toHaveBeenCalled();
     });
   });
 });

@@ -174,7 +174,8 @@ describe('DyingRounds', () => {
         />
       );
 
-      expect(screen.getByText('Estabilizar')).toBeInTheDocument();
+      // Quando isDying, o botão é "Fim do Combate" para resetar
+      expect(screen.getByText('Fim do Combate')).toBeInTheDocument();
     });
   });
 
@@ -269,7 +270,7 @@ describe('DyingRounds', () => {
       });
     });
 
-    it('should reset dying state when "Estabilizar" is clicked', () => {
+    it('should reset dying state when "Fim do Combate" is clicked', () => {
       const dyingState: DyingState = {
         isDying: true,
         currentRounds: 2,
@@ -284,7 +285,7 @@ describe('DyingRounds', () => {
         />
       );
 
-      fireEvent.click(screen.getByText('Estabilizar'));
+      fireEvent.click(screen.getByText('Fim do Combate'));
 
       expect(mockOnChange).toHaveBeenCalledWith({
         isDying: false,

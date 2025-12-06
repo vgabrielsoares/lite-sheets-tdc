@@ -115,7 +115,8 @@ describe('PPLimit', () => {
 
       // 3 + 2 + 2 = 7
       expect(screen.getByText('7')).toBeInTheDocument();
-      expect(screen.getByText('Outros +2')).toBeInTheDocument();
+      // Exibe como "Mod. adicional: +2"
+      expect(screen.getByText('+2')).toBeInTheDocument();
     });
 
     it('should display negative modifiers correctly', () => {
@@ -136,7 +137,8 @@ describe('PPLimit', () => {
 
       // 3 + 2 - 1 = 4
       expect(screen.getByText('4')).toBeInTheDocument();
-      expect(screen.getByText('Outros -1')).toBeInTheDocument();
+      // Exibe como "Mod. adicional: -1"
+      expect(screen.getByText('-1')).toBeInTheDocument();
     });
   });
 

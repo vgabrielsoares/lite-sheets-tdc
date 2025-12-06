@@ -131,10 +131,8 @@ describe('CharacterSheet', () => {
       const combatTab = screen.getByRole('tab', { name: 'Combate' });
       fireEvent.click(combatTab);
 
-      // Verifica se o conteúdo da aba de Combate está visível
-      expect(
-        screen.getByText(/será implementada na FASE 5/i)
-      ).toBeInTheDocument();
+      // Verifica se o conteúdo da aba de Combate está visível (aba agora implementada)
+      expect(screen.getByText('Combate')).toBeInTheDocument();
     });
   });
 

@@ -74,7 +74,8 @@ describe('Sidebar', () => {
         <Sidebar {...defaultProps} onClose={onClose} title="Teste" />
       );
 
-      const closeButton = screen.getByLabelText('Fechar sidebar');
+      // aria-label é "Fechar {title}"
+      const closeButton = screen.getByLabelText('Fechar Teste');
       fireEvent.click(closeButton);
 
       expect(onClose).toHaveBeenCalledTimes(1);
