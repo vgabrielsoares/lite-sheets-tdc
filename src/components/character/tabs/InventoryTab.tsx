@@ -20,6 +20,8 @@ import {
 export interface InventoryTabProps {
   character: Character;
   onUpdate: (updates: Partial<Character>) => void;
+  /** Callback para abrir sidebar de detalhes de item */
+  onOpenItem?: (item: InventoryItem) => void;
 }
 
 /**
@@ -33,7 +35,11 @@ export interface InventoryTabProps {
  * - Estado de carga
  * - Listagem de itens
  */
-export function InventoryTab({ character, onUpdate }: InventoryTabProps) {
+export function InventoryTab({
+  character,
+  onUpdate,
+  onOpenItem,
+}: InventoryTabProps) {
   /**
    * Handler para atualizar as moedas do personagem
    */
@@ -136,6 +142,7 @@ export function InventoryTab({ character, onUpdate }: InventoryTabProps) {
           onUpdate={handleItemsUpdate}
           maxCapacity={maxCapacity}
           coinsWeight={coinsWeight}
+          onOpenItem={onOpenItem}
         />
       </Stack>
     </Box>
