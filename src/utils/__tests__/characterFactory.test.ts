@@ -238,21 +238,18 @@ describe('characterFactory', () => {
       });
 
       describe('Moedas', () => {
-        it('deve ter 10 PO$ (ouro) físicas', () => {
-          expect(character.inventory.currency.physical.ouro).toBe(10);
-        });
-
-        it('deve ter 0 moedas de cobre físicas', () => {
+        it('deve ter 0 moedas físicas (dinheiro começa no banco)', () => {
           expect(character.inventory.currency.physical.cobre).toBe(0);
-        });
-
-        it('deve ter 0 moedas de platina físicas', () => {
+          expect(character.inventory.currency.physical.ouro).toBe(0);
           expect(character.inventory.currency.physical.platina).toBe(0);
         });
 
-        it('deve ter 0 moedas no banco inicialmente', () => {
+        it('deve ter 10 PO$ (ouro) no banco (Cartão do Banco)', () => {
+          expect(character.inventory.currency.bank.ouro).toBe(10);
+        });
+
+        it('deve ter 0 de cobre e platina no banco', () => {
           expect(character.inventory.currency.bank.cobre).toBe(0);
-          expect(character.inventory.currency.bank.ouro).toBe(0);
           expect(character.inventory.currency.bank.platina).toBe(0);
         });
       });
@@ -556,7 +553,8 @@ describe('characterFactory', () => {
         const hasCard = character.inventory.items.some(
           (item) => item.name === 'Cartão do Banco'
         );
-        const hasGold = character.inventory.currency.physical.ouro === 10;
+        // 10 PO$ no banco (já que temos Cartão do Banco)
+        const hasGold = character.inventory.currency.bank.ouro === 10;
 
         expect(hasBackpack).toBe(true);
         expect(hasCard).toBe(true);
