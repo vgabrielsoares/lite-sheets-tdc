@@ -72,9 +72,9 @@ describe('SkillRow', () => {
       />
     );
 
-    // Verificar que o atributo correto está exibido
-    const agilidadeElements = screen.getAllByText('Agilidade');
-    expect(agilidadeElements.length).toBeGreaterThan(0);
+    // Verificar que o atributo correto está exibido (usa abreviação AGI)
+    const agiElements = screen.getAllByText('AGI');
+    expect(agiElements.length).toBeGreaterThan(0);
   });
 
   it('deve exibir a proficiência selecionada', () => {
@@ -185,10 +185,8 @@ describe('SkillRow', () => {
       />
     );
 
-    const proficiencySelect = screen.getByLabelText(
-      /Proficiência em Acrobacia/i
-    );
-    expect(proficiencySelect).toBeInTheDocument();
+    // Verifica que a proficiência está exibida
+    expect(screen.getByText('Versado')).toBeInTheDocument();
     expect(mockOnProficiencyChange).not.toHaveBeenCalled();
   });
 

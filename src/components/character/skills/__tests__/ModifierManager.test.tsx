@@ -1,14 +1,18 @@
 /**
- * Testes do ModifierManager
+ * Testes do InlineModifiers e funções utilitárias do ModifierManager
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { ModifierManager } from '../ModifierManager';
+import { render, screen, fireEvent } from '@testing-library/react';
+import {
+  InlineModifiers,
+  extractDiceModifier,
+  extractNumericModifier,
+  buildModifiersArray,
+} from '../ModifierManager';
 import type { Modifier } from '@/types';
 
-describe('ModifierManager', () => {
+describe('InlineModifiers', () => {
   const mockOnUpdate = jest.fn();
 
   beforeEach(() => {
@@ -16,281 +20,251 @@ describe('ModifierManager', () => {
   });
 
   describe('Renderização', () => {
-    it('deve renderizar com lista vazia', () => {
-      render(<ModifierManager modifiers={[]} onUpdate={mockOnUpdate} />);
-
-      expect(
-        screen.getByRole('heading', { name: /Modificadores \(0\)/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/Nenhum modificador adicionado/i)
-      ).toBeInTheDocument();
-    });
-
-    it('deve renderizar com modificadores existentes', () => {
-      const modifiers: Modifier[] = [
-        { name: 'Bênção', value: 2, type: 'bonus', affectsDice: false },
-        {
-          name: 'Ferimento',
-          value: -1,
-          type: 'penalidade',
-          affectsDice: false,
-        },
-      ];
-
-      render(<ModifierManager modifiers={modifiers} onUpdate={mockOnUpdate} />);
-
-      expect(screen.getByText('Bênção')).toBeInTheDocument();
-      expect(screen.getByText('+2')).toBeInTheDocument();
-      expect(screen.getByText('Ferimento')).toBeInTheDocument();
-      expect(screen.getByText('-1')).toBeInTheDocument();
-    });
-
-    it('deve renderizar em modo compacto', () => {
-      const modifiers: Modifier[] = [
-        { name: 'Teste', value: 3, type: 'bonus', affectsDice: false },
-      ];
-
+    it('deve renderizar com valores iniciais', () => {
       render(
-        <ModifierManager
-          modifiers={modifiers}
+        <InlineModifiers
+          diceModifier={0}
+          numericModifier={0}
           onUpdate={mockOnUpdate}
-          compact
         />
       );
 
-      // Em modo compacto, não deve mostrar título detalhado
-      expect(screen.queryByText(/Nenhum modificador/i)).not.toBeInTheDocument();
+      // Deve haver dois inputs numéricos
+      const inputs = screen.getAllByRole('spinbutton');
+      expect(inputs).toHaveLength(2);
+    });
+
+    it('deve exibir valores de modificadores corretamente', () => {
+      render(
+        <InlineModifiers
+          diceModifier={2}
+          numericModifier={5}
+          onUpdate={mockOnUpdate}
+        />
+      );
+
+      const inputs = screen.getAllByRole('spinbutton');
+      expect(inputs[0]).toHaveValue(2); // dice modifier
+      expect(inputs[1]).toHaveValue(5); // numeric modifier
+    });
+
+    it('deve exibir valores negativos', () => {
+      render(
+        <InlineModifiers
+          diceModifier={-1}
+          numericModifier={-3}
+          onUpdate={mockOnUpdate}
+        />
+      );
+
+      const inputs = screen.getAllByRole('spinbutton');
+      expect(inputs[0]).toHaveValue(-1);
+      expect(inputs[1]).toHaveValue(-3);
     });
   });
 
-  describe('Adicionar Modificador', () => {
-    it('deve abrir formulário ao clicar em Adicionar', async () => {
-      const user = userEvent.setup();
+  describe('Interações', () => {
+    it('deve chamar onUpdate quando dice modifier muda', () => {
+      render(
+        <InlineModifiers
+          diceModifier={0}
+          numericModifier={5}
+          onUpdate={mockOnUpdate}
+        />
+      );
 
-      render(<ModifierManager modifiers={[]} onUpdate={mockOnUpdate} />);
+      const inputs = screen.getAllByRole('spinbutton');
+      fireEvent.change(inputs[0], { target: { value: '2' } });
 
-      const addButton = screen.getByRole('button', { name: /adicionar/i });
-      await user.click(addButton);
-
-      expect(screen.getByLabelText(/Nome do Modificador/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Valor/i)).toBeInTheDocument();
+      expect(mockOnUpdate).toHaveBeenCalledWith(2, 5);
     });
 
-    it('deve adicionar modificador numérico', async () => {
-      const user = userEvent.setup();
+    it('deve chamar onUpdate quando numeric modifier muda', () => {
+      render(
+        <InlineModifiers
+          diceModifier={1}
+          numericModifier={0}
+          onUpdate={mockOnUpdate}
+        />
+      );
 
-      render(<ModifierManager modifiers={[]} onUpdate={mockOnUpdate} />);
+      const inputs = screen.getAllByRole('spinbutton');
+      fireEvent.change(inputs[1], { target: { value: '3' } });
 
-      const addButton = screen.getByRole('button', { name: /adicionar/i });
-      await user.click(addButton);
-
-      const nameInput = screen.getByLabelText(/Nome do Modificador/i);
-      const valueInput = screen.getByLabelText(/Valor/i);
-
-      await user.type(nameInput, 'Bênção Divina');
-      await user.clear(valueInput);
-      await user.type(valueInput, '5');
-
-      const saveButton = screen.getByRole('button', { name: /salvar/i });
-      await user.click(saveButton);
-
-      expect(mockOnUpdate).toHaveBeenCalledWith([
-        {
-          name: 'Bênção Divina',
-          value: 5,
-          type: 'bonus',
-          affectsDice: false,
-        },
-      ]);
+      expect(mockOnUpdate).toHaveBeenCalledWith(1, 3);
     });
 
-    it('deve adicionar modificador de dados', async () => {
-      const user = userEvent.setup();
+    it('deve tratar valores inválidos como zero', () => {
+      render(
+        <InlineModifiers
+          diceModifier={0}
+          numericModifier={0}
+          onUpdate={mockOnUpdate}
+        />
+      );
 
-      render(<ModifierManager modifiers={[]} onUpdate={mockOnUpdate} />);
+      const inputs = screen.getAllByRole('spinbutton');
+      fireEvent.change(inputs[0], { target: { value: 'abc' } });
 
-      const addButton = screen.getByRole('button', { name: /adicionar/i });
-      await user.click(addButton);
-
-      const nameInput = screen.getByLabelText(/Nome do Modificador/i);
-      const diceSwitch = screen.getByRole('switch');
-
-      await user.type(nameInput, 'Adrenalina');
-      await user.click(diceSwitch);
-
-      // Após clicar no switch, o label muda para "Dados (+/-d20)"
-      const valueInput = screen.getByLabelText(/Dados \(\+\/-d20\)/i);
-      await user.clear(valueInput);
-      await user.type(valueInput, '2');
-
-      const saveButton = screen.getByRole('button', { name: /salvar/i });
-      await user.click(saveButton);
-
-      expect(mockOnUpdate).toHaveBeenCalledWith([
-        {
-          name: 'Adrenalina',
-          value: 2,
-          type: 'bonus',
-          affectsDice: true,
-        },
-      ]);
-    });
-
-    it('não deve salvar sem nome', async () => {
-      const user = userEvent.setup();
-
-      render(<ModifierManager modifiers={[]} onUpdate={mockOnUpdate} />);
-
-      const addButton = screen.getByRole('button', { name: /adicionar/i });
-      await user.click(addButton);
-
-      const valueInput = screen.getByLabelText(/Valor/i);
-      await user.clear(valueInput);
-      await user.type(valueInput, '3');
-
-      const saveButton = screen.getByRole('button', { name: /salvar/i });
-      expect(saveButton).toBeDisabled();
-    });
-
-    it('não deve salvar com valor zero', async () => {
-      const user = userEvent.setup();
-
-      render(<ModifierManager modifiers={[]} onUpdate={mockOnUpdate} />);
-
-      const addButton = screen.getByRole('button', { name: /adicionar/i });
-      await user.click(addButton);
-
-      const nameInput = screen.getByLabelText(/Nome do Modificador/i);
-      await user.type(nameInput, 'Teste');
-
-      const saveButton = screen.getByRole('button', { name: /salvar/i });
-      expect(saveButton).toBeDisabled();
+      expect(mockOnUpdate).toHaveBeenCalledWith(0, 0);
     });
   });
 
-  describe('Editar Modificador', () => {
-    it('deve editar modificador existente', async () => {
-      const user = userEvent.setup();
-      const modifiers: Modifier[] = [
-        { name: 'Original', value: 2, type: 'bonus', affectsDice: false },
-      ];
+  describe('Desabilitado', () => {
+    it('deve desabilitar inputs quando disabled=true', () => {
+      render(
+        <InlineModifiers
+          diceModifier={0}
+          numericModifier={0}
+          onUpdate={mockOnUpdate}
+          disabled
+        />
+      );
 
-      render(<ModifierManager modifiers={modifiers} onUpdate={mockOnUpdate} />);
-
-      const editButton = screen.getByLabelText(/editar/i);
-      await user.click(editButton);
-
-      const nameInput = screen.getByLabelText(/Nome do Modificador/i);
-      await user.clear(nameInput);
-      await user.type(nameInput, 'Modificado');
-
-      const saveButton = screen.getByRole('button', { name: /salvar/i });
-      await user.click(saveButton);
-
-      expect(mockOnUpdate).toHaveBeenCalledWith([
-        {
-          name: 'Modificado',
-          value: 2,
-          type: 'bonus',
-          affectsDice: false,
-        },
-      ]);
+      const inputs = screen.getAllByRole('spinbutton');
+      inputs.forEach((input) => {
+        expect(input).toBeDisabled();
+      });
     });
   });
+});
 
-  describe('Remover Modificador', () => {
-    it('deve remover modificador', async () => {
-      const user = userEvent.setup();
-      const modifiers: Modifier[] = [
-        { name: 'Teste 1', value: 2, type: 'bonus', affectsDice: false },
-        { name: 'Teste 2', value: -1, type: 'penalidade', affectsDice: false },
-      ];
-
-      render(<ModifierManager modifiers={modifiers} onUpdate={mockOnUpdate} />);
-
-      const deleteButtons = screen.getAllByLabelText(/remover/i);
-      await user.click(deleteButtons[0]);
-
-      expect(mockOnUpdate).toHaveBeenCalledWith([
-        { name: 'Teste 2', value: -1, type: 'penalidade', affectsDice: false },
-      ]);
-    });
-  });
-
-  describe('Cancelar', () => {
-    it('deve cancelar adição', async () => {
-      const user = userEvent.setup();
-
-      render(<ModifierManager modifiers={[]} onUpdate={mockOnUpdate} />);
-
-      const addButton = screen.getByRole('button', { name: /adicionar/i });
-      await user.click(addButton);
-
-      const nameInput = screen.getByLabelText(/Nome do Modificador/i);
-      await user.type(nameInput, 'Será Cancelado');
-
-      const cancelButton = screen.getByRole('button', { name: /cancelar/i });
-      await user.click(cancelButton);
-
-      expect(mockOnUpdate).not.toHaveBeenCalled();
-      expect(
-        screen.queryByLabelText(/Nome do Modificador/i)
-      ).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Renderização de Cores', () => {
-    it('deve usar cor success para bônus positivo', () => {
-      const modifiers: Modifier[] = [
-        { name: 'Bônus', value: 3, type: 'bonus', affectsDice: false },
-      ];
-
-      render(<ModifierManager modifiers={modifiers} onUpdate={mockOnUpdate} />);
-
-      const chip = screen.getByText('+3');
-      expect(chip.closest('.MuiChip-root')).toHaveClass('MuiChip-colorSuccess');
+describe('Funções utilitárias', () => {
+  describe('extractDiceModifier', () => {
+    it('deve retornar 0 para array vazio', () => {
+      expect(extractDiceModifier([])).toBe(0);
     });
 
-    it('deve usar cor error para penalidade negativa', () => {
-      const modifiers: Modifier[] = [
-        {
-          name: 'Penalidade',
-          value: -2,
-          type: 'penalidade',
-          affectsDice: false,
-        },
-      ];
-
-      render(<ModifierManager modifiers={modifiers} onUpdate={mockOnUpdate} />);
-
-      const chip = screen.getByText('-2');
-      expect(chip.closest('.MuiChip-root')).toHaveClass('MuiChip-colorError');
+    it('deve retornar 0 para undefined', () => {
+      expect(extractDiceModifier(undefined)).toBe(0);
     });
-  });
 
-  describe('Formato de Dados', () => {
-    it('deve exibir formato de dados corretamente', () => {
+    it('deve extrair soma de modificadores de dados', () => {
       const modifiers: Modifier[] = [
         { name: 'Extra Dice', value: 2, type: 'bonus', affectsDice: true },
+        { name: 'Buff', value: 1, type: 'bonus', affectsDice: true },
       ];
 
-      render(<ModifierManager modifiers={modifiers} onUpdate={mockOnUpdate} />);
-
-      // Nome do modificador e valor são renderizados separadamente em não-compacto
-      expect(screen.getByText('Extra Dice')).toBeInTheDocument();
-      expect(screen.getByText('+2d20')).toBeInTheDocument();
+      expect(extractDiceModifier(modifiers)).toBe(3);
     });
 
-    it('deve exibir dados negativos corretamente', () => {
+    it('deve ignorar modificadores numéricos', () => {
       const modifiers: Modifier[] = [
-        { name: 'Fadiga', value: -1, type: 'penalidade', affectsDice: true },
+        { name: 'Dice', value: 2, type: 'bonus', affectsDice: true },
+        { name: 'Numeric', value: 5, type: 'bonus', affectsDice: false },
       ];
 
-      render(<ModifierManager modifiers={modifiers} onUpdate={mockOnUpdate} />);
+      expect(extractDiceModifier(modifiers)).toBe(2);
+    });
 
-      expect(screen.getByText('Fadiga')).toBeInTheDocument();
-      expect(screen.getByText('-1d20')).toBeInTheDocument();
+    it('deve somar modificadores negativos corretamente', () => {
+      const modifiers: Modifier[] = [
+        { name: 'Buff', value: 2, type: 'bonus', affectsDice: true },
+        { name: 'Debuff', value: -1, type: 'penalidade', affectsDice: true },
+      ];
+
+      expect(extractDiceModifier(modifiers)).toBe(1);
+    });
+  });
+
+  describe('extractNumericModifier', () => {
+    it('deve retornar 0 para array vazio', () => {
+      expect(extractNumericModifier([])).toBe(0);
+    });
+
+    it('deve retornar 0 para undefined', () => {
+      expect(extractNumericModifier(undefined)).toBe(0);
+    });
+
+    it('deve extrair soma de modificadores numéricos', () => {
+      const modifiers: Modifier[] = [
+        { name: 'Buff 1', value: 3, type: 'bonus', affectsDice: false },
+        { name: 'Buff 2', value: 2, type: 'bonus', affectsDice: false },
+      ];
+
+      expect(extractNumericModifier(modifiers)).toBe(5);
+    });
+
+    it('deve ignorar modificadores de dados', () => {
+      const modifiers: Modifier[] = [
+        { name: 'Dice', value: 2, type: 'bonus', affectsDice: true },
+        { name: 'Numeric', value: 5, type: 'bonus', affectsDice: false },
+      ];
+
+      expect(extractNumericModifier(modifiers)).toBe(5);
+    });
+
+    it('deve somar modificadores negativos corretamente', () => {
+      const modifiers: Modifier[] = [
+        { name: 'Buff', value: 5, type: 'bonus', affectsDice: false },
+        { name: 'Debuff', value: -2, type: 'penalidade', affectsDice: false },
+      ];
+
+      expect(extractNumericModifier(modifiers)).toBe(3);
+    });
+  });
+
+  describe('buildModifiersArray', () => {
+    it('deve retornar array vazio quando ambos são zero', () => {
+      expect(buildModifiersArray(0, 0)).toEqual([]);
+    });
+
+    it('deve criar modificador de dados positivo', () => {
+      const result = buildModifiersArray(2, 0);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        name: 'Modificador de Dados',
+        value: 2,
+        type: 'bonus',
+        affectsDice: true,
+      });
+    });
+
+    it('deve criar modificador de dados negativo', () => {
+      const result = buildModifiersArray(-1, 0);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        name: 'Modificador de Dados',
+        value: -1,
+        type: 'penalidade',
+        affectsDice: true,
+      });
+    });
+
+    it('deve criar modificador numérico positivo', () => {
+      const result = buildModifiersArray(0, 5);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        name: 'Modificador Numérico',
+        value: 5,
+        type: 'bonus',
+        affectsDice: false,
+      });
+    });
+
+    it('deve criar modificador numérico negativo', () => {
+      const result = buildModifiersArray(0, -3);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        name: 'Modificador Numérico',
+        value: -3,
+        type: 'penalidade',
+        affectsDice: false,
+      });
+    });
+
+    it('deve criar ambos modificadores quando necessário', () => {
+      const result = buildModifiersArray(2, 5);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].affectsDice).toBe(true);
+      expect(result[0].value).toBe(2);
+      expect(result[1].affectsDice).toBe(false);
+      expect(result[1].value).toBe(5);
     });
   });
 });

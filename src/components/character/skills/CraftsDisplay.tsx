@@ -5,7 +5,7 @@
  * Cada ofício tem: nome, nível (0-5), atributo-chave, modificadores de dados e numéricos.
  */
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import {
   Box,
   Typography,
@@ -62,7 +62,7 @@ function getCraftLevelColor(
   return 'success';
 }
 
-export function CraftsDisplay({
+export const CraftsDisplay = memo(function CraftsDisplay({
   crafts,
   attributes,
   onAdd,
@@ -293,4 +293,6 @@ export function CraftsDisplay({
       />
     </Box>
   );
-}
+});
+
+CraftsDisplay.displayName = 'CraftsDisplay';

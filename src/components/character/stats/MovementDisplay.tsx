@@ -110,147 +110,149 @@ const MOVEMENT_COLORS: Record<
   nadando: 'primary',
 };
 
-export const MovementDisplay: React.FC<MovementDisplayProps> = ({
-  movement,
-  onOpenDetails,
-}) => {
-  // Get all non-zero movements with their totals
-  const activeMovements = (
-    Object.entries(movement) as [MovementType, MovementSpeed | number][]
-  )
-    .map(([type, speed]) => ({
-      type,
-      ...getSpeedDetails(speed),
-    }))
-    .filter(({ total }) => total > 0);
+export const MovementDisplay: React.FC<MovementDisplayProps> = React.memo(
+  function MovementDisplay({ movement, onOpenDetails }) {
+    // Get all non-zero movements with their totals
+    const activeMovements = (
+      Object.entries(movement) as [MovementType, MovementSpeed | number][]
+    )
+      .map(([type, speed]) => ({
+        type,
+        ...getSpeedDetails(speed),
+      }))
+      .filter(({ total }) => total > 0);
 
-  // Check if there are any movements
-  const hasMovement = activeMovements.length > 0;
+    // Check if there are any movements
+    const hasMovement = activeMovements.length > 0;
 
-  // Build tooltip text showing all active movements
-  const tooltipLines = hasMovement
-    ? [
-        'Deslocamento do Personagem:',
-        ...activeMovements.map(({ type, base, bonus, total }) => {
-          if (bonus !== 0) {
-            const bonusSign = bonus > 0 ? '+' : '';
-            return `• ${MOVEMENT_LABELS[type]}: ${base}${bonusSign}${bonus} = ${total}m`;
-          }
-          return `• ${MOVEMENT_LABELS[type]}: ${total}m`;
-        }),
-      ]
-    : ['Nenhum deslocamento configurado'];
-
-  const tooltipText = tooltipLines.join('\n');
-
-  return (
-    <Paper
-      elevation={2}
-      sx={{
-        p: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 1,
-        minWidth: 200,
-        border: onOpenDetails ? 1 : 0,
-        borderColor: onOpenDetails ? 'primary.main' : 'transparent',
-        cursor: onOpenDetails ? 'pointer' : 'default',
-        transition: 'all 0.15s ease-in-out',
-        '&:hover': onOpenDetails
-          ? {
-              borderColor: 'primary.dark',
-              bgcolor: 'action.hover',
+    // Build tooltip text showing all active movements
+    const tooltipLines = hasMovement
+      ? [
+          'Deslocamento do Personagem:',
+          ...activeMovements.map(({ type, base, bonus, total }) => {
+            if (bonus !== 0) {
+              const bonusSign = bonus > 0 ? '+' : '';
+              return `• ${MOVEMENT_LABELS[type]}: ${base}${bonusSign}${bonus} = ${total}m`;
             }
-          : {},
-      }}
-      onClick={onOpenDetails}
-    >
-      {/* Header */}
-      <Box
-        sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}
-      >
-        <DirectionsWalkIcon color="success" />
-        <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
-          Deslocamento
-        </Typography>
-        <Tooltip
-          title={
-            <Typography sx={{ whiteSpace: 'pre-line' }}>
-              {tooltipText}
-            </Typography>
-          }
-          arrow
-          enterDelay={150}
-        >
-          <IconButton size="small" onClick={(e) => e.stopPropagation()}>
-            <InfoIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
+            return `• ${MOVEMENT_LABELS[type]}: ${total}m`;
+          }),
+        ]
+      : ['Nenhum deslocamento configurado'];
 
-      <Divider sx={{ width: '100%' }} />
+    const tooltipText = tooltipLines.join('\n');
 
-      {/* Movement Chips */}
-      <Box
+    return (
+      <Paper
+        elevation={2}
         sx={{
+          p: 2,
           display: 'flex',
-          flexWrap: 'wrap',
+          flexDirection: 'column',
+          alignItems: 'center',
           gap: 1,
-          py: 2,
-          justifyContent: 'center',
-          width: '100%',
-        }}
-      >
-        {hasMovement ? (
-          activeMovements.map(({ type, base, bonus, total }) => (
-            <Tooltip
-              key={type}
-              title={
-                <Box>
-                  <Typography variant="body2" fontWeight="bold">
-                    {MOVEMENT_LABELS[type]}
-                  </Typography>
-                  <Typography variant="caption">
-                    {MOVEMENT_DESCRIPTIONS[type]}
-                  </Typography>
-                  {bonus !== 0 && (
-                    <Typography
-                      variant="caption"
-                      display="block"
-                      sx={{ mt: 0.5 }}
-                    >
-                      Base: {base}m {bonus > 0 ? '+' : ''}
-                      {bonus}m bônus
-                    </Typography>
-                  )}
-                </Box>
+          minWidth: 200,
+          border: onOpenDetails ? 1 : 0,
+          borderColor: onOpenDetails ? 'primary.main' : 'transparent',
+          cursor: onOpenDetails ? 'pointer' : 'default',
+          transition: 'all 0.15s ease-in-out',
+          '&:hover': onOpenDetails
+            ? {
+                borderColor: 'primary.dark',
+                bgcolor: 'action.hover',
               }
-              arrow
-              enterDelay={150}
-            >
-              <Chip
-                icon={MOVEMENT_ICONS[type] as React.ReactElement}
-                label={`${total}m`}
-                color={MOVEMENT_COLORS[type]}
-                variant="outlined"
-                size="medium"
-                sx={{
-                  fontWeight: 'bold',
-                  fontSize: type === 'andando' ? '1.1rem' : '0.9rem',
-                  py: type === 'andando' ? 2 : 1,
-                }}
-              />
-            </Tooltip>
-          ))
-        ) : (
-          <Typography variant="body2" color="text.secondary">
-            Nenhum deslocamento
+            : {},
+        }}
+        onClick={onOpenDetails}
+      >
+        {/* Header */}
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}
+        >
+          <DirectionsWalkIcon color="success" />
+          <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
+            Deslocamento
           </Typography>
-        )}
-      </Box>
-    </Paper>
-  );
-};
+          <Tooltip
+            title={
+              <Typography sx={{ whiteSpace: 'pre-line' }}>
+                {tooltipText}
+              </Typography>
+            }
+            arrow
+            enterDelay={150}
+          >
+            <IconButton size="small" onClick={(e) => e.stopPropagation()}>
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
+        <Divider sx={{ width: '100%' }} />
+
+        {/* Movement Chips */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1,
+            py: 2,
+            justifyContent: 'center',
+            width: '100%',
+          }}
+        >
+          {hasMovement ? (
+            activeMovements.map(({ type, base, bonus, total }) => (
+              <Tooltip
+                key={type}
+                title={
+                  <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                      {MOVEMENT_LABELS[type]}
+                    </Typography>
+                    <Typography variant="caption">
+                      {MOVEMENT_DESCRIPTIONS[type]}
+                    </Typography>
+                    {bonus !== 0 && (
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ mt: 0.5 }}
+                      >
+                        Base: {base}m {bonus > 0 ? '+' : ''}
+                        {bonus}m bônus
+                      </Typography>
+                    )}
+                  </Box>
+                }
+                arrow
+                enterDelay={150}
+              >
+                <Chip
+                  icon={MOVEMENT_ICONS[type] as React.ReactElement}
+                  label={`${total}m`}
+                  color={MOVEMENT_COLORS[type]}
+                  variant="outlined"
+                  size="medium"
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: type === 'andando' ? '1.1rem' : '0.9rem',
+                    py: type === 'andando' ? 2 : 1,
+                  }}
+                />
+              </Tooltip>
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Nenhum deslocamento
+            </Typography>
+          )}
+        </Box>
+      </Paper>
+    );
+  }
+);
+
+// Display name para debugging
+MovementDisplay.displayName = 'MovementDisplay';
 
 export default MovementDisplay;

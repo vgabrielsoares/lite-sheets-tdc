@@ -113,7 +113,8 @@ describe('LanguageSelector', () => {
     it('deve estar desabilitado quando disabled=true', () => {
       render(<LanguageSelector {...defaultProps} disabled />);
       const selectButton = screen.getByRole('combobox');
-      expect(selectButton).toBeDisabled();
+      // MUI Select usa aria-disabled em vez de disabled HTML
+      expect(selectButton).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('deve mostrar apenas idiomas disponíveis por padrão', async () => {

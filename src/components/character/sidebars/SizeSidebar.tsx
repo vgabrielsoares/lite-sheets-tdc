@@ -368,14 +368,14 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                     alignItems: 'center',
                   }}
                 >
-                  <Typography variant="body2">Reflexos</Typography>
+                  <Typography variant="body2">Reflexo</Typography>
                   <Chip
-                    label={formatModifier(modifiers.skillModifiers.reflexos)}
+                    label={formatModifier(modifiers.skillModifiers.reflexo)}
                     size="small"
                     color={
-                      modifiers.skillModifiers.reflexos > 0
+                      modifiers.skillModifiers.reflexo > 0
                         ? 'success'
-                        : modifiers.skillModifiers.reflexos < 0
+                        : modifiers.skillModifiers.reflexo < 0
                           ? 'error'
                           : 'default'
                     }

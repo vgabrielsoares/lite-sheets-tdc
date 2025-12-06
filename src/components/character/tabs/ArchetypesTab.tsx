@@ -1,8 +1,11 @@
 'use client';
 
-import React from 'react';
-import { Box, Typography, Alert } from '@mui/material';
-import type { Character } from '@/types';
+import React, { useCallback } from 'react';
+import { Box, Divider, Typography } from '@mui/material';
+import type { Character, Archetype, CharacterClass } from '@/types';
+import { ArchetypeDisplay, ArchetypeFeatures } from '../archetypes';
+import { ClassesDisplay } from '../classes';
+import { ProgressionTable } from '../progression';
 
 export interface ArchetypesTabProps {
   character: Character;
@@ -13,31 +16,86 @@ export interface ArchetypesTabProps {
  * Aba de Arquétipos e Classes
  *
  * Exibe informações de arquétipos e classes:
- * - Nível de cada arquétipo
- * - Características de arquétipo
- * - Nível de cada classe
+ * - Nível total do personagem
+ * - Nível de cada arquétipo (6 arquétipos)
+ * - Distribuição de níveis entre arquétipos
+ * - Cálculo de PV e PP baseado nos arquétipos
+ * - Descrição de cada arquétipo
+ * - Características e Poderes de arquétipo
+ * - Sistema de classes (até 3 classes)
  * - Habilidades de classe
  * - Melhorias de habilidade
- * - Defesa por etapa
- * - Ganhos por classe
- * - Progressão de personagem
- *
- * Será implementada na FASE 5.
  */
 export function ArchetypesTab({ character, onUpdate }: ArchetypesTabProps) {
+  const handleArchetypeChange = useCallback(
+    (archetypes: Archetype[]) => {
+      onUpdate({ archetypes });
+    },
+    [onUpdate]
+  );
+
+  const handleFeaturesChange = useCallback(
+    (archetypes: Archetype[]) => {
+      onUpdate({ archetypes });
+    },
+    [onUpdate]
+  );
+
+  const handleClassesChange = useCallback(
+    (classes: CharacterClass[]) => {
+      onUpdate({ classes });
+    },
+    [onUpdate]
+  );
+
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
-        Arquétipos e Classes
-      </Typography>
-
-      <Alert severity="info" sx={{ mt: 2 }}>
-        <Typography variant="body2">
-          <strong>Em desenvolvimento:</strong> Esta aba será implementada na
-          FASE 5 com componentes para gerenciar arquétipos, classes e progressão
-          de personagem.
+      {/* Seção 1: Arquétipos */}
+      <Box id="section-archetypes">
+        <Typography variant="h5" gutterBottom>
+          Arquétipos
         </Typography>
-      </Alert>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Distribua seus níveis entre os 6 arquétipos. Cada arquétipo contribui
+          para seu PV e PP máximos e desbloqueia habilidades específicas.
+        </Typography>
+
+        <ArchetypeDisplay
+          archetypes={character.archetypes ?? []}
+          characterLevel={character.level}
+          attributes={character.attributes}
+          onArchetypeChange={handleArchetypeChange}
+        />
+      </Box>
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Seção 2: Características e Poderes de Arquétipo */}
+      <Box id="section-archetype-features">
+        <ArchetypeFeatures
+          archetypes={character.archetypes ?? []}
+          characterLevel={character.level}
+          onFeaturesChange={handleFeaturesChange}
+        />
+      </Box>
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Seção 3: Sistema de Classes */}
+      <Box id="section-classes">
+        <ClassesDisplay
+          classes={character.classes ?? []}
+          characterLevel={character.level}
+          onClassesChange={handleClassesChange}
+        />
+      </Box>
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Seção 4: Tabela de Progressão */}
+      <Box id="section-progression">
+        <ProgressionTable currentLevel={character.level} />
+      </Box>
     </Box>
   );
 }

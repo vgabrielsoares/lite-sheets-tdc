@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Stack } from '@mui/material';
 import type {
   Character,
@@ -17,11 +17,13 @@ import {
   CompactPowerPoints,
   DefenseDisplay,
   MovementDisplay,
+  SensesDisplay,
 } from '../stats';
 import { AttributesDisplay } from '../attributes';
 import { SkillsDisplay, CraftsDisplay } from '../skills';
 import { LanguagesDisplay } from '../languages';
 import { getEncumbranceState, calculateCarryCapacity } from '@/utils';
+import { getSizeModifiers } from '@/constants/lineage';
 
 export interface MainTabProps {
   /**
@@ -66,6 +68,11 @@ export interface MainTabProps {
    * Callback para abrir detalhes de Deslocamento
    */
   onOpenMovement?: () => void;
+
+  /**
+   * Callback para abrir detalhes de Sentidos
+   */
+  onOpenSenses?: () => void;
 
   /**
    * Callback para abrir detalhes de um atributo
@@ -145,7 +152,7 @@ export interface MainTabProps {
  * />
  * ```
  */
-export function MainTab({
+export const MainTab = React.memo(function MainTab({
   character,
   onUpdate,
   onOpenLineage,
@@ -155,6 +162,7 @@ export function MainTab({
   onOpenPP,
   onOpenDefense,
   onOpenMovement,
+  onOpenSenses,
   onOpenAttribute,
   onOpenSkill,
   onSkillKeyAttributeChange,
@@ -175,6 +183,10 @@ export function MainTab({
   const encumbranceState = getEncumbranceState(currentLoad, carryCapacity);
   const isOverloaded =
     encumbranceState === 'sobrecarregado' || encumbranceState === 'imobilizado';
+
+  // Obter modificador de defesa pelo tamanho
+  const sizeModifiers = getSizeModifiers(character.size);
+  const sizeDefenseBonus = sizeModifiers.defense;
 
   return (
     <Box>
@@ -240,6 +252,7 @@ export function MainTab({
           {/* Defesa */}
           <DefenseDisplay
             agilidade={character.attributes.agilidade}
+            sizeBonus={sizeDefenseBonus}
             armorBonus={character.combat.defense.armorBonus}
             shieldBonus={character.combat.defense.shieldBonus}
             maxAgilityBonus={character.combat.defense.maxAgilityBonus}
@@ -252,6 +265,11 @@ export function MainTab({
             movement={character.movement.speeds}
             onOpenDetails={onOpenMovement}
           />
+        </Box>
+
+        {/* Sentidos */}
+        <Box id="section-senses">
+          <SensesDisplay character={character} onOpenDetails={onOpenSenses} />
         </Box>
 
         {/* Atributos */}
@@ -296,6 +314,13 @@ export function MainTab({
                     },
                   })
                 }
+                sizeSkillModifiers={sizeModifiers.skillModifiers}
+                skillProficiencyBonusSlots={
+                  character.skillProficiencyBonusSlots ?? 0
+                }
+                onSkillProficiencyBonusSlotsChange={(bonusSlots) =>
+                  onUpdate({ skillProficiencyBonusSlots: bonusSlots })
+                }
               />
             )}
         </Box>
@@ -323,4 +348,7 @@ export function MainTab({
       </Stack>
     </Box>
   );
-}
+});
+
+// Display name para debugging
+MainTab.displayName = 'MainTab';

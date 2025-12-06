@@ -134,3 +134,33 @@ export {
   ensureComumLanguage,
   getLanguageSummary,
 } from './languageUtils';
+
+// Sense calculation utilities
+export {
+  calculateSenseModifier,
+  calculateAllSenses,
+  getKeenSenseBonus,
+  PERCEPTION_USE_TO_SENSE,
+  SENSE_TO_PERCEPTION_USE,
+  SENSE_USE_LABELS,
+  SENSE_ICONS,
+} from './senseCalculations';
+export type { SenseCalculationResult } from './senseCalculations';
+
+// Combat penalties utilities
+export {
+  createDefaultCombatPenalties,
+  applyDefensePenalty,
+  resetDefensePenalty,
+  applySavingThrowPenalty,
+  resetSavingThrowPenalty,
+  resetAllPenalties,
+  calculateEffectiveDefense,
+  hasAnyPenalty,
+  MIN_DEFENSE,
+  DEFENSE_PENALTY_PER_MISS,
+  SAVING_THROW_DICE_PENALTY_PER_SUCCESS,
+  SAVING_THROW_LABELS,
+  SAVING_THROW_COLORS,
+} from './combatPenalties';
+export type { CombatPenaltiesState } from './combatPenalties';

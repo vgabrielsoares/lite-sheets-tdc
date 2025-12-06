@@ -296,11 +296,12 @@ describe('characterFactory', () => {
       });
 
       it('deve ter todas as ações disponíveis', () => {
-        expect(character.combat.actionEconomy.mainAction).toBe(true);
-        expect(character.combat.actionEconomy.movementAction).toBe(true);
-        expect(character.combat.actionEconomy.quickAction).toBe(true);
-        expect(character.combat.actionEconomy.freeAction).toBe(true);
+        expect(character.combat.actionEconomy.majorAction).toBe(true);
+        expect(character.combat.actionEconomy.minorAction1).toBe(true);
+        expect(character.combat.actionEconomy.minorAction2).toBe(true);
         expect(character.combat.actionEconomy.reaction).toBe(true);
+        expect(character.combat.actionEconomy.defensiveReaction).toBe(true);
+        expect(character.combat.actionEconomy.extraActions).toEqual([]);
       });
 
       it('deve ter defesa base de 15', () => {
@@ -335,14 +336,15 @@ describe('characterFactory', () => {
 
     describe('Deslocamento', () => {
       it('deve ter deslocamento andando padrão de 5', () => {
-        expect(character.movement.speeds.andando).toBe(5);
+        expect(character.movement.speeds.andando.base).toBe(5);
+        expect(character.movement.speeds.andando.bonus).toBe(0);
       });
 
       it('deve ter outros deslocamentos em 0', () => {
-        expect(character.movement.speeds.voando).toBe(0);
-        expect(character.movement.speeds.escalando).toBe(0);
-        expect(character.movement.speeds.escavando).toBe(0);
-        expect(character.movement.speeds.nadando).toBe(0);
+        expect(character.movement.speeds.voando.base).toBe(0);
+        expect(character.movement.speeds.escalando.base).toBe(0);
+        expect(character.movement.speeds.escavando.base).toBe(0);
+        expect(character.movement.speeds.nadando.base).toBe(0);
       });
     });
 
@@ -574,7 +576,7 @@ describe('characterFactory', () => {
       });
 
       it('deve seguir regra: Deslocamento padrão andando = 5', () => {
-        expect(character.movement.speeds.andando).toBe(5);
+        expect(character.movement.speeds.andando.base).toBe(5);
       });
 
       it('deve seguir regra: Todas habilidades começam em Leigo (x0)', () => {

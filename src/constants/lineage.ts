@@ -51,7 +51,7 @@ export interface SizeModifiers {
     acrobacia: number;
     atletismo: number;
     furtividade: number;
-    reflexos: number;
+    reflexo: number;
     tenacidade: number;
   };
 }
@@ -77,7 +77,7 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
       acrobacia: 5,
       atletismo: -5,
       furtividade: 5,
-      reflexos: 3,
+      reflexo: 3,
       tenacidade: -3,
     },
   },
@@ -93,7 +93,7 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
       acrobacia: 2,
       atletismo: -2,
       furtividade: 2,
-      reflexos: 1,
+      reflexo: 1,
       tenacidade: -1,
     },
   },
@@ -109,7 +109,7 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
       acrobacia: 0,
       atletismo: 0,
       furtividade: 0,
-      reflexos: 0,
+      reflexo: 0,
       tenacidade: 0,
     },
   },
@@ -125,7 +125,7 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
       acrobacia: -2,
       atletismo: 2,
       furtividade: -2,
-      reflexos: -1,
+      reflexo: -1,
       tenacidade: 1,
     },
   },
@@ -141,7 +141,7 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
       acrobacia: -5, // -5 a -7 (usando mínimo)
       atletismo: 5, // +5 a +7 (usando mínimo)
       furtividade: -5, // -5 a -7 (usando mínimo)
-      reflexos: -2, // -2 a -4 (usando mínimo)
+      reflexo: -2, // -2 a -4 (usando mínimo)
       tenacidade: 2, // +2 a +4 (usando mínimo)
     },
   },
@@ -157,7 +157,7 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
       acrobacia: -8, // -8 ou mais
       atletismo: 8, // +8 ou mais
       furtividade: -8, // -8 ou mais
-      reflexos: -5, // -5 ou mais
+      reflexo: -5, // -5 ou mais
       tenacidade: 5, // +5 ou mais
     },
   },

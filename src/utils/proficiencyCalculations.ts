@@ -14,18 +14,22 @@ import { SKILL_LIST, BASE_PROFICIENT_SKILLS } from '@/types/skills';
 /**
  * Calcula o número máximo de proficiências disponíveis
  *
- * Regra: 3 + valor do atributo Mente (retroativo)
+ * Regra: 3 + valor do atributo Mente + bônus (retroativo)
  *
  * @param menteValue - Valor do atributo Mente
+ * @param bonusSlots - Bônus adicional de slots (poderes, arquétipos, classes)
  * @returns Número máximo de proficiências
  *
  * @example
- * calculateMaxProficiencies(1); // 4 (3 base + 1 de Mente)
- * calculateMaxProficiencies(3); // 6 (3 base + 3 de Mente)
- * calculateMaxProficiencies(0); // 3 (mínimo, mesmo com Mente 0)
+ * calculateMaxProficiencies(1, 0); // 4 (3 base + 1 de Mente)
+ * calculateMaxProficiencies(3, 2); // 8 (3 base + 3 de Mente + 2 bônus)
+ * calculateMaxProficiencies(0, 0); // 3 (mínimo, mesmo com Mente 0)
  */
-export function calculateMaxProficiencies(menteValue: number): number {
-  return BASE_PROFICIENT_SKILLS + Math.max(0, menteValue);
+export function calculateMaxProficiencies(
+  menteValue: number,
+  bonusSlots: number = 0
+): number {
+  return BASE_PROFICIENT_SKILLS + Math.max(0, menteValue) + bonusSlots;
 }
 
 /**
@@ -65,17 +69,19 @@ export function countAcquiredProficiencies(
  * @param skills - Todas as habilidades do personagem
  * @param menteValue - Valor do atributo Mente
  * @param luckLevel - Nível de sorte do personagem
+ * @param bonusSlots - Bônus adicional de slots (poderes, arquétipos, classes)
  * @returns true se ainda há espaço para mais proficiências
  *
  * @example
- * canAddProficiency(skills, 2, 1); // true se tiver menos de 5 proficiências (incluindo sorte)
+ * canAddProficiency(skills, 2, 1, 0); // true se tiver menos de 5 proficiências (incluindo sorte)
  */
 export function canAddProficiency(
   skills: Skills,
   menteValue: number,
-  luckLevel: number = 0
+  luckLevel: number = 0,
+  bonusSlots: number = 0
 ): boolean {
-  const maxProficiencies = calculateMaxProficiencies(menteValue);
+  const maxProficiencies = calculateMaxProficiencies(menteValue, bonusSlots);
   const acquiredProficiencies = countAcquiredProficiencies(skills, luckLevel);
   return acquiredProficiencies < maxProficiencies;
 }
@@ -86,17 +92,19 @@ export function canAddProficiency(
  * @param skills - Todas as habilidades do personagem
  * @param menteValue - Valor do atributo Mente
  * @param luckLevel - Nível de sorte do personagem
+ * @param bonusSlots - Bônus adicional de slots (poderes, arquétipos, classes)
  * @returns true se o número de proficiências não excede o permitido
  *
  * @example
- * validateProficienciesLimit(skills, 2, 1); // true se <= 5 proficiências (incluindo sorte)
+ * validateProficienciesLimit(skills, 2, 1, 0); // true se <= 5 proficiências (incluindo sorte)
  */
 export function validateProficienciesLimit(
   skills: Skills,
   menteValue: number,
-  luckLevel: number = 0
+  luckLevel: number = 0,
+  bonusSlots: number = 0
 ): boolean {
-  const maxProficiencies = calculateMaxProficiencies(menteValue);
+  const maxProficiencies = calculateMaxProficiencies(menteValue, bonusSlots);
   const acquiredProficiencies = countAcquiredProficiencies(skills, luckLevel);
   return acquiredProficiencies <= maxProficiencies;
 }
@@ -107,17 +115,19 @@ export function validateProficienciesLimit(
  * @param skills - Todas as habilidades do personagem
  * @param menteValue - Valor do atributo Mente
  * @param luckLevel - Nível de sorte do personagem
+ * @param bonusSlots - Bônus adicional de slots (poderes, arquétipos, classes)
  * @returns Número de proficiências restantes
  *
  * @example
- * getRemainingProficiencies(skills, 2, 1); // Ex: 1 (se tem 4 de 5 usadas, incluindo sorte)
+ * getRemainingProficiencies(skills, 2, 1, 0); // Ex: 1 (se tem 4 de 5 usadas, incluindo sorte)
  */
 export function getRemainingProficiencies(
   skills: Skills,
   menteValue: number,
-  luckLevel: number = 0
+  luckLevel: number = 0,
+  bonusSlots: number = 0
 ): number {
-  const maxProficiencies = calculateMaxProficiencies(menteValue);
+  const maxProficiencies = calculateMaxProficiencies(menteValue, bonusSlots);
   const acquiredProficiencies = countAcquiredProficiencies(skills, luckLevel);
   return Math.max(0, maxProficiencies - acquiredProficiencies);
 }
@@ -128,10 +138,11 @@ export function getRemainingProficiencies(
  * @param skills - Todas as habilidades do personagem
  * @param menteValue - Valor do atributo Mente
  * @param luckLevel - Nível de sorte do personagem
+ * @param bonusSlots - Bônus adicional de slots (poderes, arquétipos, classes)
  * @returns Objeto com informações completas
  *
  * @example
- * const info = getProficiencyInfo(skills, 2, 1);
+ * const info = getProficiencyInfo(skills, 2, 1, 0);
  * // {
  * //   max: 5,
  * //   acquired: 4, // 3 habilidades + 1 nível de sorte
@@ -143,9 +154,10 @@ export function getRemainingProficiencies(
 export function getProficiencyInfo(
   skills: Skills,
   menteValue: number,
-  luckLevel: number = 0
+  luckLevel: number = 0,
+  bonusSlots: number = 0
 ) {
-  const max = calculateMaxProficiencies(menteValue);
+  const max = calculateMaxProficiencies(menteValue, bonusSlots);
   const acquired = countAcquiredProficiencies(skills, luckLevel);
   const remaining = Math.max(0, max - acquired);
   const canAdd = acquired < max;

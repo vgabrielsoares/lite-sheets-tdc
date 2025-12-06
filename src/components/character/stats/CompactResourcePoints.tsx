@@ -112,7 +112,7 @@ export interface CompactResourcePointsProps {
  * />
  * ```
  */
-export function CompactResourcePoints({
+export const CompactResourcePoints = React.memo(function CompactResourcePoints({
   resource,
   config,
   onChange,
@@ -261,7 +261,14 @@ export function CompactResourcePoints({
         </Box>
 
         {/* Controles de ajuste */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+          }}
+        >
           {/* Botão: Diminuir grande */}
           <Tooltip title={buttonLabels.decreaseLarge} arrow enterDelay={150}>
             <IconButton
@@ -395,6 +402,9 @@ export function CompactResourcePoints({
       </CardContent>
     </Card>
   );
-}
+});
+
+// Display name para debugging
+CompactResourcePoints.displayName = 'CompactResourcePoints';
 
 export default CompactResourcePoints;

@@ -11,7 +11,9 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Checkbox,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
   Paper,
   Tooltip,
   Button,
@@ -22,6 +24,7 @@ import { Sidebar } from '@/components/shared/Sidebar';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { Character } from '@/types/character';
 import type { Modifier } from '@/types/common';
+import { getSizeModifiers, SIZE_LABELS } from '@/constants/lineage';
 
 /**
  * Interface para armadura cadastrada
@@ -148,8 +151,18 @@ export default function DefenseSidebar({
       : agilityValue;
   const armorBonusValue = activeArmor?.armorBonus || 0;
   const otherBonusesTotal = otherBonuses.reduce((sum, m) => sum + m.value, 0);
+
+  // Obter modificador de defesa pelo tamanho
+  const sizeModifiers = getSizeModifiers(character.size);
+  const sizeDefenseBonus = sizeModifiers.defense;
+
   const totalDefense =
-    15 + effectiveAgility + armorBonusValue + shieldBonus + otherBonusesTotal;
+    15 +
+    effectiveAgility +
+    sizeDefenseBonus +
+    armorBonusValue +
+    shieldBonus +
+    otherBonusesTotal;
 
   // Estado combinado para debounce
   const defenseState = React.useMemo(
@@ -212,7 +225,7 @@ export default function DefenseSidebar({
     setArmors(
       armors.map((a) => ({
         ...a,
-        isActive: a.id === id ? !a.isActive : false, // Apenas uma ativa por vez
+        isActive: a.id === id, // Apenas uma ativa por vez (Radio behavior)
       }))
     );
   };
@@ -258,7 +271,15 @@ export default function DefenseSidebar({
             {activeArmor?.maxAgilityBonus !== null
               ? `, máx ${activeArmor?.maxAgilityBonus}`
               : ''}
-            ) + {armorBonusValue} (armadura) + {shieldBonus} (escudo) +{' '}
+            )
+            {sizeDefenseBonus !== 0 && (
+              <>
+                {' '}
+                {sizeDefenseBonus > 0 ? '+' : ''}
+                {sizeDefenseBonus} (tamanho: {SIZE_LABELS[character.size]})
+              </>
+            )}{' '}
+            + {armorBonusValue} (armadura) + {shieldBonus} (escudo) +{' '}
             {otherBonusesTotal} (outros)
           </Typography>
         </Paper>
@@ -276,38 +297,46 @@ export default function DefenseSidebar({
           </Typography>
 
           {armors.length > 0 ? (
-            <List dense sx={{ mb: 2 }}>
-              {armors.map((armor) => (
-                <ListItem
-                  key={armor.id}
-                  sx={{
-                    bgcolor: armor.isActive ? 'action.selected' : 'transparent',
-                    borderRadius: 1,
-                    mb: 0.5,
-                  }}
-                >
-                  <Checkbox
-                    checked={armor.isActive}
-                    onChange={() => handleToggleArmor(armor.id)}
-                    size="small"
-                  />
-                  <ListItemText
-                    primary={armor.name}
-                    secondary={`+${armor.armorBonus} defesa${armor.maxAgilityBonus !== null ? `, máx agilidade: ${armor.maxAgilityBonus}` : ', sem limite de agilidade'}`}
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      onClick={() => handleRemoveArmor(armor.id)}
-                      color="error"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
+            <RadioGroup
+              value={armors.find((a) => a.isActive)?.id || ''}
+              onChange={(e) => handleToggleArmor(e.target.value)}
+            >
+              <List dense sx={{ mb: 2 }}>
+                {armors.map((armor) => (
+                  <ListItem
+                    key={armor.id}
+                    sx={{
+                      bgcolor: armor.isActive
+                        ? 'action.selected'
+                        : 'transparent',
+                      borderRadius: 1,
+                      mb: 0.5,
+                    }}
+                  >
+                    <FormControlLabel
+                      value={armor.id}
+                      control={<Radio size="small" />}
+                      label=""
+                      sx={{ mr: 0 }}
+                    />
+                    <ListItemText
+                      primary={armor.name}
+                      secondary={`+${armor.armorBonus} defesa${armor.maxAgilityBonus !== null ? `, máx agilidade: ${armor.maxAgilityBonus}` : ', sem limite de agilidade'}`}
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        edge="end"
+                        size="small"
+                        onClick={() => handleRemoveArmor(armor.id)}
+                        color="error"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
+            </RadioGroup>
           ) : (
             <Typography
               variant="body2"

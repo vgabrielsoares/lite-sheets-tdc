@@ -55,7 +55,7 @@ const HP_CONFIG: ResourceConfig = {
  * />
  * ```
  */
-export function CompactHealthPoints({
+export const CompactHealthPoints = React.memo(function CompactHealthPoints({
   hp,
   onChange,
   onOpenDetails,
@@ -69,6 +69,9 @@ export function CompactHealthPoints({
       applyDelta={applyDeltaToHP}
     />
   );
-}
+});
+
+// Display name para debugging
+CompactHealthPoints.displayName = 'CompactHealthPoints';
 
 export default CompactHealthPoints;

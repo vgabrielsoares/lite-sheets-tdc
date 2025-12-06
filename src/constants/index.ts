@@ -23,6 +23,9 @@ export * from './languages';
 // Arquétipos
 export * from './archetypes';
 
+// Classes
+export * from './classes';
+
 // Proficiências
 export * from './proficiencies';
 
@@ -37,3 +40,9 @@ export * from './lineage';
 
 // Origens
 export * from './origins';
+
+// Tipos de Dano
+export * from './damageTypes';
+
+// Condições
+export * from './conditions';

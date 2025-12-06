@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense, lazy, useTransition } from 'react';
 import {
   Box,
   Container,
@@ -9,6 +9,8 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
+  CircularProgress,
+  Fade,
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
 import PersonIcon from '@mui/icons-material/Person';
@@ -18,6 +20,16 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import BuildIcon from '@mui/icons-material/Build';
 import TranslateIcon from '@mui/icons-material/Translate';
+// Ícones para TOC - Combate
+import FlashOnIcon from '@mui/icons-material/FlashOn';
+import SportsKabaddiIcon from '@mui/icons-material/SportsKabaddi';
+import GavelIcon from '@mui/icons-material/Gavel';
+import SecurityIcon from '@mui/icons-material/Security';
+// Ícones para TOC - Arquétipos
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import StarIcon from '@mui/icons-material/Star';
+import SchoolIcon from '@mui/icons-material/School';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { useRouter } from 'next/navigation';
 import type {
   Character,
@@ -30,15 +42,29 @@ import type {
 import type { HealthPoints, PowerPoints } from '@/types/combat';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
-import {
-  MainTab,
-  CombatTab,
-  ArchetypesTab,
-  ResourcesTab,
-  InventoryTab,
-  SpellsTab,
-  DescriptionTab,
-} from './tabs';
+
+// Lazy load tabs for better performance
+const MainTab = lazy(() =>
+  import('./tabs/MainTab').then((m) => ({ default: m.MainTab }))
+);
+const CombatTab = lazy(() =>
+  import('./tabs/CombatTab').then((m) => ({ default: m.CombatTab }))
+);
+const ArchetypesTab = lazy(() =>
+  import('./tabs/ArchetypesTab').then((m) => ({ default: m.ArchetypesTab }))
+);
+const ResourcesTab = lazy(() =>
+  import('./tabs/ResourcesTab').then((m) => ({ default: m.ResourcesTab }))
+);
+const InventoryTab = lazy(() =>
+  import('./tabs/InventoryTab').then((m) => ({ default: m.InventoryTab }))
+);
+const SpellsTab = lazy(() =>
+  import('./tabs/SpellsTab').then((m) => ({ default: m.SpellsTab }))
+);
+const DescriptionTab = lazy(() =>
+  import('./tabs/DescriptionTab').then((m) => ({ default: m.DescriptionTab }))
+);
 import {
   LinhagemSidebar,
   OrigemSidebar,
@@ -51,6 +77,10 @@ import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 import { TableOfContents, TOCSection } from '@/components/shared';
+import {
+  calculateArchetypeHPBreakdown,
+  calculateArchetypePPBreakdown,
+} from './archetypes';
 
 export interface CharacterSheetProps {
   /**
@@ -92,8 +122,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Estado da aba atual
+  // Estado da aba atual com transição para mostrar loading
   const [currentTab, setCurrentTab] = useState<CharacterTabId>('main');
+  const [isPending, startTransition] = useTransition();
+
+  // Handler para mudança de aba com transição
+  const handleTabChange = (tab: CharacterTabId) => {
+    startTransition(() => {
+      setCurrentTab(tab);
+    });
+  };
 
   // Estado do Table of Contents
   const [tocOpen, setTocOpen] = useState<boolean>(false);
@@ -162,13 +200,63 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         },
       ],
       combat: [
-        { id: 'section-combat-stats', label: 'Status de Combate' },
-        { id: 'section-actions', label: 'Ações' },
-        { id: 'section-attacks', label: 'Ataques' },
+        {
+          id: 'section-combat-stats',
+          label: 'Recursos Vitais',
+          icon: <FavoriteIcon fontSize="small" />,
+        },
+        {
+          id: 'section-action-economy',
+          label: 'Economia de Ações',
+          icon: <FlashOnIcon fontSize="small" />,
+        },
+        {
+          id: 'section-defense',
+          label: 'Defesa',
+          icon: <ShieldIcon fontSize="small" />,
+        },
+        {
+          id: 'section-saving-throws',
+          label: 'Testes de Resistência',
+          icon: <GavelIcon fontSize="small" />,
+        },
+        {
+          id: 'section-attacks',
+          label: 'Ataques',
+          icon: <SportsKabaddiIcon fontSize="small" />,
+        },
+        {
+          id: 'section-dying-and-pplimit',
+          label: 'Condições de Combate',
+          icon: <SecurityIcon fontSize="small" />,
+        },
+        {
+          id: 'section-resistances',
+          label: 'Resistências',
+          icon: <SecurityIcon fontSize="small" />,
+        },
       ],
       archetypes: [
-        { id: 'section-archetypes', label: 'Arquétipos' },
-        { id: 'section-classes', label: 'Classes' },
+        {
+          id: 'section-archetypes',
+          label: 'Arquétipos',
+          icon: <AutoAwesomeIcon fontSize="small" />,
+        },
+        {
+          id: 'section-archetype-features',
+          label: 'Características',
+          icon: <StarIcon fontSize="small" />,
+        },
+        {
+          id: 'section-classes',
+          label: 'Classes',
+          icon: <SchoolIcon fontSize="small" />,
+        },
+        {
+          id: 'section-progression',
+          label: 'Progressão',
+          icon: <TrendingUpIcon fontSize="small" />,
+        },
       ],
       resources: [
         { id: 'section-luck', label: 'Sorte' },
@@ -274,7 +362,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   /**
    * Handler para atualizar a linhagem do personagem
-   * Também aplica os modificadores de atributos da linhagem automaticamente
+   * Também aplica automaticamente:
+   * - Modificadores de atributos
+   * - Tamanho
+   * - Deslocamento (base)
+   * - Visão e sentidos aguçados
    */
   const handleUpdateLineage = (lineage: Character['lineage']) => {
     if (!lineage) {
@@ -309,8 +401,64 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       }
     });
 
-    // Atualiza linhagem e atributos juntos
-    onUpdate({ lineage, attributes: updatedAttributes });
+    // Sincroniza o tamanho da linhagem com o personagem
+    const updatedSize = lineage.size;
+
+    // Sincroniza o deslocamento da linhagem com o personagem (valores base)
+    // O bônus é mantido do personagem, apenas o base vem da linhagem
+    const lineageMovement = lineage.movement;
+    const currentMovement = character.movement;
+    const updatedMovement = {
+      ...currentMovement,
+      speeds: {
+        andando: {
+          base: lineageMovement.andando ?? 0,
+          bonus: currentMovement.speeds?.andando?.bonus ?? 0,
+        },
+        voando: {
+          base: lineageMovement.voando ?? 0,
+          bonus: currentMovement.speeds?.voando?.bonus ?? 0,
+        },
+        escalando: {
+          base: lineageMovement.escalando ?? 0,
+          bonus: currentMovement.speeds?.escalando?.bonus ?? 0,
+        },
+        escavando: {
+          base: lineageMovement.escavando ?? 0,
+          bonus: currentMovement.speeds?.escavando?.bonus ?? 0,
+        },
+        nadando: {
+          base: lineageMovement.nadando ?? 0,
+          bonus: currentMovement.speeds?.nadando?.bonus ?? 0,
+        },
+      },
+    };
+
+    // Sincroniza a visão e sentidos aguçados da linhagem com o personagem
+    const updatedSenses = {
+      ...character.senses,
+      vision: lineage.vision,
+      keenSenses: lineage.keenSenses || [],
+      perceptionModifiers: {
+        visao: 0,
+        olfato: 0,
+        audicao: 0,
+      },
+    };
+
+    // Calcula os modificadores de percepção baseado nos sentidos aguçados
+    (lineage.keenSenses || []).forEach((sense) => {
+      updatedSenses.perceptionModifiers[sense.type] = sense.bonus;
+    });
+
+    // Atualiza linhagem, atributos, tamanho, deslocamento e sentidos juntos
+    onUpdate({
+      lineage,
+      attributes: updatedAttributes,
+      size: updatedSize,
+      movement: updatedMovement,
+      senses: updatedSenses,
+    });
   };
 
   /**
@@ -701,18 +849,75 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           }}
         >
           {/* Navegação por abas */}
-          <TabNavigation currentTab={currentTab} onTabChange={setCurrentTab} />
+          <TabNavigation
+            currentTab={currentTab}
+            onTabChange={handleTabChange}
+          />
 
-          {/* Conteúdo da aba atual */}
+          {/* Conteúdo da aba atual com loading */}
           <Box
             role="tabpanel"
             id={`tabpanel-${currentTab}`}
             aria-labelledby={`tab-${currentTab}`}
             sx={{
               flex: 1,
+              position: 'relative',
+              minHeight: 400,
             }}
           >
-            {renderTabContent()}
+            {/* Overlay de loading durante transição */}
+            <Fade in={isPending} timeout={150}>
+              <Box
+                sx={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: 'rgba(0, 0, 0, 0.3)',
+                  zIndex: 1300, // Acima de modais e outros overlays
+                  backdropFilter: 'blur(2px)',
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 3,
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    boxShadow: 3,
+                  }}
+                >
+                  <CircularProgress size={40} />
+                </Box>
+              </Box>
+            </Fade>
+
+            {/* Conteúdo da aba */}
+            <Suspense
+              fallback={
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 400,
+                    bgcolor: 'background.paper',
+                    borderRadius: 1,
+                  }}
+                >
+                  <CircularProgress size={40} />
+                </Box>
+              }
+            >
+              {renderTabContent()}
+            </Suspense>
           </Box>
         </Box>
       </Box>
@@ -771,6 +976,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 })
               }
               onClose={handleCloseSidebar}
+              archetypeBreakdown={calculateArchetypeHPBreakdown(
+                character.archetypes ?? [],
+                character.attributes.constituicao
+              )}
+              baseHP={15}
             />
           )}
 
@@ -785,6 +995,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
                 })
               }
               onClose={handleCloseSidebar}
+              archetypeBreakdown={calculateArchetypePPBreakdown(
+                character.archetypes ?? [],
+                character.attributes.presenca
+              )}
+              basePP={2}
             />
           )}
 
@@ -836,6 +1051,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               currentSignatureSkill={getCurrentSignatureSkill()}
               crafts={character.crafts}
               onUpdateCraft={handleUpdateCraft}
+              keenSenses={character.senses?.keenSenses}
             />
           )}
         </>
@@ -881,6 +1097,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             })
           }
           onClose={handleCloseSidebar}
+          archetypeBreakdown={calculateArchetypeHPBreakdown(
+            character.archetypes ?? [],
+            character.attributes.constituicao
+          )}
+          baseHP={15}
         />
       )}
 
@@ -895,6 +1116,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             })
           }
           onClose={handleCloseSidebar}
+          archetypeBreakdown={calculateArchetypePPBreakdown(
+            character.archetypes ?? [],
+            character.attributes.presenca
+          )}
+          basePP={2}
         />
       )}
 
@@ -946,6 +1172,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           currentSignatureSkill={getCurrentSignatureSkill()}
           crafts={character.crafts}
           onUpdateCraft={handleUpdateCraft}
+          keenSenses={character.senses?.keenSenses}
         />
       )}
     </Container>

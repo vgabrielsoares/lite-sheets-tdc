@@ -14,10 +14,12 @@ import type { SkillName } from './skills';
 export interface HealthPoints extends Resource {
   /** PV atual */
   current: number;
-  /** PV máximo */
+  /** PV máximo (calculado: 15 + arquétipos + modificadores) */
   max: number;
   /** PV temporário */
   temporary: number;
+  /** Modificadores adicionais ao PV máximo (habilidades especiais, itens, etc.) */
+  maxModifiers?: Modifier[];
 }
 
 /**
@@ -26,10 +28,12 @@ export interface HealthPoints extends Resource {
 export interface PowerPoints extends Resource {
   /** PP atual */
   current: number;
-  /** PP máximo */
+  /** PP máximo (calculado: 2 + arquétipos + modificadores) */
   max: number;
   /** PP temporário */
   temporary: number;
+  /** Modificadores adicionais ao PP máximo (habilidades especiais, itens, etc.) */
+  maxModifiers?: Modifier[];
 }
 
 /**
@@ -52,33 +56,61 @@ export interface DyingState {
   currentRounds: number;
   /** Rodadas máximas antes da morte (2 + Constituição + modificadores) */
   maxRounds: number;
+  /** Modificadores adicionais para rodadas máximas (de habilidades, itens, etc.) */
+  otherModifiers?: number;
 }
 
 /**
  * Economia de ações em combate
+ *
+ * O sistema Tabuleiro do Caos usa:
+ * - 1 Ação Maior por turno
+ * - 2 Ações Menores por turno
+ * - 1 Reação por rodada
+ * - 1 Reação Defensiva por rodada
+ * - Ações Livres ilimitadas
+ *
+ * Habilidades especiais podem conceder ações extras
  */
 export interface ActionEconomy {
-  /** Ação principal disponível */
-  mainAction: boolean;
-  /** Ação de movimento disponível */
-  movementAction: boolean;
-  /** Ação rápida disponível */
-  quickAction: boolean;
-  /** Ação livre disponível (geralmente sempre true) */
-  freeAction: boolean;
-  /** Reação disponível */
+  /** Ação Maior disponível (1 por turno) */
+  majorAction: boolean;
+  /** Primeira Ação Menor disponível (2 por turno) */
+  minorAction1: boolean;
+  /** Segunda Ação Menor disponível (2 por turno) */
+  minorAction2: boolean;
+  /** Reação disponível (1 por rodada) */
   reaction: boolean;
+  /** Reação Defensiva disponível (1 por rodada) */
+  defensiveReaction: boolean;
+  /** Ações extras concedidas por habilidades especiais */
+  extraActions?: ExtraAction[];
+}
+
+/**
+ * Ação extra concedida por habilidade especial
+ */
+export interface ExtraAction {
+  /** ID único da ação extra */
+  id: string;
+  /** Tipo da ação extra */
+  type: 'maior' | 'menor' | 'reacao' | 'reacao-defensiva';
+  /** Se a ação está disponível */
+  available: boolean;
+  /** Fonte da ação extra (nome da habilidade) */
+  source: string;
 }
 
 /**
  * Tipos de ação em combate
  */
 export type ActionType =
-  | 'principal'
-  | 'movimento'
-  | 'rapida'
+  | 'maior'
+  | 'menor'
+  | '2-menores'
   | 'livre'
-  | 'reacao';
+  | 'reacao'
+  | 'reacao-defensiva';
 
 /**
  * Defesa do personagem
@@ -182,16 +214,29 @@ export interface SavingThrow {
  * Resistências do personagem
  */
 export interface Resistances {
-  /** Resistências a tipos de dano */
+  /** Reduções de Dano (RD) - reduz dano recebido por valor fixo */
+  damageReduction: DamageReductionEntry[];
+  /** Resistências Aprimoradas a tipos de dano - divide dano por 2 */
   damageResistances: DamageType[];
-  /** Imunidades a tipos de dano */
+  /** Imunidades a tipos de dano - anula todo o dano */
   damageImmunities: DamageType[];
-  /** Vulnerabilidades a tipos de dano */
+  /** Vulnerabilidades a tipos de dano - dobra o dano */
   damageVulnerabilities: DamageType[];
-  /** Resistências a condições */
-  conditionResistances: string[];
   /** Imunidades a condições */
   conditionImmunities: string[];
+}
+
+/**
+ * Entrada de Redução de Dano (RD)
+ * Ex: RD 5 Fogo (reduz 5 pontos de dano de fogo)
+ */
+export interface DamageReductionEntry {
+  /** Tipo de dano que é reduzido */
+  type: DamageType;
+  /** Valor da redução */
+  value: number;
+  /** Fonte da RD (opcional) */
+  source?: string;
 }
 
 /**
@@ -218,6 +263,17 @@ export interface Initiative {
   modifier: number;
   /** Valor rolado de iniciativa no combate atual */
   currentRoll?: number;
+}
+
+/**
+ * Estado das penalidades de combate
+ * Rastreia penalidades por erros de ataques e sucessos em testes de resistência
+ */
+export interface CombatPenalties {
+  /** Penalidade atual na defesa (valor negativo, ex: -2) */
+  defensePenalty: number;
+  /** Penalidades nos testes de resistência (-1d20 por sucesso, rastreado por tipo) */
+  savingThrowPenalties: Record<SavingThrowType, number>;
 }
 
 /**
@@ -248,6 +304,8 @@ export interface CombatData {
   conditions: Condition[];
   /** Iniciativa */
   initiative: Initiative;
+  /** Penalidades de combate */
+  penalties: CombatPenalties;
 }
 
 /**

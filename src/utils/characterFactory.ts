@@ -108,11 +108,12 @@ function createDefaultCombat(): CombatData {
       maxRounds: 3, // 2 + Constituição (1)
     },
     actionEconomy: {
-      mainAction: true,
-      movementAction: true,
-      quickAction: true,
-      freeAction: true,
+      majorAction: true,
+      minorAction1: true,
+      minorAction2: true,
       reaction: true,
+      defensiveReaction: true,
+      extraActions: [],
     },
     defense: {
       base: 15,
@@ -150,15 +151,24 @@ function createDefaultCombat(): CombatData {
       },
     ],
     resistances: {
+      damageReduction: [],
       damageResistances: [],
       damageImmunities: [],
       damageVulnerabilities: [],
-      conditionResistances: [],
       conditionImmunities: [],
     },
     conditions: [],
     initiative: {
       modifier: 0,
+    },
+    penalties: {
+      defensePenalty: 0,
+      savingThrowPenalties: {
+        determinacao: 0,
+        reflexo: 0,
+        tenacidade: 0,
+        vigor: 0,
+      },
     },
   };
 }
@@ -387,6 +397,7 @@ export function createDefaultCharacter(
     // Habilidades
     skills: createDefaultSkills(),
     signatureSkill: 'acerto' as SkillName, // Default, deve ser escolhido pelo jogador
+    skillProficiencyBonusSlots: 0, // Bônus de slots de proficiência (poderes, arquétipos, classes)
 
     // Combate
     combat: createDefaultCombat(),

@@ -2,11 +2,12 @@
  * DefenseDisplay Component
  *
  * Displays the character's Defense value with automatic calculation
- * Formula: 15 + Agilidade + armor bonus (limited by Agility) + other bonuses
+ * Formula: 15 + Agilidade + size bonus + armor bonus (limited by Agility) + other bonuses
  *
  * According to RPG rules:
  * - Base defense: 15
  * - Agility bonus: Full Agilidade attribute value
+ * - Size bonus: From creature size (e.g., +3 for tiny, -1 for large)
  * - Armor bonus: Limited by armor's max Agility bonus
  * - Other bonuses: From spells, abilities, etc.
  *
@@ -32,6 +33,8 @@ import type { Modifier } from '@/types';
 interface DefenseDisplayProps {
   /** Current Agilidade (Agility) attribute value */
   agilidade: number;
+  /** Size modifier bonus from creature size (can be negative) */
+  sizeBonus?: number;
   /** Armor bonus (already limited by armor's max Agility if applicable) */
   armorBonus?: number;
   /** Shield bonus */
@@ -44,14 +47,15 @@ interface DefenseDisplayProps {
   onOpenDetails?: () => void;
 }
 
-export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
+export const DefenseDisplay: React.FC<DefenseDisplayProps> = React.memo(function DefenseDisplay({
   agilidade,
+  sizeBonus = 0,
   armorBonus = 0,
   shieldBonus = 0,
   maxAgilityBonus,
   otherBonuses = [],
   onOpenDetails,
-}) => {
+}) {
   // Calculate the effective agility bonus (limited by armor if applicable)
   const effectiveAgilityBonus =
     maxAgilityBonus !== undefined
@@ -64,9 +68,14 @@ export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
     0
   );
 
-  // Calculate total defense
+  // Calculate total defense (including size bonus)
   const totalDefense =
-    15 + effectiveAgilityBonus + armorBonus + shieldBonus + otherBonusesTotal;
+    15 +
+    effectiveAgilityBonus +
+    sizeBonus +
+    armorBonus +
+    shieldBonus +
+    otherBonusesTotal;
 
   // Build tooltip text
   const tooltipLines = [
@@ -74,6 +83,10 @@ export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
     '• Base: 15',
     `• Agilidade: ${agilidade > 0 ? '+' : ''}${agilidade}${maxAgilityBonus !== undefined && agilidade > maxAgilityBonus ? ` (limitado a ${maxAgilityBonus})` : ''}`,
   ];
+
+  if (sizeBonus !== 0) {
+    tooltipLines.push(`• Tamanho: ${sizeBonus > 0 ? '+' : ''}${sizeBonus}`);
+  }
 
   if (armorBonus !== 0) {
     tooltipLines.push(`• Armadura: ${armorBonus > 0 ? '+' : ''}${armorBonus}`);
@@ -161,6 +174,9 @@ export const DefenseDisplay: React.FC<DefenseDisplayProps> = ({
       </Box>
     </Paper>
   );
-};
+});
+
+// Display name para debugging
+DefenseDisplay.displayName = 'DefenseDisplay';
 
 export default DefenseDisplay;

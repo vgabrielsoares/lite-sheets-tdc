@@ -1,14 +1,46 @@
 'use client';
 
 import React from 'react';
-import { Box, Card, CardContent, Typography, Divider } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Divider,
+  Chip,
+  Stack,
+} from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import HomeIcon from '@mui/icons-material/Home';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import StarIcon from '@mui/icons-material/Star';
-import type { Character } from '@/types';
+import CategoryIcon from '@mui/icons-material/Category';
+import type { Character, ArchetypeName } from '@/types';
 import { EditableText, EditableNumber } from '@/components/shared';
+import { ARCHETYPE_LABELS } from '@/constants/archetypes';
+
+/**
+ * Cor do chip baseada no arquétipo (mesmo padrão da aba de arquétipos)
+ */
+const getArchetypeColor = (name: ArchetypeName): string => {
+  switch (name) {
+    case 'academico':
+      return '#5C6BC0'; // Indigo
+    case 'acolito':
+      return '#AB47BC'; // Purple
+    case 'combatente':
+      return '#EF5350'; // Red
+    case 'feiticeiro':
+      return '#42A5F5'; // Blue
+    case 'ladino':
+      return '#66BB6A'; // Green
+    case 'natural':
+      return '#8D6E63'; // Brown
+    default:
+      return '#78909C'; // Grey
+  }
+};
 
 export interface BasicStatsProps {
   /**
@@ -63,7 +95,7 @@ export interface BasicStatsProps {
  * />
  * ```
  */
-export function BasicStats({
+export const BasicStats = React.memo(function BasicStats({
   character,
   onUpdate,
   onOpenLineage,
@@ -298,7 +330,44 @@ export function BasicStats({
             </Box>
           </Box>
         </Box>
+
+        {/* Arquétipos do Personagem */}
+        {character.archetypes.filter((a) => a.level > 0).length > 0 && (
+          <Box sx={{ mt: 3 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}
+            >
+              <CategoryIcon color="primary" fontSize="small" />
+              <Typography variant="caption" color="text.secondary">
+                Arquétipos
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {character.archetypes
+                .filter((archetype) => archetype.level > 0)
+                .map((archetype) => (
+                  <Chip
+                    key={archetype.name}
+                    label={`${ARCHETYPE_LABELS[archetype.name]} ${archetype.level}`}
+                    size="small"
+                    sx={{
+                      bgcolor: getArchetypeColor(archetype.name),
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: '0.75rem',
+                      '& .MuiChip-label': {
+                        px: 1.5,
+                      },
+                    }}
+                  />
+                ))}
+            </Stack>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );
-}
+});
+
+// Display name para debugging
+BasicStats.displayName = 'BasicStats';
