@@ -166,6 +166,11 @@ export function calculateCoinsWeight(currency: Currency): number {
 /**
  * Calcula o peso total dos itens do inventário
  *
+ * Regras especiais:
+ * - Itens com peso null/undefined são completamente sem peso (não contam para nada)
+ * - Itens com peso 0 contam: a cada 5 unidades de itens peso 0 = 1 de peso
+ * - Itens com peso negativo reduzem o peso total
+ *
  * @param items - Lista de itens do inventário
  * @param includeEquipped - Se deve incluir itens equipados (padrão: true)
  * @returns Peso total dos itens
@@ -174,14 +179,61 @@ export function calculateItemsWeight(
   items: InventoryItem[],
   includeEquipped: boolean = true
 ): number {
-  return items.reduce((total, item) => {
+  let totalWeight = 0;
+  let zeroWeightItemCount = 0;
+
+  for (const item of items) {
     // Se não deve incluir equipados e o item está equipado, pula
     if (!includeEquipped && item.equipped) {
-      return total;
+      continue;
     }
 
-    return total + item.weight * item.quantity;
-  }, 0);
+    // Itens sem peso (null/undefined) não contam para nada
+    if (item.weight === null || item.weight === undefined) {
+      continue;
+    }
+
+    // Itens de peso 0: contar quantidade para regra de 5 = 1
+    if (item.weight === 0) {
+      zeroWeightItemCount += item.quantity;
+      continue;
+    }
+
+    // Itens com peso (positivo ou negativo): soma normal
+    totalWeight += item.weight * item.quantity;
+  }
+
+  // Aplicar regra: 5 itens de peso 0 = 1 de peso (arredondado para baixo)
+  const zeroWeightContribution = Math.floor(zeroWeightItemCount / 5);
+  totalWeight += zeroWeightContribution;
+
+  return totalWeight;
+}
+
+/**
+ * Conta o total de unidades de itens com peso 0 no inventário
+ *
+ * @param items - Lista de itens do inventário
+ * @param includeEquipped - Se deve incluir itens equipados (padrão: true)
+ * @returns Contagem total de unidades de itens peso 0
+ */
+export function countZeroWeightItems(
+  items: InventoryItem[],
+  includeEquipped: boolean = true
+): number {
+  let count = 0;
+
+  for (const item of items) {
+    if (!includeEquipped && item.equipped) {
+      continue;
+    }
+
+    if (item.weight === 0) {
+      count += item.quantity;
+    }
+  }
+
+  return count;
 }
 
 /**
@@ -252,6 +304,8 @@ export function generateCarryingCapacity(
 
   return {
     base,
+    sizeModifier,
+    otherModifiers,
     modifiers: sizeModifier + otherModifiers,
     total,
     currentWeight,

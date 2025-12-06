@@ -179,6 +179,8 @@ function createDefaultCombat(): CombatData {
 function createDefaultCarryingCapacity(): CarryingCapacity {
   return {
     base: 10, // 5 + (Força (1) * 5)
+    sizeModifier: 0,
+    otherModifiers: 0,
     modifiers: 0,
     total: 10,
     currentWeight: 0,
@@ -200,7 +202,7 @@ function createDefaultInventory(): Inventory {
       description: 'Mochila padrão de aventureiro',
       category: 'diversos',
       quantity: 1,
-      weight: 0, // Mochila não conta peso
+      weight: null, // Mochila não tem peso
       value: 0,
       equipped: true,
     },
@@ -210,7 +212,7 @@ function createDefaultInventory(): Inventory {
       description: 'Cartão para acesso à conta bancária',
       category: 'diversos',
       quantity: 1,
-      weight: 0,
+      weight: null, // Cartão não tem peso
       value: 0,
       equipped: false,
     },

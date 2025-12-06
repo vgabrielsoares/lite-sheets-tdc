@@ -198,6 +198,7 @@ export {
   getEncumbranceState as getCarryEncumbranceState,
   calculateCoinsWeight,
   calculateItemsWeight,
+  countZeroWeightItems,
   calculateTotalWeight,
   calculateFullCarryCapacity,
   generateCarryingCapacity,
