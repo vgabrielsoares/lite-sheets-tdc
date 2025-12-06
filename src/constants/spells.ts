@@ -188,74 +188,7 @@ export const SPELL_LEARNING_MIN_CHANCE = 1;
 export const SPELL_LEARNING_MAX_CHANCE = 99;
 
 /**
- * Cálculo de ND (Nível de Dificuldade) de feitiços
- * Fórmula base: 12 + Presença + Habilidade de Conjuração + Bônus de ND
+ * ND base de feitiços (constante do sistema)
+ * Usado na fórmula: 12 + Presença + Habilidade + Bônus
  */
 export const SPELL_BASE_DC = 12;
-
-/**
- * Cálculo de Bônus de Ataque de feitiços
- * Fórmula: Presença + Habilidade de Conjuração + Bônus de Ataque
- */
-export const calculateSpellDC = (
-  presencaValue: number,
-  skillModifier: number,
-  dcBonus: number = 0
-): number => {
-  return SPELL_BASE_DC + presencaValue + skillModifier + dcBonus;
-};
-
-/**
- * Calcula o bônus de ataque de feitiços
- */
-export const calculateSpellAttackBonus = (
-  presencaValue: number,
-  skillModifier: number,
-  attackBonus: number = 0
-): number => {
-  return presencaValue + skillModifier + attackBonus;
-};
-
-/**
- * Calcula a chance de aprendizado de um feitiço
- *
- * @param menteValue - Valor do atributo Mente
- * @param skillModifier - Modificador total da habilidade de conjuração
- * @param circle - Círculo do feitiço
- * @param isFirstSpell - Se é o primeiro feitiço (afeta bônus do 1º círculo)
- * @param knownSpellsModifier - Modificador pelo número de feitiços conhecidos
- * @param matrixModifier - Modificador por matriz (opcional)
- * @param otherModifiers - Outros modificadores
- * @returns Chance de aprendizado (1-99%)
- */
-export const calculateSpellLearningChance = (
-  menteValue: number,
-  skillModifier: number,
-  circle: SpellCircle,
-  isFirstSpell: boolean = false,
-  knownSpellsModifier: number = 0,
-  matrixModifier: number = 0,
-  otherModifiers: number = 0
-): number => {
-  // Valor base: Mente × 5
-  const baseValue = menteValue * 5;
-
-  // Modificador do círculo (1º círculo é +0 se for o primeiro feitiço)
-  const circleModifier =
-    circle === 1 && isFirstSpell ? 0 : SPELL_LEARNING_CIRCLE_MODIFIER[circle];
-
-  // Soma total
-  const totalChance =
-    baseValue +
-    skillModifier +
-    circleModifier +
-    knownSpellsModifier +
-    matrixModifier +
-    otherModifiers;
-
-  // Limita entre 1% e 99%
-  return Math.max(
-    SPELL_LEARNING_MIN_CHANCE,
-    Math.min(SPELL_LEARNING_MAX_CHANCE, totalChance)
-  );
-};
