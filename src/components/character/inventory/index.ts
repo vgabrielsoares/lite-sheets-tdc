@@ -19,3 +19,6 @@ export type { InventoryItemRowProps } from './InventoryItemRow';
 
 export { AddItemDialog } from './AddItemDialog';
 export type { AddItemDialogProps } from './AddItemDialog';
+
+export { ItemDetailsSidebar } from './ItemDetailsSidebar';
+export type { ItemDetailsSidebarProps } from './ItemDetailsSidebar';

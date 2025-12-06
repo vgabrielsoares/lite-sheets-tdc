@@ -35,6 +35,8 @@ export interface InventoryItemRowProps {
   onEdit: (item: InventoryItem) => void;
   /** Callback para remover o item */
   onRemove: (itemId: string) => void;
+  /** Callback quando o item é clicado (para abrir detalhes) */
+  onClick?: (item: InventoryItem) => void;
   /** Se as ações estão desabilitadas */
   disabled?: boolean;
   /** Contagem total de itens de peso 0 no inventário (para cálculo de peso efetivo) */
@@ -116,6 +118,7 @@ export function InventoryItemRow({
   item,
   onEdit,
   onRemove,
+  onClick,
   disabled = false,
   totalZeroWeightCount = 0,
 }: InventoryItemRowProps) {
@@ -150,8 +153,25 @@ export function InventoryItemRow({
     }
   };
 
+  const handleClick = () => {
+    if (onClick && !disabled) {
+      onClick(item);
+    }
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleEdit();
+  };
+
+  const handleRemoveClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleRemove();
+  };
+
   return (
     <Box
+      onClick={handleClick}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -160,6 +180,7 @@ export function InventoryItemRow({
         borderRadius: 1,
         backgroundColor: alpha(theme.palette.background.paper, 0.5),
         border: `1px solid ${theme.palette.divider}`,
+        cursor: onClick && !disabled ? 'pointer' : 'default',
         transition: 'all 0.2s ease-in-out',
         '&:hover': {
           backgroundColor: alpha(theme.palette.primary.main, 0.04),
@@ -269,7 +290,7 @@ export function InventoryItemRow({
           <span>
             <IconButton
               size="small"
-              onClick={handleEdit}
+              onClick={handleEditClick}
               disabled={disabled}
               aria-label={`Editar ${item.name}`}
               sx={{
@@ -289,7 +310,7 @@ export function InventoryItemRow({
           <span>
             <IconButton
               size="small"
-              onClick={handleRemove}
+              onClick={handleRemoveClick}
               disabled={disabled}
               aria-label={`Remover ${item.name}`}
               sx={{

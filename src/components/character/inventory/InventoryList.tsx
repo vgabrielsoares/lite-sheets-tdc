@@ -55,6 +55,8 @@ export interface InventoryListProps {
   coinsWeight?: number;
   /** Se a edição está desabilitada */
   disabled?: boolean;
+  /** Callback para abrir a sidebar de detalhes do item */
+  onOpenItem?: (item: InventoryItem) => void;
 }
 
 // ============================================================================
@@ -91,6 +93,7 @@ export function InventoryList({
   maxCapacity = 10,
   coinsWeight = 0,
   disabled = false,
+  onOpenItem,
 }: InventoryListProps) {
   const theme = useTheme();
 
@@ -340,6 +343,7 @@ export function InventoryList({
                     item={item}
                     onEdit={handleEditItem}
                     onRemove={handleRemoveItem}
+                    onClick={onOpenItem}
                     disabled={disabled}
                     totalZeroWeightCount={totalZeroWeightCount}
                   />
