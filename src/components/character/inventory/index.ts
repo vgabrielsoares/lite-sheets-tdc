@@ -10,3 +10,12 @@ export type { CurrencyManagerProps } from './CurrencyManager';
 
 export { CarryCapacityDisplay } from './CarryCapacityDisplay';
 export type { CarryCapacityDisplayProps } from './CarryCapacityDisplay';
+
+export { InventoryList } from './InventoryList';
+export type { InventoryListProps } from './InventoryList';
+
+export { InventoryItemRow } from './InventoryItemRow';
+export type { InventoryItemRowProps } from './InventoryItemRow';
+
+export { AddItemDialog } from './AddItemDialog';
+export type { AddItemDialogProps } from './AddItemDialog';

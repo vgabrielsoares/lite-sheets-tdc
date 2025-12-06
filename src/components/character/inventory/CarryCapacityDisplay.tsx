@@ -8,7 +8,7 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -20,6 +20,8 @@ import {
   Tooltip,
   Divider,
   Grid,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -27,6 +29,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import PushPinIcon from '@mui/icons-material/PushPin';
+import TuneIcon from '@mui/icons-material/Tune';
 import type { Character } from '@/types';
 import type { CreatureSize } from '@/types/common';
 import {
@@ -34,6 +37,7 @@ import {
   calculateCarryPercentage,
   ENCUMBRANCE_STATE_DESCRIPTIONS,
   ENCUMBRANCE_STATE_COLORS,
+  getSizeCarryModifier,
   type EncumbranceState,
 } from '@/utils/carryCapacityCalculations';
 
@@ -42,6 +46,8 @@ export interface CarryCapacityDisplayProps {
   character: Character;
   /** Se deve mostrar detalhes expandidos */
   showDetails?: boolean;
+  /** Callback para atualizar o modificador adicional de capacidade */
+  onOtherModifiersChange?: (value: number) => void;
 }
 
 /**
@@ -87,28 +93,44 @@ function getProgressColor(percentage: number): 'success' | 'warning' | 'error' {
 export function CarryCapacityDisplay({
   character,
   showDetails = true,
+  onOtherModifiersChange,
 }: CarryCapacityDisplayProps) {
+  // Estado local para o modificador adicional
+  const [localOtherModifiers, setLocalOtherModifiers] = useState(
+    character.inventory?.carryingCapacity?.otherModifiers ?? 0
+  );
+
+  // Obter modificador de tamanho da linhagem
+  const size = (character.size ?? 'medio') as CreatureSize;
+  const sizeModifier = getSizeCarryModifier(size);
+
   // Calcular capacidade de carga
   const carryingCapacity = useMemo(() => {
     const forca = character.attributes?.forca ?? 1;
-    const size = (character.size ?? 'medio') as CreatureSize;
     const items = character.inventory?.items ?? [];
     const currency = character.inventory?.currency ?? {
       physical: { cobre: 0, ouro: 0, platina: 0 },
       bank: { cobre: 0, ouro: 0, platina: 0 },
     };
 
-    // Outros modificadores podem vir de habilidades, itens mágicos, etc.
-    const otherModifiers = 0;
-
     return generateCarryingCapacity(
       forca,
       size,
       items,
       currency,
-      otherModifiers
+      localOtherModifiers
     );
-  }, [character]);
+  }, [character, size, localOtherModifiers]);
+
+  // Handler para mudança do modificador adicional
+  const handleOtherModifiersChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = parseInt(event.target.value, 10) || 0;
+      setLocalOtherModifiers(value);
+      onOtherModifiersChange?.(value);
+    },
+    [onOtherModifiersChange]
+  );
 
   // Calcular porcentagem para a barra de progresso
   const percentage = useMemo(
@@ -216,12 +238,55 @@ export function CarryCapacityDisplay({
                 <Typography variant="body2">{carryingCapacity.base}</Typography>
               </Grid>
 
-              {/* Modificadores */}
+              {/* Modificadores de Tamanho (da linhagem) */}
+              <Grid size={{ xs: 6 }}>
+                <Tooltip
+                  title="Modificador de tamanho (definido pela linhagem)"
+                  arrow
+                >
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Mod. Tamanho
+                    </Typography>
+                    <Typography variant="body2">
+                      {sizeModifier >= 0 ? '+' : ''}
+                      {sizeModifier}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              </Grid>
+
+              {/* Modificadores Adicionais (editável) */}
+              <Grid size={{ xs: 6 }}>
+                <Tooltip
+                  title="Modificadores de habilidades, poderes, condições, etc."
+                  arrow
+                >
+                  <Stack direction="row" alignItems="center" spacing={0.5}>
+                    <TuneIcon fontSize="small" color="action" />
+                    <TextField
+                      label="Outros Mod."
+                      type="number"
+                      value={localOtherModifiers}
+                      onChange={handleOtherModifiersChange}
+                      size="small"
+                      inputProps={{
+                        step: 1,
+                        style: { textAlign: 'center', width: 60 },
+                        'aria-label': 'Modificadores adicionais de capacidade',
+                      }}
+                      sx={{ maxWidth: 100 }}
+                    />
+                  </Stack>
+                </Tooltip>
+              </Grid>
+
+              {/* Total de Modificadores */}
               <Grid size={{ xs: 6 }}>
                 <Typography variant="caption" color="text.secondary">
-                  Modificadores
+                  Total Mod.
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="body2" fontWeight="medium">
                   {carryingCapacity.modifiers >= 0 ? '+' : ''}
                   {carryingCapacity.modifiers}
                 </Typography>
@@ -281,8 +346,8 @@ export function CarryCapacityDisplay({
                   borderRadius: 1,
                   backgroundColor:
                     stateColor === 'warning' ? 'warning.light' : 'error.light',
-                  color:
-                    stateColor === 'warning' ? 'warning.dark' : 'error.dark',
+                  // Usar cores contrastantes para melhor legibilidade
+                  color: 'common.black',
                 }}
               >
                 <Typography variant="caption" fontWeight="medium">
