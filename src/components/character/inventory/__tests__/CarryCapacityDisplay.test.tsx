@@ -218,7 +218,8 @@ describe('CarryCapacityDisplay', () => {
       render(<CarryCapacityDisplay character={baseCharacter} showDetails />);
 
       expect(screen.getByText('Capacidade Base')).toBeInTheDocument();
-      expect(screen.getByText('Modificadores')).toBeInTheDocument();
+      expect(screen.getByText('Mod. Tamanho')).toBeInTheDocument();
+      expect(screen.getByText('Total Mod.')).toBeInTheDocument();
       expect(screen.getByText('Empurrar')).toBeInTheDocument();
       expect(screen.getByText('Levantar')).toBeInTheDocument();
     });

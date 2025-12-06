@@ -219,7 +219,7 @@ describe('characterFactory', () => {
         );
         expect(backpack).toBeDefined();
         expect(backpack?.quantity).toBe(1);
-        expect(backpack?.weight).toBe(0);
+        expect(backpack?.weight).toBeNull(); // Mochila não tem peso
       });
 
       it('deve ter Cartão do Banco no inventário', () => {
@@ -228,7 +228,7 @@ describe('characterFactory', () => {
         );
         expect(card).toBeDefined();
         expect(card?.quantity).toBe(1);
-        expect(card?.weight).toBe(0);
+        expect(card?.weight).toBeNull(); // Cartão não tem peso
       });
 
       it('cada item deve ter ID único', () => {
