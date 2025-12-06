@@ -678,7 +678,8 @@ export function LinhagemSidebar({
                   {sizeModifiers.squaresOccupied}m
                 </Typography>
                 <Typography variant="body2">
-                  <strong>Capacidade de Carga:</strong> ×
+                  <strong>Capacidade de Carga:</strong>{' '}
+                  {sizeModifiers.carryingCapacity >= 0 ? '+' : ''}
                   {sizeModifiers.carryingCapacity}
                 </Typography>
                 <Typography variant="body2">
