@@ -7,3 +7,6 @@
 
 export { CurrencyManager } from './CurrencyManager';
 export type { CurrencyManagerProps } from './CurrencyManager';
+
+export { CarryCapacityDisplay } from './CarryCapacityDisplay';
+export type { CarryCapacityDisplayProps } from './CarryCapacityDisplay';
