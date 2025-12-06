@@ -375,7 +375,7 @@ export function ItemDetailsSidebar({
         open={open}
         onClose={onClose}
         title="Detalhes do Item"
-        size="medium"
+        width="md"
       >
         <Alert severity="warning">Nenhum item selecionado</Alert>
       </Sidebar>
@@ -383,12 +383,7 @@ export function ItemDetailsSidebar({
   }
 
   return (
-    <Sidebar
-      open={open}
-      onClose={onClose}
-      title="Detalhes do Item"
-      size="medium"
-    >
+    <Sidebar open={open} onClose={onClose} title="Detalhes do Item" width="md">
       <Stack spacing={3}>
         {/* Informações Básicas */}
         <Box>
