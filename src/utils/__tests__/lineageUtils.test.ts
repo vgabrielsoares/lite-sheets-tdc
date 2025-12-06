@@ -19,7 +19,7 @@ describe('lineageUtils', () => {
         size: 'medio',
         height: 170,
         weightKg: 70,
-        weightRPG: 70,
+        weightRPG: 10, // peso RPG padrão é 10
         age: 25,
         adulthood: undefined,
         lifeExpectancy: undefined,
@@ -76,7 +76,8 @@ describe('lineageUtils', () => {
     });
 
     it('deve validar peso fora dos limites como inválido', () => {
-      const lineage = { name: 'Humano', weightKg: 0 }; // Muito baixo
+      // Peso negativo não é válido
+      const lineage = { name: 'Humano', weightKg: -1 }; // Peso negativo
 
       expect(validateLineage(lineage)).toBe(false);
     });

@@ -142,8 +142,8 @@ describe('skillCalculations', () => {
 
     it('deve somar outros modificadores positivos', () => {
       const modifiers: Modifier[] = [
-        { name: 'Bênção', type: 'bonus', value: 2, source: 'magia' },
-        { name: 'Item Mágico', type: 'bonus', value: 3, source: 'item' },
+        { name: 'Bênção', type: 'bonus', value: 2 },
+        { name: 'Item Mágico', type: 'bonus', value: 3 },
       ];
 
       const result = calculateSkillTotalModifier(
@@ -164,7 +164,7 @@ describe('skillCalculations', () => {
 
     it('deve somar outros modificadores negativos', () => {
       const modifiers: Modifier[] = [
-        { name: 'Ferimento', type: 'penalty', value: -2, source: 'condição' },
+        { name: 'Ferimento', type: 'penalidade', value: -2 },
       ];
 
       const result = calculateSkillTotalModifier(
@@ -253,8 +253,8 @@ describe('skillCalculations', () => {
 
     it('deve combinar todos os modificadores corretamente', () => {
       const modifiers: Modifier[] = [
-        { name: 'Bênção', type: 'bonus', value: 2, source: 'magia' },
-        { name: 'Ferimento', type: 'penalty', value: -1, source: 'condição' },
+        { name: 'Bênção', type: 'bonus', value: 2 },
+        { name: 'Ferimento', type: 'penalidade', value: -1 },
       ];
 
       const result = calculateSkillTotalModifier(
@@ -291,7 +291,7 @@ describe('skillCalculations', () => {
       expect(result.diceCount).toBe(2);
       expect(result.takeLowest).toBe(true); // escolhe o menor
       expect(result.modifier).toBe(2);
-      expect(result.formula).toBe('2d20 (menor)+2');
+      expect(result.formula).toBe('2d20+2'); // sem (menor) - UI usa cor vermelha
     });
 
     it('deve gerar fórmula com modificador negativo', () => {
@@ -308,7 +308,7 @@ describe('skillCalculations', () => {
 
     it('deve aplicar modificadores de dados positivos', () => {
       const diceModifiers: Modifier[] = [
-        { name: 'Vantagem', type: 'dice', value: 1, source: 'condição' },
+        { name: 'Vantagem', type: 'bonus', value: 1, affectsDice: true },
       ];
 
       const result = calculateSkillRollFormula(2, 4, diceModifiers);
@@ -320,7 +320,12 @@ describe('skillCalculations', () => {
 
     it('deve aplicar modificadores de dados negativos', () => {
       const diceModifiers: Modifier[] = [
-        { name: 'Desvantagem', type: 'dice', value: -1, source: 'condição' },
+        {
+          name: 'Desvantagem',
+          type: 'penalidade',
+          value: -1,
+          affectsDice: true,
+        },
       ];
 
       const result = calculateSkillRollFormula(3, 5, diceModifiers);
@@ -334,23 +339,28 @@ describe('skillCalculations', () => {
       const diceModifiers: Modifier[] = [
         {
           name: 'Desvantagem Extrema',
-          type: 'dice',
+          type: 'penalidade',
           value: -3,
-          source: 'condição',
+          affectsDice: true,
         },
       ];
 
       const result = calculateSkillRollFormula(2, 5, diceModifiers);
 
-      expect(result.diceCount).toBe(1); // abs(2 - 3) = 1
+      expect(result.diceCount).toBe(3); // 2 - 3 = -1 → 2 - (-1) = 3
       expect(result.takeLowest).toBe(true); // passou de negativo
-      expect(result.formula).toBe('1d20 (menor)+5');
+      expect(result.formula).toBe('3d20+5'); // sem (menor) - UI usa cor vermelha
     });
 
     it('deve combinar múltiplos modificadores de dados', () => {
       const diceModifiers: Modifier[] = [
-        { name: 'Vantagem', type: 'dice', value: 2, source: 'magia' },
-        { name: 'Desvantagem', type: 'dice', value: -1, source: 'condição' },
+        { name: 'Vantagem', type: 'bonus', value: 2, affectsDice: true },
+        {
+          name: 'Desvantagem',
+          type: 'penalidade',
+          value: -1,
+          affectsDice: true,
+        },
       ];
 
       const result = calculateSkillRollFormula(3, 4, diceModifiers);
@@ -400,8 +410,8 @@ describe('skillCalculations', () => {
 
     it('deve separar modificadores de valor e de dados corretamente', () => {
       const modifiers: Modifier[] = [
-        { name: 'Bênção', type: 'bonus', value: 2, source: 'magia' },
-        { name: 'Vantagem', type: 'dice', value: 1, source: 'condição' },
+        { name: 'Bênção', type: 'bonus', value: 2 },
+        { name: 'Vantagem', type: 'bonus', value: 1, affectsDice: true },
       ];
 
       const result = calculateSkillRoll(
@@ -733,7 +743,7 @@ describe('skillCalculations', () => {
       );
 
       // Influência 0 = 2d20 (menor), modificador 0
-      expect(result).toBe('2d20 (menor)');
+      expect(result).toBe('2d20'); // sem (menor) - UI usa cor vermelha
     });
 
     it('deve gerar fórmula com modificador negativo', () => {

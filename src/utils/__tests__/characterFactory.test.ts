@@ -336,14 +336,15 @@ describe('characterFactory', () => {
 
     describe('Deslocamento', () => {
       it('deve ter deslocamento andando padrão de 5', () => {
-        expect(character.movement.speeds.andando).toBe(5);
+        expect(character.movement.speeds.andando.base).toBe(5);
+        expect(character.movement.speeds.andando.bonus).toBe(0);
       });
 
       it('deve ter outros deslocamentos em 0', () => {
-        expect(character.movement.speeds.voando).toBe(0);
-        expect(character.movement.speeds.escalando).toBe(0);
-        expect(character.movement.speeds.escavando).toBe(0);
-        expect(character.movement.speeds.nadando).toBe(0);
+        expect(character.movement.speeds.voando.base).toBe(0);
+        expect(character.movement.speeds.escalando.base).toBe(0);
+        expect(character.movement.speeds.escavando.base).toBe(0);
+        expect(character.movement.speeds.nadando.base).toBe(0);
       });
     });
 
@@ -575,7 +576,7 @@ describe('characterFactory', () => {
       });
 
       it('deve seguir regra: Deslocamento padrão andando = 5', () => {
-        expect(character.movement.speeds.andando).toBe(5);
+        expect(character.movement.speeds.andando.base).toBe(5);
       });
 
       it('deve seguir regra: Todas habilidades começam em Leigo (x0)', () => {
