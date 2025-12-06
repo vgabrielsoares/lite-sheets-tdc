@@ -187,3 +187,27 @@ export {
   removeCurrency,
   transferCurrency,
 } from './currencyCalculations';
+
+// Carry capacity calculation utilities
+export {
+  calculateBaseCarryCapacity,
+  getSizeCarryModifier,
+  calculateCarryCapacity as calculateCarryCapacityFromForce,
+  calculatePushCapacity,
+  calculateLiftCapacity,
+  getEncumbranceState as getCarryEncumbranceState,
+  calculateCoinsWeight,
+  calculateItemsWeight,
+  calculateTotalWeight,
+  calculateFullCarryCapacity,
+  generateCarryingCapacity,
+  calculateCarryPercentage,
+  canCarryWithoutPenalty,
+  canCarryAtAll,
+  ENCUMBRANCE_STATE_DESCRIPTIONS,
+  ENCUMBRANCE_STATE_COLORS,
+} from './carryCapacityCalculations';
+export type {
+  EncumbranceState,
+  CarryCapacityResult,
+} from './carryCapacityCalculations';
