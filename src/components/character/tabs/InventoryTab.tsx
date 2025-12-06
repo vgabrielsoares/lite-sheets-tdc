@@ -4,7 +4,7 @@ import React from 'react';
 import { Box, Typography, Stack, Divider } from '@mui/material';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import type { Character } from '@/types';
-import { CurrencyManager } from '../inventory';
+import { CurrencyManager, CarryCapacityDisplay } from '../inventory';
 
 export interface InventoryTabProps {
   character: Character;
@@ -18,11 +18,9 @@ export interface InventoryTabProps {
  * - Cunhagem (moedas físicas e banco)
  * - Riquezas totais
  * - Peso de moedas
- * - Capacidade de carga (a ser implementado)
- * - Estado de carga (a ser implementado)
+ * - Capacidade de carga
+ * - Estado de carga
  * - Listagem de itens (a ser implementado)
- * - Conversor de moedas (a ser implementado na Issue 6.2)
- * - Indicador de empurrar/levantar (a ser implementado na Issue 6.3)
  */
 export function InventoryTab({ character, onUpdate }: InventoryTabProps) {
   /**
@@ -59,9 +57,10 @@ export function InventoryTab({ character, onUpdate }: InventoryTabProps) {
           onUpdate={handleCurrencyUpdate}
         />
 
+        {/* Capacidade de Carga */}
+        <CarryCapacityDisplay character={character} showDetails />
+
         {/* Placeholder para componentes futuros */}
-        {/* Issue 6.2: CurrencyConverter */}
-        {/* Issue 6.3: CarryCapacityDisplay */}
         {/* Issue 6.4: InventoryItemList */}
       </Stack>
     </Box>
