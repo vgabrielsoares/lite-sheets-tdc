@@ -212,3 +212,10 @@ export type {
   EncumbranceState,
   CarryCapacityResult,
 } from './carryCapacityCalculations';
+
+// Spell calculation utilities
+// Note: calculateSpellDC and calculateSpellAttackBonus are already exported from './calculations'
+export {
+  calculateSpellLearningChance,
+  calculateSpellPPCost,
+} from './spellCalculations';
