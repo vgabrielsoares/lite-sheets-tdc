@@ -5,162 +5,131 @@
  * e conjuração do Tabuleiro do Caos RPG.
  */
 
-import type { UUID, DiceRoll, DamageType, Duration, RangeType } from './common';
+import type { UUID } from './common';
 import type { SkillName } from './skills';
 
 /**
- * Tipo de feitiço
+ * Círculo de feitiço (1º ao 8º)
  */
-export type SpellType = 'arcano' | 'divino' | 'religioso';
+export type SpellCircle = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+/**
+ * Tipo de feitiço (baseado na habilidade de conjuração)
+ */
+export type SpellType = 'arcano' | 'natureza' | 'religiao';
 
 /**
  * Matriz de feitiço
  */
 export type SpellMatrix =
-  | 'fogo'
-  | 'agua'
-  | 'terra'
-  | 'ar'
-  | 'luz'
-  | 'trevas'
-  | 'vida'
-  | 'morte'
-  | 'ordem'
-  | 'caos'
-  | 'tempo'
-  | 'espaco';
+  | 'arcana'
+  | 'adiafana'
+  | 'gnomica'
+  | 'mundana'
+  | 'natural'
+  | 'elfica'
+  | 'ana'
+  | 'primordial'
+  | 'luzidia'
+  | 'infernal';
 
 /**
- * Escola de magia
+ * Classes de feitiço (15 tipos)
  */
-export type MagicSchool =
+export type SpellClass =
   | 'abjuracao'
-  | 'adivinhacao'
-  | 'conjuracao'
+  | 'divinacao'
+  | 'elemental'
   | 'encantamento'
   | 'evocacao'
   | 'ilusao'
+  | 'invocacao'
+  | 'manipulacao'
+  | 'mistica'
+  | 'natural'
   | 'necromancia'
+  | 'profana'
+  | 'sagrada'
+  | 'translocacao'
   | 'transmutacao';
 
 /**
- * Componentes de feitiço
+ * Componente de feitiço
  */
-export interface SpellComponents {
-  /** Componente verbal (palavras) */
-  verbal: boolean;
-  /** Componente somático (gestos) */
-  somatic: boolean;
-  /** Componente material */
-  material?: {
-    /** Descrição do material */
-    description: string;
-    /** Se o material é consumido */
-    consumed: boolean;
-    /** Custo do material (em PO$) */
-    cost?: number;
-  };
-}
+export type SpellComponent = 'somatico' | 'verbal' | 'material' | 'circular';
 
 /**
- * Área de efeito do feitiço
- */
-export interface SpellArea {
-  /** Tipo de área */
-  type: 'cone' | 'cubo' | 'cilindro' | 'esfera' | 'linha' | 'unico';
-  /** Tamanho/raio da área */
-  size?: number;
-  /** Descrição da área */
-  description?: string;
-}
-
-/**
- * Feitiço
+ * Feitiço completo
  */
 export interface Spell {
   /** ID único do feitiço */
   id: UUID;
   /** Nome do feitiço */
   name: string;
-  /** Descrição completa */
-  description: string;
-  /** Tipo de feitiço */
+  /** Círculo do feitiço (1º ao 8º) */
+  circle: SpellCircle;
+  /** Tipo de feitiço (arcano, natureza ou religião) */
   type: SpellType;
-  /** Escola de magia */
-  school: MagicSchool;
-  /** Matrizes associadas */
-  matrices: SpellMatrix[];
-  /** Custo em PP */
-  ppCost: number;
-  /** Alcance */
-  range: RangeType;
-  /** Área de efeito */
-  area: SpellArea;
+  /** Matriz do feitiço */
+  matrix: SpellMatrix;
+  /** Resistência permitida (se houver, ex: "Reflexo") */
+  resistance?: string;
+  /** Tempo de conjuração (ex: "1 ação", "1 turno") */
+  castingTime: string;
+  /** Alcance (ex: "Toque", "Curto", "30m") */
+  range: string;
+  /** Alvo/Área (ex: "1 criatura", "Esfera 6m") */
+  target: string;
   /** Componentes necessários */
-  components: SpellComponents;
-  /** Duração */
-  duration: Duration;
-  /** Tempo de conjuração */
-  castingTime: {
-    /** Quantidade de ações/tempo */
-    value: number;
-    /** Unidade (ação, turno, minuto, etc.) */
-    unit: 'acao' | 'reacao' | 'turno' | 'minuto' | 'hora';
-  };
-  /** Teste de resistência permitido */
-  savingThrow?: {
-    /** Tipo de teste */
-    type: 'determinacao' | 'reflexo' | 'tenacidade' | 'vigor';
-    /** Efeito em caso de sucesso */
-    onSuccess: 'negates' | 'half' | 'partial';
-  };
-  /** Dano causado (se aplicável) */
-  damage?: {
-    /** Rolagem de dano */
-    roll: DiceRoll;
-    /** Tipo de dano */
-    type: DamageType;
-  };
-  /** Cura fornecida (se aplicável) */
-  healing?: DiceRoll;
-  /** Se pode ser conjurado em nível superior */
-  upcastable: boolean;
-  /** Efeitos ao conjurar em nível superior */
-  upcastEffect?: string;
-  /** Se requer concentração */
-  concentration: boolean;
-  /** Se é um ritual */
-  ritual: boolean;
+  components: SpellComponent[];
+  /** Duração (ex: "Instantâneo", "1 rodada", "Concentração, até 1 minuto") */
+  duration: string;
+  /** Classes de feitiço */
+  classes: SpellClass[];
+  /** Descrição completa do feitiço */
+  description: string;
+  /** Aprimoramentos do feitiço (texto descritivo) */
+  enhancements?: string;
+  /** Elevação do feitiço (texto descritivo) */
+  escalation?: string;
+  /** Anotações personalizadas */
+  notes?: string;
 }
 
 /**
  * Feitiço conhecido pelo personagem
  */
 export interface KnownSpell {
-  /** Referência ao feitiço */
+  /** Referência ao feitiço (pode ser ID ou objeto completo) */
   spellId: UUID;
-  /** Se o feitiço está preparado */
-  prepared: boolean;
-  /** Anotações do jogador sobre o feitiço */
+  /** Círculo do feitiço (para facilitar agrupamento) */
+  circle: SpellCircle;
+  /** Nome do feitiço (para exibição rápida) */
+  name: string;
+  /** Matriz do feitiço */
+  matrix: SpellMatrix;
+  /** Habilidade de conjuração usada */
+  spellcastingSkill: SkillName;
+  /** Anotações personalizadas do jogador */
   notes?: string;
 }
 
 /**
- * Habilidade de conjuração
+ * Habilidade de conjuração do personagem
  */
 export interface SpellcastingAbility {
   /** Tipo de feitiço */
-  spellType: SpellType;
-  /** Habilidade usada para conjuração */
+  type: SpellType;
+  /** Habilidade usada para conjuração (personalizável) */
   skill: SkillName;
   /** ND dos feitiços (12 + Presença + Habilidade + Bônus) */
   spellDC: number;
   /** Bônus de ataque (Presença + Habilidade + Bônus) */
   spellAttackBonus: number;
   /** Modificadores adicionais ao ND */
-  dcModifiers: number;
-  /** Modificadores adicionais ao ataque */
-  attackModifiers: number;
+  dcBonus: number;
+  /** Modificadores adicionais ao bônus de ataque */
+  attackBonus: number;
 }
 
 /**
@@ -169,46 +138,26 @@ export interface SpellcastingAbility {
 export interface SpellcastingData {
   /** Feitiços conhecidos */
   knownSpells: KnownSpell[];
-  /** Número máximo de feitiços conhecidos */
+  /** Número máximo de feitiços conhecidos (base) */
   maxKnownSpells: number;
   /** Modificadores ao número de feitiços conhecidos */
   knownSpellsModifiers: number;
   /** Habilidades de conjuração por tipo */
   spellcastingAbilities: SpellcastingAbility[];
-  /** Matrizes dominadas */
+  /** Matrizes dominadas pelo personagem */
   masteredMatrices: SpellMatrix[];
-  /** Feitiços atualmente concentrando */
-  concentratingOn: UUID[];
 }
 
 /**
- * ND base de feitiços
+ * ND base de feitiços (constante do sistema)
  */
 export const BASE_SPELL_DC = 12;
 
 /**
- * Habilidades padrão de conjuração por tipo
+ * Habilidades padrão de conjuração por tipo de feitiço
  */
 export const DEFAULT_SPELLCASTING_SKILLS: Record<SpellType, SkillName> = {
   arcano: 'arcano',
-  divino: 'religiao',
-  religioso: 'religiao',
-} as const;
-
-/**
- * Custos base de PP por matriz de feitiço
- */
-export const SPELL_MATRIX_BASE_COSTS: Record<SpellMatrix, number> = {
-  fogo: 1,
-  agua: 1,
-  terra: 1,
-  ar: 1,
-  luz: 2,
-  trevas: 2,
-  vida: 3,
-  morte: 3,
-  ordem: 4,
-  caos: 4,
-  tempo: 5,
-  espaco: 5,
+  natureza: 'natureza',
+  religiao: 'religiao',
 } as const;

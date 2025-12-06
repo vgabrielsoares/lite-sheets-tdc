@@ -136,22 +136,18 @@ export {
 
 // Spells
 export type {
+  SpellCircle,
   SpellType,
   SpellMatrix,
-  MagicSchool,
-  SpellComponents,
-  SpellArea,
+  SpellClass,
+  SpellComponent,
   Spell,
   KnownSpell,
   SpellcastingAbility,
   SpellcastingData,
 } from './spells';
 
-export {
-  BASE_SPELL_DC,
-  DEFAULT_SPELLCASTING_SKILLS,
-  SPELL_MATRIX_BASE_COSTS,
-} from './spells';
+export { BASE_SPELL_DC, DEFAULT_SPELLCASTING_SKILLS } from './spells';
 
 // Currency (dedicated types for currency system)
 export type {
