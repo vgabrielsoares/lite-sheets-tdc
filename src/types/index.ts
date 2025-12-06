@@ -153,6 +153,22 @@ export {
   SPELL_MATRIX_BASE_COSTS,
 } from './spells';
 
+// Currency (dedicated types for currency system)
+export type {
+  CurrencyDenomination,
+  CoinWeight,
+  CurrencyConversionResult,
+  WealthSummary,
+  CurrencyLocation,
+  CurrencyTransfer,
+} from './currency';
+
+export { DEFAULT_CURRENCY, EMPTY_DENOMINATION } from './currency';
+
+// Re-export Currency and TotalWealth from currency.ts (canonical source)
+// Note: These are also defined in inventory.ts for backward compatibility
+export type { Currency as CurrencyData } from './currency';
+
 // Character
 export type {
   ArchetypeName,
