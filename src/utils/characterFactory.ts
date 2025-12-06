@@ -219,12 +219,12 @@ function createDefaultInventory(): Inventory {
   const defaultCurrency: Currency = {
     physical: {
       cobre: 0,
-      ouro: 10, // 10 PO$ inicial
+      ouro: 0,
       platina: 0,
     },
     bank: {
       cobre: 0,
-      ouro: 0,
+      ouro: 10, // 10 PO$ inicial no banco (com Cartão do Banco)
       platina: 0,
     },
   };

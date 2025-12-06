@@ -164,3 +164,26 @@ export {
   SAVING_THROW_COLORS,
 } from './combatPenalties';
 export type { CombatPenaltiesState } from './combatPenalties';
+
+// Currency calculation utilities
+export {
+  convertToCopper,
+  copperToDenomination,
+  calculateTotalWealth,
+  addDenominations,
+  subtractDenominations,
+  convertCurrency,
+  exchangeCurrency,
+  calculateCoinWeight as calculateCurrencyCoinWeight,
+  calculateWealthSummary,
+  formatCurrency,
+  formatDenomination,
+  formatTotalAs,
+  canAfford,
+  isValidDenomination,
+  isValidCurrencyType,
+  makePayment,
+  addCurrency,
+  removeCurrency,
+  transferCurrency,
+} from './currencyCalculations';
