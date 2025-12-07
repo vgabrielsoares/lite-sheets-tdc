@@ -115,20 +115,30 @@ export interface KnownSpell {
 }
 
 /**
- * Habilidade de conjuração do personagem
+ * Habilidades que podem ser usadas para conjuração
+ * Expandido além do trio clássico (Arcano, Natureza, Religião)
+ */
+export type SpellcastingSkillName =
+  | 'arcano'
+  | 'arte'
+  | 'natureza'
+  | 'performance'
+  | 'religiao'
+  | 'vigor';
+
+/**
+ * Habilidade de conjuração cadastrada do personagem
  */
 export interface SpellcastingAbility {
-  /** Tipo de feitiço */
-  type: SpellType;
-  /** Habilidade usada para conjuração (personalizável) */
-  skill: SkillName;
-  /** ND dos feitiços (12 + Presença + Habilidade + Bônus) */
-  spellDC: number;
-  /** Bônus de ataque (Presença + Habilidade + Bônus) */
-  spellAttackBonus: number;
-  /** Modificadores adicionais ao ND */
+  /** ID único da habilidade de conjuração */
+  id: string;
+  /** Habilidade usada para conjuração */
+  skill: SpellcastingSkillName;
+  /** Atributo usado para cálculos (padrão: Presença) */
+  attribute: 'presenca' | 'influencia' | 'constituicao';
+  /** Modificador especial adicional ao ND */
   dcBonus: number;
-  /** Modificadores adicionais ao bônus de ataque */
+  /** Modificador especial adicional ao bônus de ataque */
   attackBonus: number;
 }
 
@@ -142,7 +152,7 @@ export interface SpellcastingData {
   maxKnownSpells: number;
   /** Modificadores ao número de feitiços conhecidos */
   knownSpellsModifiers: number;
-  /** Habilidades de conjuração por tipo */
+  /** Habilidades de conjuração cadastradas */
   spellcastingAbilities: SpellcastingAbility[];
   /** Matrizes dominadas pelo personagem */
   masteredMatrices: SpellMatrix[];
