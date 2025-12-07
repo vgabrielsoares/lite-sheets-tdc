@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Alert } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import type { Character } from '@/types';
+import { SpellDashboard } from '../spells';
 
 export interface SpellsTabProps {
   character: Character;
@@ -17,25 +18,16 @@ export interface SpellsTabProps {
  * - Número de feitiços conhecidos
  * - Limite de PP por rodada
  * - PP atuais
- * - ND dos feitiços (Arcanos, Divinos, Religiosos)
+ * - ND dos feitiços (Arcanos, Natureza, Religião)
  * - Bônus de ataque de feitiços
- * - Listagem de feitiços conhecidos
+ * - Listagem de feitiços conhecidos (próximas fases)
  *
- * Será implementada na FASE 6.
+ * FASE 6.7: Dashboard de Feitiços
  */
 export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
-        Feitiços
-      </Typography>
-
-      <Alert severity="info" sx={{ mt: 2 }}>
-        <Typography variant="body2">
-          <strong>Em desenvolvimento:</strong> Esta aba será implementada na
-          FASE 6 com componentes para gerenciar feitiços e conjuração.
-        </Typography>
-      </Alert>
+      <SpellDashboard character={character} onUpdate={onUpdate} />
     </Box>
   );
 }
