@@ -1,13 +1,32 @@
 'use client';
 
-import React, { useCallback } from 'react';
-import { Box, Stack, Divider } from '@mui/material';
+import React, { useCallback, useState } from 'react';
+import {
+  Box,
+  Stack,
+  Divider,
+  Card,
+  CardContent,
+  Collapse,
+  IconButton,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import StarIcon from '@mui/icons-material/Star';
 import {
   ProficienciesList,
   LanguagesList,
   RestCalculator,
 } from '@/components/character/resources';
-import type { Character, Proficiencies, LanguageName } from '@/types';
+import { ComplementaryTraits, CompleteTraits } from '../traits';
+import type {
+  Character,
+  Proficiencies,
+  LanguageName,
+  ComplementaryTrait,
+  CompleteTrait,
+} from '@/types';
+import { calculateTraitBalance } from '@/types/traits';
 
 export interface ResourcesTabProps {
   character: Character;
@@ -20,9 +39,12 @@ export interface ResourcesTabProps {
  * Exibe e gerencia recursos do personagem:
  * - Proficiências (armas, armaduras, ferramentas, outros)
  * - Idiomas conhecidos
+ * - Particularidades (características complementares e completas)
  * - Calculadora de descanso (recuperação de PV/PP)
  */
 export function ResourcesTab({ character, onUpdate }: ResourcesTabProps) {
+  const [particularitiessExpanded, setParticularitiesExpanded] =
+    useState(false);
   const handleProficienciesUpdate = useCallback(
     (proficiencies: Proficiencies) => {
       onUpdate({ proficiencies });
@@ -35,6 +57,59 @@ export function ResourcesTab({ character, onUpdate }: ResourcesTabProps) {
       onUpdate({ languages });
     },
     [onUpdate]
+  );
+
+  const handleExtraLanguagesModifierUpdate = useCallback(
+    (extraLanguagesModifier: number) => {
+      onUpdate({ extraLanguagesModifier });
+    },
+    [onUpdate]
+  );
+
+  const handleUpdateNegativeTraits = useCallback(
+    (negativeTraits: ComplementaryTrait[]) => {
+      const balance = calculateTraitBalance(
+        negativeTraits,
+        character.particularities.positiveTraits
+      );
+      onUpdate({
+        particularities: {
+          ...character.particularities,
+          negativeTraits,
+          balance,
+        },
+      });
+    },
+    [character.particularities, onUpdate]
+  );
+
+  const handleUpdatePositiveTraits = useCallback(
+    (positiveTraits: ComplementaryTrait[]) => {
+      const balance = calculateTraitBalance(
+        character.particularities.negativeTraits,
+        positiveTraits
+      );
+      onUpdate({
+        particularities: {
+          ...character.particularities,
+          positiveTraits,
+          balance,
+        },
+      });
+    },
+    [character.particularities, onUpdate]
+  );
+
+  const handleUpdateCompleteTraits = useCallback(
+    (completeTraits: CompleteTrait[]) => {
+      onUpdate({
+        particularities: {
+          ...character.particularities,
+          completeTraits,
+        },
+      });
+    },
+    [character.particularities, onUpdate]
   );
 
   const handleApplyRecovery = useCallback(
@@ -84,9 +159,81 @@ export function ResourcesTab({ character, onUpdate }: ResourcesTabProps) {
             languages={character.languages}
             menteValue={character.attributes.mente}
             lineageLanguages={character.lineage?.languages || []}
+            extraLanguagesModifier={character.extraLanguagesModifier}
             onUpdate={handleLanguagesUpdate}
+            onUpdateModifier={handleExtraLanguagesModifierUpdate}
           />
         </Box>
+
+        <Divider />
+
+        {/* Particularidades */}
+        <Card
+          variant="outlined"
+          id="section-particularities"
+          sx={{
+            borderColor: 'primary.main',
+            borderWidth: 1,
+          }}
+        >
+          <CardContent>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                cursor: 'pointer',
+                mb: particularitiessExpanded ? 2 : 0,
+              }}
+              onClick={() =>
+                setParticularitiesExpanded(!particularitiessExpanded)
+              }
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <StarIcon color="primary" />
+                <Typography variant="h6" fontWeight="bold">
+                  Particularidades
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                sx={{
+                  transform: particularitiessExpanded
+                    ? 'rotate(180deg)'
+                    : 'rotate(0deg)',
+                  transition: 'transform 0.3s',
+                }}
+                aria-label={particularitiessExpanded ? 'Recolher' : 'Expandir'}
+              >
+                <ExpandMoreIcon />
+              </IconButton>
+            </Box>
+
+            <Collapse in={particularitiessExpanded}>
+              <Stack spacing={4}>
+                {/* Características Complementares */}
+                <Box>
+                  <ComplementaryTraits
+                    negativeTraits={character.particularities.negativeTraits}
+                    positiveTraits={character.particularities.positiveTraits}
+                    onUpdateNegative={handleUpdateNegativeTraits}
+                    onUpdatePositive={handleUpdatePositiveTraits}
+                  />
+                </Box>
+
+                <Divider />
+
+                {/* Características Completas */}
+                <Box>
+                  <CompleteTraits
+                    traits={character.particularities.completeTraits}
+                    onUpdate={handleUpdateCompleteTraits}
+                  />
+                </Box>
+              </Stack>
+            </Collapse>
+          </CardContent>
+        </Card>
 
         <Divider />
 
