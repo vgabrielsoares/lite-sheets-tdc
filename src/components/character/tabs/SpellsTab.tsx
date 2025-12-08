@@ -20,7 +20,12 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import type { Character, SkillName } from '@/types';
 import type { KnownSpell, SpellCircle, SpellMatrix } from '@/types/spells';
-import { SpellDashboard, SpellList, SpellDetailsSidebar } from '../spells';
+import {
+  SpellDashboard,
+  SpellList,
+  SpellDetailsSidebar,
+  SpellLearningCalculator,
+} from '../spells';
 import {
   SPELL_CIRCLES,
   SPELL_MATRICES,
@@ -360,6 +365,9 @@ export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
         onDeleteSpell={handleDeleteSpell}
         onAddSpell={handleOpenAddDialog}
       />
+
+      {/* Calculadora de Aprendizado de Feitiços (FASE 6.10) */}
+      <SpellLearningCalculator character={character} />
 
       {/* Dialog: Add/Edit Spell */}
       <Dialog
