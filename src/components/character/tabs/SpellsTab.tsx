@@ -20,7 +20,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import type { Character, SkillName } from '@/types';
 import type { KnownSpell, SpellCircle, SpellMatrix } from '@/types/spells';
-import { SpellDashboard, SpellList } from '../spells';
+import { SpellDashboard, SpellList, SpellDetailsSidebar } from '../spells';
 import {
   SPELL_CIRCLES,
   SPELL_MATRICES,
@@ -51,6 +51,7 @@ export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
   const { showSuccess, showError } = useNotifications();
   const [dialogMode, setDialogMode] = useState<SpellDialogMode>(null);
   const [selectedSpell, setSelectedSpell] = useState<KnownSpell | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -85,10 +86,10 @@ export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
     setDialogMode('edit');
   }, []);
 
-  // Open view dialog
-  const handleOpenViewDialog = useCallback((spell: KnownSpell) => {
+  // Open spell details sidebar
+  const handleOpenSpellSidebar = useCallback((spell: KnownSpell) => {
     setSelectedSpell(spell);
-    setDialogMode('view');
+    setSidebarOpen(true);
   }, []);
 
   // Close dialog
@@ -97,6 +98,39 @@ export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
     setSelectedSpell(null);
     resetForm();
   }, [resetForm]);
+
+  // Close sidebar
+  const handleCloseSidebar = useCallback(() => {
+    setSidebarOpen(false);
+    setSelectedSpell(null);
+  }, []);
+
+  // Save spell from sidebar
+  const handleSaveSpellFromSidebar = useCallback(
+    (updatedSpell: KnownSpell) => {
+      if (!character.spellcasting) {
+        showError('Dados de conjuração não disponíveis');
+        return;
+      }
+
+      const updatedSpells = character.spellcasting.knownSpells.map((spell) =>
+        spell.spellId === updatedSpell.spellId ? updatedSpell : spell
+      );
+
+      onUpdate({
+        spellcasting: {
+          maxKnownSpells: character.spellcasting.maxKnownSpells,
+          knownSpellsModifiers: character.spellcasting.knownSpellsModifiers,
+          spellcastingAbilities: character.spellcasting.spellcastingAbilities,
+          masteredMatrices: character.spellcasting.masteredMatrices,
+          knownSpells: updatedSpells,
+        },
+      });
+
+      // Não mostra mensagem de sucesso para evitar spam com auto-save
+    },
+    [character, onUpdate, showError]
+  );
 
   // Add spell
   const handleAddSpell = useCallback(() => {
@@ -322,8 +356,7 @@ export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
       {/* Lista de Feitiços Conhecidos */}
       <SpellList
         spells={character.spellcasting?.knownSpells || []}
-        onViewSpell={handleOpenViewDialog}
-        onEditSpell={handleOpenEditDialog}
+        onOpenSpell={handleOpenSpellSidebar}
         onDeleteSpell={handleDeleteSpell}
         onAddSpell={handleOpenAddDialog}
       />
@@ -424,107 +457,14 @@ export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog: View Spell */}
-      <Dialog
-        open={dialogMode === 'view'}
-        onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>{selectedSpell?.name}</DialogTitle>
-        <DialogContent>
-          {selectedSpell && (
-            <Stack spacing={2} sx={{ mt: 2 }}>
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  Círculo
-                </Typography>
-                <Chip
-                  label={getCircleLabel(selectedSpell.circle)}
-                  color="primary"
-                  size="small"
-                />
-              </Box>
-
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  Custo de PP
-                </Typography>
-                <Chip
-                  label={`${SPELL_CIRCLE_PP_COST[selectedSpell.circle]} PP`}
-                  color="info"
-                  size="small"
-                />
-              </Box>
-
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  Matriz
-                </Typography>
-                <Chip
-                  label={getMatrixLabel(selectedSpell.matrix)}
-                  color="secondary"
-                  size="small"
-                />
-              </Box>
-
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  Habilidade de Conjuração
-                </Typography>
-                <Chip
-                  label={getSkillLabel(selectedSpell.spellcastingSkill)}
-                  color="warning"
-                  size="small"
-                />
-              </Box>
-
-              {selectedSpell.notes && (
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Notas
-                  </Typography>
-                  <Typography variant="body2">{selectedSpell.notes}</Typography>
-                </Box>
-              )}
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Fechar</Button>
-          <Button
-            onClick={() => {
-              if (selectedSpell) {
-                handleCloseDialog();
-                handleOpenEditDialog(selectedSpell);
-              }
-            }}
-            variant="contained"
-          >
-            Editar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Sidebar: Spell Details */}
+      <SpellDetailsSidebar
+        open={sidebarOpen}
+        onClose={handleCloseSidebar}
+        spell={selectedSpell}
+        onSave={handleSaveSpellFromSidebar}
+        initialMode="edit"
+      />
     </Box>
   );
 }
