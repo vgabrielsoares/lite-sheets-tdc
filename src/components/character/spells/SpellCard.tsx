@@ -10,11 +10,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import {
-  Visibility as ViewIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import type { KnownSpell } from '@/types/spells';
 import {
   SPELL_MATRIX_LABELS,
@@ -25,8 +21,7 @@ import {
 
 export interface SpellCardProps {
   spell: KnownSpell;
-  onView?: (spell: KnownSpell) => void;
-  onEdit?: (spell: KnownSpell) => void;
+  onClick?: (spell: KnownSpell) => void;
   onDelete?: (spellId: string) => void;
 }
 
@@ -38,9 +33,11 @@ export interface SpellCardProps {
  * - Círculo e custo em PP
  * - Matriz
  * - Habilidade de conjuração
- * - Ações (visualizar, editar, deletar)
+ * - Ação de deletar
+ *
+ * Clique no card para abrir detalhes/edição
  */
-export function SpellCard({ spell, onView, onEdit, onDelete }: SpellCardProps) {
+export function SpellCard({ spell, onClick, onDelete }: SpellCardProps) {
   const ppCost = SPELL_CIRCLE_PP_COST[spell.circle];
   const matrixLabel = SPELL_MATRIX_LABELS[spell.matrix];
   const skillLabel =
@@ -50,29 +47,30 @@ export function SpellCard({ spell, onView, onEdit, onDelete }: SpellCardProps) {
     spell.spellcastingSkill.charAt(0).toUpperCase() +
       spell.spellcastingSkill.slice(1);
 
-  const handleView = () => {
-    if (onView) onView(spell);
+  const handleCardClick = () => {
+    if (onClick) onClick(spell);
   };
 
-  const handleEdit = () => {
-    if (onEdit) onEdit(spell);
-  };
-
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (onDelete) onDelete(spell.spellId);
   };
 
   return (
     <Card
       elevation={0}
+      onClick={handleCardClick}
       sx={{
         border: '1px solid',
         borderColor: 'divider',
+        cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-        },
+        '&:hover': onClick
+          ? {
+              borderColor: 'primary.main',
+              boxShadow: 2,
+            }
+          : {},
       }}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
@@ -180,37 +178,14 @@ export function SpellCard({ spell, onView, onEdit, onDelete }: SpellCardProps) {
           </Box>
 
           {/* Ações */}
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 0.5,
-              flexShrink: 0,
-              alignItems: 'flex-start',
-            }}
-          >
-            {onView && (
-              <Tooltip title="Visualizar detalhes" arrow>
-                <IconButton
-                  size="small"
-                  onClick={handleView}
-                  aria-label="Visualizar feitiço"
-                >
-                  <ViewIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            {onEdit && (
-              <Tooltip title="Editar" arrow>
-                <IconButton
-                  size="small"
-                  onClick={handleEdit}
-                  aria-label="Editar feitiço"
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            {onDelete && (
+          {onDelete && (
+            <Box
+              sx={{
+                display: 'flex',
+                flexShrink: 0,
+                alignItems: 'flex-start',
+              }}
+            >
               <Tooltip title="Remover" arrow>
                 <IconButton
                   size="small"
@@ -221,8 +196,8 @@ export function SpellCard({ spell, onView, onEdit, onDelete }: SpellCardProps) {
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-            )}
-          </Box>
+            </Box>
+          )}
         </Box>
       </CardContent>
     </Card>

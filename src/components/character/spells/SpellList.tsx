@@ -23,8 +23,7 @@ import { SPELL_CIRCLES, SPELL_CIRCLE_PP_COST } from '@/constants/spells';
 
 export interface SpellListProps {
   spells: KnownSpell[];
-  onViewSpell?: (spell: KnownSpell) => void;
-  onEditSpell?: (spell: KnownSpell) => void;
+  onOpenSpell?: (spell: KnownSpell) => void;
   onDeleteSpell?: (spellId: string) => void;
   onAddSpell?: () => void;
 }
@@ -42,8 +41,7 @@ export interface SpellListProps {
  */
 export function SpellList({
   spells,
-  onViewSpell,
-  onEditSpell,
+  onOpenSpell,
   onDeleteSpell,
   onAddSpell,
 }: SpellListProps) {
@@ -282,8 +280,7 @@ export function SpellList({
                           <SpellCard
                             key={spell.spellId}
                             spell={spell}
-                            onView={onViewSpell}
-                            onEdit={onEditSpell}
+                            onClick={onOpenSpell}
                             onDelete={onDeleteSpell}
                           />
                         ))}

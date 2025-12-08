@@ -9,3 +9,6 @@ export type { SpellCardProps } from './SpellCard';
 
 export { SpellFilters } from './SpellFilters';
 export type { SpellFiltersProps, SpellFiltersState } from './SpellFilters';
+
+export { SpellDetailsSidebar } from './SpellDetailsSidebar';
+export type { SpellDetailsSidebarProps } from './SpellDetailsSidebar';
