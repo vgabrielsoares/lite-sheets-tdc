@@ -219,3 +219,13 @@ export {
   calculateSpellLearningChance,
   calculateSpellPPCost,
 } from './spellCalculations';
+
+// Rest calculation utilities
+export {
+  calculateRestRecovery,
+  getQualityMultiplier,
+  validateRestInputs,
+  REST_QUALITY_LABELS,
+  REST_QUALITY_DESCRIPTIONS,
+} from './restCalculations';
+export type { RestQuality, RestRecovery } from './restCalculations';
