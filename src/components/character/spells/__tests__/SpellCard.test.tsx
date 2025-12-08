@@ -27,8 +27,7 @@ describe('SpellCard', () => {
     notes: 'Ótimo para grupos de inimigos',
   };
 
-  const onView = jest.fn();
-  const onEdit = jest.fn();
+  const onClick = jest.fn();
   const onDelete = jest.fn();
   let store: any;
 
@@ -41,12 +40,7 @@ describe('SpellCard', () => {
     return render(
       <Provider store={store}>
         <ThemeProvider theme={lightTheme}>
-          <SpellCard
-            spell={spell}
-            onView={onView}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
+          <SpellCard spell={spell} onClick={onClick} onDelete={onDelete} />
         </ThemeProvider>
       </Provider>
     );
@@ -75,7 +69,7 @@ describe('SpellCard', () => {
 
     it('deve exibir a habilidade de conjuração', () => {
       renderComponent();
-      expect(screen.getByText('arcano')).toBeInTheDocument();
+      expect(screen.getByText('Arcano')).toBeInTheDocument();
     });
 
     it('deve exibir as anotações quando presentes', () => {
@@ -95,17 +89,19 @@ describe('SpellCard', () => {
   });
 
   describe('Botões de ação', () => {
-    it('deve exibir todos os botões quando callbacks são fornecidos', () => {
+    it('deve exibir apenas o botão de deletar', () => {
       renderComponent();
-      expect(
-        screen.getByRole('button', { name: /Visualizar feitiço/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /Editar feitiço/i })
-      ).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: /Remover feitiço/i })
       ).toBeInTheDocument();
+
+      // Não deve ter botões de view/edit
+      expect(
+        screen.queryByRole('button', { name: /Visualizar feitiço/i })
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Editar feitiço/i })
+      ).not.toBeInTheDocument();
     });
   });
 

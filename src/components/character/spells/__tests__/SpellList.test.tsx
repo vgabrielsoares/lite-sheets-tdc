@@ -49,8 +49,7 @@ describe('SpellList', () => {
     },
   ];
 
-  const onViewSpell = jest.fn();
-  const onEditSpell = jest.fn();
+  const onOpenSpell = jest.fn();
   const onDeleteSpell = jest.fn();
   const onAddSpell = jest.fn();
   let store: any;
@@ -66,8 +65,7 @@ describe('SpellList', () => {
         <ThemeProvider theme={lightTheme}>
           <SpellList
             spells={spells}
-            onViewSpell={onViewSpell}
-            onEditSpell={onEditSpell}
+            onOpenSpell={onOpenSpell}
             onDeleteSpell={onDeleteSpell}
             onAddSpell={onAddSpell}
           />

@@ -313,36 +313,26 @@ describe('SpellsTab', () => {
       expect(screen.getByText('Bola de Fogo')).toBeInTheDocument();
     });
 
-    // Encontra e clica no botão edit
-    const allButtons = screen.getAllByRole('button');
-    const editButton = allButtons.find(
-      (btn) => btn.getAttribute('aria-label') === 'Editar feitiço'
-    );
-    expect(editButton).toBeDefined();
-    if (editButton) fireEvent.click(editButton);
+    // Clica no card do feitiço para abrir a sidebar (clica no título)
+    const spellTitle = screen.getByText('Bola de Fogo');
+    fireEvent.click(spellTitle);
 
-    // Aguarda o diálogo abrir
+    // Aguarda a sidebar abrir
     await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByRole('complementary')).toBeInTheDocument();
     });
 
     // Edita o nome
     const nameInput = screen.getByLabelText(/nome do feitiço/i);
     fireEvent.change(nameInput, { target: { value: 'Bola de Fogo Maior' } });
 
-    // Salva
-    const submitButton = within(screen.getByRole('dialog')).getByRole(
-      'button',
-      {
-        name: /salvar/i,
-      }
+    // Aguarda o salvamento automático (debounced save)
+    await waitFor(
+      () => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+      },
+      { timeout: 2000 } // Aguarda até 2 segundos para o debounce (1s) + processamento
     );
-    fireEvent.click(submitButton);
-
-    // Verifica se onUpdate foi chamado
-    await waitFor(() => {
-      expect(mockOnUpdate).toHaveBeenCalled();
-    });
   });
 
   it('should delete a spell', async () => {
