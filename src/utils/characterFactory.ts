@@ -411,6 +411,7 @@ export function createDefaultCharacter(
 
     // Idiomas e Proficiências
     languages: ['comum'], // Idioma padrão
+    extraLanguagesModifier: 0, // Modificador de idiomas extras
     proficiencies: {
       weapons: ['Armas Simples'], // Proficiência padrão
       armor: [],
