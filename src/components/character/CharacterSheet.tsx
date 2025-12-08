@@ -265,8 +265,14 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         },
       ],
       resources: [
-        { id: 'section-luck', label: 'Sorte' },
-        { id: 'section-particularities', label: 'Particularidades' },
+        { id: 'section-proficiencies', label: 'Proficiências' },
+        { id: 'section-languages', label: 'Idiomas' },
+        {
+          id: 'section-particularities',
+          label: 'Particularidades',
+          icon: <StarIcon fontSize="small" />,
+        },
+        { id: 'section-rest', label: 'Descanso' },
       ],
       inventory: [
         { id: 'section-equipment', label: 'Equipamentos' },
