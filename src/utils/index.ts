@@ -7,6 +7,18 @@
 // Character factory
 export { createDefaultCharacter } from './characterFactory';
 
+// Dice rolling utilities
+export {
+  rollD20,
+  rollDamage,
+  rollDamageWithCritical,
+  rollSkillTest,
+  DiceRollHistory,
+  globalDiceHistory,
+  type DiceRollResult,
+  type RollType,
+} from './diceRoller';
+
 // Calculation utilities
 export {
   roundDown,
