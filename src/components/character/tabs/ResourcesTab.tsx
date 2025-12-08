@@ -144,7 +144,7 @@ export function ResourcesTab({ character, onUpdate }: ResourcesTabProps) {
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Stack spacing={4}>
         {/* Proficiências */}
-        <Box>
+        <Box id="section-proficiencies">
           <ProficienciesList
             proficiencies={character.proficiencies}
             onUpdate={handleProficienciesUpdate}
@@ -154,7 +154,7 @@ export function ResourcesTab({ character, onUpdate }: ResourcesTabProps) {
         <Divider />
 
         {/* Idiomas */}
-        <Box>
+        <Box id="section-languages">
           <LanguagesList
             languages={character.languages}
             menteValue={character.attributes.mente}
@@ -238,7 +238,7 @@ export function ResourcesTab({ character, onUpdate }: ResourcesTabProps) {
         <Divider />
 
         {/* Calculadora de Descanso */}
-        <Box>
+        <Box id="section-rest">
           <RestCalculator
             character={character}
             onApplyRecovery={handleApplyRecovery}

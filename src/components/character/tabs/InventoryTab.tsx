@@ -124,26 +124,32 @@ export function InventoryTab({
 
       <Stack spacing={3}>
         {/* Gerenciador de Moedas */}
-        <CurrencyManager
-          currency={character.inventory.currency}
-          onUpdate={handleCurrencyUpdate}
-        />
+        <Box id="section-currency">
+          <CurrencyManager
+            currency={character.inventory.currency}
+            onUpdate={handleCurrencyUpdate}
+          />
+        </Box>
 
         {/* Capacidade de Carga */}
-        <CarryCapacityDisplay
-          character={character}
-          showDetails
-          onOtherModifiersChange={handleOtherModifiersChange}
-        />
+        <Box id="section-carry-capacity">
+          <CarryCapacityDisplay
+            character={character}
+            showDetails
+            onOtherModifiersChange={handleOtherModifiersChange}
+          />
+        </Box>
 
         {/* Lista de Itens do Inventário */}
-        <InventoryList
-          items={character.inventory?.items ?? []}
-          onUpdate={handleItemsUpdate}
-          maxCapacity={maxCapacity}
-          coinsWeight={coinsWeight}
-          onOpenItem={onOpenItem}
-        />
+        <Box id="section-inventory-items">
+          <InventoryList
+            items={character.inventory?.items ?? []}
+            onUpdate={handleItemsUpdate}
+            maxCapacity={maxCapacity}
+            coinsWeight={coinsWeight}
+            onOpenItem={onOpenItem}
+          />
+        </Box>
       </Stack>
     </Box>
   );

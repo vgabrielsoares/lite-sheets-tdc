@@ -356,18 +356,24 @@ export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
       }}
     >
       {/* Dashboard de Conjuração */}
-      <SpellDashboard character={character} onUpdate={onUpdate} />
+      <Box id="section-spell-dashboard">
+        <SpellDashboard character={character} onUpdate={onUpdate} />
+      </Box>
 
       {/* Lista de Feitiços Conhecidos */}
-      <SpellList
-        spells={character.spellcasting?.knownSpells || []}
-        onOpenSpell={handleOpenSpellSidebar}
-        onDeleteSpell={handleDeleteSpell}
-        onAddSpell={handleOpenAddDialog}
-      />
+      <Box id="section-spell-list">
+        <SpellList
+          spells={character.spellcasting?.knownSpells || []}
+          onOpenSpell={handleOpenSpellSidebar}
+          onDeleteSpell={handleDeleteSpell}
+          onAddSpell={handleOpenAddDialog}
+        />
+      </Box>
 
       {/* Calculadora de Aprendizado de Feitiços (FASE 6.10) */}
-      <SpellLearningCalculator character={character} />
+      <Box id="section-spell-learning">
+        <SpellLearningCalculator character={character} />
+      </Box>
 
       {/* Dialog: Add/Edit Spell */}
       <Dialog
