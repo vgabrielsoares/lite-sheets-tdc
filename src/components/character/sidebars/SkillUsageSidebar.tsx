@@ -222,6 +222,7 @@ export function SkillUsageSidebar({
       keyAttribute: editingUse.keyAttribute || skill.keyAttribute,
       bonus: editingUse.bonus || 0,
       description: editingUse.description?.trim(),
+      modifiers: editingUse.modifiers || [],
     };
 
     const updatedUses = [...customUses, newUse];
@@ -255,6 +256,7 @@ export function SkillUsageSidebar({
             keyAttribute: editingUse.keyAttribute || use.keyAttribute,
             bonus: editingUse.bonus || 0,
             description: editingUse.description?.trim(),
+            modifiers: editingUse.modifiers || [],
           }
         : use
     );
@@ -548,17 +550,20 @@ export function SkillUsageSidebar({
       >
         {/* Nome e Descrição */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            variant="body2"
-            fontWeight={600}
-            noWrap
-            sx={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {use.name}
-          </Typography>
+          <Tooltip title={use.name} placement="top" arrow>
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              noWrap
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                cursor: 'help',
+              }}
+            >
+              {use.name}
+            </Typography>
+          </Tooltip>
           {use.description && (
             <Tooltip title={use.description} placement="top" arrow>
               <Typography
@@ -770,17 +775,20 @@ export function SkillUsageSidebar({
       >
         {/* Nome */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            variant="body2"
-            fontWeight={500}
-            noWrap
-            sx={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {defaultUse.name}
-          </Typography>
+          <Tooltip title={defaultUse.name} placement="top" arrow>
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              noWrap
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                cursor: 'help',
+              }}
+            >
+              {defaultUse.name}
+            </Typography>
+          </Tooltip>
         </Box>
 
         {/* Atributo-Chave (editável se disponível) */}
