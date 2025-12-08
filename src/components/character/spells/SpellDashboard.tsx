@@ -27,7 +27,7 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
-import type { Character, AttributeName } from '@/types';
+import type { Character, AttributeName, Modifier } from '@/types';
 import type {
   SpellcastingSkillName,
   SpellcastingAbility,
@@ -132,33 +132,45 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
 
   /**
    * Calcula o modificador de uma habilidade de conjuração
-   * Prioriza o uso "Conjurar Feitiço" se existir
+   * Prioriza o uso customizado "Conjurar Feitiço" se existir
+   * Inclui modificadores gerais da habilidade + modificadores do uso customizado
    */
   const calculateSpellcastingModifier = useCallback(
     (skillName: SpellcastingSkillName): number => {
       const skill = character.skills?.[skillName];
       if (!skill) return 0;
 
-      // Verificar se existe uso customizado "Conjurar Feitiço"
-      const conjurarFeiticoUse =
-        skill.defaultUseModifierOverrides?.['Conjurar Feitiço'];
-      if (conjurarFeiticoUse && Array.isArray(conjurarFeiticoUse)) {
-        // Calcular modificador base com atributo customizado (se houver)
-        const customAttr =
-          skill.defaultUseAttributeOverrides?.['Conjurar Feitiço'];
-        const attributeValue = customAttr
-          ? character.attributes[customAttr]
-          : character.attributes[skill.keyAttribute];
+      // Buscar uso customizado "Conjurar Feitiço" em customUses
+      const conjurarFeiticoUse = skill.customUses?.find(
+        (use) => use.name === 'Conjurar Feitiço'
+      );
 
-        // Combinar modificadores do uso "Conjurar Feitiço" com modificadores gerais da habilidade
-        const allModifiers = [
+      if (conjurarFeiticoUse) {
+        // Usar atributo e modificadores do uso customizado
+        const attributeValue =
+          character.attributes[conjurarFeiticoUse.keyAttribute];
+
+        // Combinar:
+        // 1. Modificadores gerais da habilidade
+        // 2. Modificadores do uso customizado
+        // 3. Bônus do uso customizado (convertido para modificador numérico)
+        const allModifiers: Modifier[] = [
           ...(skill.modifiers || []),
-          ...conjurarFeiticoUse,
+          ...(conjurarFeiticoUse.modifiers || []),
         ];
+
+        // Adicionar bônus do uso como modificador numérico
+        if (conjurarFeiticoUse.bonus !== 0) {
+          allModifiers.push({
+            name: `Uso: ${conjurarFeiticoUse.name}`,
+            value: conjurarFeiticoUse.bonus,
+            type: conjurarFeiticoUse.bonus > 0 ? 'bonus' : 'penalidade',
+          });
+        }
 
         const calc = calculateSkillTotalModifier(
           skillName,
-          customAttr || skill.keyAttribute,
+          conjurarFeiticoUse.keyAttribute,
           attributeValue,
           skill.proficiencyLevel,
           skill.isSignature,
