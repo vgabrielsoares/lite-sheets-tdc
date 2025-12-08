@@ -179,6 +179,8 @@ function createDefaultCombat(): CombatData {
 function createDefaultCarryingCapacity(): CarryingCapacity {
   return {
     base: 10, // 5 + (Força (1) * 5)
+    sizeModifier: 0,
+    otherModifiers: 0,
     modifiers: 0,
     total: 10,
     currentWeight: 0,
@@ -200,7 +202,7 @@ function createDefaultInventory(): Inventory {
       description: 'Mochila padrão de aventureiro',
       category: 'diversos',
       quantity: 1,
-      weight: 0, // Mochila não conta peso
+      weight: null, // Mochila não tem peso
       value: 0,
       equipped: true,
     },
@@ -210,7 +212,7 @@ function createDefaultInventory(): Inventory {
       description: 'Cartão para acesso à conta bancária',
       category: 'diversos',
       quantity: 1,
-      weight: 0,
+      weight: null, // Cartão não tem peso
       value: 0,
       equipped: false,
     },
@@ -219,12 +221,12 @@ function createDefaultInventory(): Inventory {
   const defaultCurrency: Currency = {
     physical: {
       cobre: 0,
-      ouro: 10, // 10 PO$ inicial
+      ouro: 0,
       platina: 0,
     },
     bank: {
       cobre: 0,
-      ouro: 0,
+      ouro: 10, // 10 PO$ inicial no banco (com Cartão do Banco)
       platina: 0,
     },
   };
@@ -409,6 +411,7 @@ export function createDefaultCharacter(
 
     // Idiomas e Proficiências
     languages: ['comum'], // Idioma padrão
+    extraLanguagesModifier: 0, // Modificador de idiomas extras
     proficiencies: {
       weapons: ['Armas Simples'], // Proficiência padrão
       armor: [],

@@ -202,7 +202,8 @@ describe('useCharacterCreation', () => {
           (item) => item.name === 'Cartão do Banco'
         )
       ).toBeDefined();
-      expect(character.inventory.currency.physical.ouro).toBe(10);
+      // 10 PO$ no banco (já que o personagem começa com Cartão do Banco)
+      expect(character.inventory.currency.bank.ouro).toBe(10);
     });
   });
 

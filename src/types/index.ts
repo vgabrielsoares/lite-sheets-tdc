@@ -136,22 +136,34 @@ export {
 
 // Spells
 export type {
+  SpellCircle,
   SpellType,
   SpellMatrix,
-  MagicSchool,
-  SpellComponents,
-  SpellArea,
+  SpellClass,
+  SpellComponent,
   Spell,
   KnownSpell,
   SpellcastingAbility,
   SpellcastingData,
 } from './spells';
 
-export {
-  BASE_SPELL_DC,
-  DEFAULT_SPELLCASTING_SKILLS,
-  SPELL_MATRIX_BASE_COSTS,
-} from './spells';
+export { BASE_SPELL_DC, DEFAULT_SPELLCASTING_SKILLS } from './spells';
+
+// Currency (dedicated types for currency system)
+export type {
+  CurrencyDenomination,
+  CoinWeight,
+  CurrencyConversionResult,
+  WealthSummary,
+  CurrencyLocation,
+  CurrencyTransfer,
+} from './currency';
+
+export { DEFAULT_CURRENCY, EMPTY_DENOMINATION } from './currency';
+
+// Re-export Currency and TotalWealth from currency.ts (canonical source)
+// Note: These are also defined in inventory.ts for backward compatibility
+export type { Currency as CurrencyData } from './currency';
 
 // Character
 export type {
@@ -182,3 +194,16 @@ export type {
 } from './character';
 
 export { DEFAULT_LEVEL_1_CHARACTER } from './character';
+
+// Traits (utilities for working with particularities)
+export type {
+  ComplementaryTrait as ComplementaryTraitUtil,
+  CompleteTrait as CompleteTraitUtil,
+} from './traits';
+
+export {
+  calculateTraitBalance,
+  areTraitsBalanced,
+  createEmptyComplementaryTrait,
+  createEmptyCompleteTrait,
+} from './traits';

@@ -172,8 +172,8 @@ describe('Type System', () => {
 
     it('should have default spellcasting skills', () => {
       expect(DEFAULT_SPELLCASTING_SKILLS.arcano).toBe('arcano');
-      expect(DEFAULT_SPELLCASTING_SKILLS.divino).toBe('religiao');
-      expect(DEFAULT_SPELLCASTING_SKILLS.religioso).toBe('religiao');
+      expect(DEFAULT_SPELLCASTING_SKILLS.natureza).toBe('natureza');
+      expect(DEFAULT_SPELLCASTING_SKILLS.religiao).toBe('religiao');
     });
   });
 

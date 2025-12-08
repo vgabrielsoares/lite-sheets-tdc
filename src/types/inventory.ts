@@ -35,8 +35,14 @@ export interface InventoryItem {
   category: ItemCategory;
   /** Quantidade no inventário */
   quantity: number;
-  /** Peso unitário (na medida "Peso" do RPG) */
-  weight: number;
+  /**
+   * Peso unitário (na medida "Peso" do RPG).
+   * - null/undefined: Item sem peso (não conta para nenhum cálculo)
+   * - 0: Item de peso zero (5 itens de peso 0 = 1 de peso)
+   * - negativo: Item que aumenta capacidade de carga
+   * - positivo: Peso normal
+   */
+  weight: number | null;
   /** Valor em moedas de ouro */
   value: number;
   /** Se o item está equipado */
@@ -153,7 +159,11 @@ export interface Tool extends InventoryItem {
 export interface CarryingCapacity {
   /** Capacidade base (5 + Força × 5) */
   base: number;
-  /** Modificadores à capacidade */
+  /** Modificadores de tamanho (da linhagem) */
+  sizeModifier: number;
+  /** Modificadores adicionais (habilidades, poderes, condições, etc.) */
+  otherModifiers: number;
+  /** Total de todos os modificadores (sizeModifier + otherModifiers) */
   modifiers: number;
   /** Capacidade total */
   total: number;

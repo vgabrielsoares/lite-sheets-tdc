@@ -46,3 +46,6 @@ export * from './damageTypes';
 
 // Condições
 export * from './conditions';
+
+// Moedas
+export * from './currency';

@@ -429,6 +429,11 @@ export interface Character extends BaseEntity {
   // Idiomas e Proficiências
   /** Idiomas conhecidos */
   languages: LanguageName[];
+  /**
+   * Modificador de idiomas extras
+   * Idiomas adicionais concedidos por linhagem, habilidades especiais, etc.
+   */
+  extraLanguagesModifier: number;
   /** Proficiências */
   proficiencies: Proficiencies;
 
@@ -499,6 +504,7 @@ export const DEFAULT_LEVEL_1_CHARACTER: Partial<Character> = {
     },
   } as any,
   languages: ['comum'],
+  extraLanguagesModifier: 0,
   proficiencies: {
     weapons: ['armas-simples'],
     armor: [],

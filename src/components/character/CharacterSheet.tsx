@@ -30,6 +30,14 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import StarIcon from '@mui/icons-material/Star';
 import SchoolIcon from '@mui/icons-material/School';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+// Ícones para TOC - Resources
+import HotelIcon from '@mui/icons-material/Hotel';
+// Ícones para TOC - Inventory
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import InventoryIcon from '@mui/icons-material/Inventory';
+// Ícones para TOC - Spells
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useRouter } from 'next/navigation';
 import type {
   Character,
@@ -39,6 +47,7 @@ import type {
   ProficiencyLevel,
   Modifier,
 } from '@/types';
+import type { InventoryItem } from '@/types/inventory';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
@@ -76,6 +85,7 @@ import { PPDetailSidebar } from './sidebars/PPDetailSidebar';
 import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
+import { ItemDetailsSidebar } from './inventory/ItemDetailsSidebar';
 import { TableOfContents, TOCSection } from '@/components/shared';
 import {
   calculateArchetypeHPBreakdown,
@@ -147,6 +157,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
     | 'movement'
     | 'attribute'
     | 'skill'
+    | 'item'
     | null
   >(null);
 
@@ -156,6 +167,9 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   // Habilidade selecionada para a sidebar
   const [selectedSkill, setSelectedSkill] = useState<SkillName | null>(null);
+
+  // Item selecionado para a sidebar de detalhes
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   /**
    * Seções do TOC por aba
@@ -259,16 +273,60 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         },
       ],
       resources: [
-        { id: 'section-luck', label: 'Sorte' },
-        { id: 'section-particularities', label: 'Particularidades' },
+        {
+          id: 'section-proficiencies',
+          label: 'Proficiências',
+          icon: <BuildIcon fontSize="small" />,
+        },
+        {
+          id: 'section-languages',
+          label: 'Idiomas',
+          icon: <TranslateIcon fontSize="small" />,
+        },
+        {
+          id: 'section-particularities',
+          label: 'Particularidades',
+          icon: <StarIcon fontSize="small" />,
+        },
+        {
+          id: 'section-rest',
+          label: 'Descanso',
+          icon: <HotelIcon fontSize="small" />,
+        },
       ],
       inventory: [
-        { id: 'section-equipment', label: 'Equipamentos' },
-        { id: 'section-currency', label: 'Dinheiro' },
+        {
+          id: 'section-currency',
+          label: 'Moedas e Riquezas',
+          icon: <MonetizationOnIcon fontSize="small" />,
+        },
+        {
+          id: 'section-carry-capacity',
+          label: 'Capacidade de Carga',
+          icon: <FitnessCenterIcon fontSize="small" />,
+        },
+        {
+          id: 'section-inventory-items',
+          label: 'Itens do Inventário',
+          icon: <InventoryIcon fontSize="small" />,
+        },
       ],
       spells: [
-        { id: 'section-known-spells', label: 'Feitiços Conhecidos' },
-        { id: 'section-spell-slots', label: 'Espaços de Feitiço' },
+        {
+          id: 'section-spell-dashboard',
+          label: 'Dashboard de Feitiços',
+          icon: <DashboardIcon fontSize="small" />,
+        },
+        {
+          id: 'section-spell-list',
+          label: 'Lista de Feitiços',
+          icon: <MenuBookIcon fontSize="small" />,
+        },
+        {
+          id: 'section-spell-learning',
+          label: 'Calculadora de Aprendizado',
+          icon: <SchoolIcon fontSize="small" />,
+        },
       ],
       description: [
         { id: 'section-physical', label: 'Descrição Física' },
@@ -352,12 +410,39 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Abre a sidebar de detalhes de um item do inventário
+   */
+  const handleOpenItemSidebar = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setActiveSidebar('item');
+  };
+
+  /**
+   * Handler para atualizar item do inventário via sidebar
+   */
+  const handleUpdateItemFromSidebar = (updatedItem: InventoryItem) => {
+    const currentItems = character.inventory?.items ?? [];
+    const updatedItems = currentItems.map((item) =>
+      item.id === updatedItem.id ? updatedItem : item
+    );
+    onUpdate({
+      inventory: {
+        ...character.inventory,
+        items: updatedItems,
+      },
+    });
+    // Atualiza o item selecionado para manter a sidebar sincronizada
+    setSelectedItem(updatedItem);
+  };
+
+  /**
    * Fecha qualquer sidebar aberta
    */
   const handleCloseSidebar = () => {
     setActiveSidebar(null);
     setSelectedAttribute(null);
     setSelectedSkill(null);
+    setSelectedItem(null);
   };
 
   /**
@@ -767,6 +852,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenMovement: handleOpenMovementSidebar,
       onOpenAttribute: handleOpenAttributeSidebar,
       onOpenSkill: handleOpenSkillSidebar,
+      onOpenItem: handleOpenItemSidebar,
       onSkillKeyAttributeChange: handleSkillKeyAttributeChange,
       onSkillProficiencyChange: handleSkillProficiencyChange,
       onSkillModifiersChange: handleSkillModifiersChange,
@@ -1054,6 +1140,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               keenSenses={character.senses?.keenSenses}
             />
           )}
+
+          {/* Sidebar de Detalhes de Item */}
+          {activeSidebar === 'item' && selectedItem && (
+            <ItemDetailsSidebar
+              open={activeSidebar === 'item'}
+              onClose={handleCloseSidebar}
+              item={selectedItem}
+              onUpdate={handleUpdateItemFromSidebar}
+            />
+          )}
         </>
       )}
 
@@ -1173,6 +1269,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           crafts={character.crafts}
           onUpdateCraft={handleUpdateCraft}
           keenSenses={character.senses?.keenSenses}
+        />
+      )}
+
+      {/* Sidebar de Detalhes de Item em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'item' && selectedItem && (
+        <ItemDetailsSidebar
+          open={activeSidebar === 'item'}
+          onClose={handleCloseSidebar}
+          item={selectedItem}
+          onUpdate={handleUpdateItemFromSidebar}
         />
       )}
     </Container>

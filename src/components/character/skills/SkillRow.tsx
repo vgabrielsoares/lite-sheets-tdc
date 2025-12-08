@@ -73,7 +73,7 @@ export interface SkillRowProps {
   skill: Skill;
   /** Atributos do personagem (para cÃ¡lculos) */
   attributes: Attributes;
-  /** NÃ­vel do personagem (para bÃ´nus de assinatura) */
+  /** Ní­vel do personagem (para bÃ´nus de assinatura) */
   characterLevel: number;
   /** Se personagem estÃ¡ sobrecarregado */
   isOverloaded: boolean;
@@ -148,7 +148,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
     let calculation, rollFormula;
 
     if (isSorteSkill && luck) {
-      // Tabela de rolagens por nÃ­vel de sorte
+      // Tabela de rolagens por Nível de sorte
       const LUCK_ROLL_TABLE: Record<number, { dice: number; bonus: number }> = {
         0: { dice: 1, bonus: 0 },
         1: { dice: 2, bonus: 0 },
@@ -160,7 +160,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
         7: { dice: 5, bonus: 15 },
       };
 
-      // Obter dados do nÃ­vel de sorte ou calcular para nÃ­veis > 7
+      // Obter dados do Nível de sorte ou calcular para nÃ­veis > 7
       const luckData = LUCK_ROLL_TABLE[luck.level] ?? {
         dice: luck.level,
         bonus: luck.level * 3,
@@ -451,7 +451,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
           <Box sx={{ display: 'flex', gap: 0.5 }}>{indicators}</Box>
         </Box>
 
-        {/* Atributo-chave atual (editÃ¡vel) OU Select de OfÃ­cio OU Select de NÃ­vel de Sorte */}
+        {/* Atributo-chave atual (editÃ¡vel) OU Select de OfÃ­cio OU Select de Nível de Sorte */}
         {isOficioSkill ? (
           // Select de ofÃ­cio (apenas para habilidade "oficio")
           <FormControl
@@ -515,7 +515,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
             </Tooltip>
           </FormControl>
         ) : isSorteSkill && luck ? (
-          // Select de nÃ­vel de sorte (apenas para habilidade "sorte")
+          // Select de Nível de sorte (apenas para habilidade "sorte")
           <FormControl
             size="small"
             fullWidth
@@ -525,21 +525,21 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
             <Select
               value={luck.level}
               onChange={handleLuckLevelChange}
-              aria-label="NÃ­vel de sorte"
+              aria-label="Nível de sorte"
               sx={{
                 '& .MuiSelect-select': {
                   py: 0.75,
                 },
               }}
             >
-              <MenuItem value={0}>NÃ­vel 0 (1d20)</MenuItem>
-              <MenuItem value={1}>NÃ­vel 1 (2d20)</MenuItem>
-              <MenuItem value={2}>NÃ­vel 2 (2d20+2)</MenuItem>
-              <MenuItem value={3}>NÃ­vel 3 (3d20+3)</MenuItem>
-              <MenuItem value={4}>NÃ­vel 4 (3d20+6)</MenuItem>
-              <MenuItem value={5}>NÃ­vel 5 (4d20+8)</MenuItem>
-              <MenuItem value={6}>NÃ­vel 6 (4d20+12)</MenuItem>
-              <MenuItem value={7}>NÃ­vel 7 (5d20+15)</MenuItem>
+              <MenuItem value={0}>Nível 0 (1d20)</MenuItem>
+              <MenuItem value={1}>Nível 1 (2d20)</MenuItem>
+              <MenuItem value={2}>Nível 2 (2d20+2)</MenuItem>
+              <MenuItem value={3}>Nível 3 (3d20+3)</MenuItem>
+              <MenuItem value={4}>Nível 4 (3d20+6)</MenuItem>
+              <MenuItem value={5}>Nível 5 (4d20+8)</MenuItem>
+              <MenuItem value={6}>Nível 6 (4d20+12)</MenuItem>
+              <MenuItem value={7}>Nível 7 (5d20+15)</MenuItem>
             </Select>
           </FormControl>
         ) : (

@@ -164,3 +164,68 @@ export {
   SAVING_THROW_COLORS,
 } from './combatPenalties';
 export type { CombatPenaltiesState } from './combatPenalties';
+
+// Currency calculation utilities
+export {
+  convertToCopper,
+  copperToDenomination,
+  calculateTotalWealth,
+  addDenominations,
+  subtractDenominations,
+  convertCurrency,
+  exchangeCurrency,
+  calculateCoinWeight as calculateCurrencyCoinWeight,
+  calculateWealthSummary,
+  formatCurrency,
+  formatDenomination,
+  formatTotalAs,
+  canAfford,
+  isValidDenomination,
+  isValidCurrencyType,
+  makePayment,
+  addCurrency,
+  removeCurrency,
+  transferCurrency,
+} from './currencyCalculations';
+
+// Carry capacity calculation utilities
+export {
+  calculateBaseCarryCapacity,
+  getSizeCarryModifier,
+  calculateCarryCapacity as calculateCarryCapacityFromForce,
+  calculatePushCapacity,
+  calculateLiftCapacity,
+  getEncumbranceState as getCarryEncumbranceState,
+  calculateCoinsWeight,
+  calculateItemsWeight,
+  countZeroWeightItems,
+  calculateTotalWeight,
+  calculateFullCarryCapacity,
+  generateCarryingCapacity,
+  calculateCarryPercentage,
+  canCarryWithoutPenalty,
+  canCarryAtAll,
+  ENCUMBRANCE_STATE_DESCRIPTIONS,
+  ENCUMBRANCE_STATE_COLORS,
+} from './carryCapacityCalculations';
+export type {
+  EncumbranceState,
+  CarryCapacityResult,
+} from './carryCapacityCalculations';
+
+// Spell calculation utilities
+// Note: calculateSpellDC and calculateSpellAttackBonus are already exported from './calculations'
+export {
+  calculateSpellLearningChance,
+  calculateSpellPPCost,
+} from './spellCalculations';
+
+// Rest calculation utilities
+export {
+  calculateRestRecovery,
+  getQualityMultiplier,
+  validateRestInputs,
+  REST_QUALITY_LABELS,
+  REST_QUALITY_DESCRIPTIONS,
+} from './restCalculations';
+export type { RestQuality, RestRecovery } from './restCalculations';
