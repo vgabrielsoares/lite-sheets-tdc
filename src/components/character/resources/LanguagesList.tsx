@@ -32,7 +32,9 @@ export interface LanguagesListProps {
   languages: LanguageName[];
   menteValue: number;
   lineageLanguages?: LanguageName[];
+  extraLanguagesModifier: number;
   onUpdate: (languages: LanguageName[]) => void;
+  onUpdateModifier: (modifier: number) => void;
 }
 
 /**
@@ -48,12 +50,13 @@ export function LanguagesList({
   languages,
   menteValue,
   lineageLanguages = [],
+  extraLanguagesModifier,
   onUpdate,
+  onUpdateModifier,
 }: LanguagesListProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageName | ''>(
     ''
   );
-  const [extraLanguagesModifier, setExtraLanguagesModifier] = useState(0);
 
   // Calcular limite de idiomas: Comum + (Mente - 1) + Modificador Extra
   const baseLimit = 1 + Math.max(0, menteValue - 1);
@@ -118,9 +121,7 @@ export function LanguagesList({
               fullWidth
               label="Modificador de Idiomas Extras"
               value={extraLanguagesModifier}
-              onChange={(e) =>
-                setExtraLanguagesModifier(Number(e.target.value))
-              }
+              onChange={(e) => onUpdateModifier(Number(e.target.value))}
               helperText="Idiomas adicionais de linhagem, habilidades especiais, etc."
             />
           </Box>
@@ -240,15 +241,6 @@ export function LanguagesList({
                 Adicionar
               </Button>
             </Box>
-          )}
-
-          {!canAddMore && (
-            <Alert severity="warning" sx={{ mt: 2 }}>
-              <Typography variant="body2">
-                Você atingiu o limite de idiomas. Aumente o valor de Mente ou
-                adicione modificadores extras.
-              </Typography>
-            </Alert>
           )}
 
           {availableLanguages.length === 0 && canAddMore && (
