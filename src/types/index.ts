@@ -194,3 +194,16 @@ export type {
 } from './character';
 
 export { DEFAULT_LEVEL_1_CHARACTER } from './character';
+
+// Traits (utilities for working with particularities)
+export type {
+  ComplementaryTrait as ComplementaryTraitUtil,
+  CompleteTrait as CompleteTraitUtil,
+} from './traits';
+
+export {
+  calculateTraitBalance,
+  areTraitsBalanced,
+  createEmptyComplementaryTrait,
+  createEmptyCompleteTrait,
+} from './traits';
