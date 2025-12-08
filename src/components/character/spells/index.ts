@@ -12,3 +12,6 @@ export type { SpellFiltersProps, SpellFiltersState } from './SpellFilters';
 
 export { SpellDetailsSidebar } from './SpellDetailsSidebar';
 export type { SpellDetailsSidebarProps } from './SpellDetailsSidebar';
+
+export { SpellLearningCalculator } from './SpellLearningCalculator';
+export type { SpellLearningCalculatorProps } from './SpellLearningCalculator';
