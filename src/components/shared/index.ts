@@ -21,3 +21,12 @@ export type { EditableNumberProps } from './EditableNumber';
 
 export { EditableSelect } from './EditableSelect';
 export type { EditableSelectProps, SelectOption } from './EditableSelect';
+
+export { DiceRoller } from './DiceRoller';
+export type { DiceRollerProps } from './DiceRoller';
+
+export { DiceRollResult } from './DiceRollResult';
+export type { DiceRollResultProps } from './DiceRollResult';
+
+export { DiceRollHistory } from './DiceRollHistory';
+export type { DiceRollHistoryProps } from './DiceRollHistory';
