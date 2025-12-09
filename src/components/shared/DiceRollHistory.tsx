@@ -263,13 +263,13 @@ export function DiceRollHistory({
       </List>
 
       {/* Indicador de limite */}
-      {globalDiceHistory.size() > maxEntries && (
+      {globalDiceHistory.size > maxEntries && (
         <Typography
           variant="caption"
           color="text.secondary"
           sx={{ mt: 1, display: 'block' }}
         >
-          Mostrando últimas {maxEntries} de {globalDiceHistory.size()} rolagens
+          Mostrando últimas {maxEntries} de {globalDiceHistory.size} rolagens
         </Typography>
       )}
     </Box>
