@@ -36,6 +36,8 @@ export interface DiceRollResult {
   isCriticalFailure?: boolean;
   /** Descrição do contexto da rolagem */
   context?: string;
+  /** Se é rolagem de dano (não tem Triunfos/Desastres) */
+  isDamageRoll?: boolean;
 }
 
 export type RollType = 'normal' | 'advantage' | 'disadvantage';
@@ -205,6 +207,7 @@ export function rollDamage(
       timestamp: new Date(),
       rollType: 'normal',
       context,
+      isDamageRoll: true,
     };
   }
 
@@ -227,12 +230,13 @@ export function rollDamage(
     timestamp: new Date(),
     rollType: 'normal',
     context,
+    isDamageRoll: true,
   };
 }
 
 /**
  * Rola dano com possibilidade de crítico
- * Crítico dobra os dados (não o modificador)
+ * Crítico MAXIMIZA os dados (não rola, usa valor máximo)
  *
  * @param diceCount - Número de dados base
  * @param diceSides - Lados do dado
@@ -248,15 +252,29 @@ export function rollDamageWithCritical(
   isCritical: boolean = false,
   context?: string
 ): DiceRollResult {
-  const actualDiceCount = isCritical ? diceCount * 2 : diceCount;
-  const result = rollDamage(actualDiceCount, diceSides, modifier, context);
-
   if (isCritical) {
-    result.formula = `${diceCount}d${diceSides} × 2 (crítico)${modifier >= 0 ? '+' : ''}${modifier}`;
-    result.isCritical = true;
+    // Crítico: MAXIMIZA os dados (não rola)
+    const maxDamage = diceCount * diceSides;
+    const finalResult = maxDamage + modifier;
+
+    return {
+      formula: `${diceCount}d${diceSides} MAXIMIZADO (${maxDamage})${modifier >= 0 ? '+' : ''}${modifier}`,
+      rolls: Array(diceCount).fill(diceSides), // Mostra todos os dados no máximo
+      diceType: diceSides,
+      diceCount,
+      modifier,
+      baseResult: maxDamage,
+      finalResult: Math.max(0, finalResult),
+      timestamp: new Date(),
+      rollType: 'normal',
+      isCritical: true,
+      context,
+      isDamageRoll: true,
+    };
   }
 
-  return result;
+  // Dano normal: rola normalmente
+  return rollDamage(diceCount, diceSides, modifier, context);
 }
 
 /**
