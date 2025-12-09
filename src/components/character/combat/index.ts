@@ -11,6 +11,15 @@ export type { AttackFormProps } from './AttackForm';
 export { AttackRow } from './AttackRow';
 export type { AttackRowProps } from './AttackRow';
 
+export { AttackRollButton } from './AttackRollButton';
+export type { AttackRollButtonProps } from './AttackRollButton';
+
+export { DamageRollButton } from './DamageRollButton';
+export type { DamageRollButtonProps } from './DamageRollButton';
+
+export { CombinedAttackButton } from './CombinedAttackButton';
+export type { CombinedAttackButtonProps } from './CombinedAttackButton';
+
 export { AttacksDisplay } from './AttacksDisplay';
 export type { AttacksDisplayProps } from './AttacksDisplay';
 
