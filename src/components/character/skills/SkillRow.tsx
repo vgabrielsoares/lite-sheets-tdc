@@ -18,7 +18,7 @@
  * - AcessÃ­vel por teclado (Tab, Enter, ESC)
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -67,6 +67,7 @@ import {
   extractNumericModifier,
   buildModifiersArray,
 } from './ModifierManager';
+import { SkillRollButton } from './SkillRollButton';
 
 export interface SkillRowProps {
   /** Dados da habilidade */
@@ -647,23 +648,65 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
           </Tooltip>
 
           <Tooltip
-            title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+            title={`Clique para rolar: ${rollFormula.formula}`}
             enterDelay={150}
           >
-            <Typography
-              variant="body1"
-              fontFamily="monospace"
-              color={rollFormula.takeLowest ? 'error' : 'primary'}
-              fontWeight={700}
+            <Box
+              onClick={(e) => {
+                e.stopPropagation();
+                // Encontrar o botão SkillRollButton e clicar nele
+                const button =
+                  e.currentTarget.nextElementSibling?.querySelector('button');
+                if (button) button.click();
+              }}
               sx={{
-                minWidth: 'fit-content',
-                fontSize: '1.25rem',
-                letterSpacing: '0.02em',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                px: 1.5,
+                py: 0.5,
+                border: 1,
+                borderColor: 'primary.main',
+                borderRadius: 1,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  borderColor: 'primary.dark',
+                  transform: 'scale(1.05)',
+                },
+                '&:active': {
+                  transform: 'scale(0.98)',
+                },
               }}
             >
-              {rollFormula.formula}
-            </Typography>
+              <Typography
+                variant="body1"
+                fontFamily="monospace"
+                color={rollFormula.takeLowest ? 'error' : 'primary'}
+                fontWeight={700}
+                sx={{
+                  fontSize: '1.25rem',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {rollFormula.formula}
+              </Typography>
+            </Box>
           </Tooltip>
+
+          {/* Botão de rolagem (invisível, controlado pela fórmula) */}
+          <Box sx={{ display: 'none' }}>
+            <SkillRollButton
+              skillLabel={SKILL_LABELS[skill.name]}
+              diceCount={rollFormula.diceCount}
+              modifier={calculation.totalModifier}
+              formula={rollFormula.formula}
+              takeLowest={rollFormula.takeLowest}
+              size="small"
+              color="primary"
+            />
+          </Box>
         </Box>
 
         {/* Mobile: Modificador + Rolagem */}
@@ -691,18 +734,60 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
             />
           </Tooltip>
           <Tooltip
-            title={`Fórmula de rolagem: ${rollFormula.formula} (${rollFormula.diceCount} dado${rollFormula.diceCount > 1 ? 's' : ''} + modificador de ${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier})`}
+            title={`Clique para rolar: ${rollFormula.formula}`}
             enterDelay={150}
           >
-            <Typography
-              variant="body2"
-              fontFamily="monospace"
-              color={rollFormula.takeLowest ? 'error' : 'primary'}
-              fontWeight={600}
+            <Box
+              onClick={(e) => {
+                e.stopPropagation();
+                // Encontrar o botão SkillRollButton e clicar nele
+                const button =
+                  e.currentTarget.nextElementSibling?.querySelector('button');
+                if (button) button.click();
+              }}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                px: 1,
+                py: 0.25,
+                border: 1,
+                borderColor: 'primary.main',
+                borderRadius: 1,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  borderColor: 'primary.dark',
+                },
+                '&:active': {
+                  transform: 'scale(0.98)',
+                },
+              }}
             >
-              {rollFormula.formula}
-            </Typography>
+              <Typography
+                variant="body2"
+                fontFamily="monospace"
+                color={rollFormula.takeLowest ? 'error' : 'primary'}
+                fontWeight={600}
+              >
+                {rollFormula.formula}
+              </Typography>
+            </Box>
           </Tooltip>
+
+          {/* Botão de rolagem (invisível, controlado pela fórmula) */}
+          <Box sx={{ display: 'none' }}>
+            <SkillRollButton
+              skillLabel={SKILL_LABELS[skill.name]}
+              diceCount={rollFormula.diceCount}
+              modifier={calculation.totalModifier}
+              formula={rollFormula.formula}
+              takeLowest={rollFormula.takeLowest}
+              size="small"
+              color="primary"
+            />
+          </Box>
         </Box>
       </Box>
     );
