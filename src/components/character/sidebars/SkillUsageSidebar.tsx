@@ -49,6 +49,7 @@ import {
 
 import { Sidebar } from '@/components/shared/Sidebar';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import { SkillRollButton } from '@/components/character/skills/SkillRollButton';
 import {
   InlineModifiers,
   extractDiceModifier,
@@ -528,6 +529,20 @@ export function SkillUsageSidebar({
       isOverloaded
     );
 
+    // Calcular diceCount e takeLowest para o botão de rolagem
+    const attributeValue = attributes[use.keyAttribute];
+
+    const allModifiers = [...(skill.modifiers || []), ...(use.modifiers || [])];
+
+    const diceModifiers = allModifiers
+      .filter((mod) => mod.affectsDice === true)
+      .reduce((sum, mod) => sum + mod.value, 0);
+
+    // Para atributo 0, rollD20 espera 0 e trata internamente como 2d20 (pega menor)
+    // Para outros atributos, passa o valor direto
+    const finalDiceCount = attributeValue + diceModifiers;
+    const takeLowest = attributeValue === 0;
+
     const isCustomAttribute = use.keyAttribute !== skill.keyAttribute;
 
     return (
@@ -657,18 +672,15 @@ export function SkillUsageSidebar({
         </Typography>
 
         {/* Botão de Rolagem */}
-        <Tooltip title="Rolar Dados (Em Breve)">
-          <span>
-            <IconButton
-              size="small"
-              disabled
-              aria-label={`Rolar ${use.name}`}
-              sx={{ minWidth: 'fit-content' }}
-            >
-              <DiceIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
+        <SkillRollButton
+          skillLabel={`${SKILL_LABELS[skill.name]}: ${use.name}`}
+          diceCount={finalDiceCount}
+          modifier={modifier}
+          formula={rollFormula}
+          takeLowest={takeLowest}
+          size="small"
+          tooltipText={`Rolar ${use.name}: ${rollFormula}`}
+        />
 
         {/* Ações */}
         <Box sx={{ display: 'flex', gap: 0.5, minWidth: 'fit-content' }}>
@@ -748,6 +760,21 @@ export function SkillUsageSidebar({
       characterLevel,
       isOverloaded
     );
+
+    // Calcular diceCount e takeLowest para o botão de rolagem
+    const attributeValue = attributes[useAttribute];
+
+    // Combinar modificadores: habilidade base + uso específico (effectiveModifiers)
+    const allModifiers = [...(skill.modifiers || []), ...effectiveModifiers];
+
+    const diceModifiers = allModifiers
+      .filter((mod) => mod.affectsDice === true)
+      .reduce((sum, mod) => sum + mod.value, 0);
+
+    // Para atributo 0, rollD20 espera 0 e trata internamente como 2d20 (pega menor)
+    // Para outros atributos, passa o valor direto
+    const finalDiceCount = attributeValue + diceModifiers;
+    const takeLowest = attributeValue === 0;
 
     const isAvailable = isDefaultUseAvailable(
       defaultUse,
@@ -912,18 +939,15 @@ export function SkillUsageSidebar({
             </Typography>
 
             {/* Botão de Rolagem */}
-            <Tooltip title="Rolar Dados (Em Breve)">
-              <span>
-                <IconButton
-                  size="small"
-                  disabled
-                  aria-label={`Rolar ${defaultUse.name}`}
-                  sx={{ minWidth: 'fit-content' }}
-                >
-                  <DiceIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
+            <SkillRollButton
+              skillLabel={`${SKILL_LABELS[skill.name]}: ${defaultUse.name}`}
+              diceCount={finalDiceCount}
+              modifier={modifier}
+              formula={rollFormula}
+              takeLowest={takeLowest}
+              size="small"
+              tooltipText={`Rolar ${defaultUse.name}: ${rollFormula}`}
+            />
           </>
         )}
 
@@ -1350,11 +1374,15 @@ export function SkillUsageSidebar({
                                 {formula}
                               </Typography>
                             </Box>
-                            <Tooltip title="Rolar ofício (em breve)">
-                              <IconButton size="small" color="primary" disabled>
-                                <DiceIcon />
-                              </IconButton>
-                            </Tooltip>
+                            <SkillRollButton
+                              skillLabel={`${SKILL_LABELS[skill.name]}: ${craft.name}`}
+                              diceCount={diceCount}
+                              modifier={totalModifier}
+                              formula={formula}
+                              takeLowest={takeLowest}
+                              size="small"
+                              tooltipText={`Rolar ${craft.name}: ${formula}`}
+                            />
                           </Box>
                         </Stack>
                       </Paper>
