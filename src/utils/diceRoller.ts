@@ -5,9 +5,10 @@
  * - Rolagem básica: xd20+y (rolar x dados de 20 lados, escolher o maior, adicionar y)
  * - Atributo 0: 2d20, escolher o MENOR resultado
  * - Dados negativos: -1d20 = 3d20 escolher menor, -2d20 = 4d20 escolher menor
- * - Vantagem/Desvantagem: 2d20, escolher maior/menor
  * - Rolagem de dano: xdy+z (rolar x dados de y lados, somar todos, adicionar z)
  * - Críticos: 20 natural adiciona dados extras conforme configurado
+ * - Triunfos: 20 natural com sucesso (diferença ≤5 do ND)
+ * - Desastres: 1 natural (1d20) ou maioria dos dados iguais (múltiplos)
  */
 
 export interface DiceRollResult {
@@ -27,7 +28,7 @@ export interface DiceRollResult {
   finalResult: number;
   /** Timestamp da rolagem */
   timestamp: Date;
-  /** Se foi vantagem/desvantagem/normal */
+  /** Tipo de rolagem (mantido para compatibilidade, sempre 'normal') */
   rollType: 'normal' | 'advantage' | 'disadvantage';
   /** Se houve crítico (20 natural) */
   isCritical?: boolean;
@@ -49,14 +50,14 @@ export type RollType = 'normal' | 'advantage' | 'disadvantage';
  *
  * @param numberOfDice - Número de dados (pode ser negativo)
  * @param modifier - Modificador a adicionar ao resultado
- * @param rollType - Tipo de rolagem (normal, advantage, disadvantage)
+ * @param rollType - Tipo de rolagem (mantido para compatibilidade, não usado)
  * @param context - Descrição do contexto da rolagem
  * @returns Resultado detalhado da rolagem
  */
 export function rollD20(
   numberOfDice: number,
   modifier: number = 0,
-  rollType: RollType = 'normal',
+  rollType: RollType = 'normal', // Mantido para compatibilidade
   context?: string
 ): DiceRollResult {
   // Caso especial: atributo 0 (rolar 2d20, escolher menor)
@@ -70,7 +71,7 @@ export function rollD20(
   }
 
   // Caso normal: dados positivos
-  return rollWithPositiveDice(numberOfDice, modifier, rollType, context);
+  return rollWithPositiveDice(numberOfDice, modifier, context);
 }
 
 /**
@@ -134,40 +135,17 @@ function rollWithNegativeDice(
 
 /**
  * Rolagem com dados positivos: escolher o maior
- * Respeita vantagem/desvantagem
  */
 function rollWithPositiveDice(
   numberOfDice: number,
   modifier: number,
-  rollType: RollType,
   context?: string
 ): DiceRollResult {
-  let actualDiceCount = numberOfDice;
-  let pickHighest = true;
-
-  // Vantagem: +1d20, escolher maior
-  if (rollType === 'advantage') {
-    actualDiceCount = numberOfDice + 1;
-    pickHighest = true;
-  }
-
-  // Desvantagem: +1d20, escolher menor
-  if (rollType === 'disadvantage') {
-    actualDiceCount = numberOfDice + 1;
-    pickHighest = false;
-  }
-
-  const rolls = Array.from({ length: actualDiceCount }, () => rollSingleD20());
-  const baseResult = pickHighest ? Math.max(...rolls) : Math.min(...rolls);
+  const rolls = Array.from({ length: numberOfDice }, () => rollSingleD20());
+  const baseResult = Math.max(...rolls);
   const finalResult = baseResult + modifier;
 
-  let formula = `${numberOfDice}d20`;
-  if (rollType === 'advantage') {
-    formula += ` (vantagem)`;
-  } else if (rollType === 'disadvantage') {
-    formula += ` (desvantagem)`;
-  }
-  formula += modifier >= 0 ? `+${modifier}` : `${modifier}`;
+  const formula = `${numberOfDice}d20${modifier >= 0 ? `+${modifier}` : `${modifier}`}`;
 
   return {
     formula,
@@ -178,7 +156,7 @@ function rollWithPositiveDice(
     baseResult,
     finalResult,
     timestamp: new Date(),
-    rollType,
+    rollType: 'normal',
     isCritical: baseResult === 20,
     isCriticalFailure: baseResult === 1,
     context,
