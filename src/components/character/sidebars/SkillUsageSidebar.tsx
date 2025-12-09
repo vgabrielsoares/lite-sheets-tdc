@@ -18,7 +18,7 @@
  * com um bônus de +2 específico para situações de combate em superfícies estreitas.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -170,7 +170,12 @@ export function SkillUsageSidebar({
   const [localDefaultModifiers, setLocalDefaultModifiers] = useState<
     Record<string, Modifier[]>
   >(skill.defaultUseModifierOverrides || {});
-  skill.defaultUseModifierOverrides || {};
+
+  // Sincronizar estados locais quando skill mudar (ex: após reload)
+  useEffect(() => {
+    setLocalDefaultOverrides(skill.defaultUseAttributeOverrides || {});
+    setLocalDefaultModifiers(skill.defaultUseModifierOverrides || {});
+  }, [skill.defaultUseAttributeOverrides, skill.defaultUseModifierOverrides]);
 
   // Estado para confirmação de exclusão
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
