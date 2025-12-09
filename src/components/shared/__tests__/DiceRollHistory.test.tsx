@@ -11,13 +11,19 @@ import * as diceRollerUtils from '@/utils/diceRoller';
 import type { DiceRollResult } from '@/utils/diceRoller';
 
 // Mock do módulo diceRoller
+let mockRolls: DiceRollResult[] = [];
+
 jest.mock('@/utils/diceRoller', () => ({
   ...jest.requireActual('@/utils/diceRoller'),
   globalDiceHistory: {
     add: jest.fn(),
-    getAll: jest.fn(() => []),
-    clear: jest.fn(),
-    size: jest.fn(() => 0),
+    getAll: jest.fn(() => mockRolls),
+    clear: jest.fn(() => {
+      mockRolls = [];
+    }),
+    get size() {
+      return mockRolls.length;
+    },
   },
 }));
 
@@ -68,10 +74,7 @@ describe('DiceRollHistory', () => {
 
   describe('Estado Vazio', () => {
     it('deve exibir mensagem quando não há rolagens', () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue(
-        []
-      );
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(0);
+      mockRolls = [];
 
       render(<DiceRollHistory />);
 
@@ -82,10 +85,7 @@ describe('DiceRollHistory', () => {
     });
 
     it('não deve exibir botão de limpar quando vazio', () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue(
-        []
-      );
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(0);
+      mockRolls = [];
 
       render(<DiceRollHistory />);
 
@@ -101,7 +101,6 @@ describe('DiceRollHistory', () => {
         mockRoll1,
         mockRoll2,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(2);
 
       render(<DiceRollHistory />);
 
@@ -115,7 +114,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockRoll1,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       render(<DiceRollHistory />);
 
@@ -129,7 +127,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockRoll1,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       render(<DiceRollHistory />);
 
@@ -144,7 +141,6 @@ describe('DiceRollHistory', () => {
         mockRoll1,
         mockRoll2,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(2);
 
       render(<DiceRollHistory />);
 
@@ -159,7 +155,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockRoll3Critical,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       render(<DiceRollHistory />);
 
@@ -182,7 +177,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockFailure,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       render(<DiceRollHistory />);
 
@@ -199,7 +193,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockRoll1,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       const user = userEvent.setup();
       render(<DiceRollHistory expandable={true} />);
@@ -220,7 +213,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockRoll1,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       render(<DiceRollHistory expandable={false} />);
 
@@ -235,7 +227,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockRoll1,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       const user = userEvent.setup();
       render(<DiceRollHistory expandable={true} />);
@@ -266,7 +257,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockRoll1,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       render(<DiceRollHistory />);
 
@@ -282,7 +272,6 @@ describe('DiceRollHistory', () => {
         mockRoll1,
         mockRoll2,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(2);
 
       const user = userEvent.setup();
       render(<DiceRollHistory />);
@@ -303,7 +292,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockRoll1,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       const onClearMock = jest.fn();
       const user = userEvent.setup();
@@ -335,7 +323,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue(
         manyRolls
       );
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(10);
 
       render(<DiceRollHistory maxEntries={5} />);
 
@@ -353,7 +340,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue(
         manyRolls.slice(0, 5)
       );
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(10);
 
       render(<DiceRollHistory maxEntries={5} />);
 
@@ -369,18 +355,16 @@ describe('DiceRollHistory', () => {
     it('deve atualizar histórico automaticamente', async () => {
       jest.useFakeTimers();
 
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock)
-        .mockReturnValueOnce([])
-        .mockReturnValueOnce([mockRoll1]);
-
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock)
-        .mockReturnValueOnce(0)
-        .mockReturnValueOnce(1);
+      // Começa vazio
+      mockRolls = [];
 
       render(<DiceRollHistory />);
 
       // Estado inicial vazio
       expect(screen.getByText(/nenhuma rolagem ainda/i)).toBeInTheDocument();
+
+      // Simular adição de rolagem
+      mockRolls = [mockRoll1];
 
       // Avançar 1 segundo (tempo do polling)
       jest.advanceTimersByTime(1000);
@@ -401,7 +385,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         mockRoll1,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       render(<DiceRollHistory />);
 
@@ -419,7 +402,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
         rollWithoutContext,
       ]);
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(1);
 
       render(<DiceRollHistory />);
 
@@ -440,7 +422,6 @@ describe('DiceRollHistory', () => {
       (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue(
         manyRolls
       );
-      (diceRollerUtils.globalDiceHistory.size as jest.Mock).mockReturnValue(20);
 
       const { container } = render(<DiceRollHistory maxEntries={20} />);
 
