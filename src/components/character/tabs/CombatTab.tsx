@@ -329,6 +329,7 @@ export function CombatTab({
           <AttacksDisplay
             attacks={character.combat.attacks}
             onChange={handleAttacksChange}
+            character={character}
           />
         </Box>
 

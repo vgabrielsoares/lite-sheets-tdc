@@ -7,6 +7,7 @@
 
 import type { DiceRoll, DamageType, Resource, Modifier } from './common';
 import type { SkillName } from './skills';
+import type { AttributeName } from './attributes';
 
 /**
  * Pontos de Vida (PV)
@@ -145,12 +146,22 @@ export interface Attack {
   type: AttackType;
   /** Habilidade usada para acertar */
   attackSkill: SkillName;
-  /** Bônus de ataque adicional */
+  /** ID do uso de habilidade específico (opcional - se não especificado, usa a habilidade padrão) */
+  attackSkillUseId?: string;
+  /** Atributo alternativo para o ataque (opcional - sobrescreve o atributo da habilidade/uso) */
+  attackAttribute?: AttributeName;
+  /** Modificador de dados adicional (ex: +1 = +1d20, -1 = -1d20) */
+  attackDiceModifier?: number;
+  /** Bônus de ataque adicional (modificador numérico) */
   attackBonus: number;
   /** Rolagem de dano */
   damageRoll: DiceRoll;
   /** Tipo de dano */
   damageType: DamageType;
+  /** Margem de crítico (ex: 20, 19, 18) */
+  criticalRange: number;
+  /** Dano crítico adicional (ex: { quantity: 1, type: 'd8' }) */
+  criticalDamage: DiceRoll;
   /** Alcance do ataque */
   range?: string;
   /** Descrição do ataque */

@@ -43,7 +43,9 @@ import type {
   ActionEconomy as ActionEconomyType,
   ExtraAction,
 } from '@/types/combat';
-import { v4 as uuidv4 } from 'uuid';
+
+// Contador simples para IDs (evita hidratação mismatch)
+let extraActionIdCounter = 0;
 
 export interface ActionEconomyProps {
   /** Estado atual da economia de ações */
@@ -131,7 +133,7 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
     if (!newActionSource.trim()) return;
 
     const newAction: ExtraAction = {
-      id: uuidv4(),
+      id: `extra-action-${++extraActionIdCounter}`,
       type: newActionType,
       available: true,
       source: newActionSource.trim(),

@@ -80,8 +80,9 @@ export function DiceRollResult({
 
   /**
    * Detectar Triunfo: 20 natural E (sem ND OU sucesso com diferença ≤5)
+   * IMPORTANTE: NÃO se aplica a rolagens de dano
    *
-   * IMPORTANTE: Verifica baseResult, não rolls.some()
+   * Verifica baseResult, não rolls.some()
    * - Em dados positivos: baseResult = maior valor (pode ser 20)
    * - Em dados negativos/atributo 0: baseResult = menor valor (raramente será 20)
    *
@@ -90,13 +91,16 @@ export function DiceRollResult({
    * - Dados negativos: rola [20, 8, 3] → baseResult = 3 → NÃO é Triunfo
    */
   const isTriumph =
+    !result.isDamageRoll &&
     result.baseResult === 20 &&
     (!nd || (result.finalResult >= nd && result.finalResult - nd <= 5));
 
   /**
    * Detectar Desastre: 1 natural (1d20) OU mais da metade iguais (exceto 20)
+   * IMPORTANTE: NÃO se aplica a rolagens de dano
    */
   const isDisaster = (() => {
+    if (result.isDamageRoll) return false;
     if (result.rolls.length === 1) {
       return result.rolls[0] === 1;
     }
