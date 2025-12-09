@@ -27,6 +27,8 @@ export interface DiceRollResultProps {
   animate?: boolean;
   /** Se deve exibir breakdown detalhado */
   showBreakdown?: boolean;
+  /** Nível de Dificuldade (para detectar Triunfos) */
+  nd?: number;
 }
 
 /**
@@ -72,18 +74,61 @@ export function DiceRollResult({
   result,
   animate = true,
   showBreakdown = true,
+  nd,
 }: DiceRollResultProps) {
   const theme = useTheme();
 
   /**
-   * Determina a cor do resultado baseado em crítico/falha
+   * Detectar Triunfo: 20 natural E (sem ND OU sucesso com diferença ≤5)
+   *
+   * IMPORTANTE: Verifica baseResult, não rolls.some()
+   * - Em dados positivos: baseResult = maior valor (pode ser 20)
+   * - Em dados negativos/atributo 0: baseResult = menor valor (raramente será 20)
+   *
+   * Exemplo que NÃO é Triunfo:
+   * - Atributo 0: rola [20, 5] → baseResult = 5 (menor) → NÃO é Triunfo
+   * - Dados negativos: rola [20, 8, 3] → baseResult = 3 → NÃO é Triunfo
+   */
+  const isTriumph =
+    result.baseResult === 20 &&
+    (!nd || (result.finalResult >= nd && result.finalResult - nd <= 5));
+
+  /**
+   * Detectar Desastre: 1 natural (1d20) OU mais da metade iguais (exceto 20)
+   */
+  const isDisaster = (() => {
+    if (result.rolls.length === 1) {
+      return result.rolls[0] === 1;
+    }
+    const counts = new Map<number, number>();
+    result.rolls.forEach((roll) => {
+      if (roll !== 20) {
+        counts.set(roll, (counts.get(roll) || 0) + 1);
+      }
+    });
+    // "Mais da metade" = floor(length/2) + 1
+    // 2 dados: floor(2/2) + 1 = 2 (precisa ambos iguais)
+    // 3 dados: floor(3/2) + 1 = 2 (precisa 2 iguais)
+    // 4 dados: floor(4/2) + 1 = 3 (precisa 3 iguais)
+    const threshold = Math.floor(result.rolls.length / 2) + 1;
+    return Array.from(counts.values()).some((count) => count >= threshold);
+  })();
+
+  /**
+   * Determina a cor do resultado baseado em Triunfos/Desastres
    */
   const getResultColor = () => {
+    if (isTriumph) {
+      return theme.palette.warning.main; // Dourado para Triunfo
+    }
+    if (isDisaster) {
+      return theme.palette.error.main; // Vermelho para Desastre
+    }
     if (result.isCritical) {
-      return theme.palette.warning.main; // Dourado para crítico
+      return theme.palette.warning.main; // Dourado para crítico (fallback)
     }
     if (result.isCriticalFailure) {
-      return theme.palette.error.main; // Vermelho para falha crítica
+      return theme.palette.error.main; // Vermelho para falha crítica (fallback)
     }
     return theme.palette.primary.main;
   };
@@ -92,12 +137,12 @@ export function DiceRollResult({
    * Determina a cor de fundo do resultado
    */
   const getResultBackgroundColor = () => {
-    if (result.isCritical) {
+    if (isTriumph || result.isCritical) {
       return theme.palette.mode === 'dark'
         ? 'rgba(255, 215, 0, 0.1)'
         : 'rgba(255, 215, 0, 0.05)';
     }
-    if (result.isCriticalFailure) {
+    if (isDisaster || result.isCriticalFailure) {
       return theme.palette.mode === 'dark'
         ? 'rgba(211, 47, 47, 0.1)'
         : 'rgba(211, 47, 47, 0.05)';
@@ -160,10 +205,10 @@ export function DiceRollResult({
             {result.finalResult}
           </Typography>
 
-          {/* Tags de Crítico/Falha */}
-          {result.isCritical && (
+          {/* Tags de Triunfo/Desastre */}
+          {isTriumph && (
             <Chip
-              label="CRÍTICO! 🎉"
+              label="TRIUNFO!"
               color="warning"
               sx={{
                 fontWeight: 'bold',
@@ -172,9 +217,9 @@ export function DiceRollResult({
               }}
             />
           )}
-          {result.isCriticalFailure && (
+          {isDisaster && (
             <Chip
-              label="FALHA CRÍTICA!"
+              label="DESASTRE!"
               color="error"
               sx={{
                 fontWeight: 'bold',
