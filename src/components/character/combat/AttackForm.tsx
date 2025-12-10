@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Box,
   TextField,
@@ -18,6 +18,7 @@ import {
   IconButton,
   InputAdornment,
   Divider,
+  Alert,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -27,11 +28,15 @@ import {
 import type { Attack, AttackType, ActionType } from '@/types/combat';
 import type { SkillName } from '@/types/skills';
 import type { DamageType, DiceType } from '@/types/common';
+import type { AttributeName, Character } from '@/types';
 import {
   SKILL_LABELS,
   COMBAT_SKILLS,
   SKILL_METADATA,
 } from '@/constants/skills';
+import { ATTRIBUTE_LABELS } from '@/constants/attributes';
+import { calculateAttackRoll } from '@/utils/attackCalculations';
+import { getAvailableDefaultUses } from '@/constants/skillUses';
 
 export interface AttackFormProps {
   /** Se o dialog está aberto */
@@ -42,6 +47,8 @@ export interface AttackFormProps {
   onSave: (attack: Attack) => void;
   /** Ataque existente para edição (undefined = novo ataque) */
   editingAttack?: Attack;
+  /** Dados do personagem (para acessar habilidades e usos) */
+  character: Character;
 }
 
 /** Tipos de ataque disponíveis */
@@ -110,10 +117,17 @@ const ATTACK_SKILLS: SkillName[] = [
   'arcano',
   'natureza',
   'religiao',
+];
+
+/** Habilidades de ataque secundárias */
+const SECONDARY_ATTACK_SKILLS: SkillName[] = [
   'arte',
   'performance',
   'sorte',
   'vigor',
+  'determinacao',
+  'iniciativa',
+  'reflexo',
 ];
 
 /** Ataque padrão para novo ataque */
@@ -128,6 +142,12 @@ const DEFAULT_ATTACK: Attack = {
     modifier: 0,
   },
   damageType: 'fisico',
+  criticalRange: 20,
+  criticalDamage: {
+    quantity: 1,
+    type: 'd6',
+    modifier: 0,
+  },
   range: 'Adjacente',
   description: '',
   ppCost: 0,
@@ -164,16 +184,96 @@ export function AttackForm({
   onClose,
   onSave,
   editingAttack,
+  character,
 }: AttackFormProps) {
   const [attack, setAttack] = useState<Attack>(DEFAULT_ATTACK);
   const [customRange, setCustomRange] = useState('');
   const [useCustomRange, setUseCustomRange] = useState(false);
 
+  // Obter habilidade atual
+  const currentSkill = useMemo(() => {
+    return character.skills[attack.attackSkill];
+  }, [character.skills, attack.attackSkill]);
+
+  // Obter usos padrões disponíveis baseado na proficiência
+  const availableDefaultUses = useMemo(() => {
+    if (!currentSkill) return [];
+    return getAvailableDefaultUses(
+      attack.attackSkill,
+      currentSkill.proficiencyLevel
+    );
+  }, [attack.attackSkill, currentSkill]);
+
+  // Obter usos customizados da habilidade selecionada
+  const availableCustomUses = useMemo(() => {
+    return currentSkill?.customUses || [];
+  }, [currentSkill]);
+
+  // Combinar usos padrões e customizados
+  const allAvailableUses = useMemo(() => {
+    const defaultUsesList = availableDefaultUses.map((use) => ({
+      id: `default-${use.name}`,
+      name: use.name,
+      isDefault: true,
+    }));
+    const customUsesList = availableCustomUses.map((use) => ({
+      id: use.id,
+      name: use.name,
+      isDefault: false,
+    }));
+    return [...defaultUsesList, ...customUsesList];
+  }, [availableDefaultUses, availableCustomUses]);
+
+  // Obter atributo padrão da habilidade/uso selecionado
+  const defaultAttribute = useMemo(() => {
+    if (!currentSkill) return 'agilidade' as AttributeName;
+
+    // Se um uso está selecionado, usa o atributo do uso
+    if (attack.attackSkillUseId && currentSkill.customUses) {
+      const use = currentSkill.customUses.find(
+        (u) => u.id === attack.attackSkillUseId
+      );
+      if (use) return use.keyAttribute;
+    }
+
+    // Senão, usa o atributo da habilidade
+    return currentSkill.keyAttribute;
+  }, [currentSkill, attack.attackSkillUseId]);
+
+  // Calcular preview da fórmula de ataque
+  const attackPreview = useMemo(() => {
+    return calculateAttackRoll(
+      character,
+      attack.attackSkill,
+      attack.attackSkillUseId,
+      attack.attackBonus,
+      attack.attackAttribute,
+      attack.attackDiceModifier || 0
+    );
+  }, [
+    character,
+    attack.attackSkill,
+    attack.attackSkillUseId,
+    attack.attackBonus,
+    attack.attackAttribute,
+    attack.attackDiceModifier,
+  ]);
+
   // Resetar form quando abrir/fechar ou mudar ataque editado
   useEffect(() => {
     if (open) {
       if (editingAttack) {
-        setAttack(editingAttack);
+        // Garantir que campos novos existam (migração de ataques antigos)
+        const attackWithDefaults: Attack = {
+          ...editingAttack,
+          criticalRange: editingAttack.criticalRange ?? 20,
+          criticalDamage: editingAttack.criticalDamage ?? {
+            quantity: 1,
+            type: 'd6',
+            modifier: 0,
+          },
+        };
+        setAttack(attackWithDefaults);
         // Verificar se o alcance é customizado
         const isCustom =
           editingAttack.range && !RANGE_OPTIONS.includes(editingAttack.range);
@@ -208,6 +308,22 @@ export function AttackForm({
         ...prev,
         damageRoll: {
           ...prev.damageRoll,
+          [field]: value,
+        },
+      }));
+    },
+    []
+  );
+
+  /**
+   * Atualiza um campo do dano crítico
+   */
+  const updateCriticalDamage = useCallback(
+    (field: 'quantity' | 'type' | 'modifier', value: number | DiceType) => {
+      setAttack((prev) => ({
+        ...prev,
+        criticalDamage: {
+          ...prev.criticalDamage,
           [field]: value,
         },
       }));
@@ -342,30 +458,48 @@ export function AttackForm({
                 labelId="attack-skill-label"
                 value={attack.attackSkill}
                 label="Habilidade Usada"
-                onChange={(e) =>
-                  updateField('attackSkill', e.target.value as SkillName)
-                }
+                onChange={(e) => {
+                  updateField('attackSkill', e.target.value as SkillName);
+                  // Reset skill use quando mudar a habilidade
+                  updateField('attackSkillUseId', undefined);
+                  updateField('attackAttribute', undefined);
+                }}
               >
                 {/* Habilidades de ataque principais primeiro */}
-                {ATTACK_SKILLS.map((skill) => (
-                  <MenuItem key={skill} value={skill}>
-                    {SKILL_LABELS[skill]}
-                  </MenuItem>
-                ))}
+                {ATTACK_SKILLS.map((skill) => {
+                  const skillData = character.skills[skill];
+                  const formula = calculateAttackRoll(
+                    character,
+                    skill,
+                    undefined,
+                    0
+                  ).formula;
+                  return (
+                    <MenuItem key={skill} value={skill}>
+                      {SKILL_LABELS[skill]} ({formula})
+                    </MenuItem>
+                  );
+                })}
                 <Divider />
-                {/* Outras habilidades de combate */}
-                {COMBAT_SKILLS.filter(
-                  (skill) => !ATTACK_SKILLS.includes(skill)
-                ).map((skill) => (
-                  <MenuItem key={skill} value={skill}>
-                    {SKILL_LABELS[skill]}
-                  </MenuItem>
-                ))}
+                {/* Habilidades secundárias */}
+                {SECONDARY_ATTACK_SKILLS.map((skill) => {
+                  const formula = calculateAttackRoll(
+                    character,
+                    skill,
+                    undefined,
+                    0
+                  ).formula;
+                  return (
+                    <MenuItem key={skill} value={skill}>
+                      {SKILL_LABELS[skill]} ({formula})
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
 
             <TextField
-              label="Bônus de Ataque"
+              label="Bônus Adicional"
               type="number"
               value={attack.attackBonus}
               onChange={(e) =>
@@ -378,9 +512,232 @@ export function AttackForm({
                   </InputAdornment>
                 ),
               }}
+              helperText="Somado aos modificadores da habilidade/uso"
               fullWidth
             />
           </Box>
+
+          {/* Uso de Habilidade e Atributo */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: 2,
+            }}
+          >
+            <FormControl fullWidth>
+              <InputLabel id="skill-use-label">Uso de Habilidade</InputLabel>
+              <Select
+                labelId="skill-use-label"
+                value={attack.attackSkillUseId || ''}
+                label="Uso de Habilidade"
+                onChange={(e) => {
+                  updateField('attackSkillUseId', e.target.value || undefined);
+                  updateField('attackAttribute', undefined);
+                }}
+              >
+                <MenuItem value="">
+                  <em>Usar Habilidade Padrão</em>
+                </MenuItem>
+                {allAvailableUses.map((use) => {
+                  // Calcular fórmula do uso
+                  const useFormula = calculateAttackRoll(
+                    character,
+                    attack.attackSkill,
+                    use.id, // Usar o ID correto (inclusive para usos padrões)
+                    0
+                  ).formula;
+                  return (
+                    <MenuItem key={use.id} value={use.id}>
+                      {use.name} ({useFormula})
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel id="attack-attribute-label">
+                Atributo (padrão: {ATTRIBUTE_LABELS[defaultAttribute]})
+              </InputLabel>
+              <Select
+                labelId="attack-attribute-label"
+                value={attack.attackAttribute || ''}
+                label={`Atributo (padrão: ${ATTRIBUTE_LABELS[defaultAttribute]})`}
+                onChange={(e) =>
+                  updateField(
+                    'attackAttribute',
+                    e.target.value
+                      ? (e.target.value as AttributeName)
+                      : undefined
+                  )
+                }
+              >
+                <MenuItem value="">
+                  <em>
+                    Usar Atributo Padrão ({ATTRIBUTE_LABELS[defaultAttribute]})
+                  </em>
+                </MenuItem>
+                {(Object.keys(ATTRIBUTE_LABELS) as AttributeName[]).map(
+                  (attr) => {
+                    // Calcular diferença de fórmula usando este atributo
+                    const attrFormula = calculateAttackRoll(
+                      character,
+                      attack.attackSkill,
+                      attack.attackSkillUseId,
+                      0,
+                      attr
+                    ).formula;
+                    const defaultFormula = calculateAttackRoll(
+                      character,
+                      attack.attackSkill,
+                      attack.attackSkillUseId,
+                      0
+                    ).formula;
+                    const isDefaultAttr = attr === defaultAttribute;
+
+                    return (
+                      <MenuItem key={attr} value={attr}>
+                        {ATTRIBUTE_LABELS[attr]}
+                        {' ('}
+                        {attrFormula}
+                        {')'}
+                      </MenuItem>
+                    );
+                  }
+                )}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Modificador de Dados */}
+          <TextField
+            label="Modificador de Dados"
+            type="number"
+            value={attack.attackDiceModifier || 0}
+            onChange={(e) =>
+              updateField('attackDiceModifier', parseInt(e.target.value) || 0)
+            }
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  {(attack.attackDiceModifier || 0) >= 0 ? '+' : ''}
+                </InputAdornment>
+              ),
+            }}
+            helperText="Dados adicionais de ataque (+1 = +1d20, -1 = -1d20)"
+            fullWidth
+          />
+
+          {/* Preview da Rolagem de Ataque */}
+          <Alert severity="info" icon={false}>
+            <Typography variant="body2" fontWeight="bold">
+              Rolagem de Ataque: {attackPreview.formula}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {attackPreview.diceCount}d20 (
+              {attack.attackAttribute &&
+              ATTRIBUTE_LABELS[attack.attackAttribute as AttributeName]
+                ? ATTRIBUTE_LABELS[attack.attackAttribute as AttributeName]
+                : ATTRIBUTE_LABELS[defaultAttribute]}
+              {attackPreview.useName ? ` - ${attackPreview.useName}` : ''})
+              {attackPreview.modifier !== 0 &&
+                ` ${attackPreview.modifier >= 0 ? '+' : ''}${attackPreview.modifier}`}
+            </Typography>
+          </Alert>
+
+          <Divider>
+            <Typography variant="caption" color="text.secondary">
+              Crítico
+            </Typography>
+          </Divider>
+
+          {/* Margem de Crítico e Dano Crítico */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 3fr' },
+              gap: 2,
+            }}
+          >
+            <TextField
+              label="Margem de Crítico"
+              type="number"
+              value={attack.criticalRange}
+              onChange={(e) =>
+                updateField(
+                  'criticalRange',
+                  Math.min(20, Math.max(1, parseInt(e.target.value) || 20))
+                )
+              }
+              inputProps={{ min: 1, max: 20 }}
+              fullWidth
+              helperText="Ex: 20, 19, 18"
+            />
+
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 2,
+              }}
+            >
+              <TextField
+                label="Quantidade"
+                type="number"
+                value={attack.criticalDamage.quantity}
+                onChange={(e) =>
+                  updateCriticalDamage(
+                    'quantity',
+                    Math.max(0, parseInt(e.target.value) || 0)
+                  )
+                }
+                inputProps={{ min: 0 }}
+                fullWidth
+                helperText="Dados extras (Crítico Verdadeiro)"
+              />
+
+              <FormControl fullWidth>
+                <InputLabel id="critical-dice-type-label">
+                  Tipo de Dado
+                </InputLabel>
+                <Select
+                  labelId="critical-dice-type-label"
+                  value={attack.criticalDamage.type}
+                  label="Tipo de Dado"
+                  onChange={(e) =>
+                    updateCriticalDamage('type', e.target.value as DiceType)
+                  }
+                >
+                  {DICE_TYPES.map((dice) => (
+                    <MenuItem key={dice} value={dice}>
+                      {dice}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+
+          <Stack spacing={0.5}>
+            <Typography variant="caption" color="text.secondary">
+              Formato de crítico: {attack.criticalRange}/+
+              {attack.criticalDamage.quantity}
+              {attack.criticalDamage.type}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ fontStyle: 'italic' }}
+            >
+              • Crítico: natural ≥ margem → dano base MAXIMIZADO + modificador
+              <br />
+              • Crítico Verdadeiro: crítico + margem ≥5 → base maximizado +
+              dados extras ROLADOS (sem mod extra)
+              <br />• Raspão: resultado = Defesa → dados ÷ 2 (sem modificador,
+              mín 1)
+            </Typography>
+          </Stack>
 
           <Divider>
             <Typography variant="caption" color="text.secondary">

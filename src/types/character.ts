@@ -321,6 +321,8 @@ export interface PhysicalDescription {
   weight?: number;
   /** Outros detalhes */
   other?: string;
+  /** Pronomes preferidos (ex: ele/dele, ela/dela, elu/delu) */
+  pronouns?: string;
 }
 
 /**

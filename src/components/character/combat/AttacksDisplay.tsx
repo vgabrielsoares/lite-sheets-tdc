@@ -17,11 +17,15 @@ import { AttackRow } from './AttackRow';
 import { AttackForm } from './AttackForm';
 import { ConfirmDialog } from '@/components/shared';
 
+import type { Character } from '@/types';
+
 export interface AttacksDisplayProps {
   /** Lista de ataques do personagem */
   attacks: Attack[];
   /** Callback para atualizar a lista de ataques */
   onChange: (attacks: Attack[]) => void;
+  /** Dados do personagem (para acessar atributos/habilidades) */
+  character: Character;
 }
 
 /**
@@ -41,7 +45,11 @@ export interface AttacksDisplayProps {
  * />
  * ```
  */
-export function AttacksDisplay({ attacks, onChange }: AttacksDisplayProps) {
+export function AttacksDisplay({
+  attacks,
+  onChange,
+  character,
+}: AttacksDisplayProps) {
   const theme = useTheme();
   const [formOpen, setFormOpen] = useState(false);
   const [editingAttack, setEditingAttack] = useState<Attack | undefined>(
@@ -184,6 +192,7 @@ export function AttacksDisplay({ attacks, onChange }: AttacksDisplayProps) {
                 onEdit={handleEditAttack}
                 onDelete={handleDeleteClick}
                 index={index}
+                character={character}
               />
             ))}
           </Stack>
@@ -195,6 +204,7 @@ export function AttacksDisplay({ attacks, onChange }: AttacksDisplayProps) {
           onClose={handleCloseForm}
           onSave={handleSaveAttack}
           editingAttack={editingAttack}
+          character={character}
         />
 
         {/* Dialog de confirmação de exclusão */}

@@ -48,7 +48,7 @@ describe('CarryCapacityDisplay', () => {
   let baseCharacter: Character;
 
   beforeEach(() => {
-    baseCharacter = createDefaultCharacter('Test Character');
+    baseCharacter = createDefaultCharacter({ name: 'Test Character' });
   });
 
   describe('Renderização básica', () => {

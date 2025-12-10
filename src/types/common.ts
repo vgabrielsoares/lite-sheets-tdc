@@ -282,4 +282,6 @@ export interface Note extends BaseEntity {
   tags: string[];
   /** Categoria da anotação */
   category?: string;
+  /** Indica se a nota está fixada no topo */
+  pinned: boolean;
 }

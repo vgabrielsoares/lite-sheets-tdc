@@ -39,6 +39,11 @@ export {
   DIFFICULTY_VALUES,
 } from './common';
 
+// Notes system
+export type { NotesSortField, SortOrder, NotesFilter } from './notes';
+
+export { DEFAULT_NOTES_FILTER } from './notes';
+
 // Attributes
 export type {
   AttributeName,

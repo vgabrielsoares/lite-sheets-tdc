@@ -127,8 +127,8 @@ export function LinhagemSidebar({
     () => lineage || createDefaultLineage()
   );
 
-  // Debounce para auto-save
-  const debouncedLineage = useDebounce(localLineage, 100);
+  // Debounce para auto-save (300ms para reduzir frequência)
+  const debouncedLineage = useDebounce(localLineage, 300);
 
   // Estado de validação
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -136,42 +136,54 @@ export function LinhagemSidebar({
   // Flag para controlar se o usuário já editou algo
   const [hasUserEdited, setHasUserEdited] = useState(false);
 
+  // Ref para rastrear se a sidebar estava aberta anteriormente
+  const wasOpenRef = useRef(false);
+
+  // Ref para rastrear se já sincronizou ao abrir (evita auto-save do valor inicial)
+  const hasSyncedRef = useRef(false);
+
   /**
-   * Sincroniza estado local com props quando a linhagem externa muda
-   * Apenas sincroniza se a sidebar acabou de abrir ou se houve mudança externa significativa
+   * Sincroniza linhagem externa com estado local APENAS quando abre
+   * (não quando lineage muda enquanto já está aberta - evita loops)
    */
   useEffect(() => {
-    if (open) {
-      // Quando a sidebar abre, carrega a linhagem mais recente
+    // Só sincroniza quando a sidebar ABRE (transição de fechado para aberto)
+    if (open && !wasOpenRef.current) {
       const currentLineage = lineage || createDefaultLineage();
       setLocalLineage(currentLineage);
-      setHasUserEdited(false); // Reset flag quando abre
-      setValidationErrors([]); // Limpa erros ao abrir
+      setHasUserEdited(false);
+      setValidationErrors([]);
+      hasSyncedRef.current = false; // Resetar flag de sync
     }
+
+    // Marcar como sincronizado após a sidebar abrir
+    if (open && !hasSyncedRef.current) {
+      hasSyncedRef.current = true;
+    }
+
+    wasOpenRef.current = open;
+    // Intencionalmente não incluímos 'lineage' nas dependências
+    // para evitar resetar o estado enquanto o usuário está editando
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   /**
-   * Sincroniza quando a linhagem externa muda significativamente
-   */
-  useEffect(() => {
-    if (lineage && open) {
-      // Apenas atualiza se for significativamente diferente (evita loops de sincronização)
-      if (JSON.stringify(lineage) !== JSON.stringify(localLineage)) {
-        setLocalLineage(lineage);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lineage]);
-
-  /**
    * Auto-save com debounce
+   * Só salva se usuário editou E sidebar está aberta E já sincronizou
    */
   useEffect(() => {
-    if (debouncedLineage && open && hasUserEdited) {
+    // Só salvar se:
+    // 1. Usuário editou algo (hasUserEdited = true)
+    // 2. Sidebar está aberta (open = true)
+    // 3. Já sincronizou o valor inicial (hasSyncedRef.current = true)
+    if (hasUserEdited && open && hasSyncedRef.current) {
       // Valida antes de salvar
       const isValid = validateLineage(debouncedLineage);
       if (isValid) {
+        console.log(
+          '💾 LinhagemSidebar auto-save disparando:',
+          debouncedLineage.name
+        );
         onUpdate(debouncedLineage);
         setValidationErrors([]);
       } else {
@@ -184,7 +196,7 @@ export function LinhagemSidebar({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedLineage]);
+  }, [debouncedLineage, hasUserEdited, open]);
 
   /**
    * Atualiza campo de texto da linhagem

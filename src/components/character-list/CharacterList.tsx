@@ -14,6 +14,7 @@ import {
 import { useNotifications } from '@/hooks/useNotifications';
 import CharacterCard from './CharacterCard';
 import EmptyState from './EmptyState';
+import ImportCharacterButton from './ImportCharacterButton';
 
 /**
  * Componente principal de listagem de fichas de personagens
@@ -148,19 +149,26 @@ export default function CharacterList() {
   // Estado vazio - nenhuma ficha criada ainda
   if (characters.length === 0) {
     return (
-      <EmptyState
-        title="Nenhuma ficha criada ainda"
-        description="Comece sua jornada criando seu primeiro personagem para o Tabuleiro do Caos RPG"
-        actionLabel="Criar Primeira Ficha"
-        onAction={handleCreateCharacter}
-      />
+      <Box>
+        {/* Botão de importar no estado vazio */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+          <ImportCharacterButton variant="outlined" />
+        </Box>
+
+        <EmptyState
+          title="Nenhuma ficha criada ainda"
+          description="Comece sua jornada criando seu primeiro personagem para o Tabuleiro do Caos RPG, ou importe uma ficha existente"
+          actionLabel="Criar Primeira Ficha"
+          onAction={handleCreateCharacter}
+        />
+      </Box>
     );
   }
 
   // Lista de fichas existentes
   return (
     <Box sx={{ py: { xs: 2, sm: 4 } }}>
-      {/* Header com título e botão de nova ficha */}
+      {/* Header com título e botões de nova ficha e importar */}
       <Box
         sx={{
           display: 'flex',
@@ -181,15 +189,20 @@ export default function CharacterList() {
         >
           Minhas Fichas
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleCreateCharacter}
-          size="large"
-          aria-label="Criar nova ficha"
-        >
-          Nova Ficha
-        </Button>
+
+        {/* Botões de ação */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <ImportCharacterButton variant="outlined" size="large" />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleCreateCharacter}
+            size="large"
+            aria-label="Criar nova ficha"
+          >
+            Nova Ficha
+          </Button>
+        </Box>
       </Box>
 
       {/* Grid de cards de personagens */}

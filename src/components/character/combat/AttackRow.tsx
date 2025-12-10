@@ -23,6 +23,11 @@ import {
 } from '@mui/icons-material';
 import type { Attack, AttackType, ActionType } from '@/types/combat';
 import type { DamageType } from '@/types/common';
+import type { Character } from '@/types';
+import { AttackRollButton } from './AttackRollButton';
+import { DamageRollButton } from './DamageRollButton';
+import { CombinedAttackButton } from './CombinedAttackButton';
+import { calculateAttackRoll } from '@/utils/attackCalculations';
 
 export interface AttackRowProps {
   /** Dados do ataque */
@@ -33,6 +38,8 @@ export interface AttackRowProps {
   onDelete: (attackName: string) => void;
   /** Índice do ataque (para acessibilidade) */
   index: number;
+  /** Dados do personagem (para acessar atributos/habilidades) */
+  character: Character;
 }
 
 /** Labels para tipos de ataque */
@@ -113,12 +120,26 @@ function formatDiceRoll(
  * />
  * ```
  */
-export function AttackRow({ attack, onEdit, onDelete, index }: AttackRowProps) {
+export function AttackRow({
+  attack,
+  onEdit,
+  onDelete,
+  index,
+  character,
+}: AttackRowProps) {
   const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
 
-  // Formatar rolagem de ataque
-  const attackRollStr = formatDiceRoll(1, 'd20', attack.attackBonus);
+  // Calcular fórmula de ataque dinâmica baseada na habilidade/uso
+  const attackRollCalc = calculateAttackRoll(
+    character,
+    attack.attackSkill,
+    attack.attackSkillUseId,
+    attack.attackBonus,
+    attack.attackAttribute,
+    attack.attackDiceModifier || 0
+  );
+  const attackRollStr = attackRollCalc.formula;
 
   // Formatar rolagem de dano
   const damageRollStr = formatDiceRoll(
@@ -196,6 +217,19 @@ export function AttackRow({ attack, onEdit, onDelete, index }: AttackRowProps) {
           />
         </Tooltip>
 
+        {/* Botão de rolagem de ataque */}
+        <AttackRollButton
+          attackName={attack.name}
+          attackBonus={attack.attackBonus}
+          character={character}
+          attackSkill={attack.attackSkill}
+          attackSkillUseId={attack.attackSkillUseId}
+          attackAttribute={attack.attackAttribute}
+          attackDiceModifier={attack.attackDiceModifier}
+          size="small"
+          color="primary"
+        />
+
         {/* Info rápida - Dano */}
         <Tooltip title={`Dano (${DAMAGE_TYPE_LABELS[attack.damageType]})`}>
           <Chip
@@ -206,6 +240,36 @@ export function AttackRow({ attack, onEdit, onDelete, index }: AttackRowProps) {
             sx={{ minWidth: 60 }}
           />
         </Tooltip>
+
+        {/* Botão de rolagem de dano */}
+        <DamageRollButton
+          attackName={attack.name}
+          damageRoll={attack.damageRoll}
+          damageType={attack.damageType}
+          criticalDamage={
+            attack.criticalDamage ?? { quantity: 1, type: 'd6', modifier: 0 }
+          }
+          size="small"
+          color="error"
+        />
+
+        {/* Botão de rolagem combinada (ataque + dano) */}
+        <CombinedAttackButton
+          attackName={attack.name}
+          attackBonus={attack.attackBonus}
+          damageRoll={attack.damageRoll}
+          damageType={attack.damageType}
+          criticalRange={attack.criticalRange ?? 20}
+          criticalDamage={
+            attack.criticalDamage ?? { quantity: 1, type: 'd6', modifier: 0 }
+          }
+          character={character}
+          attackSkill={attack.attackSkill}
+          attackSkillUseId={attack.attackSkillUseId}
+          attackAttribute={attack.attackAttribute}
+          attackDiceModifier={attack.attackDiceModifier}
+          size="small"
+        />
 
         {/* Botão expandir */}
         <IconButton
@@ -250,7 +314,7 @@ export function AttackRow({ attack, onEdit, onDelete, index }: AttackRowProps) {
               )}
             </Box>
 
-            {/* Detalhes de ataque */}
+            {/* Detalhes de ataque com botões de rolagem */}
             <Box
               sx={{
                 display: 'grid',
@@ -262,18 +326,40 @@ export function AttackRow({ attack, onEdit, onDelete, index }: AttackRowProps) {
                 <Typography variant="caption" color="text.secondary">
                   Rolagem de Ataque
                 </Typography>
-                <Typography variant="body2">
-                  {attackRollStr} ({attack.attackSkill})
-                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography variant="body2">
+                    {attackRollStr} ({attack.attackSkill})
+                  </Typography>
+                  <AttackRollButton
+                    attackName={attack.name}
+                    attackBonus={attack.attackBonus}
+                    character={character}
+                    attackSkill={attack.attackSkill}
+                    attackSkillUseId={attack.attackSkillUseId}
+                    attackAttribute={attack.attackAttribute}
+                    attackDiceModifier={attack.attackDiceModifier}
+                    size="small"
+                    color="primary"
+                  />
+                </Stack>
               </Box>
 
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Dano
                 </Typography>
-                <Typography variant="body2">
-                  {damageRollStr} de {DAMAGE_TYPE_LABELS[attack.damageType]}
-                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography variant="body2">
+                    {damageRollStr} de {DAMAGE_TYPE_LABELS[attack.damageType]}
+                  </Typography>
+                  <DamageRollButton
+                    attackName={attack.name}
+                    damageRoll={attack.damageRoll}
+                    damageType={attack.damageType}
+                    size="small"
+                    color="error"
+                  />
+                </Stack>
               </Box>
 
               {attack.range && (
@@ -284,6 +370,55 @@ export function AttackRow({ attack, onEdit, onDelete, index }: AttackRowProps) {
                   <Typography variant="body2">{attack.range}</Typography>
                 </Box>
               )}
+            </Box>
+
+            {/* Seção de rolagem rápida */}
+            <Box
+              sx={{
+                p: 1.5,
+                bgcolor: alpha(theme.palette.secondary.main, 0.05),
+                borderRadius: 1,
+                border: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                gutterBottom
+                display="block"
+              >
+                Rolagem Rápida
+              </Typography>
+              <Stack direction="row" spacing={1} justifyContent="center">
+                <CombinedAttackButton
+                  attackName={attack.name}
+                  attackBonus={attack.attackBonus}
+                  damageRoll={attack.damageRoll}
+                  damageType={attack.damageType}
+                  criticalRange={attack.criticalRange ?? 20}
+                  criticalDamage={
+                    attack.criticalDamage ?? {
+                      quantity: 1,
+                      type: 'd6',
+                      modifier: 0,
+                    }
+                  }
+                  character={character}
+                  attackSkill={attack.attackSkill}
+                  attackSkillUseId={attack.attackSkillUseId}
+                  attackAttribute={attack.attackAttribute}
+                  attackDiceModifier={attack.attackDiceModifier}
+                  size="medium"
+                />
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ alignSelf: 'center' }}
+                >
+                  Ataque Completo (Ataque + Dano)
+                </Typography>
+              </Stack>
             </Box>
 
             {/* Descrição */}

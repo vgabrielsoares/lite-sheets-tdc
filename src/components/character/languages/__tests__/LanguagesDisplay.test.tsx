@@ -12,7 +12,7 @@ describe('LanguagesDisplay', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    defaultCharacter = createDefaultCharacter('Test Character');
+    defaultCharacter = createDefaultCharacter({ name: 'Test Character' });
     defaultCharacter.attributes.mente = 2; // Permite 1 idioma adicional
     defaultCharacter.languages = ['comum'];
   });
@@ -122,19 +122,14 @@ describe('LanguagesDisplay', () => {
         ...defaultCharacter,
         lineage: {
           name: 'Elfo',
-          attributes: {
-            agilidade: 1,
-            constituicao: 0,
-            forca: 0,
-            influencia: 0,
-            mente: 0,
-            presenca: 0,
-          },
-          size: 'médio' as const,
+          description: 'Elfos ágeis',
+          attributeModifiers: [{ attribute: 'agilidade' as const, value: 1 }],
+          size: 'medio' as const,
           height: 180,
-          weight: 70,
-          weightMeasure: 10,
+          weightKg: 70,
+          weightRPG: 14,
           age: 100,
+          adulthood: 80,
           lifeExpectancy: 500,
           languages: ['elfico'] as LanguageName[],
           movement: {
@@ -337,7 +332,9 @@ describe('LanguagesDisplay', () => {
         ?.closest('.MuiChip-root');
 
       expect(elficoChip).toBeTruthy();
-      const deleteButton = within(elficoChip!).getByTestId('DeleteIcon');
+      const deleteButton = within(elficoChip! as HTMLElement).getByTestId(
+        'DeleteIcon'
+      );
 
       await user.click(deleteButton);
 
@@ -364,7 +361,7 @@ describe('LanguagesDisplay', () => {
 
       expect(comumChip).toBeTruthy();
       expect(
-        within(comumChip!).queryByTestId('DeleteIcon')
+        within(comumChip! as HTMLElement).queryByTestId('DeleteIcon')
       ).not.toBeInTheDocument();
     });
   });
@@ -413,7 +410,7 @@ describe('LanguagesDisplay', () => {
 
       expect(elficoChip).toBeTruthy();
       expect(
-        within(elficoChip!).queryByTestId('DeleteIcon')
+        within(elficoChip! as HTMLElement).queryByTestId('DeleteIcon')
       ).not.toBeInTheDocument();
     });
   });
@@ -504,19 +501,14 @@ describe('LanguagesDisplay', () => {
         ...defaultCharacter,
         lineage: {
           name: 'Elfo',
-          attributes: {
-            agilidade: 1,
-            constituicao: 0,
-            forca: 0,
-            influencia: 0,
-            mente: 0,
-            presenca: 0,
-          },
-          size: 'médio' as const,
+          description: 'Elfos ágeis',
+          attributeModifiers: [{ attribute: 'agilidade' as const, value: 1 }],
+          size: 'medio' as const,
           height: 180,
-          weight: 70,
-          weightMeasure: 10,
+          weightKg: 70,
+          weightRPG: 14,
           age: 100,
+          adulthood: 80,
           lifeExpectancy: 500,
           languages: ['elfico', 'silvestre'] as LanguageName[], // 2 idiomas de linhagem
           movement: {

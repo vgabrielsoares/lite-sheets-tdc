@@ -5,125 +5,55 @@
 import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { SpellLearningCalculator } from '../SpellLearningCalculator';
+import { createDefaultCharacter } from '@/utils/characterFactory';
 import type { Character } from '@/types';
 
 describe('SpellLearningCalculator', () => {
-  const createMockCharacter = (overrides?: Partial<Character>): Character => ({
-    id: 'char-1',
-    name: 'Test Character',
-    playerName: 'Player 1',
-    level: 1,
-    xp: { current: 0, forNextLevel: 1000 },
-    linhagem: undefined,
-    origem: undefined,
-    attributes: {
-      agilidade: 1,
-      constituicao: 1,
-      forca: 1,
-      influencia: 1,
-      mente: 3,
-      presenca: 1,
-    },
-    pv: {
-      max: 15,
-      current: 15,
-      temporary: 0,
-    },
-    pp: {
-      max: 2,
-      current: 2,
-      temporary: 0,
-    },
-    combat: {
-      defense: { base: 16, modifiers: 0 },
-      initiative: { base: 1, modifiers: 0 },
-      movement: { base: 9, modifiers: 0 },
-      pvLimit: { total: 15, modifiers: 0 },
-      ppLimit: { total: 2, modifiers: 0 },
-      attacks: [],
-      criticalRange: 20,
-      criticalMultiplier: 2,
-    },
-    skills: {
-      arcano: {
-        keyAttribute: 'mente',
-        proficiencyLevel: 'versado',
+  const createMockCharacter = (overrides?: Partial<Character>): Character => {
+    const baseCharacter = createDefaultCharacter({
+      name: 'Test Character',
+      playerName: 'Player 1',
+    });
+
+    return {
+      ...baseCharacter,
+      attributes: {
+        ...baseCharacter.attributes,
+        mente: 3,
       },
-      arte: {
-        keyAttribute: 'presenca',
-        proficiencyLevel: 'leigo',
+      spellcasting: {
+        knownSpells: [
+          {
+            spellId: 'spell-1',
+            name: 'Mísseis Mágicos',
+            circle: 1,
+            matrix: 'arcana',
+            spellcastingSkill: 'arcano',
+          },
+          {
+            spellId: 'spell-2',
+            name: 'Escudo Arcano',
+            circle: 1,
+            matrix: 'arcana',
+            spellcastingSkill: 'arcano',
+          },
+        ],
+        maxKnownSpells: 10,
+        knownSpellsModifiers: 0,
+        spellcastingAbilities: [
+          {
+            id: 'ability-1',
+            skill: 'arcano',
+            attribute: 'presenca',
+            dcBonus: 0,
+            attackBonus: 0,
+          },
+        ],
+        masteredMatrices: [],
       },
-      natureza: {
-        keyAttribute: 'mente',
-        proficiencyLevel: 'leigo',
-      },
-      performance: {
-        keyAttribute: 'presenca',
-        proficiencyLevel: 'leigo',
-      },
-      religiao: {
-        keyAttribute: 'mente',
-        proficiencyLevel: 'leigo',
-      },
-      vigor: {
-        keyAttribute: 'constituicao',
-        proficiencyLevel: 'leigo',
-      },
-    } as any,
-    languages: ['comum'],
-    proficiencies: {
-      weapons: ['simples'],
-      armors: [],
-      shields: [],
-      tools: [],
-      skills: [],
-    },
-    inventory: {
-      items: [],
-      currency: { PO: 10 },
-      encumbrance: { current: 0, max: 50 },
-    },
-    spellcasting: {
-      knownSpells: [
-        {
-          spellId: 'spell-1',
-          name: 'Mísseis Mágicos',
-          circle: 1,
-          matrix: 'arcana',
-          spellcastingSkill: 'arcano',
-        },
-        {
-          spellId: 'spell-2',
-          name: 'Escudo Arcano',
-          circle: 1,
-          matrix: 'arcana',
-          spellcastingSkill: 'arcano',
-        },
-      ],
-      maxKnownSpells: 10,
-      knownSpellsModifiers: 0,
-      spellcastingAbilities: [
-        {
-          abilityId: 'spell-1',
-          skill: 'arcano',
-          attribute: 'presenca',
-          dcBonus: 0,
-          attackBonus: 0,
-        },
-      ],
-      masteredMatrices: [],
-    },
-    crafts: [],
-    senses: {
-      perceptionBonus: 0,
-      darkvision: 0,
-    },
-    size: 'medio',
-    conditions: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    ...overrides,
-  });
+      ...overrides,
+    };
+  };
 
   describe('Renderização Básica', () => {
     it('deve renderizar corretamente', () => {
@@ -239,7 +169,7 @@ describe('SpellLearningCalculator', () => {
           knownSpellsModifiers: 0,
           spellcastingAbilities: [
             {
-              abilityId: 'spell-1',
+              id: 'ability-1',
               skill: 'arcano',
               attribute: 'presenca',
               dcBonus: 0,

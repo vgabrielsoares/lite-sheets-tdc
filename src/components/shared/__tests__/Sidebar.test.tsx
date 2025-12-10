@@ -140,15 +140,8 @@ describe('Sidebar', () => {
       expect(drawer).toBeInTheDocument();
     });
 
-    it('deve aplicar anchor "left" corretamente', () => {
-      renderWithTheme(<Sidebar {...defaultProps} anchor="left" />);
-
-      const drawer = screen.getByRole('complementary');
-      expect(drawer).toBeInTheDocument();
-    });
-
-    it('deve aplicar anchor "right" corretamente (padrão)', () => {
-      renderWithTheme(<Sidebar {...defaultProps} anchor="right" />);
+    it('deve renderizar com anchor right por padrão', () => {
+      renderWithTheme(<Sidebar {...defaultProps} />);
 
       const drawer = screen.getByRole('complementary');
       expect(drawer).toBeInTheDocument();

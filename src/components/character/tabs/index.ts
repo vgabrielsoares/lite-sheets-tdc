@@ -18,3 +18,6 @@ export type { SpellsTabProps } from './SpellsTab';
 
 export { DescriptionTab } from './DescriptionTab';
 export type { DescriptionTabProps } from './DescriptionTab';
+
+export { NotesTab } from './NotesTab';
+export type { NotesTabProps } from './NotesTab';

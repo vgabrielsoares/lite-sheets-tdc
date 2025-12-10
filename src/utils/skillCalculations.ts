@@ -164,8 +164,13 @@ export function calculateSkillRollFormula(
     takeLowest = false;
   }
 
-  // 4. Gerar string da fórmula (sem indicador de "menor" - cor vermelha indica isso)
+  // 4. Gerar string da fórmula com indicador "(menor)" quando aplicável
   let formula = `${finalDiceCount}d20`;
+
+  // Adicionar indicador "(menor)" para rolagens que pegam o menor resultado
+  if (takeLowest) {
+    formula += ' (menor)';
+  }
 
   // Adicionar modificador
   if (totalModifier > 0) {
@@ -462,16 +467,31 @@ export function calculateSkillUseRollFormula(
 
   // Quantidade de dados = atributo + modificadores de dados
   const baseDiceCount = attributeValue;
-  const finalDiceCount = baseDiceCount + diceModifiers;
+  const realDiceCount = baseDiceCount + diceModifiers;
 
-  // Para atributo 0, começa com 2d20 (pega menor)
-  // Com modificadores negativos: 2-1=1d20, 2-2=0d20, 2-3=-1d20, etc.
-  const displayDiceCount =
-    attributeValue === 0 ? 2 + diceModifiers : finalDiceCount;
+  // Determinar se pega o menor (quando real < 1)
+  let finalDiceCount: number;
+  let takeLowest = false;
 
-  // Fórmula sem indicador "(menor)"
+  if (realDiceCount < 1) {
+    // 0→2d20, -1→3d20, -2→4d20, etc.
+    finalDiceCount = 2 - realDiceCount;
+    takeLowest = true;
+  } else {
+    finalDiceCount = realDiceCount;
+  }
+
+  // Formatar fórmula com "(menor)" quando aplicável
   const sign = modifier >= 0 ? '+' : '';
-  return modifier === 0
-    ? `${displayDiceCount}d20`
-    : `${displayDiceCount}d20${sign}${modifier}`;
+  let formula = `${finalDiceCount}d20`;
+
+  if (takeLowest) {
+    formula += ' (menor)';
+  }
+
+  if (modifier !== 0) {
+    formula += `${sign}${modifier}`;
+  }
+
+  return formula;
 }

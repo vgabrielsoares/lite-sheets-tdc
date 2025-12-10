@@ -11,8 +11,11 @@ import {
   useMediaQuery,
   CircularProgress,
   Fade,
+  Button,
+  Tooltip,
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
+import DownloadIcon from '@mui/icons-material/Download';
 import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ShieldIcon from '@mui/icons-material/Shield';
@@ -38,6 +41,13 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 // Ícones para TOC - Spells
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+// Ícones para TOC - Descrições
+import FaceIcon from '@mui/icons-material/Face';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
+// Ícones para TOC - Anotações
+import NoteIcon from '@mui/icons-material/Note';
 import { useRouter } from 'next/navigation';
 import type {
   Character,
@@ -46,6 +56,8 @@ import type {
   SkillUse,
   ProficiencyLevel,
   Modifier,
+  Lineage,
+  Note,
 } from '@/types';
 import type { InventoryItem } from '@/types/inventory';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
@@ -74,6 +86,9 @@ const SpellsTab = lazy(() =>
 const DescriptionTab = lazy(() =>
   import('./tabs/DescriptionTab').then((m) => ({ default: m.DescriptionTab }))
 );
+const NotesTab = lazy(() =>
+  import('./tabs/NotesTab').then((m) => ({ default: m.NotesTab }))
+);
 import {
   LinhagemSidebar,
   OrigemSidebar,
@@ -86,11 +101,15 @@ import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 import { ItemDetailsSidebar } from './inventory/ItemDetailsSidebar';
+import { ConceptSidebar } from './sidebars/ConceptSidebar';
+import { NoteViewSidebar } from './sidebars/NoteViewSidebar';
 import { TableOfContents, TOCSection } from '@/components/shared';
 import {
   calculateArchetypeHPBreakdown,
   calculateArchetypePPBreakdown,
 } from './archetypes';
+import { exportCharacter } from '@/services/exportService';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export interface CharacterSheetProps {
   /**
@@ -131,16 +150,34 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { showSuccess, showError } = useNotifications();
 
   // Estado da aba atual com transição para mostrar loading
   const [currentTab, setCurrentTab] = useState<CharacterTabId>('main');
   const [isPending, startTransition] = useTransition();
+
+  // Estado de exportação
+  const [isExporting, setIsExporting] = useState(false);
 
   // Handler para mudança de aba com transição
   const handleTabChange = (tab: CharacterTabId) => {
     startTransition(() => {
       setCurrentTab(tab);
     });
+  };
+
+  // Handler para exportar personagem
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      await exportCharacter(character);
+      showSuccess('Personagem exportado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar personagem:', error);
+      showError('Erro ao exportar personagem. Tente novamente.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Estado do Table of Contents
@@ -158,6 +195,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
     | 'attribute'
     | 'skill'
     | 'item'
+    | 'concept'
+    | 'note'
     | null
   >(null);
 
@@ -170,6 +209,9 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   // Item selecionado para a sidebar de detalhes
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  // Nota selecionada para a sidebar de visualização
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
 
   /**
    * Seções do TOC por aba
@@ -329,9 +371,38 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         },
       ],
       description: [
-        { id: 'section-physical', label: 'Descrição Física' },
-        { id: 'section-definers', label: 'Definidores' },
-        { id: 'section-backstory', label: 'História' },
+        {
+          id: 'section-basic-info',
+          label: 'Informações Básicas',
+          icon: <PersonIcon fontSize="small" />,
+        },
+        {
+          id: 'section-concept',
+          label: 'Conceito do Personagem',
+          icon: <AutoStoriesIcon fontSize="small" />,
+        },
+        {
+          id: 'section-appearance',
+          label: 'Descrição de Aparência',
+          icon: <FaceIcon fontSize="small" />,
+        },
+        {
+          id: 'section-personality',
+          label: 'Definidores do Personagem',
+          icon: <EmojiEventsIcon fontSize="small" />,
+        },
+        {
+          id: 'section-backstory',
+          label: 'História do Personagem',
+          icon: <HistoryEduIcon fontSize="small" />,
+        },
+      ],
+      notes: [
+        {
+          id: 'section-notes-list',
+          label: 'Minhas Anotações',
+          icon: <NoteIcon fontSize="small" />,
+        },
       ],
     }),
     []
@@ -415,6 +486,21 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   const handleOpenItemSidebar = (item: InventoryItem) => {
     setSelectedItem(item);
     setActiveSidebar('item');
+  };
+
+  /**
+   * Abre a sidebar de conceito expandido
+   */
+  const handleOpenConceptSidebar = () => {
+    setActiveSidebar('concept');
+  };
+
+  /**
+   * Abre a sidebar de visualização de nota
+   */
+  const handleOpenNoteSidebar = (note: Note) => {
+    setSelectedNote(note);
+    setActiveSidebar('note');
   };
 
   /**
@@ -837,12 +923,28 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Handler para atualizar campos específicos da linhagem
+   * Usa handleUpdateLineage para garantir sincronização correta
+   */
+  const handleUpdateLineageField = (field: keyof Lineage, value: any) => {
+    if (!character.lineage) return;
+
+    const updatedLineage = {
+      ...character.lineage,
+      [field]: value,
+    };
+
+    handleUpdateLineage(updatedLineage);
+  };
+
+  /**
    * Renderiza o conteúdo da aba atual
    */
   const renderTabContent = () => {
     const tabProps = {
       character,
       onUpdate,
+      onUpdateLineageField: handleUpdateLineageField,
       onOpenLineage: handleOpenLineageSidebar,
       onOpenOrigin: handleOpenOriginSidebar,
       onOpenSize: handleOpenSizeSidebar,
@@ -853,6 +955,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenAttribute: handleOpenAttributeSidebar,
       onOpenSkill: handleOpenSkillSidebar,
       onOpenItem: handleOpenItemSidebar,
+      onOpenConceptSidebar: handleOpenConceptSidebar,
+      onOpenNote: handleOpenNoteSidebar,
       onSkillKeyAttributeChange: handleSkillKeyAttributeChange,
       onSkillProficiencyChange: handleSkillProficiencyChange,
       onSkillModifiersChange: handleSkillModifiersChange,
@@ -877,6 +981,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         return <SpellsTab {...tabProps} />;
       case 'description':
         return <DescriptionTab {...tabProps} />;
+      case 'notes':
+        return <NotesTab {...tabProps} />;
       default:
         return <MainTab {...tabProps} />;
     }
@@ -897,6 +1003,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           justifyContent: 'space-between',
           alignItems: 'center',
           mb: 3,
+          flexWrap: 'wrap',
+          gap: 2,
         }}
       >
         {/* Breadcrumb de navegação */}
@@ -915,6 +1023,26 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             <Typography color="text.secondary">{currentTabLabel}</Typography>
           )}
         </Breadcrumbs>
+
+        {/* Botão de Exportação */}
+        <Tooltip title="Exportar ficha em JSON">
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={handleExport}
+            disabled={isExporting}
+            sx={{
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+              },
+            }}
+          >
+            {isExporting ? 'Exportando...' : 'Exportar'}
+          </Button>
+        </Tooltip>
       </Box>
 
       {/* Layout principal - Ficha sempre centralizada */}
@@ -1150,6 +1278,63 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               onUpdate={handleUpdateItemFromSidebar}
             />
           )}
+
+          {/* Sidebar de Conceito Expandido */}
+          {activeSidebar === 'concept' && (
+            <ConceptSidebar
+              open={activeSidebar === 'concept'}
+              onClose={handleCloseSidebar}
+              conceptExpanded={character.conceptExpanded || ''}
+              onUpdate={(conceptExpanded) => onUpdate({ conceptExpanded })}
+            />
+          )}
+
+          {/* Sidebar de Visualização de Nota */}
+          {activeSidebar === 'note' && selectedNote && (
+            <NoteViewSidebar
+              open={activeSidebar === 'note'}
+              onClose={handleCloseSidebar}
+              note={selectedNote}
+              onUpdate={(noteData) => {
+                const updatedNotes = (character.notes || []).map((n) =>
+                  n.id === selectedNote.id
+                    ? {
+                        ...n,
+                        ...noteData,
+                        updatedAt: new Date().toISOString(),
+                      }
+                    : n
+                );
+                onUpdate({ notes: updatedNotes });
+              }}
+              onTogglePin={(noteId) => {
+                const updatedNotes = (character.notes || []).map((n) =>
+                  n.id === noteId
+                    ? {
+                        ...n,
+                        pinned: !n.pinned,
+                        updatedAt: new Date().toISOString(),
+                      }
+                    : n
+                );
+                onUpdate({ notes: updatedNotes });
+              }}
+              onDelete={(noteId) => {
+                const updatedNotes = (character.notes || []).filter(
+                  (n) => n.id !== noteId
+                );
+                onUpdate({ notes: updatedNotes });
+                handleCloseSidebar();
+              }}
+              availableCategories={Array.from(
+                new Set(
+                  (character.notes || [])
+                    .map((n) => n.category)
+                    .filter((c): c is string => !!c)
+                )
+              ).sort()}
+            />
+          )}
         </>
       )}
 
@@ -1279,6 +1464,63 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           onClose={handleCloseSidebar}
           item={selectedItem}
           onUpdate={handleUpdateItemFromSidebar}
+        />
+      )}
+
+      {/* Sidebar de Conceito Expandido em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'concept' && (
+        <ConceptSidebar
+          open={activeSidebar === 'concept'}
+          onClose={handleCloseSidebar}
+          conceptExpanded={character.conceptExpanded || ''}
+          onUpdate={(conceptExpanded) => onUpdate({ conceptExpanded })}
+        />
+      )}
+
+      {/* Sidebar de Visualização de Nota em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'note' && selectedNote && (
+        <NoteViewSidebar
+          open={activeSidebar === 'note'}
+          onClose={handleCloseSidebar}
+          note={selectedNote}
+          onUpdate={(noteData) => {
+            const updatedNotes = (character.notes || []).map((n) =>
+              n.id === selectedNote.id
+                ? {
+                    ...n,
+                    ...noteData,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : n
+            );
+            onUpdate({ notes: updatedNotes });
+          }}
+          onTogglePin={(noteId) => {
+            const updatedNotes = (character.notes || []).map((n) =>
+              n.id === noteId
+                ? {
+                    ...n,
+                    pinned: !n.pinned,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : n
+            );
+            onUpdate({ notes: updatedNotes });
+          }}
+          onDelete={(noteId) => {
+            const updatedNotes = (character.notes || []).filter(
+              (n) => n.id !== noteId
+            );
+            onUpdate({ notes: updatedNotes });
+            handleCloseSidebar();
+          }}
+          availableCategories={Array.from(
+            new Set(
+              (character.notes || [])
+                .map((n) => n.category)
+                .filter((c): c is string => !!c)
+            )
+          ).sort()}
         />
       )}
     </Container>

@@ -271,9 +271,7 @@ describe('SkillRow', () => {
     const weakSkill: Skill = {
       ...mockSkill,
       proficiencyLevel: 'leigo', // x0 = modificador 0
-      modifiers: [
-        { name: 'Ferimento', type: 'penalty', value: -3, source: 'condição' },
-      ],
+      modifiers: [{ name: 'Ferimento', type: 'penalidade', value: -3 }],
     };
 
     render(
