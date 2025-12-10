@@ -27,6 +27,7 @@ import {
   SIZE_DESCRIPTIONS,
   getSizeModifiers,
   CREATURE_SIZES,
+  formatMeleeDamage,
 } from '@/constants/lineage';
 
 export interface SizeSidebarProps {
@@ -49,7 +50,8 @@ export interface SizeSidebarProps {
 /**
  * Formata modificador com sinal (+/-)
  */
-function formatModifier(value: number): string {
+function formatModifier(value: number | string): string {
+  if (typeof value === 'string') return value;
   if (value === 0) return '0';
   return value > 0 ? `+${value}` : `${value}`;
 }
@@ -169,14 +171,20 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                 >
                   <Typography variant="body2">Dano Corpo-a-Corpo</Typography>
                   <Chip
-                    label={formatModifier(modifiers.meleeDamage)}
+                    label={formatMeleeDamage(modifiers.meleeDamage)}
                     size="small"
                     color={
-                      modifiers.meleeDamage > 0
-                        ? 'success'
-                        : modifiers.meleeDamage < 0
-                          ? 'error'
-                          : 'default'
+                      typeof modifiers.meleeDamage === 'string'
+                        ? modifiers.meleeDamage.startsWith('+')
+                          ? 'success'
+                          : modifiers.meleeDamage.startsWith('-')
+                            ? 'error'
+                            : 'default'
+                        : modifiers.meleeDamage > 0
+                          ? 'success'
+                          : modifiers.meleeDamage < 0
+                            ? 'error'
+                            : 'default'
                     }
                   />
                 </Box>
@@ -478,14 +486,20 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                         <Typography
                           variant="body2"
                           color={
-                            sizeModifiers.meleeDamage > 0
-                              ? 'success.main'
-                              : sizeModifiers.meleeDamage < 0
-                                ? 'error.main'
-                                : 'text.primary'
+                            typeof sizeModifiers.meleeDamage === 'string'
+                              ? sizeModifiers.meleeDamage.startsWith('+')
+                                ? 'success.main'
+                                : sizeModifiers.meleeDamage.startsWith('-')
+                                  ? 'error.main'
+                                  : 'text.primary'
+                              : sizeModifiers.meleeDamage > 0
+                                ? 'success.main'
+                                : sizeModifiers.meleeDamage < 0
+                                  ? 'error.main'
+                                  : 'text.primary'
                           }
                         >
-                          {formatModifier(sizeModifiers.meleeDamage)}
+                          {formatMeleeDamage(sizeModifiers.meleeDamage)}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
