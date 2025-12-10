@@ -37,7 +37,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="mente"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -52,7 +53,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="agilidade"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -67,7 +69,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="forca"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -82,7 +85,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="mente"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -110,7 +114,8 @@ describe('AttributeSidebar', () => {
             open={true}
             onClose={mockOnClose}
             attribute={attr}
-            character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+            character={mockCharacter}
+            onUpdateAttribute={mockOnUpdateAttribute}
           />
         );
 
@@ -130,7 +135,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="mente"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -147,7 +153,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="mente"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -166,7 +173,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="agilidade"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -182,7 +190,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="agilidade"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -196,7 +205,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="constituicao"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -215,7 +225,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="presenca"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -233,7 +244,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="forca"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -252,7 +264,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="influencia"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -267,7 +280,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="agilidade"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -296,7 +310,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="agilidade"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -319,7 +334,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="forca"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -341,7 +357,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="forca"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -358,7 +375,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="mente"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -375,7 +393,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="presenca"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -383,18 +402,19 @@ describe('AttributeSidebar', () => {
       expect(screen.getByText(/Rola 1 dado de 20 lados/)).toBeInTheDocument();
     });
 
-    it('should show 2d20 (menor) for attribute value 0', () => {
+    it('should show -2d20 for attribute value 0', () => {
       mockCharacter.attributes.agilidade = 0;
       render(
         <AttributeSidebar
           open={true}
           onClose={mockOnClose}
           attribute="agilidade"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
-      expect(screen.getByText('2d20 (menor)')).toBeInTheDocument();
+      expect(screen.getByText('-2d20')).toBeInTheDocument();
       expect(
         screen.getByText(/Rola 2 dados de 20 lados e escolhe o menor resultado/)
       ).toBeInTheDocument();
@@ -407,7 +427,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="mente"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
@@ -435,7 +456,8 @@ describe('AttributeSidebar', () => {
             open={true}
             onClose={mockOnClose}
             attribute={attr}
-            character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+            character={mockCharacter}
+            onUpdateAttribute={mockOnUpdateAttribute}
           />
         );
         expect(screen.getByText(ATTRIBUTE_LABELS[attr])).toBeInTheDocument();
@@ -453,7 +475,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="forca"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
       expect(screen.getByText('10')).toBeInTheDocument();
@@ -463,7 +486,8 @@ describe('AttributeSidebar', () => {
           open={true}
           onClose={mockOnClose}
           attribute="mente"
-          character={mockCharacter} onUpdateAttribute={mockOnUpdateAttribute}
+          character={mockCharacter}
+          onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
       expect(screen.getByText('0')).toBeInTheDocument();
