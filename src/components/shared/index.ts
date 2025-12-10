@@ -28,5 +28,7 @@ export type { DiceRollerProps } from './DiceRoller';
 export { DiceRollResult } from './DiceRollResult';
 export type { DiceRollResultProps } from './DiceRollResult';
 
+export { OnlineIndicator } from './OnlineIndicator';
+
 export { DiceRollHistory } from './DiceRollHistory';
 export type { DiceRollHistoryProps } from './DiceRollHistory';
