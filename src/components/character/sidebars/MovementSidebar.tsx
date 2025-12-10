@@ -98,9 +98,14 @@ export default function MovementSidebar({
     return values;
   });
 
-  // Reset values when sidebar opens or character changes
+  // Refs para rastrear estado da sidebar e prevenir loops
+  const wasOpenRef = React.useRef(false);
+  const hasSyncedRef = React.useRef(false);
+  const [hasUserEdited, setHasUserEdited] = React.useState(false);
+
+  // Reset values SOMENTE quando sidebar abre (transição de fechado → aberto)
   React.useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
       const values: Record<MovementType, MovementSpeed> = {} as Record<
         MovementType,
         MovementSpeed
@@ -109,14 +114,18 @@ export default function MovementSidebar({
         values[type] = getMovementSpeed(character.movement.speeds[type]);
       });
       setMovementValues(values);
+      hasSyncedRef.current = true;
+      setHasUserEdited(false);
     }
-  }, [character.id, open]);
+    wasOpenRef.current = open;
+  }, [open, character.id]);
 
   const handleBaseChange = (type: MovementType, value: number) => {
     setMovementValues((prev) => ({
       ...prev,
       [type]: { ...prev[type], base: Math.max(0, value) },
     }));
+    setHasUserEdited(true);
   };
 
   const handleBonusChange = (type: MovementType, value: number) => {
@@ -124,6 +133,7 @@ export default function MovementSidebar({
       ...prev,
       [type]: { ...prev[type], bonus: value },
     }));
+    setHasUserEdited(true);
   };
 
   const getTotalSpeed = (type: MovementType): number => {
@@ -131,12 +141,12 @@ export default function MovementSidebar({
     return Math.max(0, values.base + values.bonus);
   };
 
-  // Debounce do estado para auto-save
-  const debouncedMovementValues = useDebounce(movementValues, 100);
+  // Debounce do estado para auto-save (aumentado para 300ms para melhor performance)
+  const debouncedMovementValues = useDebounce(movementValues, 300);
 
-  // Auto-save: quando o estado muda, salva BASE e BONUS separadamente
+  // Auto-save: somente se usuário editou e sidebar está aberta e já sincronizou
   React.useEffect(() => {
-    if (!open) return;
+    if (!hasUserEdited || !open || !hasSyncedRef.current) return;
 
     const newSpeeds: Record<MovementType, MovementSpeed> = {} as Record<
       MovementType,
@@ -152,7 +162,7 @@ export default function MovementSidebar({
     const updated = { ...character };
     updated.movement = { ...updated.movement, speeds: newSpeeds };
     onUpdate(updated);
-  }, [debouncedMovementValues, open]);
+  }, [debouncedMovementValues, hasUserEdited, open]);
 
   return (
     <Sidebar open={open} onClose={onClose} title="Deslocamento">

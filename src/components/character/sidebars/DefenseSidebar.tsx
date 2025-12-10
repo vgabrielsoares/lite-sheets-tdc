@@ -108,17 +108,30 @@ export default function DefenseSidebar({
     )
   );
 
-  // Recarrega armaduras quando a sidebar abre ou personagem muda
+  // Refs para rastrear estado da sidebar e prevenir loops
+  const wasOpenRef = React.useRef(false);
+  const hasSyncedRef = React.useRef(false);
+  const [hasUserEdited, setHasUserEdited] = React.useState(false);
+
+  // Recarrega armaduras quando a sidebar abre (SOMENTE na transição de fechado → aberto)
   React.useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
       const loadedArmors = loadArmors(
         character.id,
         character.combat.defense.armorBonus,
         character.combat.defense.maxAgilityBonus
       );
       setArmors(loadedArmors);
+      hasSyncedRef.current = true;
+      setHasUserEdited(false);
     }
-  }, [open, character.id]);
+    wasOpenRef.current = open;
+  }, [
+    open,
+    character.id,
+    character.combat.defense.armorBonus,
+    character.combat.defense.maxAgilityBonus,
+  ]);
 
   // Persiste armaduras quando mudam
   React.useEffect(() => {
@@ -175,12 +188,12 @@ export default function DefenseSidebar({
     [armors, shieldBonus, otherBonuses, totalDefense]
   );
 
-  // Debounce para auto-save
-  const debouncedDefenseState = useDebounce(defenseState, 100);
+  // Debounce para auto-save (aumentado para 300ms para melhor performance)
+  const debouncedDefenseState = useDebounce(defenseState, 300);
 
-  // Auto-save quando o estado muda
+  // Auto-save: somente se usuário editou e sidebar está aberta e já sincronizou
   React.useEffect(() => {
-    if (!open) return;
+    if (!hasUserEdited || !open || !hasSyncedRef.current) return;
 
     const active = debouncedDefenseState.armors.find((a) => a.isActive);
 
@@ -197,7 +210,7 @@ export default function DefenseSidebar({
         },
       },
     });
-  }, [debouncedDefenseState, open]);
+  }, [debouncedDefenseState, hasUserEdited, open]);
 
   const handleAddArmor = () => {
     if (!newArmorName.trim()) return;
@@ -211,6 +224,7 @@ export default function DefenseSidebar({
     };
 
     setArmors([...armors, newArmor]);
+    setHasUserEdited(true);
     setNewArmorName('');
     setNewArmorBonus(0);
     setNewArmorMaxAgility('');
@@ -219,6 +233,7 @@ export default function DefenseSidebar({
 
   const handleRemoveArmor = (id: string) => {
     setArmors(armors.filter((a) => a.id !== id));
+    setHasUserEdited(true);
   };
 
   const handleToggleArmor = (id: string) => {
@@ -228,6 +243,7 @@ export default function DefenseSidebar({
         isActive: a.id === id, // Apenas uma ativa por vez (Radio behavior)
       }))
     );
+    setHasUserEdited(true);
   };
 
   const handleAddOtherBonus = () => {
@@ -235,10 +251,12 @@ export default function DefenseSidebar({
       ...otherBonuses,
       { name: 'Novo Bônus', value: 1, type: 'bonus' },
     ]);
+    setHasUserEdited(true);
   };
 
   const handleRemoveOtherBonus = (index: number) => {
     setOtherBonuses(otherBonuses.filter((_, i) => i !== index));
+    setHasUserEdited(true);
   };
 
   const handleUpdateOtherBonus = (
@@ -250,6 +268,7 @@ export default function DefenseSidebar({
         i === index ? { ...bonus, ...updates } : bonus
       )
     );
+    setHasUserEdited(true);
   };
 
   return (
@@ -445,7 +464,10 @@ export default function DefenseSidebar({
             type="number"
             label="Bônus de Escudo"
             value={shieldBonus}
-            onChange={(e) => setShieldBonus(Number(e.target.value))}
+            onChange={(e) => {
+              setShieldBonus(Number(e.target.value));
+              setHasUserEdited(true);
+            }}
             inputProps={{ min: 0 }}
             size="small"
           />
