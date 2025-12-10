@@ -59,8 +59,12 @@ const SIZE_OPTIONS: Array<{ value: CreatureSize; label: string }> = [
   { value: 'pequeno', label: 'Pequeno' },
   { value: 'medio', label: 'Médio' },
   { value: 'grande', label: 'Grande' },
-  { value: 'enorme', label: 'Enorme' },
-  { value: 'colossal', label: 'Colossal' },
+  { value: 'enorme-1', label: 'Enorme 1' },
+  { value: 'enorme-2', label: 'Enorme 2' },
+  { value: 'enorme-3', label: 'Enorme 3' },
+  { value: 'colossal-1', label: 'Colossal 1' },
+  { value: 'colossal-2', label: 'Colossal 2' },
+  { value: 'colossal-3', label: 'Colossal 3' },
 ];
 
 export interface DescriptionTabProps {
