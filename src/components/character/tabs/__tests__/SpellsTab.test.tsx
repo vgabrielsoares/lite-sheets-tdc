@@ -7,6 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { SpellsTab } from '../SpellsTab';
+import { createDefaultCharacter } from '@/utils/characterFactory';
 import type { Character } from '@/types';
 import type { KnownSpell } from '@/types/spells';
 
@@ -44,81 +45,53 @@ describe('SpellsTab', () => {
     },
   ];
 
-  const mockCharacter: Character = {
-    id: 'char-1',
-    name: 'Gandalf',
-    playerName: 'Player 1',
-    level: 5,
-    xp: { current: 0, forNextLevel: 1000 },
-    linhagem: undefined,
-    origem: undefined,
-    attributes: {
-      agilidade: 2,
-      constituicao: 2,
-      forca: 1,
-      influencia: 3,
-      mente: 4,
-      presenca: 5,
-    },
-    pv: {
-      max: 25,
-      current: 25,
-      temporary: 0,
-    },
-    pp: {
-      max: 10,
-      current: 10,
-      temporary: 0,
-    },
-    combat: {
-      defense: { base: 17, modifiers: 0 },
-      initiative: { base: 2, modifiers: 0 },
-      movement: { base: 9, modifiers: 0 },
-      pvLimit: { total: 25, modifiers: 0 },
-      ppLimit: { total: 10, modifiers: 0 },
-      attacks: [],
-      criticalRange: 20,
-      criticalMultiplier: 2,
-    },
-    skills: {} as any,
-    languages: ['comum'],
-    proficiencies: {
-      weapons: ['simples'],
-      armors: [],
-      shields: [],
-      tools: [],
-      skills: [],
-    },
-    inventory: {
-      items: [],
-      currency: { PO: 10 },
-      encumbrance: { current: 0, max: 50 },
-    },
-    spellcasting: {
-      knownSpells: mockSpells,
-      maxKnownSpells: 10,
-      knownSpellsModifiers: 0,
-      spellcastingAbilities: [
-        {
-          abilityId: 'spell-1',
-          skill: 'arcano',
-          attribute: 'presenca',
-          dcBonus: 2,
-          attackBonus: 3,
+  const mockCharacter: Character = (() => {
+    const base = createDefaultCharacter({
+      name: 'Gandalf',
+      playerName: 'Player 1',
+    });
+
+    return {
+      ...base,
+      level: 5,
+      attributes: {
+        agilidade: 2,
+        constituicao: 2,
+        forca: 1,
+        influencia: 3,
+        mente: 4,
+        presenca: 5,
+      },
+      combat: {
+        ...base.combat,
+        hp: {
+          max: 25,
+          current: 25,
+          temporary: 0,
         },
-      ],
-      masteredMatrices: ['arcana'],
-    },
-    crafts: [],
-    senses: {
-      perceptionBonus: 0,
-      darkvision: 0,
-    },
-    size: 'medio',
-    conditions: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+        pp: {
+          max: 10,
+          current: 10,
+          temporary: 0,
+        },
+      },
+      spellcasting: {
+        knownSpells: mockSpells,
+        maxKnownSpells: 10,
+        knownSpellsModifiers: 0,
+        spellcastingAbilities: [
+          {
+            id: 'ability-1',
+            skill: 'arcano',
+            attribute: 'presenca',
+            dcBonus: 0,
+            attackBonus: 0,
+          },
+        ],
+        masteredMatrices: ['arcana'],
+      },
+    };
+  })();
 
   const mockOnUpdate = jest.fn();
 
