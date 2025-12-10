@@ -68,14 +68,19 @@ export type VisionType = 'normal' | 'penumbra' | 'escuro';
 
 /**
  * Tamanhos de criaturas no sistema
+ * Tamanhos maiores (Enorme e Colossal) possuem subníveis (1, 2, 3)
  */
 export type CreatureSize =
   | 'minusculo'
   | 'pequeno'
   | 'medio'
   | 'grande'
-  | 'enorme'
-  | 'colossal';
+  | 'enorme-1'
+  | 'enorme-2'
+  | 'enorme-3'
+  | 'colossal-1'
+  | 'colossal-2'
+  | 'colossal-3';
 
 /**
  * Tipos de dados disponíveis
