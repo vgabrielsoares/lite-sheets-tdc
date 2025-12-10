@@ -71,7 +71,7 @@ const SAVING_THROWS: SavingThrowInfo[] = [
   {
     type: 'determinacao',
     skill: 'determinacao',
-    attribute: 'presenca',
+    attribute: 'mente',
     resistUse: 'Resistir Mentalmente',
     label: 'Determinação',
     icon: <MindIcon />,
@@ -241,8 +241,8 @@ export function SavingThrows({
    */
   const getRollDescription = (calc: SavingThrowCalculation): string => {
     const modifierStr = formatModifier(calc.modifier);
-    const suffix = calc.takeLowest ? ' (menor)' : '';
-    return `${calc.diceCount}d20${modifierStr}${suffix}`;
+    const prefix = calc.takeLowest ? '-' : '';
+    return `${prefix}${calc.diceCount}d20${modifierStr}`;
   };
 
   return (
@@ -369,7 +369,8 @@ export function SavingThrows({
                       fontWeight: calc.takeLowest ? 'bold' : 'normal',
                     }}
                   >
-                    {calc.diceCount}d20{calc.takeLowest ? ' (menor)' : ''}
+                    {calc.takeLowest ? '-' : ''}
+                    {calc.diceCount}d20
                   </Typography>
 
                   {/* Badges */}
