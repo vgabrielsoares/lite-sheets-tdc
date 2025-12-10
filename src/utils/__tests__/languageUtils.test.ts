@@ -53,19 +53,14 @@ describe('languageUtils', () => {
     it('deve retornar idiomas da linhagem', () => {
       character.lineage = {
         name: 'Elfo',
-        attributes: {
-          agilidade: 1,
-          constituicao: 0,
-          forca: 0,
-          influencia: 0,
-          mente: 0,
-          presenca: 0,
-        },
-        size: 'médio',
+        description: 'Elfos ágeis',
+        attributeModifiers: [{ attribute: 'agilidade', value: 1 }],
+        size: 'medio',
         height: 180,
-        weight: 70,
-        weightMeasure: 10,
+        weightKg: 70,
+        weightRPG: 14,
         age: 100,
+        adulthood: 80,
         lifeExpectancy: 500,
         languages: ['elfico', 'silvestre'] as LanguageName[],
         movement: {
@@ -91,19 +86,14 @@ describe('languageUtils', () => {
     it('deve incluir idiomas de linhagem no cálculo', () => {
       character.lineage = {
         name: 'Elfo',
-        attributes: {
-          agilidade: 1,
-          constituicao: 0,
-          forca: 0,
-          influencia: 0,
-          mente: 0,
-          presenca: 0,
-        },
-        size: 'médio',
+        description: 'Elfos ágeis',
+        attributeModifiers: [{ attribute: 'agilidade', value: 1 }],
+        size: 'medio',
         height: 180,
-        weight: 70,
-        weightMeasure: 10,
+        weightKg: 70,
+        weightRPG: 14,
         age: 100,
+        adulthood: 80,
         lifeExpectancy: 500,
         languages: ['elfico'] as LanguageName[],
         movement: {
@@ -332,19 +322,14 @@ describe('languageUtils', () => {
     it('deve incluir idiomas de linhagem no resumo', () => {
       character.lineage = {
         name: 'Elfo',
-        attributes: {
-          agilidade: 1,
-          constituicao: 0,
-          forca: 0,
-          influencia: 0,
-          mente: 0,
-          presenca: 0,
-        },
-        size: 'médio',
+        description: 'Elfos ágeis',
+        attributeModifiers: [{ attribute: 'agilidade', value: 1 }],
+        size: 'medio',
         height: 180,
-        weight: 70,
-        weightMeasure: 10,
+        weightKg: 70,
+        weightRPG: 14,
         age: 100,
+        adulthood: 80,
         lifeExpectancy: 500,
         languages: ['elfico', 'silvestre'] as LanguageName[],
         movement: {

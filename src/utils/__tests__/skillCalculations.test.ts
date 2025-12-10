@@ -664,8 +664,8 @@ describe('skillCalculations', () => {
         proficiencyLevel: 'adepto',
         isSignature: false,
         modifiers: [
-          { value: 2, source: 'item', type: 'bonus' },
-          { value: -1, source: 'debuff', type: 'penalidade' },
+          { name: 'Bônus de item', value: 2, type: 'bonus' },
+          { name: 'Penalidade de debuff', value: -1, type: 'penalidade' },
         ],
       };
 
