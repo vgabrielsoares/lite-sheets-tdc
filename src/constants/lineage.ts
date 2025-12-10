@@ -17,14 +17,20 @@ import type {
  */
 export const SIZE_DESCRIPTIONS: Record<CreatureSize, string> = {
   minusculo:
-    'Criaturas minúsculas são extremamente pequenas, como fadas ou sprites.',
+    'Criaturas minúsculas são extremamente pequenas, como fadas, morcegos ou ratos.',
   pequeno:
     'Criaturas pequenas incluem halflings, goblins e crianças humanoides.',
   medio: 'Tamanho padrão para a maioria dos humanoides adultos.',
   grande:
-    'Criaturas grandes incluem ogros, cavalos e outras criaturas imponentes.',
-  enorme: 'Criaturas enormes são massivas, como gigantes e dragões jovens.',
-  colossal: 'Criaturas colossais são titânicas, preenchendo espaços imensos.',
+    'Criaturas grandes incluem bugbears, cavalos e outras criaturas imponentes.',
+  'enorme-1': 'Criaturas enormes menores, como gigantes (3 quadrados).',
+  'enorme-2': 'Criaturas enormes médias (4 quadrados).',
+  'enorme-3': 'Criaturas enormes maiores (5 quadrados).',
+  'colossal-1': 'Criaturas colossais menores, como dragões (6 quadrados).',
+  'colossal-2':
+    'Criaturas colossais médias, massivas e aterradoras (7 quadrados).',
+  'colossal-3':
+    'Criaturas colossais épicas, preenchem espaços imensos (8 quadrados).',
 } as const;
 
 /**
@@ -34,8 +40,8 @@ export const SIZE_DESCRIPTIONS: Record<CreatureSize, string> = {
 export interface SizeModifiers {
   /** Alcance (em metros) */
   reach: number;
-  /** Modificador de dano corpo-a-corpo */
-  meleeDamage: number;
+  /** Modificador de dano corpo-a-corpo (notação de dados ou numérico) */
+  meleeDamage: string | number;
   /** Modificador de defesa */
   defense: number;
   /** Quadrados ocupados (em metros) */
@@ -67,7 +73,7 @@ export interface SizeModifiers {
 export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
   minusculo: {
     reach: 1,
-    meleeDamage: -4, // -1d4 (média ~2.5, convertido)
+    meleeDamage: '-1d4',
     defense: 3,
     squaresOccupied: 0.5,
     carryingCapacity: -5, // ADITIVO
@@ -129,36 +135,100 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
       tenacidade: 1,
     },
   },
-  enorme: {
-    reach: 3, // 3 a 5 (usando mínimo)
-    meleeDamage: 4, // +1d4 (mínimo do range, média ~2.5, convertido para +4)
-    defense: -2, // -2 a -4 (usando mínimo)
-    squaresOccupied: 3, // 3 a 5 (usando mínimo)
+  'enorme-1': {
+    reach: 3,
+    meleeDamage: '+1d4',
+    defense: -2,
+    squaresOccupied: 3,
     carryingCapacity: 5, // ADITIVO
-    combatManeuvers: 2, // +2 a +4 (usando mínimo)
-    trackingDC: -5, // -5 a -7 (usando mínimo)
+    combatManeuvers: 2,
+    trackingDC: -5,
     skillModifiers: {
-      acrobacia: -5, // -5 a -7 (usando mínimo)
-      atletismo: 5, // +5 a +7 (usando mínimo)
-      furtividade: -5, // -5 a -7 (usando mínimo)
-      reflexo: -2, // -2 a -4 (usando mínimo)
-      tenacidade: 2, // +2 a +4 (usando mínimo)
+      acrobacia: -5,
+      atletismo: 5,
+      furtividade: -5,
+      reflexo: -2,
+      tenacidade: 2,
     },
   },
-  colossal: {
-    reach: 6, // 6 ou mais
-    meleeDamage: 8, // +1d10 ou mais (usando mínimo +1d10, média ~5.5, convertido para +8)
-    defense: -5, // -5 ou mais
-    squaresOccupied: 6, // 6 ou mais
-    carryingCapacity: 10, // ADITIVO
-    combatManeuvers: 5, // +5 ou mais
-    trackingDC: -8, // -8 ou mais
+  'enorme-2': {
+    reach: 4,
+    meleeDamage: '+1d6',
+    defense: -3,
+    squaresOccupied: 4,
+    carryingCapacity: 5, // ADITIVO
+    combatManeuvers: 3,
+    trackingDC: -6,
     skillModifiers: {
-      acrobacia: -8, // -8 ou mais
-      atletismo: 8, // +8 ou mais
-      furtividade: -8, // -8 ou mais
-      reflexo: -5, // -5 ou mais
-      tenacidade: 5, // +5 ou mais
+      acrobacia: -6,
+      atletismo: 6,
+      furtividade: -6,
+      reflexo: -3,
+      tenacidade: 3,
+    },
+  },
+  'enorme-3': {
+    reach: 5,
+    meleeDamage: '+1d8',
+    defense: -4,
+    squaresOccupied: 5,
+    carryingCapacity: 5, // ADITIVO
+    combatManeuvers: 4,
+    trackingDC: -7,
+    skillModifiers: {
+      acrobacia: -7,
+      atletismo: 7,
+      furtividade: -7,
+      reflexo: -4,
+      tenacidade: 4,
+    },
+  },
+  'colossal-1': {
+    reach: 6,
+    meleeDamage: '+1d10',
+    defense: -5,
+    squaresOccupied: 6,
+    carryingCapacity: 10, // ADITIVO
+    combatManeuvers: 5,
+    trackingDC: -8,
+    skillModifiers: {
+      acrobacia: -8,
+      atletismo: 8,
+      furtividade: -8,
+      reflexo: -5,
+      tenacidade: 5,
+    },
+  },
+  'colossal-2': {
+    reach: 7,
+    meleeDamage: '+1d12',
+    defense: -6,
+    squaresOccupied: 7,
+    carryingCapacity: 10, // ADITIVO
+    combatManeuvers: 6,
+    trackingDC: -9,
+    skillModifiers: {
+      acrobacia: -9,
+      atletismo: 9,
+      furtividade: -9,
+      reflexo: -6,
+      tenacidade: 6,
+    },
+  },
+  'colossal-3': {
+    reach: 8,
+    meleeDamage: '+2d8',
+    defense: -7,
+    squaresOccupied: 8,
+    carryingCapacity: 10, // ADITIVO
+    combatManeuvers: 7,
+    trackingDC: -10,
+    skillModifiers: {
+      acrobacia: -10,
+      atletismo: 10,
+      furtividade: -10,
+      reflexo: -7,
+      tenacidade: 7,
     },
   },
 } as const;
@@ -237,8 +307,12 @@ export const CREATURE_SIZES: readonly CreatureSize[] = [
   'pequeno',
   'medio',
   'grande',
-  'enorme',
-  'colossal',
+  'enorme-1',
+  'enorme-2',
+  'enorme-3',
+  'colossal-1',
+  'colossal-2',
+  'colossal-3',
 ] as const;
 
 /**
@@ -278,8 +352,12 @@ export const SIZE_LABELS: Record<CreatureSize, string> = {
   pequeno: 'Pequeno',
   medio: 'Médio',
   grande: 'Grande',
-  enorme: 'Enorme',
-  colossal: 'Colossal',
+  'enorme-1': 'Enorme 1',
+  'enorme-2': 'Enorme 2',
+  'enorme-3': 'Enorme 3',
+  'colossal-1': 'Colossal 1',
+  'colossal-2': 'Colossal 2',
+  'colossal-3': 'Colossal 3',
 } as const;
 
 /**
@@ -310,6 +388,17 @@ export const MOVEMENT_LABELS: Record<MovementType, string> = {
   escavando: 'Escavando',
   nadando: 'Nadando',
 } as const;
+
+/**
+ * Formata o modificador de dano corpo a corpo
+ * Valores numéricos são formatados com +/-, strings são retornadas como estão
+ */
+export function formatMeleeDamage(meleeDamage: string | number): string {
+  if (typeof meleeDamage === 'string') {
+    return meleeDamage;
+  }
+  return meleeDamage >= 0 ? `+${meleeDamage}` : `${meleeDamage}`;
+}
 
 /**
  * Helper para obter modificadores de tamanho
