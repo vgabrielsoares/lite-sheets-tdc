@@ -37,8 +37,17 @@ import {
   Person as PersonIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
-import type { Character, CreatureSize, Lineage } from '@/types';
-import { AppearanceSection, ConceptSection } from '../descriptions';
+import type {
+  Character,
+  CreatureSize,
+  Lineage,
+  CharacterDefiners,
+} from '@/types';
+import {
+  AppearanceSection,
+  ConceptSection,
+  PersonalitySection,
+} from '../descriptions';
 import { createDefaultLineage } from '@/utils/lineageUtils';
 
 /**
@@ -229,6 +238,13 @@ export function DescriptionTab({
 
   const handleConceptChange = (concept: string) => {
     onUpdate({ concept });
+  };
+
+  /**
+   * Atualiza definidores do personagem
+   */
+  const handleDefinersChange = (definers: CharacterDefiners) => {
+    onUpdate({ definers });
   };
 
   return (
@@ -484,6 +500,38 @@ export function DescriptionTab({
             <AppearanceSection
               physicalDescription={character.physicalDescription}
               onUpdate={handlePhysicalDescriptionChange}
+            />
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Seção: Definidores do Personagem (Retrátil) */}
+        <Accordion
+          defaultExpanded={false}
+          sx={{
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+            '&:before': { display: 'none' },
+            bgcolor: alpha(theme.palette.background.paper, 0.6),
+          }}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: alpha(theme.palette.primary.main, 0.05),
+              },
+            }}
+          >
+            <Typography variant="h6" fontWeight={700}>
+              Definidores do Personagem
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <PersonalitySection
+              definers={character.definers}
+              onUpdate={handleDefinersChange}
             />
           </AccordionDetails>
         </Accordion>
