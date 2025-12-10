@@ -47,6 +47,7 @@ import type {
   ProficiencyLevel,
   Modifier,
   Lineage,
+  Note,
 } from '@/types';
 import type { InventoryItem } from '@/types/inventory';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
@@ -75,6 +76,9 @@ const SpellsTab = lazy(() =>
 const DescriptionTab = lazy(() =>
   import('./tabs/DescriptionTab').then((m) => ({ default: m.DescriptionTab }))
 );
+const NotesTab = lazy(() =>
+  import('./tabs/NotesTab').then((m) => ({ default: m.NotesTab }))
+);
 import {
   LinhagemSidebar,
   OrigemSidebar,
@@ -88,6 +92,7 @@ import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 import { ItemDetailsSidebar } from './inventory/ItemDetailsSidebar';
 import { ConceptSidebar } from './sidebars/ConceptSidebar';
+import { NoteViewSidebar } from './sidebars/NoteViewSidebar';
 import { TableOfContents, TOCSection } from '@/components/shared';
 import {
   calculateArchetypeHPBreakdown,
@@ -161,6 +166,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
     | 'skill'
     | 'item'
     | 'concept'
+    | 'note'
     | null
   >(null);
 
@@ -173,6 +179,9 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   // Item selecionado para a sidebar de detalhes
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  // Nota selecionada para a sidebar de visualização
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
 
   /**
    * Seções do TOC por aba
@@ -336,6 +345,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         { id: 'section-definers', label: 'Definidores' },
         { id: 'section-backstory', label: 'História' },
       ],
+      notes: [{ id: 'section-notes-list', label: 'Minhas Anotações' }],
     }),
     []
   );
@@ -425,6 +435,14 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
    */
   const handleOpenConceptSidebar = () => {
     setActiveSidebar('concept');
+  };
+
+  /**
+   * Abre a sidebar de visualização de nota
+   */
+  const handleOpenNoteSidebar = (note: Note) => {
+    setSelectedNote(note);
+    setActiveSidebar('note');
   };
 
   /**
@@ -880,6 +898,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenSkill: handleOpenSkillSidebar,
       onOpenItem: handleOpenItemSidebar,
       onOpenConceptSidebar: handleOpenConceptSidebar,
+      onOpenNote: handleOpenNoteSidebar,
       onSkillKeyAttributeChange: handleSkillKeyAttributeChange,
       onSkillProficiencyChange: handleSkillProficiencyChange,
       onSkillModifiersChange: handleSkillModifiersChange,
@@ -904,6 +923,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         return <SpellsTab {...tabProps} />;
       case 'description':
         return <DescriptionTab {...tabProps} />;
+      case 'notes':
+        return <NotesTab {...tabProps} />;
       default:
         return <MainTab {...tabProps} />;
     }
@@ -1187,6 +1208,53 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               onUpdate={(conceptExpanded) => onUpdate({ conceptExpanded })}
             />
           )}
+
+          {/* Sidebar de Visualização de Nota */}
+          {activeSidebar === 'note' && selectedNote && (
+            <NoteViewSidebar
+              open={activeSidebar === 'note'}
+              onClose={handleCloseSidebar}
+              note={selectedNote}
+              onUpdate={(noteData) => {
+                const updatedNotes = (character.notes || []).map((n) =>
+                  n.id === selectedNote.id
+                    ? {
+                        ...n,
+                        ...noteData,
+                        updatedAt: new Date().toISOString(),
+                      }
+                    : n
+                );
+                onUpdate({ notes: updatedNotes });
+              }}
+              onTogglePin={(noteId) => {
+                const updatedNotes = (character.notes || []).map((n) =>
+                  n.id === noteId
+                    ? {
+                        ...n,
+                        pinned: !n.pinned,
+                        updatedAt: new Date().toISOString(),
+                      }
+                    : n
+                );
+                onUpdate({ notes: updatedNotes });
+              }}
+              onDelete={(noteId) => {
+                const updatedNotes = (character.notes || []).filter(
+                  (n) => n.id !== noteId
+                );
+                onUpdate({ notes: updatedNotes });
+                handleCloseSidebar();
+              }}
+              availableCategories={Array.from(
+                new Set(
+                  (character.notes || [])
+                    .map((n) => n.category)
+                    .filter((c): c is string => !!c)
+                )
+              ).sort()}
+            />
+          )}
         </>
       )}
 
@@ -1326,6 +1394,53 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           onClose={handleCloseSidebar}
           conceptExpanded={character.conceptExpanded || ''}
           onUpdate={(conceptExpanded) => onUpdate({ conceptExpanded })}
+        />
+      )}
+
+      {/* Sidebar de Visualização de Nota em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'note' && selectedNote && (
+        <NoteViewSidebar
+          open={activeSidebar === 'note'}
+          onClose={handleCloseSidebar}
+          note={selectedNote}
+          onUpdate={(noteData) => {
+            const updatedNotes = (character.notes || []).map((n) =>
+              n.id === selectedNote.id
+                ? {
+                    ...n,
+                    ...noteData,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : n
+            );
+            onUpdate({ notes: updatedNotes });
+          }}
+          onTogglePin={(noteId) => {
+            const updatedNotes = (character.notes || []).map((n) =>
+              n.id === noteId
+                ? {
+                    ...n,
+                    pinned: !n.pinned,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : n
+            );
+            onUpdate({ notes: updatedNotes });
+          }}
+          onDelete={(noteId) => {
+            const updatedNotes = (character.notes || []).filter(
+              (n) => n.id !== noteId
+            );
+            onUpdate({ notes: updatedNotes });
+            handleCloseSidebar();
+          }}
+          availableCategories={Array.from(
+            new Set(
+              (character.notes || [])
+                .map((n) => n.category)
+                .filter((c): c is string => !!c)
+            )
+          ).sort()}
         />
       )}
     </Container>
