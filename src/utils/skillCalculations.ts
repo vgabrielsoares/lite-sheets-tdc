@@ -164,13 +164,15 @@ export function calculateSkillRollFormula(
     takeLowest = false;
   }
 
-  // 4. Gerar string da fórmula com indicador "(menor)" quando aplicável
-  let formula = `${finalDiceCount}d20`;
+  // 4. Gerar string da fórmula com prefixo "-" quando takeLowest
+  let formula = '';
 
-  // Adicionar indicador "(menor)" para rolagens que pegam o menor resultado
+  // Adicionar prefixo "-" para rolagens que pegam o menor resultado
   if (takeLowest) {
-    formula += ' (menor)';
+    formula = '-';
   }
+
+  formula += `${finalDiceCount}d20`;
 
   // Adicionar modificador
   if (totalModifier > 0) {
@@ -481,13 +483,15 @@ export function calculateSkillUseRollFormula(
     finalDiceCount = realDiceCount;
   }
 
-  // Formatar fórmula com "(menor)" quando aplicável
+  // Formatar fórmula com prefixo "-" quando takeLowest
   const sign = modifier >= 0 ? '+' : '';
-  let formula = `${finalDiceCount}d20`;
+  let formula = '';
 
   if (takeLowest) {
-    formula += ' (menor)';
+    formula = '-';
   }
+
+  formula += `${finalDiceCount}d20`;
 
   if (modifier !== 0) {
     formula += `${sign}${modifier}`;
