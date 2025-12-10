@@ -15,3 +15,6 @@ export type { SizeSidebarProps } from './SizeSidebar';
 
 export { AttributeSidebar } from './AttributeSidebar';
 export type { AttributeSidebarProps } from './AttributeSidebar';
+
+export { NoteViewSidebar } from './NoteViewSidebar';
+export type { NoteViewSidebarProps } from './NoteViewSidebar';
