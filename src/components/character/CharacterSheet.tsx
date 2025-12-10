@@ -11,8 +11,11 @@ import {
   useMediaQuery,
   CircularProgress,
   Fade,
+  Button,
+  Tooltip,
 } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
+import DownloadIcon from '@mui/icons-material/Download';
 import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ShieldIcon from '@mui/icons-material/Shield';
@@ -105,6 +108,8 @@ import {
   calculateArchetypeHPBreakdown,
   calculateArchetypePPBreakdown,
 } from './archetypes';
+import { exportCharacter } from '@/services/exportService';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export interface CharacterSheetProps {
   /**
@@ -145,16 +150,34 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { showSuccess, showError } = useNotifications();
 
   // Estado da aba atual com transição para mostrar loading
   const [currentTab, setCurrentTab] = useState<CharacterTabId>('main');
   const [isPending, startTransition] = useTransition();
+
+  // Estado de exportação
+  const [isExporting, setIsExporting] = useState(false);
 
   // Handler para mudança de aba com transição
   const handleTabChange = (tab: CharacterTabId) => {
     startTransition(() => {
       setCurrentTab(tab);
     });
+  };
+
+  // Handler para exportar personagem
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      await exportCharacter(character);
+      showSuccess('Personagem exportado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar personagem:', error);
+      showError('Erro ao exportar personagem. Tente novamente.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Estado do Table of Contents
@@ -980,6 +1003,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           justifyContent: 'space-between',
           alignItems: 'center',
           mb: 3,
+          flexWrap: 'wrap',
+          gap: 2,
         }}
       >
         {/* Breadcrumb de navegação */}
@@ -998,6 +1023,26 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             <Typography color="text.secondary">{currentTabLabel}</Typography>
           )}
         </Breadcrumbs>
+
+        {/* Botão de Exportação */}
+        <Tooltip title="Exportar ficha em JSON">
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={handleExport}
+            disabled={isExporting}
+            sx={{
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+              },
+            }}
+          >
+            {isExporting ? 'Exportando...' : 'Exportar'}
+          </Button>
+        </Tooltip>
       </Box>
 
       {/* Layout principal - Ficha sempre centralizada */}
