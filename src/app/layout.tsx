@@ -4,7 +4,7 @@ import './globals.css';
 import ReduxProvider from '@/store/Provider';
 import CharacterLoader from '@/store/CharacterLoader';
 import ThemeProviderWrapper from '@/components/layout/ThemeProviderWrapper';
-import { NotificationProvider } from '@/components/shared';
+import { NotificationProvider, OnlineIndicator } from '@/components/shared';
 
 export default function RootLayout({
   children,
@@ -72,6 +72,7 @@ export default function RootLayout({
             <ThemeProviderWrapper>
               {children}
               <NotificationProvider />
+              <OnlineIndicator />
             </ThemeProviderWrapper>
           </CharacterLoader>
         </ReduxProvider>
