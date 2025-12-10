@@ -47,6 +47,7 @@ import {
   AppearanceSection,
   ConceptSection,
   PersonalitySection,
+  CharacterHistory,
 } from '../descriptions';
 import { createDefaultLineage } from '@/utils/lineageUtils';
 
@@ -245,6 +246,13 @@ export function DescriptionTab({
    */
   const handleDefinersChange = (definers: CharacterDefiners) => {
     onUpdate({ definers });
+  };
+
+  /**
+   * Atualiza história/background do personagem
+   */
+  const handleBackstoryChange = (backstory: string) => {
+    onUpdate({ backstory });
   };
 
   return (
@@ -532,6 +540,38 @@ export function DescriptionTab({
             <PersonalitySection
               definers={character.definers}
               onUpdate={handleDefinersChange}
+            />
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Seção: História do Personagem (Retrátil) */}
+        <Accordion
+          defaultExpanded={false}
+          sx={{
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+            '&:before': { display: 'none' },
+            bgcolor: alpha(theme.palette.background.paper, 0.6),
+          }}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: alpha(theme.palette.primary.main, 0.05),
+              },
+            }}
+          >
+            <Typography variant="h6" fontWeight={700}>
+              História do Personagem
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <CharacterHistory
+              backstory={character.backstory || ''}
+              onUpdate={handleBackstoryChange}
             />
           </AccordionDetails>
         </Accordion>
