@@ -51,7 +51,7 @@ export const NotesTab: React.FC<NotesTabProps> = ({
   );
 
   return (
-    <Box role="region" aria-labelledby="notes-tab">
+    <Box role="region" aria-labelledby="notes-tab" id="section-notes-list">
       <NotesTabComponent
         characterId={character.id}
         notes={character.notes}

@@ -38,6 +38,13 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 // Ícones para TOC - Spells
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+// Ícones para TOC - Descrições
+import FaceIcon from '@mui/icons-material/Face';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
+// Ícones para TOC - Anotações
+import NoteIcon from '@mui/icons-material/Note';
 import { useRouter } from 'next/navigation';
 import type {
   Character,
@@ -341,11 +348,39 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         },
       ],
       description: [
-        { id: 'section-physical', label: 'Descrição Física' },
-        { id: 'section-definers', label: 'Definidores' },
-        { id: 'section-backstory', label: 'História' },
+        {
+          id: 'section-basic-info',
+          label: 'Informações Básicas',
+          icon: <PersonIcon fontSize="small" />,
+        },
+        {
+          id: 'section-concept',
+          label: 'Conceito do Personagem',
+          icon: <AutoStoriesIcon fontSize="small" />,
+        },
+        {
+          id: 'section-appearance',
+          label: 'Descrição de Aparência',
+          icon: <FaceIcon fontSize="small" />,
+        },
+        {
+          id: 'section-personality',
+          label: 'Definidores do Personagem',
+          icon: <EmojiEventsIcon fontSize="small" />,
+        },
+        {
+          id: 'section-backstory',
+          label: 'História do Personagem',
+          icon: <HistoryEduIcon fontSize="small" />,
+        },
       ],
-      notes: [{ id: 'section-notes-list', label: 'Minhas Anotações' }],
+      notes: [
+        {
+          id: 'section-notes-list',
+          label: 'Minhas Anotações',
+          icon: <NoteIcon fontSize="small" />,
+        },
+      ],
     }),
     []
   );

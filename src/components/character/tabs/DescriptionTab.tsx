@@ -268,6 +268,7 @@ export function DescriptionTab({
 
         {/* Seção: Informações Básicas (Retrátil) */}
         <Accordion
+          id="section-basic-info"
           defaultExpanded={false}
           sx={{
             border: 1,
@@ -449,6 +450,7 @@ export function DescriptionTab({
 
         {/* Seção: Conceito do Personagem (Retrátil) */}
         <Accordion
+          id="section-concept"
           defaultExpanded={false}
           sx={{
             border: 1,
@@ -482,6 +484,7 @@ export function DescriptionTab({
 
         {/* Seção: Descrição de Aparência (Retrátil) */}
         <Accordion
+          id="section-appearance"
           defaultExpanded={false}
           sx={{
             border: 1,
@@ -514,6 +517,7 @@ export function DescriptionTab({
 
         {/* Seção: Definidores do Personagem (Retrátil) */}
         <Accordion
+          id="section-personality"
           defaultExpanded={false}
           sx={{
             border: 1,
@@ -546,6 +550,7 @@ export function DescriptionTab({
 
         {/* Seção: História do Personagem (Retrátil) */}
         <Accordion
+          id="section-backstory"
           defaultExpanded={false}
           sx={{
             border: 1,
