@@ -46,6 +46,7 @@ import type {
   SkillUse,
   ProficiencyLevel,
   Modifier,
+  Lineage,
 } from '@/types';
 import type { InventoryItem } from '@/types/inventory';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
@@ -86,6 +87,7 @@ import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 import { ItemDetailsSidebar } from './inventory/ItemDetailsSidebar';
+import { ConceptSidebar } from './sidebars/ConceptSidebar';
 import { TableOfContents, TOCSection } from '@/components/shared';
 import {
   calculateArchetypeHPBreakdown,
@@ -158,6 +160,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
     | 'attribute'
     | 'skill'
     | 'item'
+    | 'concept'
     | null
   >(null);
 
@@ -415,6 +418,13 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   const handleOpenItemSidebar = (item: InventoryItem) => {
     setSelectedItem(item);
     setActiveSidebar('item');
+  };
+
+  /**
+   * Abre a sidebar de conceito expandido
+   */
+  const handleOpenConceptSidebar = () => {
+    setActiveSidebar('concept');
   };
 
   /**
@@ -837,12 +847,28 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Handler para atualizar campos específicos da linhagem
+   * Usa handleUpdateLineage para garantir sincronização correta
+   */
+  const handleUpdateLineageField = (field: keyof Lineage, value: any) => {
+    if (!character.lineage) return;
+
+    const updatedLineage = {
+      ...character.lineage,
+      [field]: value,
+    };
+
+    handleUpdateLineage(updatedLineage);
+  };
+
+  /**
    * Renderiza o conteúdo da aba atual
    */
   const renderTabContent = () => {
     const tabProps = {
       character,
       onUpdate,
+      onUpdateLineageField: handleUpdateLineageField,
       onOpenLineage: handleOpenLineageSidebar,
       onOpenOrigin: handleOpenOriginSidebar,
       onOpenSize: handleOpenSizeSidebar,
@@ -853,6 +879,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenAttribute: handleOpenAttributeSidebar,
       onOpenSkill: handleOpenSkillSidebar,
       onOpenItem: handleOpenItemSidebar,
+      onOpenConceptSidebar: handleOpenConceptSidebar,
       onSkillKeyAttributeChange: handleSkillKeyAttributeChange,
       onSkillProficiencyChange: handleSkillProficiencyChange,
       onSkillModifiersChange: handleSkillModifiersChange,
@@ -1150,6 +1177,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               onUpdate={handleUpdateItemFromSidebar}
             />
           )}
+
+          {/* Sidebar de Conceito Expandido */}
+          {activeSidebar === 'concept' && (
+            <ConceptSidebar
+              open={activeSidebar === 'concept'}
+              onClose={handleCloseSidebar}
+              conceptExpanded={character.conceptExpanded || ''}
+              onUpdate={(conceptExpanded) => onUpdate({ conceptExpanded })}
+            />
+          )}
         </>
       )}
 
@@ -1279,6 +1316,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           onClose={handleCloseSidebar}
           item={selectedItem}
           onUpdate={handleUpdateItemFromSidebar}
+        />
+      )}
+
+      {/* Sidebar de Conceito Expandido em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'concept' && (
+        <ConceptSidebar
+          open={activeSidebar === 'concept'}
+          onClose={handleCloseSidebar}
+          conceptExpanded={character.conceptExpanded || ''}
+          onUpdate={(conceptExpanded) => onUpdate({ conceptExpanded })}
         />
       )}
     </Container>
