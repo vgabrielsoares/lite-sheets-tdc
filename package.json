@@ -15,7 +15,9 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
-    "export": "next build && next export"
+    "export": "next build && next export",
+    "validate:pwa": "node scripts/validate-pwa.js",
+    "generate:icons": "start public/generate-icons.html"
   },
   "repository": {
     "type": "git",
