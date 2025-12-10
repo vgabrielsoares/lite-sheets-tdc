@@ -25,6 +25,7 @@ export const CHARACTER_TABS = [
   { id: 'inventory', label: 'Inventário' },
   { id: 'spells', label: 'Feitiços' },
   { id: 'description', label: 'Descrição' },
+  { id: 'notes', label: 'Anotações' },
 ] as const;
 
 export type CharacterTabId = (typeof CHARACTER_TABS)[number]['id'];
@@ -49,7 +50,7 @@ export interface TabNavigationProps {
  * - Mobile: Menu dropdown
  *
  * Funcionalidades:
- * - Navegação entre as 7 abas da ficha
+ * - Navegação entre as 8 abas da ficha
  * - Adaptação automática mobile/desktop
  * - Indicador visual da aba ativa
  * - Acessível via teclado
