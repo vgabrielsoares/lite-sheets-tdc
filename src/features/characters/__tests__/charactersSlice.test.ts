@@ -53,6 +53,8 @@ const mockCharacter: Character = {
   origin: {
     name: 'Nobre',
     skillProficiencies: ['historia', 'persuasao'],
+    attributeModifiers: [{ attribute: 'influencia', value: 1 }],
+    description: 'Origens nobres',
   },
   lineage: {
     name: 'Humano',
@@ -65,6 +67,8 @@ const mockCharacter: Character = {
     movement: { andando: 6, voando: 0, escalando: 0, escavando: 0, nadando: 0 },
     vision: 'normal',
     ancestryTraits: [],
+    attributeModifiers: [{ attribute: 'forca', value: 1 }],
+    description: 'Humanos versáteis',
   },
   attributes: {
     agilidade: 2,
@@ -76,6 +80,7 @@ const mockCharacter: Character = {
   },
   skills: {} as any,
   signatureSkill: 'atletismo',
+  skillProficiencyBonusSlots: 0,
   archetypes: [],
   classes: [],
   proficiencies: {
@@ -85,6 +90,7 @@ const mockCharacter: Character = {
     other: [],
   },
   languages: ['comum'],
+  extraLanguagesModifier: 0,
   combat: {
     hp: {
       current: 15,
@@ -98,7 +104,13 @@ const mockCharacter: Character = {
     },
   } as any,
   movement: {
-    speeds: { andando: 6, voando: 0, escalando: 0, escavando: 0, nadando: 0 },
+    speeds: {
+      andando: { base: 6, bonus: 0 },
+      voando: { base: 0, bonus: 0 },
+      escalando: { base: 0, bonus: 0 },
+      escavando: { base: 0, bonus: 0 },
+      nadando: { base: 0, bonus: 0 },
+    },
     modifiers: 0,
   },
   senses: {
@@ -118,6 +130,8 @@ const mockCharacter: Character = {
     items: [],
     carryingCapacity: {
       base: 20,
+      sizeModifier: 0,
+      otherModifiers: 0,
       modifiers: 0,
       total: 20,
       currentWeight: 0,
