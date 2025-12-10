@@ -30,5 +30,7 @@ export type { DiceRollResultProps } from './DiceRollResult';
 
 export { OnlineIndicator } from './OnlineIndicator';
 
+export { InstallPrompt } from './InstallPrompt';
+
 export { DiceRollHistory } from './DiceRollHistory';
 export type { DiceRollHistoryProps } from './DiceRollHistory';
