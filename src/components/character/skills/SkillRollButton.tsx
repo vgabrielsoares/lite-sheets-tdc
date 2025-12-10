@@ -105,11 +105,11 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
    * Executa a rolagem de dados
    */
   const handleRoll = useCallback(() => {
-    // Executar rolagem simples (sem vantagem/desvantagem)
+    // Usar 'disadvantage' se takeLowest=true, senão 'normal'
     const rollResult = rollD20(
       diceCount,
       modifier,
-      'normal',
+      takeLowest ? 'disadvantage' : 'normal',
       `Teste de ${skillLabel}`
     );
 
@@ -123,7 +123,7 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
     if (onRoll) {
       onRoll(rollResult);
     }
-  }, [diceCount, modifier, skillLabel, onRoll]);
+  }, [diceCount, modifier, takeLowest, skillLabel, onRoll]);
 
   /**
    * Rolagem rápida (sem abrir diálogo)
@@ -132,11 +132,11 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
     (event: React.MouseEvent) => {
       event.stopPropagation();
 
-      // Executar rolagem normal diretamente
+      // Usar 'disadvantage' se takeLowest=true, senão 'normal'
       const rollResult = rollD20(
         diceCount,
         modifier,
-        'normal',
+        takeLowest ? 'disadvantage' : 'normal',
         `Teste de ${skillLabel}`
       );
 
@@ -156,7 +156,7 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
         setResult(null);
       }, 3000);
     },
-    [diceCount, modifier, skillLabel, onRoll]
+    [diceCount, modifier, takeLowest, skillLabel, onRoll]
   );
 
   /**

@@ -681,12 +681,12 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
               }}
             >
               <Typography
-                variant="body1"
+                variant="body2"
                 fontFamily="monospace"
                 color={rollFormula.takeLowest ? 'error' : 'primary'}
                 fontWeight={700}
                 sx={{
-                  fontSize: '1.25rem',
+                  fontSize: '1rem',
                   letterSpacing: '0.02em',
                 }}
               >
@@ -766,10 +766,13 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
               }}
             >
               <Typography
-                variant="body2"
+                variant="caption"
                 fontFamily="monospace"
                 color={rollFormula.takeLowest ? 'error' : 'primary'}
                 fontWeight={600}
+                sx={{
+                  fontSize: '0.875rem',
+                }}
               >
                 {rollFormula.formula}
               </Typography>
