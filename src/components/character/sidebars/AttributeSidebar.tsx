@@ -490,7 +490,7 @@ export function AttributeSidebar({
         >
           <Typography variant="h4" fontWeight="bold">
             {attributeValue === 0
-              ? '2d20 (menor)'
+              ? '-2d20'
               : attributeValue === 1
                 ? '1d20'
                 : `${attributeValue}d20 (maior)`}
