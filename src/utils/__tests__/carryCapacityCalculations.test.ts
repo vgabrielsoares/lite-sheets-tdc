@@ -107,12 +107,28 @@ describe('carryCapacityCalculations', () => {
       expect(getSizeCarryModifier('grande')).toBe(2);
     });
 
-    it('deve retornar +5 para criaturas enormes', () => {
-      expect(getSizeCarryModifier('enorme')).toBe(5);
+    it('deve retornar +5 para criaturas enormes 1', () => {
+      expect(getSizeCarryModifier('enorme-1')).toBe(5);
     });
 
-    it('deve retornar +10 para criaturas colossais', () => {
-      expect(getSizeCarryModifier('colossal')).toBe(10);
+    it('deve retornar +6 para criaturas enormes 2', () => {
+      expect(getSizeCarryModifier('enorme-2')).toBe(5);
+    });
+
+    it('deve retornar +7 para criaturas enormes 3', () => {
+      expect(getSizeCarryModifier('enorme-3')).toBe(5);
+    });
+
+    it('deve retornar +10 para criaturas colossais 1', () => {
+      expect(getSizeCarryModifier('colossal-1')).toBe(10);
+    });
+
+    it('deve retornar +12 para criaturas colossais 2', () => {
+      expect(getSizeCarryModifier('colossal-2')).toBe(10);
+    });
+
+    it('deve retornar +15 para criaturas colossais 3', () => {
+      expect(getSizeCarryModifier('colossal-3')).toBe(10);
     });
   });
 

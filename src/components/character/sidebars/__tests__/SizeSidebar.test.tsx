@@ -79,12 +79,16 @@ describe('SizeSidebar', () => {
       );
     });
 
-    it('deve exibir modificadores corretos para tamanho colossal', () => {
+    it('deve exibir modificadores corretos para tamanho colossal-1', () => {
       render(
-        <SizeSidebar open={true} onClose={mockOnClose} currentSize="colossal" />
+        <SizeSidebar
+          open={true}
+          onClose={mockOnClose}
+          currentSize="colossal-1"
+        />
       );
 
-      const modifiers = SIZE_MODIFIERS.colossal;
+      const modifiers = SIZE_MODIFIERS['colossal-1'];
 
       // Verifica que existem modificadores positivos e negativos
       expect(screen.getAllByText('+8').length).toBeGreaterThan(0);
