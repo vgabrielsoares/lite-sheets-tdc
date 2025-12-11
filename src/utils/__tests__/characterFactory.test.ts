@@ -7,8 +7,13 @@
 
 // Mock do uuid antes de importar o characterFactory
 let mockUuidCounter = 0;
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => `test-uuid-${mockUuidCounter++}`),
+jest.mock('@/utils/uuid', () => ({
+  uuidv4: jest.fn(() => `test-uuid-${mockUuidCounter++}`),
+  isNativeUUIDAvailable: jest.fn(() => false),
+  isValidUUID: jest.fn(() => true),
+  generateBulkUUIDs: jest.fn((count: number) =>
+    Array.from({ length: count }, () => `test-uuid-${mockUuidCounter++}`)
+  ),
 }));
 
 import { createDefaultCharacter } from '../characterFactory';

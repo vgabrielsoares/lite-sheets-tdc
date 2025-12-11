@@ -22,8 +22,12 @@ jest.mock('@/hooks/useNotifications', () => ({
 }));
 
 // Mock do uuid
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-1234',
+jest.mock('@/utils/uuid', () => ({
+  uuidv4: () => 'mock-uuid-1234',
+  isNativeUUIDAvailable: () => false,
+  isValidUUID: () => true,
+  generateBulkUUIDs: (count: number) =>
+    Array.from({ length: count }, (_, i) => `mock-uuid-${i + 1}`),
 }));
 
 describe('SpellsTab', () => {

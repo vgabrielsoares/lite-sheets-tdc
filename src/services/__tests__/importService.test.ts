@@ -20,8 +20,13 @@ jest.mock('../db', () => ({
 }));
 
 // Mock do uuid
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'mock-uuid-1234'),
+jest.mock('@/utils/uuid', () => ({
+  uuidv4: jest.fn(() => 'mock-uuid-1234'),
+  isNativeUUIDAvailable: jest.fn(() => false),
+  isValidUUID: jest.fn(() => true),
+  generateBulkUUIDs: jest.fn((count: number) =>
+    Array.from({ length: count }, (_, i) => `mock-uuid-${i + 1}`)
+  ),
 }));
 
 // Silencia logs de console
