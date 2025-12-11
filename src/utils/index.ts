@@ -4,6 +4,14 @@
  * Central export point for all utility functions used throughout the application.
  */
 
+// UUID generation (optimized with native crypto API)
+export {
+  uuidv4,
+  isNativeUUIDAvailable,
+  isValidUUID,
+  generateBulkUUIDs,
+} from './uuid';
+
 // Character factory
 export { createDefaultCharacter } from './characterFactory';
 
