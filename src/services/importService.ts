@@ -17,6 +17,20 @@ import {
 } from '@/utils/validators';
 
 /**
+ * Estrutura de dados exportados em lote
+ */
+export interface ExportedCharacters {
+  /** Versão do formato de exportação */
+  version: string;
+  /** Timestamp de quando foi exportado */
+  exportedAt: string;
+  /** Quantidade de personagens */
+  count: number;
+  /** Dados completos dos personagens */
+  characters: Character[];
+}
+
+/**
  * Erros de importação
  */
 export class ImportServiceError extends Error {
@@ -31,7 +45,7 @@ export class ImportServiceError extends Error {
 }
 
 /**
- * Resultado da importação
+ * Resultado da importação de um único personagem
  */
 export interface ImportResult {
   /** Personagem importado */
@@ -42,6 +56,24 @@ export interface ImportResult {
   originalVersion: string;
   /** Avisos durante a importação */
   warnings: string[];
+}
+
+/**
+ * Resultado da importação de múltiplos personagens
+ */
+export interface ImportMultipleResult {
+  /** Personagens importados com sucesso */
+  characters: Character[];
+  /** Indica se houve migração de versão */
+  wasMigrated: boolean;
+  /** Versão original do arquivo */
+  originalVersion: string;
+  /** Avisos durante a importação */
+  warnings: string[];
+  /** Quantidade de personagens importados */
+  count: number;
+  /** Erros individuais que ocorreram (se algum personagem falhou) */
+  errors: Array<{ index: number; name: string; error: string }>;
 }
 
 /**
@@ -322,9 +354,11 @@ function migrateCharacterData(data: Character, fromVersion: string): Character {
  * Lê e valida arquivo JSON
  *
  * @param file Arquivo a ser lido
- * @returns Dados do arquivo parseados
+ * @returns Dados do arquivo parseados (único ou múltiplo)
  */
-async function readJsonFile(file: File): Promise<ExportedCharacter> {
+async function readJsonFile(
+  file: File
+): Promise<ExportedCharacter | ExportedCharacters> {
   try {
     const text = await file.text();
 
@@ -355,14 +389,19 @@ async function readJsonFile(file: File): Promise<ExportedCharacter> {
       );
     }
 
-    if (!('character' in data)) {
+    // Detecta formato (único ou múltiplo)
+    const isBatchExport =
+      'characters' in data && Array.isArray(data.characters);
+    const isSingleExport = 'character' in data;
+
+    if (!isBatchExport && !isSingleExport) {
       throw new ImportServiceError(
-        'Arquivo sem dados de personagem',
+        'Arquivo sem dados de personagem (esperado "character" ou "characters")',
         'MISSING_CHARACTER_DATA'
       );
     }
 
-    return data as ExportedCharacter;
+    return data as ExportedCharacter | ExportedCharacters;
   } catch (error) {
     if (error instanceof ImportServiceError) {
       throw error;
@@ -393,33 +432,141 @@ async function characterExists(id: string): Promise<boolean> {
 }
 
 /**
- * Importa personagem a partir de arquivo JSON
+ * Importa múltiplos personagens a partir de arquivo JSON
  *
- * Esta função:
+ * @param data Dados do arquivo de exportação em lote
+ * @returns Resultado da importação em lote
+ */
+async function importMultipleCharactersFromData(
+  data: ExportedCharacters
+): Promise<ImportMultipleResult> {
+  console.log(`📥 Importando ${data.count} personagens em lote...`);
+
+  const importedCharacters: Character[] = [];
+  const allWarnings: string[] = [];
+  const errors: Array<{ index: number; name: string; error: string }> = [];
+  let wasMigrated = false;
+
+  // Valida versão
+  if (!isVersionCompatible(data.version)) {
+    throw new ImportServiceError(
+      `Versão incompatível: ${data.version}. Versão atual: ${EXPORT_VERSION}`,
+      'INCOMPATIBLE_VERSION'
+    );
+  }
+
+  // Processa cada personagem
+  for (let i = 0; i < data.characters.length; i++) {
+    const character = data.characters[i];
+    const characterName = character.name || `Personagem #${i + 1}`;
+
+    try {
+      console.log(`  📋 Processando ${i + 1}/${data.count}: ${characterName}`);
+
+      // Valida dados do personagem
+      const warnings = validateCharacterData(character);
+      allWarnings.push(...warnings);
+
+      // Migra dados se necessário
+      let processedCharacter = character;
+      if (data.version !== EXPORT_VERSION) {
+        processedCharacter = migrateCharacterData(character, data.version);
+        wasMigrated = true;
+      }
+
+      // Gera novo ID para evitar conflitos
+      const oldId = processedCharacter.id;
+      const newId = uuidv4();
+
+      console.log(`  🔄 ID: ${oldId} → ${newId}`);
+
+      // Cria personagem com novo ID e timestamps atualizados
+      const importedCharacter: Character = {
+        ...processedCharacter,
+        id: newId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Salva no IndexedDB
+      await db.characters.add(importedCharacter);
+      importedCharacters.push(importedCharacter);
+
+      console.log(`  ✅ ${characterName} importado com sucesso`);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erro desconhecido';
+      console.error(`  ❌ Erro ao importar ${characterName}:`, error);
+      errors.push({
+        index: i,
+        name: characterName,
+        error: errorMessage,
+      });
+    }
+  }
+
+  if (importedCharacters.length === 0) {
+    throw new ImportServiceError(
+      'Nenhum personagem foi importado com sucesso',
+      'ALL_IMPORTS_FAILED'
+    );
+  }
+
+  console.log(
+    `✅ Importação em lote concluída: ${importedCharacters.length}/${data.count} personagens`
+  );
+
+  if (errors.length > 0) {
+    console.warn(`⚠️ ${errors.length} personagens falharam na importação`);
+  }
+
+  if (allWarnings.length > 0) {
+    console.warn('⚠️ Avisos durante importação:', allWarnings);
+  }
+
+  return {
+    characters: importedCharacters,
+    wasMigrated,
+    originalVersion: data.version,
+    warnings: allWarnings,
+    count: importedCharacters.length,
+    errors,
+  };
+}
+
+/**
+ * Importa personagem(s) a partir de arquivo JSON
+ *
+ * Esta função detecta automaticamente o formato (único ou múltiplo) e:
  * 1. Lê o arquivo JSON
  * 2. Valida a estrutura e versão
- * 3. Valida os dados do personagem
+ * 3. Valida os dados do(s) personagem(ns)
  * 4. Migra dados se necessário
  * 5. Gera novo ID para evitar conflitos
  * 6. Salva no IndexedDB
  *
  * @param file Arquivo JSON a ser importado
- * @returns Resultado da importação
+ * @returns Resultado da importação (único ou múltiplo)
  * @throws {ImportServiceError} Se falhar em qualquer etapa
  *
  * @example
  * try {
  *   const result = await importCharacter(file);
- *   toast.success(`Personagem ${result.character.name} importado!`);
- *   if (result.warnings.length > 0) {
- *     console.warn('Avisos:', result.warnings);
+ *   if ('character' in result) {
+ *     // Importação única
+ *     toast.success(`Personagem ${result.character.name} importado!`);
+ *   } else {
+ *     // Importação múltipla
+ *     toast.success(`${result.count} personagens importados!`);
  *   }
  * } catch (error) {
  *   toast.error('Erro ao importar personagem');
  *   console.error(error);
  * }
  */
-export async function importCharacter(file: File): Promise<ImportResult> {
+export async function importCharacter(
+  file: File
+): Promise<ImportResult | ImportMultipleResult> {
   try {
     console.log(`📥 Iniciando importação: ${file.name}`);
 
@@ -436,23 +583,36 @@ export async function importCharacter(file: File): Promise<ImportResult> {
 
     console.log(`📋 Versão do arquivo: ${data.version}`);
 
+    // Detecta formato e delega para função apropriada
+    const isBatchExport =
+      'characters' in data && Array.isArray(data.characters);
+
+    if (isBatchExport) {
+      // Importação em lote
+      console.log(`📦 Detectado formato em lote (${data.count} personagens)`);
+      return await importMultipleCharactersFromData(data as ExportedCharacters);
+    }
+
+    // Importação única (código original)
+    const singleData = data as ExportedCharacter;
+
     // Valida versão
-    if (!isVersionCompatible(data.version)) {
+    if (!isVersionCompatible(singleData.version)) {
       throw new ImportServiceError(
-        `Versão incompatível: ${data.version}. Versão atual: ${EXPORT_VERSION}`,
+        `Versão incompatível: ${singleData.version}. Versão atual: ${EXPORT_VERSION}`,
         'INCOMPATIBLE_VERSION'
       );
     }
 
     // Valida dados do personagem
-    const warnings = validateCharacterData(data.character);
+    const warnings = validateCharacterData(singleData.character);
 
     // Migra dados se necessário
-    let character = data.character;
+    let character = singleData.character;
     let wasMigrated = false;
 
-    if (data.version !== EXPORT_VERSION) {
-      character = migrateCharacterData(character, data.version);
+    if (singleData.version !== EXPORT_VERSION) {
+      character = migrateCharacterData(character, singleData.version);
       wasMigrated = true;
     }
 
@@ -484,119 +644,19 @@ export async function importCharacter(file: File): Promise<ImportResult> {
     return {
       character: importedCharacter,
       wasMigrated,
-      originalVersion: data.version,
+      originalVersion: singleData.version,
       warnings,
     };
   } catch (error) {
-    console.error('❌ Erro ao importar personagem:', error);
+    console.error('❌ Erro ao importar personagem(s):', error);
 
     if (error instanceof ImportServiceError) {
       throw error;
     }
 
     throw new ImportServiceError(
-      'Falha ao importar personagem',
+      'Falha ao importar personagem(s)',
       'IMPORT_FAILED',
-      error
-    );
-  }
-}
-
-/**
- * Importa múltiplos personagens de um único arquivo
- *
- * @param file Arquivo JSON com múltiplos personagens
- * @returns Array de resultados de importação
- * @throws {ImportServiceError} Se estrutura do arquivo for inválida
- *
- * @example
- * const results = await importMultipleCharacters(file);
- * console.log(`${results.length} personagens importados`);
- */
-export async function importMultipleCharacters(
-  file: File
-): Promise<ImportResult[]> {
-  try {
-    console.log(`📥 Importando múltiplos personagens de: ${file.name}`);
-
-    const text = await file.text();
-    const data = JSON.parse(text);
-
-    // Valida estrutura de múltiplos personagens
-    if (!data || typeof data !== 'object') {
-      throw new ImportServiceError(
-        'Estrutura de arquivo inválida',
-        'INVALID_FILE_STRUCTURE'
-      );
-    }
-
-    if (!('characters' in data) || !Array.isArray(data.characters)) {
-      throw new ImportServiceError(
-        'Arquivo não contém array de personagens',
-        'MISSING_CHARACTERS_ARRAY'
-      );
-    }
-
-    const results: ImportResult[] = [];
-    const errors: Array<{ name: string; error: string }> = [];
-
-    // Importa cada personagem
-    for (let i = 0; i < data.characters.length; i++) {
-      const charData = data.characters[i];
-
-      try {
-        const warnings = validateCharacterData(charData);
-
-        const newId = uuidv4();
-        const importedCharacter: Character = {
-          ...charData,
-          id: newId,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        await db.characters.add(importedCharacter);
-
-        results.push({
-          character: importedCharacter,
-          wasMigrated: data.version !== EXPORT_VERSION,
-          originalVersion: data.version || EXPORT_VERSION,
-          warnings,
-        });
-
-        console.log(
-          `✅ Importado ${i + 1}/${data.characters.length}: ${importedCharacter.name}`
-        );
-      } catch (error) {
-        const name = charData?.name || `Personagem ${i + 1}`;
-        const message =
-          error instanceof Error ? error.message : 'Erro desconhecido';
-
-        console.error(`❌ Erro ao importar ${name}:`, error);
-        errors.push({ name, error: message });
-      }
-    }
-
-    if (errors.length > 0) {
-      console.warn(
-        `⚠️ ${errors.length} personagens falharam na importação:`,
-        errors
-      );
-    }
-
-    console.log(`✅ ${results.length} personagens importados com sucesso`);
-
-    return results;
-  } catch (error) {
-    console.error('❌ Erro ao importar múltiplos personagens:', error);
-
-    if (error instanceof ImportServiceError) {
-      throw error;
-    }
-
-    throw new ImportServiceError(
-      'Falha ao importar múltiplos personagens',
-      'IMPORT_MULTIPLE_FAILED',
       error
     );
   }
