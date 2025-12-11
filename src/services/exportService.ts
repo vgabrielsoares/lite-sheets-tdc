@@ -97,17 +97,29 @@ function generateFileName(character: Character): string {
 }
 
 /**
+ * Serializa personagem para objeto exportável
+ *
+ * @param character Personagem a ser serializado
+ * @returns Objeto de exportação com metadados
+ */
+export function serializeCharacterToObject(
+  character: Character
+): ExportedCharacter {
+  return {
+    version: EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    character,
+  };
+}
+
+/**
  * Serializa personagem para JSON com formatação legível
  *
  * @param character Personagem a ser serializado
  * @returns String JSON formatada
  */
 function serializeCharacter(character: Character): string {
-  const exported: ExportedCharacter = {
-    version: EXPORT_VERSION,
-    exportedAt: new Date().toISOString(),
-    character,
-  };
+  const exported = serializeCharacterToObject(character);
 
   // Serializa com indentação de 2 espaços para legibilidade
   return JSON.stringify(exported, null, 2);
