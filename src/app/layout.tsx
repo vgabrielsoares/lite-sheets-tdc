@@ -9,6 +9,7 @@ import {
   OnlineIndicator,
   InstallPrompt,
   BackupReminder,
+  SkipLink,
 } from '@/components/shared';
 
 export default function RootLayout({
@@ -72,6 +73,7 @@ export default function RootLayout({
         <meta name="msapplication-TileImage" content="/icon-144x144.png" />
       </head>
       <body>
+        <SkipLink />
         <ReduxProvider>
           <CharacterLoader>
             <ThemeProviderWrapper>
