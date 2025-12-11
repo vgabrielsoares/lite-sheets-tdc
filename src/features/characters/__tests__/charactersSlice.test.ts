@@ -183,6 +183,7 @@ describe('charactersSlice', () => {
       expect(charactersReducer(undefined, { type: 'unknown' })).toEqual({
         entities: {},
         ids: [],
+        characters: [], // Derived array from normalized state
         selectedCharacterId: null,
         loading: false,
         error: null,
