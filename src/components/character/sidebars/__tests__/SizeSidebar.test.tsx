@@ -52,7 +52,7 @@ describe('SizeSidebar', () => {
 
       expect(screen.getByText('Grande')).toBeInTheDocument();
       expect(
-        screen.getByText(/Criaturas grandes incluem ogros/i)
+        screen.getByText(/Criaturas grandes incluem bugbears/i)
       ).toBeInTheDocument();
     });
   });

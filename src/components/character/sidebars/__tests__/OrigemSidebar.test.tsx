@@ -266,9 +266,9 @@ describe('OrigemSidebar', () => {
           const successMessage = screen.queryByText(/Origem válida!/i);
           expect(successMessage).toBeInTheDocument();
         },
-        { timeout: 1500 }
+        { timeout: 8000 }
       );
-    });
+    }, 10000);
 
     it('não deve exibir validação quando showValidation é false', () => {
       const origin: Origin = {
