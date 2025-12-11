@@ -627,10 +627,14 @@ describe('LinhagemSidebar', () => {
       await user.clear(nameInput);
       await user.type(nameInput, 'Humano');
 
-      await waitFor(() => {
-        expect(mockOnUpdate).toHaveBeenCalled();
-      });
-    });
+      // userEvent.type é lento (digita caractere por caractere), precisamos de timeout maior
+      await waitFor(
+        () => {
+          expect(mockOnUpdate).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
+    }, 10000);
   });
 
   describe('Fechamento', () => {

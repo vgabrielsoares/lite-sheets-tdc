@@ -238,7 +238,7 @@ describe('CraftForm', () => {
       const saveButton = screen.getByRole('button', {
         name: /Salvar Alterações/i,
       });
-      fireEvent.click(saveButton);
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(mockOnSave).toHaveBeenCalledWith(
@@ -338,7 +338,7 @@ describe('CraftForm', () => {
       expect(
         screen.getByDisplayValue('Trabalho especializado em metais')
       ).toBeInTheDocument();
-    });
+    }, 10000);
   });
 
   describe('Validação', () => {
@@ -361,11 +361,11 @@ describe('CraftForm', () => {
       const saveButton = screen.getByRole('button', {
         name: /Adicionar Ofício/i,
       });
-      fireEvent.click(saveButton);
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(
-          screen.getByText(/nome do ofício é obrigatório/i)
+          screen.getByText(/O nome do ofício é obrigatório/i)
         ).toBeInTheDocument();
       });
 
