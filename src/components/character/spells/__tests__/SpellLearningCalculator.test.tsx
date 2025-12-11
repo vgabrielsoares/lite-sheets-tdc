@@ -3,7 +3,13 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  within,
+  waitFor,
+} from '@testing-library/react';
 import { SpellLearningCalculator } from '../SpellLearningCalculator';
 import { createDefaultCharacter } from '@/utils/characterFactory';
 import type { Character } from '@/types';
@@ -20,6 +26,14 @@ describe('SpellLearningCalculator', () => {
       attributes: {
         ...baseCharacter.attributes,
         mente: 3,
+      },
+      skills: {
+        ...baseCharacter.skills,
+        // Set arcano to 'versado' proficiency (3×2=6 modifier)
+        arcano: {
+          ...baseCharacter.skills.arcano,
+          proficiencyLevel: 'versado',
+        },
       },
       spellcasting: {
         knownSpells: [
@@ -110,17 +124,20 @@ describe('SpellLearningCalculator', () => {
   });
 
   describe('Cálculo da Chance', () => {
-    it('deve calcular chance corretamente para 1º círculo com habilidade Arcano', () => {
+    it('deve calcular chance corretamente para 1º círculo com habilidade Arcano', async () => {
       const character = createMockCharacter();
       render(<SpellLearningCalculator character={character} />);
 
       const expandButton = screen.getByLabelText('Expandir');
       fireEvent.click(expandButton);
 
-      // Mente 3, Arcano versado (3×2=6), 1º círculo, não primeiro feitiço (já tem 2 feitiços)
-      // (3×5) + 6 + 30 = 51%
-      const percentageDisplays = screen.getAllByText('51%');
-      expect(percentageDisplays.length).toBeGreaterThan(0);
+      // Aguardar expansão do componente
+      await waitFor(() => {
+        // Mente 3, Arcano versado (3×2=6), 1º círculo, não primeiro feitiço (já tem 2 feitiços)
+        // (3×5) + 6 + 30 = 51%
+        const percentageDisplays = screen.getAllByText('51%');
+        expect(percentageDisplays.length).toBeGreaterThan(0);
+      });
     });
 
     it('deve recalcular ao trocar a habilidade de conjuração', () => {
@@ -141,12 +158,16 @@ describe('SpellLearningCalculator', () => {
       expect(percentageDisplays.length).toBeGreaterThan(0);
     });
 
-    it('deve calcular chance para 2º círculo', () => {
+    it('deve calcular chance para 2º círculo', async () => {
       const character = createMockCharacter();
       render(<SpellLearningCalculator character={character} />);
 
       const expandButton = screen.getByLabelText('Expandir');
       fireEvent.click(expandButton);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Círculo do Feitiço')).toBeInTheDocument();
+      });
 
       // Mudar para 2º círculo
       const circleSelect = screen.getByLabelText('Círculo do Feitiço');
@@ -154,14 +175,16 @@ describe('SpellLearningCalculator', () => {
       const listbox = within(screen.getByRole('listbox'));
       fireEvent.click(listbox.getByText('2º Círculo'));
 
-      // (3×5) + 6 + 10 = 31%
-      const percentageDisplays = screen.getAllByText('31%');
-      expect(percentageDisplays.length).toBeGreaterThan(0);
+      await waitFor(() => {
+        // (3×5) + 6 + 10 = 31%
+        const percentageDisplays = screen.getAllByText('31%');
+        expect(percentageDisplays.length).toBeGreaterThan(0);
+      });
     });
   });
 
   describe('Primeiro Feitiço', () => {
-    it('deve aplicar modificador +0 se for o primeiro feitiço', () => {
+    it('deve aplicar modificador +0 se for o primeiro feitiço', async () => {
       const character = createMockCharacter({
         spellcasting: {
           knownSpells: [],
@@ -185,40 +208,50 @@ describe('SpellLearningCalculator', () => {
       const expandButton = screen.getByLabelText('Expandir');
       fireEvent.click(expandButton);
 
-      // Mente 3, Arcano versado (3×2=6), 1º círculo, primeiro feitiço
-      // (3×5) + 6 + 0 = 21%
-      const percentageDisplays = screen.getAllByText('21%');
-      expect(percentageDisplays.length).toBeGreaterThan(0);
+      await waitFor(() => {
+        // Mente 3, Arcano versado (3×2=6), 1º círculo, primeiro feitiço
+        // (3×5) + 6 + 0 = 21%
+        const percentageDisplays = screen.getAllByText('21%');
+        expect(percentageDisplays.length).toBeGreaterThan(0);
+      });
     });
   });
 
   describe('Modificadores Editáveis', () => {
-    it('deve permitir editar modificador de matriz', () => {
+    it('deve permitir editar modificador de matriz', async () => {
       const character = createMockCharacter();
       render(<SpellLearningCalculator character={character} />);
 
       const expandButton = screen.getByLabelText('Expandir');
       fireEvent.click(expandButton);
 
-      const matrixInput = screen.getByLabelText('Mod. Matriz');
-      fireEvent.change(matrixInput, { target: { value: '5' } });
+      await waitFor(() => {
+        expect(screen.getByLabelText('Mod. Matriz')).toBeInTheDocument();
+      });
 
-      // (3×5) + 6 + 30 + 5 = 56%
-      const percentageDisplays = screen.getAllByText('56%');
-      expect(percentageDisplays.length).toBeGreaterThan(0);
+      const matrizInput = screen.getByLabelText('Mod. Matriz');
+      fireEvent.change(matrizInput, { target: { value: '5' } });
+
+      await waitFor(() => {
+        // (3×5) + 6 + 30 + 5 = 56%
+        const percentageDisplays = screen.getAllByText('56%');
+        expect(percentageDisplays.length).toBeGreaterThan(0);
+      });
     });
   });
 
   describe('Labels de Dificuldade', () => {
-    it('deve exibir "Bom" para chance >= 50%', () => {
+    it('deve exibir "Bom" para chance >= 50%', async () => {
       const character = createMockCharacter();
       render(<SpellLearningCalculator character={character} />);
 
       const expandButton = screen.getByLabelText('Expandir');
       fireEvent.click(expandButton);
 
-      // (3×5) + 6 + 30 = 51% -> "Bom"
-      expect(screen.getByText('Bom')).toBeInTheDocument();
+      await waitFor(() => {
+        // (3×5) + 6 + 30 = 51% -> "Bom"
+        expect(screen.getByText('Bom')).toBeInTheDocument();
+      });
     });
   });
 
