@@ -96,8 +96,8 @@ describe('TabNavigation', () => {
   });
 
   describe('Dados das abas', () => {
-    it('deve ter 7 abas definidas', () => {
-      expect(CHARACTER_TABS).toHaveLength(7);
+    it('deve ter 8 abas definidas', () => {
+      expect(CHARACTER_TABS).toHaveLength(8);
     });
 
     it('deve ter todas as abas com id e label', () => {
@@ -118,6 +118,7 @@ describe('TabNavigation', () => {
         'inventory',
         'spells',
         'description',
+        'notes',
       ];
 
       CHARACTER_TABS.forEach((tab, index) => {
