@@ -24,8 +24,9 @@ Sistema de criação e gerenciamento de fichas de RPG totalmente no navegador, c
 - **Persistência local**: Fichas salvas no próprio navegador, sem necessidade de cadastro ou login.
 - **Exportação/Importação**: Suporte a exportação/importação de fichas em JSON e CSV para backup e compartilhamento.
 - **Offline-first**: Totalmente funcional sem conexão com a internet.
-- **Responsividade e acessibilidade**: Interface adaptada para desktop e mobile, com foco em acessibilidade.
+- **Responsividade e acessibilidade**: Interface adaptada para desktop e mobile, com foco em acessibilidade (WCAG 2.1 AA).
 - **Instalação como app**: Pode ser instalado em dispositivos como um aplicativo nativo (PWA).
+- **Navegação por teclado**: Totalmente navegável via teclado com skip links e suporte a leitores de tela.
 
 ---
 
@@ -100,24 +101,50 @@ yarn test
 Exemplo de teste com React Testing Library:
 
 ```tsx
-import { render, screen, fireEvent } from "@testing-library/react";
-import { CriarFicha } from "./CriarFicha";
+import { render, screen, fireEvent } from '@testing-library/react';
+import { CriarFicha } from './CriarFicha';
 
-test("cria e salva ficha", () => {
+test('cria e salva ficha', () => {
   render(<CriarFicha />);
-  fireEvent.change(screen.getByPlaceholderText("Nome"), {
-    target: { value: "Aragorn" },
+  fireEvent.change(screen.getByPlaceholderText('Nome'), {
+    target: { value: 'Aragorn' },
   });
-  fireEvent.change(screen.getByPlaceholderText("Classe"), {
-    target: { value: "Ranger" },
+  fireEvent.change(screen.getByPlaceholderText('Classe'), {
+    target: { value: 'Ranger' },
   });
-  fireEvent.change(screen.getByPlaceholderText("Nível"), {
+  fireEvent.change(screen.getByPlaceholderText('Nível'), {
     target: { value: 5 },
   });
-  fireEvent.click(screen.getByText("Salvar"));
-  expect(localStorage.getItem("ficha")).toContain("Aragorn");
+  fireEvent.click(screen.getByText('Salvar'));
+  expect(localStorage.getItem('ficha')).toContain('Aragorn');
 });
 ```
+
+---
+
+## Acessibilidade
+
+Este projeto segue as diretrizes **WCAG 2.1 Nível AA** para garantir acessibilidade para todos os usuários.
+
+### Recursos de Acessibilidade
+
+- **Navegação por teclado**: Totalmente navegável com Tab, Enter, Space e teclas de seta
+- **Skip links**: Pule para o conteúdo principal com Tab
+- **ARIA labels**: Elementos rotulados para leitores de tela
+- **Contraste de cores**: Todos os textos atendem WCAG AA (≥4.5:1)
+- **Foco visível**: Indicadores claros de foco em todos os elementos interativos
+- **Formulários acessíveis**: Labels associados, mensagens de erro claras
+- **Responsivo**: Funciona em 200% de zoom sem scroll horizontal
+- **Semântica HTML**: Estrutura correta com landmarks
+
+### Testado com
+
+- **Lighthouse**: Score de acessibilidade >90
+- **Navegação por teclado**: Todas as funcionalidades acessíveis
+- **NVDA**: Compatível com leitor de tela
+- **Axe DevTools**: Sem erros críticos
+
+Para mais detalhes, consulte [ACCESSIBILITY.md](./ACCESSIBILITY.md).
 
 ---
 
