@@ -8,6 +8,7 @@ import {
   NotificationProvider,
   OnlineIndicator,
   InstallPrompt,
+  BackupReminder,
 } from '@/components/shared';
 
 export default function RootLayout({
@@ -78,6 +79,7 @@ export default function RootLayout({
               <NotificationProvider />
               <OnlineIndicator />
               <InstallPrompt />
+              <BackupReminder />
             </ThemeProviderWrapper>
           </CharacterLoader>
         </ReduxProvider>
