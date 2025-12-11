@@ -126,7 +126,9 @@ export interface EditableSelectProps<T = string> {
  * />
  * ```
  */
-export function EditableSelect<T extends string | number = string>({
+export const EditableSelect = React.memo(function EditableSelect<
+  T extends string | number = string,
+>({
   value,
   onChange,
   options,
@@ -330,4 +332,4 @@ export function EditableSelect<T extends string | number = string>({
       )}
     </Box>
   );
-}
+});

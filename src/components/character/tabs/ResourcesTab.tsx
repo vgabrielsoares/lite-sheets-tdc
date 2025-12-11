@@ -41,8 +41,13 @@ export interface ResourcesTabProps {
  * - Idiomas conhecidos
  * - Particularidades (características complementares e completas)
  * - Calculadora de descanso (recuperação de PV/PP)
+ *
+ * Memoizado para evitar re-renders desnecessários.
  */
-export function ResourcesTab({ character, onUpdate }: ResourcesTabProps) {
+export const ResourcesTab = React.memo(function ResourcesTab({
+  character,
+  onUpdate,
+}: ResourcesTabProps) {
   const [particularitiessExpanded, setParticularitiesExpanded] =
     useState(false);
   const handleProficienciesUpdate = useCallback(
@@ -247,4 +252,4 @@ export function ResourcesTab({ character, onUpdate }: ResourcesTabProps) {
       </Stack>
     </Box>
   );
-}
+});

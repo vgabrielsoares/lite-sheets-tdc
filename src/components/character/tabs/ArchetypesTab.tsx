@@ -25,8 +25,13 @@ export interface ArchetypesTabProps {
  * - Sistema de classes (até 3 classes)
  * - Habilidades de classe
  * - Melhorias de habilidade
+ *
+ * Memoizado para evitar re-renders desnecessários.
  */
-export function ArchetypesTab({ character, onUpdate }: ArchetypesTabProps) {
+export const ArchetypesTab = React.memo(function ArchetypesTab({
+  character,
+  onUpdate,
+}: ArchetypesTabProps) {
   const handleArchetypeChange = useCallback(
     (archetypes: Archetype[]) => {
       onUpdate({ archetypes });
@@ -98,4 +103,4 @@ export function ArchetypesTab({ character, onUpdate }: ArchetypesTabProps) {
       </Box>
     </Box>
   );
-}
+});

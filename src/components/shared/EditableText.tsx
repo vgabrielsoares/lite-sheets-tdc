@@ -100,7 +100,7 @@ export interface EditableTextProps {
  * />
  * ```
  */
-export function EditableText({
+export const EditableText = React.memo(function EditableText({
   value,
   onChange,
   label,
@@ -291,4 +291,4 @@ export function EditableText({
       )}
     </Box>
   );
-}
+});

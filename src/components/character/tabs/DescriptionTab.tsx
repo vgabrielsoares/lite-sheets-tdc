@@ -81,8 +81,10 @@ export interface DescriptionTabProps {
  * - Campos básicos de descrição (sincronizados)
  * - Descrição de aparência
  * - Conceito do personagem
+ *
+ * Memoizado para evitar re-renders desnecessários.
  */
-export function DescriptionTab({
+export const DescriptionTab = React.memo(function DescriptionTab({
   character,
   onUpdate,
   onUpdateLineageField,
@@ -587,4 +589,4 @@ export function DescriptionTab({
       </Stack>
     </Box>
   );
-}
+});
