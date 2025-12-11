@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import {
   Card,
   CardContent,
@@ -9,6 +9,8 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  CircularProgress,
+  Fade,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import type { Character } from '@/types';
@@ -54,10 +56,13 @@ export default function CharacterCard({
   isDeleting = false,
 }: CharacterCardProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleClick = () => {
-    if (onClick && !isDeleting) {
-      onClick(character.id);
+    if (onClick && !isDeleting && !isPending) {
+      startTransition(() => {
+        onClick(character.id);
+      });
     }
   };
 
@@ -88,13 +93,15 @@ export default function CharacterCard({
           display: 'flex',
           flexDirection: 'column',
           opacity: isDeleting ? 0.6 : 1,
-          pointerEvents: isDeleting ? 'none' : 'auto',
-          '&:hover': onClick
-            ? {
-                transform: 'translateY(-4px)',
-                boxShadow: 6,
-              }
-            : {},
+          pointerEvents: isDeleting || isPending ? 'none' : 'auto',
+          position: 'relative',
+          '&:hover':
+            onClick && !isPending
+              ? {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 6,
+                }
+              : {},
         }}
         onClick={handleClick}
         role={onClick ? 'button' : undefined}
@@ -111,6 +118,43 @@ export default function CharacterCard({
         }
         aria-label={`Ficha do personagem ${character.name || 'Sem nome'}`}
       >
+        {/* Loading Overlay - Spinner ao clicar na ficha */}
+        <Fade in={isPending} timeout={150}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'rgba(0, 0, 0, 0.3)',
+              zIndex: 10,
+              backdropFilter: 'blur(2px)',
+              borderRadius: 'inherit',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1,
+                p: 2,
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 3,
+              }}
+            >
+              <CircularProgress size={32} />
+              <Typography variant="caption" color="text.secondary">
+                Carregando...
+              </Typography>
+            </Box>
+          </Box>
+        </Fade>
         <CardContent
           sx={{
             flexGrow: 1,
