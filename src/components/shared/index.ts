@@ -36,3 +36,6 @@ export { BackupReminder } from './BackupReminder';
 
 export { DiceRollHistory } from './DiceRollHistory';
 export type { DiceRollHistoryProps } from './DiceRollHistory';
+
+export { SkipLink } from './SkipLink';
+export type { SkipLinkProps } from './SkipLink';

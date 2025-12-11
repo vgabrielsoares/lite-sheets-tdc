@@ -83,12 +83,17 @@ export default function AppLayout({
       {/* Conteúdo principal */}
       <Box
         component="main"
+        id="main-content"
+        tabIndex={-1}
         sx={{
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
           // Espaçamento para compensar header fixo (64px desktop, 56px mobile)
           marginTop: isMobile ? '56px' : '64px',
+          '&:focus': {
+            outline: 'none',
+          },
         }}
       >
         {maxWidth === false ? (
