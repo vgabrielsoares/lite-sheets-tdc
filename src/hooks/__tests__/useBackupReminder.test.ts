@@ -195,7 +195,7 @@ describe('useBackupReminder', () => {
 
   describe('exportOnly', () => {
     it('deve exportar fichas com sucesso', async () => {
-      mockedBackupService.exportAllCharacters.mockResolvedValue(3);
+      mockedBackupService.exportAllCharactersOnly.mockResolvedValue(3);
 
       const { result } = renderHook(() => useBackupReminder());
 
@@ -212,14 +212,16 @@ describe('useBackupReminder', () => {
 
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBeNull();
-      expect(mockedBackupService.exportAllCharacters).toHaveBeenCalledTimes(1);
-      // Deve ter atualizado status após exportação
-      expect(mockedBackupService.getBackupStatus).toHaveBeenCalledTimes(2);
+      expect(mockedBackupService.exportAllCharactersOnly).toHaveBeenCalledTimes(
+        1
+      );
+      // NÃO deve atualizar status (comentário do código: refreshStatus removido intencionalmente)
+      expect(mockedBackupService.getBackupStatus).toHaveBeenCalledTimes(1);
     });
 
     it('deve tratar erros ao exportar', async () => {
       const errorMessage = 'Erro ao exportar';
-      mockedBackupService.exportAllCharacters.mockRejectedValue(
+      mockedBackupService.exportAllCharactersOnly.mockRejectedValue(
         new Error(errorMessage)
       );
 
@@ -321,7 +323,7 @@ describe('useBackupReminder', () => {
     });
 
     it('deve tratar erros que não são Error ao exportar', async () => {
-      mockedBackupService.exportAllCharacters.mockRejectedValue(
+      mockedBackupService.exportAllCharactersOnly.mockRejectedValue(
         'String de erro'
       );
 

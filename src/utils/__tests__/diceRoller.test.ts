@@ -149,16 +149,26 @@ describe('Sistema de Rolagem de Dados', () => {
       });
     });
 
-    describe('Vantagem', () => {
-      it('deve rolar +1d20 com vantagem', () => {
-        const result = rollD20(2, 0, 'advantage');
+    describe('Múltiplos Dados', () => {
+      it('deve rolar 2d20 e escolher o MAIOR', () => {
+        let callCount = 0;
+        const mockRolls = [8, 15]; // Deve escolher 15
+        jest.spyOn(Math, 'random').mockImplementation(() => {
+          const value = (mockRolls[callCount] - 1) / 20;
+          callCount++;
+          return value;
+        });
 
-        expect(result.rolls).toHaveLength(3); // 2 + 1
-        expect(result.rollType).toBe('advantage');
-        expect(result.formula).toContain('vantagem');
+        const result = rollD20(2, 0);
+
+        expect(result.rolls).toHaveLength(2);
+        expect(result.baseResult).toBe(15);
+        expect(result.rollType).toBe('normal');
+
+        jest.spyOn(Math, 'random').mockRestore();
       });
 
-      it('deve escolher o MAIOR valor em vantagem', () => {
+      it('deve rolar 3d20 e escolher o MAIOR', () => {
         let callCount = 0;
         const mockRolls = [8, 15, 12]; // Deve escolher 15
         jest.spyOn(Math, 'random').mockImplementation(() => {
@@ -167,35 +177,11 @@ describe('Sistema de Rolagem de Dados', () => {
           return value;
         });
 
-        const result = rollD20(2, 0, 'advantage');
+        const result = rollD20(3, 0);
 
+        expect(result.rolls).toHaveLength(3);
         expect(result.baseResult).toBe(15);
-
-        jest.spyOn(Math, 'random').mockRestore();
-      });
-    });
-
-    describe('Desvantagem', () => {
-      it('deve rolar +1d20 com desvantagem', () => {
-        const result = rollD20(2, 0, 'disadvantage');
-
-        expect(result.rolls).toHaveLength(3); // 2 + 1
-        expect(result.rollType).toBe('disadvantage');
-        expect(result.formula).toContain('desvantagem');
-      });
-
-      it('deve escolher o MENOR valor em desvantagem', () => {
-        let callCount = 0;
-        const mockRolls = [8, 15, 12]; // Deve escolher 8
-        jest.spyOn(Math, 'random').mockImplementation(() => {
-          const value = (mockRolls[callCount] - 1) / 20;
-          callCount++;
-          return value;
-        });
-
-        const result = rollD20(2, 0, 'disadvantage');
-
-        expect(result.baseResult).toBe(8);
+        expect(result.rollType).toBe('normal');
 
         jest.spyOn(Math, 'random').mockRestore();
       });
@@ -356,29 +342,23 @@ describe('Sistema de Rolagem de Dados', () => {
   });
 
   describe('rollDamageWithCritical - Dano com Crítico', () => {
-    it('deve dobrar os dados em crítico', () => {
+    it('deve maximizar os dados em crítico', () => {
       const result = rollDamageWithCritical(2, 6, 3, true);
 
-      expect(result.rolls).toHaveLength(4); // 2 * 2
+      expect(result.rolls).toHaveLength(2); // 2d6
+      expect(result.rolls.every((r) => r === 6)).toBe(true); // Todos maximizados
+      expect(result.baseResult).toBe(12); // 2 * 6
+      expect(result.finalResult).toBe(15); // 12 + 3
       expect(result.isCritical).toBe(true);
-      expect(result.formula).toContain('crítico');
+      expect(result.formula).toContain('MAXIMIZADO');
     });
 
-    it('não deve dobrar o modificador em crítico', () => {
-      let callCount = 0;
-      const mockRolls = [3, 3, 3, 3]; // 4d6 = 12
-      jest.spyOn(Math, 'random').mockImplementation(() => {
-        const value = (mockRolls[callCount] - 1) / 6;
-        callCount++;
-        return value;
-      });
-
+    it('não deve modificar o modificador em crítico', () => {
       const result = rollDamageWithCritical(2, 6, 5, true);
 
-      expect(result.baseResult).toBe(12); // 4 dados × 3
-      expect(result.finalResult).toBe(17); // 12 + 5 (não 12 + 10)
-
-      jest.spyOn(Math, 'random').mockRestore();
+      // 2d6 crítico = MAXIMIZADO = 12, modificador permanece 5
+      expect(result.baseResult).toBe(12); // 2 * 6
+      expect(result.finalResult).toBe(17); // 12 + 5
     });
 
     it('deve funcionar normalmente quando não é crítico', () => {
@@ -434,12 +414,9 @@ describe('Sistema de Rolagem de Dados', () => {
       jest.spyOn(Math, 'random').mockRestore();
     });
 
-    it('deve respeitar tipo de rolagem', () => {
-      const resultAdvantage = rollSkillTest(2, 1, 0, 'advantage');
-      expect(resultAdvantage.rollType).toBe('advantage');
-
-      const resultDisadvantage = rollSkillTest(2, 1, 0, 'disadvantage');
-      expect(resultDisadvantage.rollType).toBe('disadvantage');
+    it('deve usar tipo de rolagem normal para dados positivos', () => {
+      const result = rollSkillTest(2, 1, 0);
+      expect(result.rollType).toBe('normal');
     });
   });
 
@@ -560,10 +537,12 @@ describe('Sistema de Rolagem de Dados', () => {
     });
 
     it('deve simular dano crítico', () => {
-      // Ataque crítico: 2d6+3
+      // Ataque crítico: 2d6+3 (MAXIMIZADO)
       const result = rollDamageWithCritical(2, 6, 3, true, 'Dano de Espada');
 
-      expect(result.rolls).toHaveLength(4); // 2d6 × 2
+      expect(result.rolls).toHaveLength(2); // 2d6
+      expect(result.baseResult).toBe(12); // Maximizado: 2 * 6
+      expect(result.finalResult).toBe(15); // 12 + 3
       expect(result.isCritical).toBe(true);
       expect(result.context).toBe('Dano de Espada');
     });
