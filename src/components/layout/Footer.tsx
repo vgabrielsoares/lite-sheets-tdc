@@ -14,7 +14,7 @@ import {
   Divider,
   useTheme,
 } from '@mui/material';
-import { GitHub as GitHubIcon } from '@mui/icons-material';
+import { GitHub as GitHubIcon, Lock as LockIcon } from '@mui/icons-material';
 
 /**
  * Footer da aplicação
@@ -145,9 +145,18 @@ export default function Footer() {
         </Box>
 
         {/* Nota sobre offline-first */}
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
+        <Box
+          sx={{
+            mt: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.5,
+          }}
+        >
+          <LockIcon color="success" sx={{ fontSize: 16 }} />
           <Typography variant="caption" color="text.secondary">
-            🔒 Seus dados ficam salvos localmente no seu navegador • Funciona
+            Seus dados ficam salvos localmente no seu navegador • Funciona
             offline
           </Typography>
         </Box>
