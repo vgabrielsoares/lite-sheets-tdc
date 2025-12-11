@@ -26,7 +26,7 @@ import {
   Box,
   Alert,
 } from '@mui/material';
-import { v4 as uuidv4 } from 'uuid';
+import { uuidv4 } from '@/utils/uuid';
 import type { Craft, AttributeName } from '@/types';
 import { InlineModifiers } from './ModifierManager';
 

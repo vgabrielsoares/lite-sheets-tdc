@@ -5,7 +5,7 @@
  * incluindo validação de estrutura, versão e integridade dos dados.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { uuidv4 } from '@/utils/uuid';
 import type { Character } from '@/types';
 import { db } from './db';
 import { EXPORT_VERSION, type ExportedCharacter } from './exportService';

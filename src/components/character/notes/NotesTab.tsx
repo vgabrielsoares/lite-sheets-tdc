@@ -24,7 +24,7 @@ import { NotesSearch } from './NotesSearch';
 import { NotesFilters } from './NotesFilters';
 import { NotesList } from './NotesList';
 import { NoteEditor } from './NoteEditor';
-import { v4 as uuidv4 } from 'uuid';
+import { uuidv4 } from '@/utils/uuid';
 
 /**
  * Props do componente NotesTab

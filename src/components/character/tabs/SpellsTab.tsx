@@ -17,7 +17,7 @@ import {
   Typography,
   Chip,
 } from '@mui/material';
-import { v4 as uuidv4 } from 'uuid';
+import { uuidv4 } from '@/utils/uuid';
 import type { Character, SkillName } from '@/types';
 import type { KnownSpell, SpellCircle, SpellMatrix } from '@/types/spells';
 import {
@@ -51,8 +51,13 @@ type SpellDialogMode = 'add' | 'edit' | 'view' | null;
  * - Dashboard com habilidades de conjuração e estatísticas
  * - Lista organizada por círculo com filtros
  * - CRUD completo de feitiços conhecidos
+ *
+ * Memoizado para evitar re-renders desnecessários.
  */
-export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
+export const SpellsTab = React.memo(function SpellsTab({
+  character,
+  onUpdate,
+}: SpellsTabProps) {
   const { showSuccess, showError } = useNotifications();
   const [dialogMode, setDialogMode] = useState<SpellDialogMode>(null);
   const [selectedSpell, setSelectedSpell] = useState<KnownSpell | null>(null);
@@ -481,4 +486,4 @@ export function SpellsTab({ character, onUpdate }: SpellsTabProps) {
       />
     </Box>
   );
-}
+});

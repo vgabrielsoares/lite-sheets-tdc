@@ -22,7 +22,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
-import { v4 as uuidv4 } from 'uuid';
+import { uuidv4 } from '@/utils/uuid';
 import { TraitCard } from './TraitCard';
 import { calculateTraitBalance } from '@/types/traits';
 import type { ComplementaryTrait } from '@/types/character';
