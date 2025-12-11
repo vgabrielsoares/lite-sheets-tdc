@@ -10,6 +10,7 @@
 
 import type { Middleware } from '@reduxjs/toolkit';
 import { characterService } from '@/services/characterService';
+import { db } from '@/services/db';
 import type { Character } from '@/types';
 import type { RootState } from './index';
 
@@ -71,10 +72,9 @@ export const indexedDBSyncMiddleware: Middleware<{}, RootState> =
             existing.map((char) => characterService.delete(char.id))
           );
 
-          // Adicionar novos personagens
-          await Promise.all(
-            characters.map((char: Character) => characterService.create(char))
-          );
+          // Adicionar novos personagens preservando IDs originais
+          // Usamos bulkPut ao invés de create para preservar os IDs
+          await db.characters.bulkPut(characters);
 
           console.log(
             `✅ ${characters.length} personagens sincronizados com IndexedDB`
