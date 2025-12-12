@@ -97,13 +97,17 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  // TEMPORARIAMENTE DESABILITADO: output 'export' para resolver problemas de build
-  // Para um app PWA offline-first com Redux e IndexedDB, precisamos de SPA puro
-  // Será reconfigurado quando pronto para deploy no GitHub Pages
-  // output: 'export',
+  // Configuração para exportação estática (GitHub Pages)
+  output: 'export',
 
   // Permite rotas dinâmicas
   trailingSlash: true,
+
+  // Base path para GitHub Pages (repo name)
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+
+  // Asset prefix para GitHub Pages
+  assetPrefix: process.env.NEXT_PUBLIC_BASE_PATH || '',
 
   images: {
     unoptimized: true,
