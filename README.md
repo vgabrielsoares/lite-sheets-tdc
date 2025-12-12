@@ -20,13 +20,28 @@ Sistema de criação e gerenciamento de fichas de RPG totalmente no navegador, c
 
 ## Funcionalidades
 
-- **Criação e edição de fichas**: Interface intuitiva para criar e editar fichas de RPG personalizadas.
-- **Persistência local**: Fichas salvas no próprio navegador, sem necessidade de cadastro ou login.
-- **Exportação/Importação**: Suporte a exportação/importação de fichas em JSON e CSV para backup e compartilhamento.
-- **Offline-first**: Totalmente funcional sem conexão com a internet.
-- **Responsividade e acessibilidade**: Interface adaptada para desktop e mobile, com foco em acessibilidade (WCAG 2.1 AA).
-- **Instalação como app**: Pode ser instalado em dispositivos como um aplicativo nativo (PWA).
-- **Navegação por teclado**: Totalmente navegável via teclado com skip links e suporte a leitores de tela.
+### Gerenciamento de Fichas
+
+- **Criação e edição de fichas**: Interface intuitiva para criar e editar fichas de RPG personalizadas com valores padrão do sistema Tabuleiro do Caos
+- **Persistência local**: Fichas salvas no próprio navegador usando IndexedDB, sem necessidade de cadastro ou login
+- **Exportação/Importação**: Sistema completo de backup em JSON para portabilidade e compartilhamento entre dispositivos
+- **Sistema de abas**: Ficha organizada em 8 abas (Principal, Combate, Arquétipos, Recursos, Inventário, Feitiços, Descrição, Anotações)
+
+### Sistema de Jogo
+
+- **Rolagem de dados**: Sistema integrado de rolagem de d20 com suporte a vantagem/desvantagem e modificadores
+- **Cálculos automáticos**: Defesa, modificadores de habilidades, idiomas baseados em Mente, e mais
+- **Gerenciamento de recursos**: Controle de PV/PP com valores temporários, economia de ações em combate
+- **Inventário completo**: Sistema de moedas, itens, peso e capacidade de carga
+
+### Experiência do Usuário
+
+- **Offline-first**: Totalmente funcional sem conexão com a internet (PWA)
+- **Instalação como app**: Pode ser instalado em dispositivos como um aplicativo nativo
+- **Tema claro/escuro**: Alternância entre temas com paleta medieval/fantasy
+- **Responsividade**: Interface adaptada para desktop, tablet e mobile
+- **Acessibilidade completa**: Navegação por teclado, leitores de tela, WCAG 2.1 AA
+- **Central de Ajuda**: Documentação integrada com FAQ, atalhos de teclado e guias passo a passo
 
 ---
 
@@ -122,29 +137,46 @@ test('cria e salva ficha', () => {
 
 ---
 
+## Central de Ajuda
+
+O Lite Sheets TDC possui uma **Central de Ajuda integrada** acessível pelo menu de navegação (`/help`), com:
+
+### Conteúdo Disponível
+
+- **FAQ (Perguntas Frequentes)**: Respostas para dúvidas comuns sobre criação de fichas, salvamento, regras do sistema e resolução de problemas
+- **Atalhos de Teclado**: Documentação completa de navegação por teclado, incluindo atalhos para edição, rolagem e navegação geral
+- **Guia de Exportação/Importação**: Passo a passo detalhado para fazer backup e restaurar fichas, com dicas de segurança
+- **Sistema de Rolagem**: Explicação da mecânica de dados, vantagem/desvantagem, modificadores e exemplos práticos
+
+### Como Acessar
+
+1. Clique em **"Ajuda"** no menu de navegação (ícone de interrogação)
+2. Ou acesse diretamente em `/help` na URL
+3. Escolha a seção desejada nas abas (desktop) ou dropdown (mobile)
+
 ## Acessibilidade
 
 Este projeto segue as diretrizes **WCAG 2.1 Nível AA** para garantir acessibilidade para todos os usuários.
 
 ### Recursos de Acessibilidade
 
-- **Navegação por teclado**: Totalmente navegável com Tab, Enter, Space e teclas de seta
-- **Skip links**: Pule para o conteúdo principal com Tab
-- **ARIA labels**: Elementos rotulados para leitores de tela
-- **Contraste de cores**: Todos os textos atendem WCAG AA (≥4.5:1)
+- **Navegação por teclado**: Totalmente navegável com Tab, Enter, Esc e teclas de seta
+- **Atalhos documentados**: Central de Ajuda com todos os atalhos disponíveis
+- **ARIA labels**: Elementos rotulados apropriadamente para leitores de tela
+- **Contraste de cores**: Todos os textos atendem WCAG AA (≥4.5:1) em ambos os temas
 - **Foco visível**: Indicadores claros de foco em todos os elementos interativos
-- **Formulários acessíveis**: Labels associados, mensagens de erro claras
-- **Responsivo**: Funciona em 200% de zoom sem scroll horizontal
-- **Semântica HTML**: Estrutura correta com landmarks
+- **Formulários acessíveis**: Labels associados, validação inline, mensagens de erro claras
+- **Responsivo**: Funciona perfeitamente em 200% de zoom sem scroll horizontal
+- **Semântica HTML**: Estrutura correta com landmarks (header, nav, main, aside)
+- **Spinners de carregamento**: Feedback visual durante transições e carregamentos
+- **Auto-save**: Salva automaticamente, sem necessidade de ação manual
 
 ### Testado com
 
 - **Lighthouse**: Score de acessibilidade >90
-- **Navegação por teclado**: Todas as funcionalidades acessíveis
+- **Navegação por teclado**: Todas as funcionalidades acessíveis via Tab/Enter/Esc
 - **NVDA**: Compatível com leitor de tela
-- **Axe DevTools**: Sem erros críticos
-
-Para mais detalhes, consulte [ACCESSIBILITY.md](./ACCESSIBILITY.md).
+- **Axe DevTools**: Sem erros críticos de acessibilidade
 
 ---
 
