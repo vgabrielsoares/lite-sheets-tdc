@@ -69,7 +69,7 @@ export default function CharacterList() {
    * Navega para visualização de ficha específica
    */
   const handleViewCharacter = (characterId: string) => {
-    router.push(`/characters/${characterId}`);
+    router.push(`/characters?id=${characterId}`);
   };
 
   /**
