@@ -37,6 +37,7 @@ const createTestStore = (initialCharacters: Character[] = []) => {
       characters: {
         entities,
         ids,
+        characters: initialCharacters,
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -197,6 +198,7 @@ describe('CharacterList', () => {
           characters: {
             entities: {},
             ids: [],
+            characters: [],
             selectedCharacterId: null,
             loading: true,
             error: null,
@@ -225,6 +227,7 @@ describe('CharacterList', () => {
           characters: {
             entities: {},
             ids: [],
+            characters: [],
             selectedCharacterId: null,
             loading: false,
             error: 'Erro ao carregar fichas do banco de dados',
@@ -253,6 +256,7 @@ describe('CharacterList', () => {
           characters: {
             entities: {},
             ids: [],
+            characters: [],
             selectedCharacterId: null,
             loading: false,
             error: 'Erro ao carregar fichas',
