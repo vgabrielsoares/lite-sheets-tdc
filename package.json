@@ -15,9 +15,12 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
-    "export": "next build && next export",
+    "export": "next build",
+    "build:production": "NEXT_PUBLIC_BASE_PATH=/lite-sheets-tdc next build",
+    "preview": "npx serve@latest out",
     "validate:pwa": "node scripts/validate-pwa.js",
-    "generate:icons": "start public/generate-icons.html"
+    "generate:icons": "start public/generate-icons.html",
+    "predeploy": "npm run type-check && npm run lint && npm run test && npm run build:production"
   },
   "repository": {
     "type": "git",
