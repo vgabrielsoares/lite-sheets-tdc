@@ -36,7 +36,7 @@ export interface SidebarProps {
 
   /**
    * Largura da sidebar
-   * @default 'lg' (28rem em 1080p via xl, 20rem em telas menores) - Padrão definido pela LinhagemSidebar
+   * @default 'lg' (20rem em lg, 28rem em 1080p/xl, 40rem em 1440p+) - Padrão definido pela LinhagemSidebar
    */
   width?: SidebarWidth;
 
@@ -67,7 +67,7 @@ export interface SidebarProps {
  * - Header com título e botão de fechar
  * - Área de conteúdo com scroll customizado
  * - Padding padrão de 3 (24px) seguindo o padrão da LinhagemSidebar
- * - Largura padrão 'lg' (28rem em 1080p via breakpoint xl) seguindo o padrão da LinhagemSidebar
+ * - Largura padrão 'lg' (20rem em lg, 28rem em 1080p, 40rem em 1440p+) seguindo o padrão da LinhagemSidebar
  * - Renderização inline (ao lado do conteúdo principal, não modal)
  * - Tratamento de tecla ESC para fechar
  *
@@ -145,6 +145,15 @@ export function Sidebar({
               : width === 'md'
                 ? SIDEBAR_WIDTHS.md
                 : SIDEBAR_WIDTHS.xl,
+        },
+        // Media query customizada para telas 1440p+ (2400px+)
+        '@media (min-width: 2400px)': {
+          width:
+            width === 'sm'
+              ? SIDEBAR_WIDTHS.sm
+              : width === 'md'
+                ? SIDEBAR_WIDTHS.md
+                : '40rem', // 640px para 1440p+
         },
         maxWidth: '100vw',
         display: 'flex',
