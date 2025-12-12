@@ -42,3 +42,5 @@ export type { DiceHistoryFabProps } from './DiceHistoryFab';
 
 export { SkipLink } from './SkipLink';
 export type { SkipLinkProps } from './SkipLink';
+
+export { default as GitHubPagesRedirect } from './GitHubPagesRedirect';
