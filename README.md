@@ -45,7 +45,20 @@ Sistema de criação e gerenciamento de fichas de RPG totalmente no navegador, c
 
 ---
 
-## Instalação e Execução
+## Acesso Online
+
+A aplicação está disponível online no GitHub Pages:
+
+🔗 **[https://vgabrielsoares.github.io/lite-sheets-tdc/](https://vgabrielsoares.github.io/lite-sheets-tdc/)**
+
+- Totalmente funcional offline (PWA)
+- Instalável em dispositivos móveis e desktop
+- Sem necessidade de cadastro ou login
+- Dados salvos localmente no navegador
+
+---
+
+## Instalação e Execução Local
 
 ### 1. Clonando o repositório
 
@@ -57,48 +70,41 @@ cd lite-sheets-tdc
 ### 2. Instalando dependências
 
 ```bash
-# Usando npm
 npm install
-# ou usando yarn
-yarn install
 ```
 
 ### 3. Rodando localmente
 
-#### Next.js
-
 ```bash
 npm run dev
-# ou
-yarn dev
 ```
 
 O app estará disponível em `http://localhost:3000`.
 
-#### CRA
-
-```bash
-npm start
-# ou
-yarn start
-```
-
 ### 4. Build para produção
 
-#### Next.js
-
 ```bash
-npm run build && npm start
-# ou
-yarn build && yarn start
+# Build completo com validações
+npm run predeploy
+
+# Ou apenas build
+npm run build
+
+# Preview do build
+npm run preview
 ```
 
-#### CRA
+### 5. Scripts Disponíveis
 
 ```bash
-npm run build
-# ou
-yarn build
+npm run dev              # Desenvolvimento
+npm run build            # Build de produção
+npm run test             # Executar testes
+npm run test:coverage    # Testes com coverage
+npm run lint             # Verificar código
+npm run lint:fix         # Corrigir código automaticamente
+npm run format           # Formatar código
+npm run type-check       # Verificar tipos TypeScript
 ```
 
 ---
@@ -134,6 +140,38 @@ test('cria e salva ficha', () => {
   expect(localStorage.getItem('ficha')).toContain('Aragorn');
 });
 ```
+
+---
+
+## Deploy
+
+A aplicação é automaticamente deployed no GitHub Pages através de GitHub Actions quando há um push na branch `main`.
+
+### Deploy Automático
+
+O workflow de CI/CD executa:
+
+1. Validação de tipos TypeScript
+2. Linter (ESLint)
+3. Testes com coverage
+4. Build de produção
+5. Deploy no GitHub Pages
+
+### Deploy Manual
+
+Para fazer deploy manualmente, execute:
+
+```bash
+# Executar todas as validações e build
+npm run predeploy
+
+# Se tudo passar, faça push para main
+git push origin main
+```
+
+### Documentação Completa
+
+Para informações detalhadas sobre deploy, configuração e troubleshooting, consulte [DEPLOY.md](./DEPLOY.md).
 
 ---
 
