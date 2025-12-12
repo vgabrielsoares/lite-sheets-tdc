@@ -35,6 +35,9 @@ import {
   Divider,
   Alert,
   Tooltip,
+  useMediaQuery,
+  useTheme,
+  Collapse,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -45,6 +48,7 @@ import {
   Save as SaveIcon,
   Close as CloseIcon,
   Star as StarIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 
 import { Sidebar } from '@/components/shared/Sidebar';
@@ -154,6 +158,21 @@ export function SkillUsageSidebar({
 }: SkillUsageSidebarProps) {
   const [editingUse, setEditingUse] = useState<EditingUse | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+
+  // Detectar telas pequenas (menor que xl breakpoint - 1920px)
+  // Isso inclui 1080p (1920x1080) que precisa de expansão
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('xl'));
+
+  // Estado para controlar quais usos customizados estão expandidos (em telas pequenas)
+  const [expandedCustomUses, setExpandedCustomUses] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Estado para controlar quais usos padrões estão expandidos (em telas pequenas)
+  const [expandedDefaultUses, setExpandedDefaultUses] = useState<Set<string>>(
+    new Set()
+  );
 
   // Detectar se é habilidade "oficio"
   const isOficioSkill = skill.name === 'oficio';
@@ -347,6 +366,36 @@ export function SkillUsageSidebar({
   /**
    * Inicia edição de atributo de uso padrão
    */
+  /**
+   * Alterna expansão de um uso customizado (em telas pequenas)
+   */
+  const toggleCustomUseExpansion = (useId: string) => {
+    setExpandedCustomUses((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(useId)) {
+        newSet.delete(useId);
+      } else {
+        newSet.add(useId);
+      }
+      return newSet;
+    });
+  };
+
+  /**
+   * Alterna expansão de um uso padrão (em telas pequenas)
+   */
+  const toggleDefaultUseExpansion = (useName: string) => {
+    setExpandedDefaultUses((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(useName)) {
+        newSet.delete(useName);
+      } else {
+        newSet.add(useName);
+      }
+      return newSet;
+    });
+  };
+
   const handleStartEditDefaultUse = (useName: string) => {
     setEditingDefaultUse(useName);
   };
@@ -513,9 +562,12 @@ export function SkillUsageSidebar({
 
   /**
    * Renderiza linha compacta de uso customizado
+   * - Em telas pequenas (<1920px), permite expansão vertical
+   * - Quando expandido, elementos são empilhados verticalmente
    */
   const renderUseRow = (use: SkillUse) => {
     const isEditing = editingUse?.id === use.id;
+    const isExpanded = expandedCustomUses.has(use.id);
 
     // Calcula modificador e fórmula
     const modifier = calculateSkillUseModifier(
@@ -554,10 +606,6 @@ export function SkillUsageSidebar({
       <Box
         key={use.id}
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          p: 1,
           borderRadius: 1,
           border: 1,
           borderColor: isEditing ? 'primary.main' : 'divider',
@@ -568,159 +616,236 @@ export function SkillUsageSidebar({
           transition: 'all 0.2s ease-in-out',
         }}
       >
-        {/* Nome e Descrição */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Tooltip title={use.name} placement="top" arrow>
-            <Typography
-              variant="body2"
-              fontWeight={600}
-              noWrap
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                cursor: 'help',
-              }}
-            >
-              {use.name}
-            </Typography>
-          </Tooltip>
-          {use.description && (
-            <Tooltip title={use.description} placement="top" arrow>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                noWrap
-                sx={{
-                  display: 'block',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  cursor: 'help',
-                }}
-              >
-                {use.description}
-              </Typography>
-            </Tooltip>
-          )}
-        </Box>
-
-        {/* Atributo */}
-        <Chip
-          label={ATTRIBUTE_LABELS[use.keyAttribute]}
-          size="small"
-          variant={isCustomAttribute ? 'filled' : 'outlined'}
-          color={isCustomAttribute ? 'primary' : 'default'}
-          sx={{ minWidth: 'fit-content' }}
-        />
-
-        {/* Bônus (se houver) */}
-        {use.bonus !== 0 && (
-          <Chip
-            label={`${use.bonus >= 0 ? '+' : ''}${use.bonus}`}
-            size="small"
-            color={use.bonus > 0 ? 'success' : 'error'}
-            sx={{ minWidth: 'fit-content' }}
-          />
-        )}
-
-        {/* Modificadores inline - exibição compacta */}
-        {(extractDiceModifier(use.modifiers) !== 0 ||
-          extractNumericModifier(use.modifiers) !== 0) && (
-          <Box sx={{ display: 'flex', gap: 0.5, minWidth: 'fit-content' }}>
-            {extractDiceModifier(use.modifiers) !== 0 && (
-              <Chip
-                label={`${extractDiceModifier(use.modifiers) >= 0 ? '+' : ''}${extractDiceModifier(use.modifiers)}d20`}
-                size="small"
-                variant="outlined"
-                color={
-                  extractDiceModifier(use.modifiers) > 0 ? 'success' : 'error'
-                }
-              />
-            )}
-            {extractNumericModifier(use.modifiers) !== 0 && (
-              <Chip
-                label={`${extractNumericModifier(use.modifiers) >= 0 ? '+' : ''}${extractNumericModifier(use.modifiers)}`}
-                size="small"
-                variant="outlined"
-                color={
-                  extractNumericModifier(use.modifiers) > 0
-                    ? 'success'
-                    : 'error'
-                }
-              />
-            )}
-          </Box>
-        )}
-
-        {/* Modificador Total */}
-        <Tooltip title="Modificador Total">
-          <Chip
-            label={`${modifier >= 0 ? '+' : ''}${modifier}`}
-            size="small"
-            sx={{
-              minWidth: 'fit-content',
-              fontWeight: 600,
-              bgcolor: 'action.hover',
-            }}
-          />
-        </Tooltip>
-
-        {/* Fórmula de Rolagem */}
-        <Typography
-          variant="body2"
-          fontWeight={600}
+        {/* Linha principal */}
+        <Box
           sx={{
-            minWidth: 'fit-content',
-            color: 'text.secondary',
+            display: 'flex',
+            flexDirection: isSmallScreen && isExpanded ? 'column' : 'row',
+            alignItems: isSmallScreen && isExpanded ? 'stretch' : 'center',
+            gap: 1,
+            p: 1,
           }}
         >
-          {rollFormula}
-        </Typography>
+          {/* Primeira linha: Botão de expansão + Nome */}
+          <Box
+            onClick={() => isSmallScreen && toggleCustomUseExpansion(use.id)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              flex: isSmallScreen && isExpanded ? 'none' : 1,
+              minWidth: 0,
+              cursor: isSmallScreen ? 'pointer' : 'default',
+              userSelect: 'none',
+            }}
+          >
+            {/* Botão de expansão (apenas em telas pequenas) */}
+            {isSmallScreen && (
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation(); // Evita duplo toggle
+                  toggleCustomUseExpansion(use.id);
+                }}
+                sx={{
+                  minWidth: 'fit-content',
+                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease-in-out',
+                }}
+              >
+                <ExpandMoreIcon fontSize="small" />
+              </IconButton>
+            )}
 
-        {/* Botão de Rolagem */}
-        <SkillRollButton
-          skillLabel={`${SKILL_LABELS[skill.name]}: ${use.name}`}
-          diceCount={finalDiceCount}
-          modifier={modifier}
-          formula={rollFormula}
-          takeLowest={takeLowest}
-          size="small"
-          tooltipText={`Rolar ${use.name}: ${rollFormula}`}
-        />
+            {/* Nome e Descrição */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Tooltip title={use.name} placement="top" arrow>
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  noWrap
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    cursor: 'help',
+                  }}
+                >
+                  {use.name}
+                </Typography>
+              </Tooltip>
+              {use.description && (
+                <Tooltip title={use.description} placement="top" arrow>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    noWrap
+                    sx={{
+                      display: 'block',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      cursor: 'help',
+                    }}
+                  >
+                    {use.description}
+                  </Typography>
+                </Tooltip>
+              )}
+            </Box>
+          </Box>
 
-        {/* Ações */}
-        <Box sx={{ display: 'flex', gap: 0.5, minWidth: 'fit-content' }}>
-          <Tooltip title="Editar">
-            <IconButton
-              size="small"
-              onClick={() => handleStartEdit(use)}
-              aria-label={`Editar ${use.name}`}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Remover">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={() => handleDelete(use.id)}
-              aria-label={`Remover ${use.name}`}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          {/* Conteúdo visível sempre em telas grandes, ou quando expandido em telas pequenas */}
+          {(!isSmallScreen || isExpanded) && (
+            <>
+              {/* Container para elementos do meio - empilhados verticalmente quando expandido */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: isSmallScreen && isExpanded ? 'column' : 'row',
+                  gap: isSmallScreen && isExpanded ? 1.5 : 1,
+                  alignItems:
+                    isSmallScreen && isExpanded ? 'flex-start' : 'center',
+                  flex: isSmallScreen && isExpanded ? 'none' : 0,
+                  flexWrap: isSmallScreen && !isExpanded ? 'wrap' : 'nowrap',
+                }}
+              >
+                {/* Atributo */}
+                <Chip
+                  label={ATTRIBUTE_LABELS[use.keyAttribute]}
+                  size="small"
+                  variant={isCustomAttribute ? 'filled' : 'outlined'}
+                  color={isCustomAttribute ? 'primary' : 'default'}
+                  sx={{ minWidth: 'fit-content' }}
+                />
+
+                {/* Bônus (se houver) */}
+                {use.bonus !== 0 && (
+                  <Chip
+                    label={`${use.bonus >= 0 ? '+' : ''}${use.bonus}`}
+                    size="small"
+                    color={use.bonus > 0 ? 'success' : 'error'}
+                    sx={{ minWidth: 'fit-content' }}
+                  />
+                )}
+
+                {/* Modificadores inline - exibição compacta */}
+                {(extractDiceModifier(use.modifiers) !== 0 ||
+                  extractNumericModifier(use.modifiers) !== 0) && (
+                  <Box
+                    sx={{ display: 'flex', gap: 0.5, minWidth: 'fit-content' }}
+                  >
+                    {extractDiceModifier(use.modifiers) !== 0 && (
+                      <Chip
+                        label={`${extractDiceModifier(use.modifiers) >= 0 ? '+' : ''}${extractDiceModifier(use.modifiers)}d20`}
+                        size="small"
+                        variant="outlined"
+                        color={
+                          extractDiceModifier(use.modifiers) > 0
+                            ? 'success'
+                            : 'error'
+                        }
+                      />
+                    )}
+                    {extractNumericModifier(use.modifiers) !== 0 && (
+                      <Chip
+                        label={`${extractNumericModifier(use.modifiers) >= 0 ? '+' : ''}${extractNumericModifier(use.modifiers)}`}
+                        size="small"
+                        variant="outlined"
+                        color={
+                          extractNumericModifier(use.modifiers) > 0
+                            ? 'success'
+                            : 'error'
+                        }
+                      />
+                    )}
+                  </Box>
+                )}
+
+                {/* Modificador Total */}
+                <Tooltip title="Modificador Total">
+                  <Chip
+                    label={`${modifier >= 0 ? '+' : ''}${modifier}`}
+                    size="small"
+                    sx={{
+                      minWidth: 'fit-content',
+                      fontWeight: 600,
+                      bgcolor: 'action.hover',
+                    }}
+                  />
+                </Tooltip>
+
+                {/* Fórmula de Rolagem */}
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  sx={{
+                    minWidth: 'fit-content',
+                    color: 'text.secondary',
+                  }}
+                >
+                  {rollFormula}
+                </Typography>
+              </Box>
+
+              {/* Ações - sempre na mesma linha */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.5,
+                  minWidth: 'fit-content',
+                  alignSelf:
+                    isSmallScreen && isExpanded ? 'flex-end' : 'center',
+                  ml: isSmallScreen && isExpanded ? 'auto' : 0,
+                }}
+              >
+                <Tooltip title="Editar">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleStartEdit(use)}
+                    aria-label={`Editar ${use.name}`}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Remover">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => handleDelete(use.id)}
+                    aria-label={`Remover ${use.name}`}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+
+                {/* Botão de Rolagem (mais à direita) */}
+                <SkillRollButton
+                  skillLabel={`${SKILL_LABELS[skill.name]}: ${use.name}`}
+                  diceCount={finalDiceCount}
+                  modifier={modifier}
+                  formula={rollFormula}
+                  takeLowest={takeLowest}
+                  size="small"
+                  tooltipText={`Rolar ${use.name}: ${rollFormula}`}
+                />
+              </Box>
+            </>
+          )}
         </Box>
       </Box>
     );
   };
 
   /**
-   * Renderiza linha compacta de uso padrão com possibilidade de editar atributo
+   * Renderiza linha compacta de uso padrão (similar aos usos customizados)
+   * - Em telas pequenas (<1920px), permite expansão vertical
+   * - Modificadores só são editáveis ao clicar em "Editar"
    */
   const renderDefaultUseRow = (defaultUse: DefaultSkillUse) => {
     // Verifica se há personalização de atributo para este uso
     const customAttribute = localDefaultOverrides[defaultUse.name];
     const useAttribute = customAttribute || skill.keyAttribute;
     const isEditing = editingDefaultUse === defaultUse.name;
+    const isExpanded = expandedDefaultUses.has(defaultUse.name);
 
     // Verifica se há modificadores personalizados para este uso
     const customModifiers = localDefaultModifiers[defaultUse.name] || [];
@@ -786,184 +911,316 @@ export function SkillUsageSidebar({
       skill.proficiencyLevel
     );
 
+    const isCustomAttribute = customAttribute !== undefined;
+    const hasCustomModifiers =
+      extractDiceModifier(customModifiers) !== 0 ||
+      extractNumericModifier(customModifiers) !== 0;
+
     return (
       <Box
         key={defaultUse.name}
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          p: 1,
           borderRadius: 1,
           border: 1,
-          borderColor: 'divider',
-          bgcolor: 'transparent',
+          borderColor: isEditing ? 'primary.main' : 'divider',
+          bgcolor: isEditing ? 'action.selected' : 'transparent',
           opacity: isAvailable ? 1 : 0.4,
-          '&:hover': {
-            bgcolor: isAvailable ? 'action.hover' : 'transparent',
-          },
           transition: 'all 0.2s ease-in-out',
         }}
       >
-        {/* Nome */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Tooltip title={defaultUse.name} placement="top" arrow>
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              noWrap
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                cursor: 'help',
-              }}
-            >
-              {defaultUse.name}
-            </Typography>
-          </Tooltip>
-        </Box>
-
-        {/* Atributo-Chave (editável se disponível) */}
-        {isAvailable && (
-          <>
-            {isEditing ? (
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <Select
-                  value={customAttribute || skill.keyAttribute}
-                  onChange={(e) =>
-                    handleUpdateDefaultUseAttribute(
-                      defaultUse.name,
-                      e.target.value as AttributeName
-                    )
-                  }
-                  autoFocus
-                  onBlur={() => setEditingDefaultUse(null)}
-                >
-                  {ATTRIBUTE_LIST.map((attr: AttributeName) => (
-                    <MenuItem key={attr} value={attr}>
-                      {ATTRIBUTE_LABELS[attr]}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            ) : (
-              <Tooltip
-                title={
-                  customAttribute
-                    ? `Atributo personalizado (padrão: ${ATTRIBUTE_LABELS[skill.keyAttribute]}). Clique para editar.`
-                    : 'Atributo-chave. Clique para personalizar.'
-                }
+        {/* Linha principal */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: isSmallScreen && isExpanded ? 'column' : 'row',
+            alignItems: isSmallScreen && isExpanded ? 'stretch' : 'center',
+            gap: 1,
+            p: 1,
+            '&:hover': {
+              bgcolor: isAvailable ? 'action.hover' : 'transparent',
+            },
+          }}
+        >
+          {/* Primeira linha: Botão de expansão + Nome */}
+          <Box
+            onClick={() =>
+              isSmallScreen &&
+              isAvailable &&
+              toggleDefaultUseExpansion(defaultUse.name)
+            }
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              flex: isSmallScreen && isExpanded ? 'none' : 1,
+              minWidth: 0,
+              cursor: isSmallScreen && isAvailable ? 'pointer' : 'default',
+              userSelect: 'none',
+            }}
+          >
+            {/* Botão de expansão (apenas em telas pequenas) */}
+            {isSmallScreen && isAvailable && (
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation(); // Evita duplo toggle
+                  toggleDefaultUseExpansion(defaultUse.name);
+                }}
+                sx={{
+                  minWidth: 'fit-content',
+                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease-in-out',
+                }}
               >
+                <ExpandMoreIcon fontSize="small" />
+              </IconButton>
+            )}
+
+            {/* Nome */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Tooltip title={defaultUse.name} placement="top" arrow>
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  noWrap
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    cursor: 'help',
+                  }}
+                >
+                  {defaultUse.name}
+                </Typography>
+              </Tooltip>
+            </Box>
+          </Box>
+
+          {/* Conteúdo visível sempre em telas grandes, ou quando expandido em telas pequenas */}
+          {(!isSmallScreen || isExpanded) && isAvailable && (
+            <>
+              {/* Container para elementos do meio - empilhados verticalmente quando expandido */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: isSmallScreen && isExpanded ? 'column' : 'row',
+                  gap: isSmallScreen && isExpanded ? 1.5 : 1,
+                  alignItems:
+                    isSmallScreen && isExpanded ? 'flex-start' : 'center',
+                  flex: isSmallScreen && isExpanded ? 'none' : 0,
+                  flexWrap: isSmallScreen && !isExpanded ? 'wrap' : 'nowrap',
+                }}
+              >
+                {/* Atributo */}
                 <Chip
                   label={ATTRIBUTE_LABELS[useAttribute]}
                   size="small"
-                  color={customAttribute ? 'primary' : 'default'}
-                  variant={customAttribute ? 'filled' : 'outlined'}
-                  onClick={() =>
-                    isAvailable && handleStartEditDefaultUse(defaultUse.name)
-                  }
+                  variant={isCustomAttribute ? 'filled' : 'outlined'}
+                  color={isCustomAttribute ? 'primary' : 'default'}
+                  sx={{ minWidth: 'fit-content' }}
+                />
+
+                {/* Modificadores (apenas exibição, não editáveis aqui) */}
+                {hasCustomModifiers && !isEditing && (
+                  <Box
+                    sx={{ display: 'flex', gap: 0.5, minWidth: 'fit-content' }}
+                  >
+                    {extractDiceModifier(customModifiers) !== 0 && (
+                      <Chip
+                        label={`${extractDiceModifier(customModifiers) >= 0 ? '+' : ''}${extractDiceModifier(customModifiers)}d20`}
+                        size="small"
+                        variant="outlined"
+                        color={
+                          extractDiceModifier(customModifiers) > 0
+                            ? 'success'
+                            : 'error'
+                        }
+                      />
+                    )}
+                    {extractNumericModifier(customModifiers) !== 0 && (
+                      <Chip
+                        label={`${extractNumericModifier(customModifiers) >= 0 ? '+' : ''}${extractNumericModifier(customModifiers)}`}
+                        size="small"
+                        variant="outlined"
+                        color={
+                          extractNumericModifier(customModifiers) > 0
+                            ? 'success'
+                            : 'error'
+                        }
+                      />
+                    )}
+                  </Box>
+                )}
+
+                {/* Requisito de Proficiência */}
+                {defaultUse.requiredProficiency && (
+                  <Chip
+                    label={`${
+                      defaultUse.requiredProficiency.charAt(0).toUpperCase() +
+                      defaultUse.requiredProficiency.slice(1)
+                    }+`}
+                    size="small"
+                    variant="outlined"
+                    color="default"
+                    sx={{ minWidth: 'fit-content' }}
+                  />
+                )}
+
+                {/* Modificador Total */}
+                <Tooltip title="Modificador Total">
+                  <Chip
+                    label={`${modifier >= 0 ? '+' : ''}${modifier}`}
+                    size="small"
+                    sx={{
+                      minWidth: 'fit-content',
+                      fontWeight: 600,
+                      bgcolor: 'action.hover',
+                    }}
+                  />
+                </Tooltip>
+
+                {/* Fórmula de Rolagem */}
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
                   sx={{
                     minWidth: 'fit-content',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      bgcolor: customAttribute
-                        ? 'primary.dark'
-                        : 'action.hover',
-                    },
+                    color: 'text.secondary',
                   }}
-                />
-              </Tooltip>
-            )}
-
-            {/* Botão de reset (se tem personalização) */}
-            {customAttribute && !isEditing && (
-              <Tooltip title="Resetar para atributo padrão">
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    handleResetDefaultUseAttribute(defaultUse.name)
-                  }
-                  sx={{ minWidth: 'fit-content' }}
                 >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
+                  {rollFormula}
+                </Typography>
+              </Box>
 
-            {/* Modificadores inline */}
-            <InlineModifiers
-              diceModifier={extractDiceModifier(customModifiers)}
-              numericModifier={extractNumericModifier(customModifiers)}
-              onUpdate={(dice, numeric) =>
-                handleUpdateDefaultUseModifiers(defaultUse.name, dice, numeric)
-              }
-              disabled={!isAvailable}
-            />
-          </>
-        )}
-
-        {/* Requisito de Proficiência */}
-        {defaultUse.requiredProficiency && (
-          <Chip
-            label={`${
-              defaultUse.requiredProficiency.charAt(0).toUpperCase() +
-              defaultUse.requiredProficiency.slice(1)
-            }+`}
-            size="small"
-            variant="outlined"
-            color={isAvailable ? 'default' : 'error'}
-            sx={{ minWidth: 'fit-content' }}
-          />
-        )}
-
-        {/* Modificador Total */}
-        {isAvailable && (
-          <>
-            <Tooltip title="Modificador Total">
-              <Chip
-                label={`${modifier >= 0 ? '+' : ''}${modifier}`}
-                size="small"
+              {/* Ações - sempre juntas */}
+              <Box
                 sx={{
+                  display: 'flex',
+                  gap: 0.5,
                   minWidth: 'fit-content',
-                  fontWeight: 600,
-                  bgcolor: 'action.hover',
+                  alignSelf:
+                    isSmallScreen && isExpanded ? 'flex-end' : 'center',
+                  ml: isSmallScreen && isExpanded ? 'auto' : 0,
                 }}
-              />
-            </Tooltip>
+              >
+                <Tooltip title="Editar">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleStartEditDefaultUse(defaultUse.name)}
+                    aria-label={`Editar ${defaultUse.name}`}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            {/* Fórmula de Rolagem */}
+                {/* Botão de Rolagem (mais à direita) */}
+                <SkillRollButton
+                  skillLabel={`${SKILL_LABELS[skill.name]}: ${defaultUse.name}`}
+                  diceCount={finalDiceCount}
+                  modifier={modifier}
+                  formula={rollFormula}
+                  takeLowest={takeLowest}
+                  size="small"
+                  tooltipText={`Rolar ${defaultUse.name}: ${rollFormula}`}
+                />
+              </Box>
+            </>
+          )}
+
+          {/* Indisponível (sem expansão) */}
+          {!isAvailable && (
             <Typography
-              variant="body2"
-              fontWeight={600}
+              variant="caption"
+              color="error"
+              sx={{ minWidth: 'fit-content' }}
+            >
+              Indisponível
+            </Typography>
+          )}
+        </Box>
+
+        {/* Área de edição (expandida quando isEditing) */}
+        {isAvailable && (
+          <Collapse in={isEditing} timeout={300}>
+            <Box
               sx={{
-                minWidth: 'fit-content',
-                color: 'text.secondary',
+                p: 2,
+                pt: 1,
+                borderTop: 1,
+                borderColor: 'divider',
+                bgcolor: 'action.selected',
               }}
             >
-              {rollFormula}
-            </Typography>
+              <Stack spacing={2}>
+                <Typography variant="subtitle2" fontWeight={600}>
+                  Editar Uso Padrão
+                </Typography>
 
-            {/* Botão de Rolagem */}
-            <SkillRollButton
-              skillLabel={`${SKILL_LABELS[skill.name]}: ${defaultUse.name}`}
-              diceCount={finalDiceCount}
-              modifier={modifier}
-              formula={rollFormula}
-              takeLowest={takeLowest}
-              size="small"
-              tooltipText={`Rolar ${defaultUse.name}: ${rollFormula}`}
-            />
-          </>
-        )}
+                {/* Seletor de Atributo */}
+                <FormControl fullWidth size="small">
+                  <InputLabel>Atributo-Chave</InputLabel>
+                  <Select
+                    value={customAttribute || skill.keyAttribute}
+                    onChange={(e) =>
+                      handleUpdateDefaultUseAttribute(
+                        defaultUse.name,
+                        e.target.value as AttributeName
+                      )
+                    }
+                    label="Atributo-Chave"
+                  >
+                    {ATTRIBUTE_LIST.map((attr: AttributeName) => (
+                      <MenuItem key={attr} value={attr}>
+                        {ATTRIBUTE_LABELS[attr]}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-        {!isAvailable && (
-          <Typography
-            variant="caption"
-            color="error"
-            sx={{ minWidth: 'fit-content' }}
-          >
-            Indisponível
-          </Typography>
+                {/* Modificadores editáveis */}
+                <Box>
+                  <Typography variant="caption" color="text.secondary" mb={1}>
+                    Modificadores
+                  </Typography>
+                  <InlineModifiers
+                    diceModifier={extractDiceModifier(customModifiers)}
+                    numericModifier={extractNumericModifier(customModifiers)}
+                    onUpdate={(dice, numeric) =>
+                      handleUpdateDefaultUseModifiers(
+                        defaultUse.name,
+                        dice,
+                        numeric
+                      )
+                    }
+                    disabled={false}
+                  />
+                </Box>
+
+                {/* Botões de ação */}
+                <Box
+                  sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}
+                >
+                  {customAttribute && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() =>
+                        handleResetDefaultUseAttribute(defaultUse.name)
+                      }
+                    >
+                      Resetar Atributo
+                    </Button>
+                  )}
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => setEditingDefaultUse(null)}
+                  >
+                    Concluir
+                  </Button>
+                </Box>
+              </Stack>
+            </Box>
+          </Collapse>
         )}
       </Box>
     );
