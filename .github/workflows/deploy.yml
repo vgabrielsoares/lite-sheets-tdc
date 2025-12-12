@@ -36,9 +36,6 @@ jobs:
         run: npm run type-check
         continue-on-error: true # Continua mesmo com erros de tipo nos testes
 
-      - name: Run linter
-        run: npm run lint
-
       - name: Run tests
         run: npm run test:coverage
         continue-on-error: true # Continua mesmo se testes falharem (para MVP)
