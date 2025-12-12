@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Snackbar, Alert, Slide, Box, Typography } from '@mui/material';
 import { SlideProps } from '@mui/material/Slide';
