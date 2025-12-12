@@ -36,6 +36,7 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import StarsIcon from '@mui/icons-material/Stars';
+import HistoryIcon from '@mui/icons-material/History';
 import { rollD20, globalDiceHistory } from '@/utils/diceRoller';
 import { calculateAttackRoll } from '@/utils/attackCalculations';
 import type { DiceRollResult as RollResult } from '@/utils/diceRoller';
@@ -266,9 +267,34 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
         onClick={(e) => e.stopPropagation()} // Evitar propagação para linha
       >
         <DialogTitle>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <GpsFixedIcon color="primary" />
-            <Typography variant="h6">Ataque: {attackName}</Typography>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <GpsFixedIcon color="primary" />
+              <Typography variant="h6">{attackName}</Typography>
+            </Stack>
+            <Tooltip title="Ver histórico de rolagens">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Scroll até o FAB e simular clique
+                  const fab = document.querySelector(
+                    '[aria-label="Abrir histórico de rolagens"]'
+                  ) as HTMLElement;
+                  if (fab) {
+                    fab.click();
+                  }
+                }}
+                sx={{ ml: 'auto' }}
+              >
+                <HistoryIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </DialogTitle>
 
