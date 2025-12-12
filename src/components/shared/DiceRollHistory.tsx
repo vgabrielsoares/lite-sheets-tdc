@@ -167,8 +167,6 @@ export function DiceRollHistory({
       {/* Lista de rolagens */}
       <List
         sx={{
-          maxHeight: 400,
-          overflowY: 'auto',
           backgroundColor: theme.palette.background.paper,
           borderRadius: 2,
           border: `1px solid ${theme.palette.divider}`,

@@ -37,5 +37,8 @@ export { BackupReminder } from './BackupReminder';
 export { DiceRollHistory } from './DiceRollHistory';
 export type { DiceRollHistoryProps } from './DiceRollHistory';
 
+export { DiceHistoryFab } from './DiceHistoryFab';
+export type { DiceHistoryFabProps } from './DiceHistoryFab';
+
 export { SkipLink } from './SkipLink';
 export type { SkipLinkProps } from './SkipLink';

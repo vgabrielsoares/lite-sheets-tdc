@@ -11,6 +11,7 @@ import { ReactNode } from 'react';
 import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
 import Header from './Header';
 import Footer from './Footer';
+import { DiceHistoryFab } from '@/components/shared';
 
 /**
  * Props do AppLayout
@@ -124,6 +125,9 @@ export default function AppLayout({
 
       {/* Footer */}
       <Footer />
+
+      {/* Botão flutuante de histórico de rolagens */}
+      <DiceHistoryFab />
     </Box>
   );
 }
