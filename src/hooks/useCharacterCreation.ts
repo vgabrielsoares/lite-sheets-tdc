@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/store/hooks';
@@ -112,17 +114,29 @@ export function useCharacterCreation(): UseCharacterCreationReturn {
         });
 
         // Adicionar ao store Redux (que salva no IndexedDB)
-        // IMPORTANTE: Esperar o resultado para garantir que foi salvo
-        await dispatch(addCharacter(newCharacter)).unwrap();
+        // IMPORTANTE: characterService.create() GERA UM NOVO ID!
+        // Devemos usar o ID retornado, não o ID temporário do newCharacter
+        const savedCharacter = await dispatch(
+          addCharacter(newCharacter)
+        ).unwrap();
 
-        // Salvar personagem criado
-        setCreatedCharacter(newCharacter);
+        // CRITICAL: Aguardar 100ms para garantir que a transação do IndexedDB
+        // foi completamente persistida antes de navegar.
+        // window.location.href pode cancelar operações I/O pendentes.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Salvar personagem criado (com ID real)
+        setCreatedCharacter(savedCharacter);
 
         // Exibir notificação de sucesso
         showSuccess('Ficha criada com sucesso!');
 
         // Redirecionar para a visualização da ficha criada
-        router.push(`/characters/${newCharacter.id}`);
+        // USAR O ID RETORNADO PELO THUNK, NÃO O ID TEMPORÁRIO!
+        const targetUrl = `/characters?id=${savedCharacter.id}`;
+
+        // Usar window.location para garantir navegação sem cache
+        window.location.href = targetUrl;
       } catch (err) {
         console.error('Erro ao criar personagem:', err);
         const errorMessage =
