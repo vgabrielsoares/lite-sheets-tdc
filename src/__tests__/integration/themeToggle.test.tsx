@@ -8,7 +8,7 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { ThemeProvider as MUIThemeProvider, CssBaseline } from '@mui/material';
 import charactersReducer from '@/features/characters/charactersSlice';
 import notificationsReducer from '@/features/app/notificationsSlice';
@@ -45,11 +45,11 @@ function TestComponent() {
  */
 function createTestStore(initialTheme: 'light' | 'dark' = 'dark') {
   const store = configureStore({
-    reducer: {
+    reducer: combineReducers({
       characters: charactersReducer,
       notifications: notificationsReducer,
       app: appReducer,
-    },
+    }),
     preloadedState: {
       characters: {
         entities: {},

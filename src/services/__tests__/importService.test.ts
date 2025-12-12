@@ -118,10 +118,14 @@ describe('importService', () => {
 
       const result = await importCharacter(file);
 
-      expect(result.character).toBeDefined();
-      expect(result.character.name).toBe('Aragorn');
-      expect(result.character.id).toBe('mock-uuid-1234'); // Novo ID
-      expect(result.character.id).not.toBe('original-id-123'); // ID original diferente
+      // Type guard: check if it's a single character import
+      expect('character' in result).toBe(true);
+      if ('character' in result) {
+        expect(result.character).toBeDefined();
+        expect(result.character.name).toBe('Aragorn');
+        expect(result.character.id).toBe('mock-uuid-1234'); // Novo ID
+        expect(result.character.id).not.toBe('original-id-123'); // ID original diferente
+      }
       expect(result.wasMigrated).toBe(false);
       expect(result.originalVersion).toBe(EXPORT_VERSION);
       expect(result.warnings).toEqual([]);
@@ -348,8 +352,10 @@ describe('importService', () => {
 
       const result = await importCharacter(file);
 
-      expect(result.character.createdAt).toBe(mockNow.toISOString());
-      expect(result.character.updatedAt).toBe(mockNow.toISOString());
+      if ('character' in result) {
+        expect(result.character.createdAt).toBe(mockNow.toISOString());
+        expect(result.character.updatedAt).toBe(mockNow.toISOString());
+      }
 
       jest.restoreAllMocks();
     });

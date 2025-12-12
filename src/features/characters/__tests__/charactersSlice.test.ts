@@ -197,6 +197,7 @@ describe('charactersSlice', () => {
           'char-2': mockCharacter2,
         },
         ids: ['char-1', 'char-2'],
+        characters: [mockCharacter, mockCharacter2],
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -215,6 +216,7 @@ describe('charactersSlice', () => {
       const initialState = {
         entities: { 'char-1': mockCharacter },
         ids: ['char-1'],
+        characters: [mockCharacter],
         selectedCharacterId: 'char-1',
         loading: false,
         error: null,
@@ -229,6 +231,7 @@ describe('charactersSlice', () => {
       const initialState = {
         entities: { 'char-1': mockCharacter },
         ids: ['char-1'],
+        characters: [mockCharacter],
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -244,6 +247,7 @@ describe('charactersSlice', () => {
       const initialState = {
         entities: { 'char-1': mockCharacter },
         ids: ['char-1'],
+        characters: [mockCharacter],
         selectedCharacterId: 'char-1',
         loading: false,
         error: null,
@@ -258,6 +262,7 @@ describe('charactersSlice', () => {
       const initialState = {
         entities: {},
         ids: [],
+        characters: [],
         selectedCharacterId: null,
         loading: false,
         error: 'Algum erro',
@@ -272,6 +277,7 @@ describe('charactersSlice', () => {
       const initialState = {
         entities: { 'char-1': mockCharacter },
         ids: ['char-1'],
+        characters: [mockCharacter],
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -353,6 +359,7 @@ describe('charactersSlice', () => {
       const initialState = {
         entities: { 'char-1': mockCharacter },
         ids: ['char-1'],
+        characters: [mockCharacter],
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -390,6 +397,7 @@ describe('charactersSlice', () => {
           'char-2': mockCharacter2,
         },
         ids: ['char-1', 'char-2'],
+        characters: [mockCharacter, mockCharacter2],
         selectedCharacterId: null,
         loading: false,
         error: null,
@@ -481,6 +489,7 @@ describe('charactersSlice', () => {
         },
       },
       ids: ['char-1'],
+      characters: [{ ...mockCharacter, crafts: [] }],
       selectedCharacterId: null,
       loading: false,
       error: null,
