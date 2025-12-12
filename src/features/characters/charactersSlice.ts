@@ -60,6 +60,20 @@ export const loadCharacters = createAsyncThunk(
 );
 
 /**
+ * Thunk para carregar um único personagem por ID do IndexedDB
+ */
+export const loadCharacterById = createAsyncThunk(
+  'characters/loadCharacterById',
+  async (characterId: string) => {
+    const character = await characterService.getById(characterId);
+    if (!character) {
+      throw new Error(`Personagem com ID ${characterId} não encontrado`);
+    }
+    return character;
+  }
+);
+
+/**
  * Thunk para adicionar novo personagem
  * Salva no IndexedDB e adiciona ao Redux store
  */
@@ -359,6 +373,26 @@ const charactersSlice = createSlice({
     builder.addCase(loadCharacters.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || 'Erro ao carregar personagens';
+    });
+
+    // Load character by ID
+    builder.addCase(loadCharacterById.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(loadCharacterById.fulfilled, (state, action) => {
+      state.loading = false;
+      const character = action.payload;
+      state.entities[character.id] = character;
+      if (!state.ids.includes(character.id)) {
+        state.ids.push(character.id);
+      }
+      state.error = null;
+      syncCharactersArray(state);
+    });
+    builder.addCase(loadCharacterById.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Erro ao carregar personagem';
     });
 
     // Add character (async thunk)
