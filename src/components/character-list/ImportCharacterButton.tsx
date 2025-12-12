@@ -196,7 +196,7 @@ export default function ImportCharacterButton({
 
     // Para importação única, navega para o personagem
     if ('character' in importResult) {
-      router.push(`/characters/${importResult.character.id}`);
+      router.push(`/characters?id=${importResult.character.id}`);
       handleCloseDialog();
     }
     // Para importação múltipla, navega para o primeiro personagem
@@ -204,7 +204,7 @@ export default function ImportCharacterButton({
       'characters' in importResult &&
       importResult.characters.length > 0
     ) {
-      router.push(`/characters/${importResult.characters[0].id}`);
+      router.push(`/characters?id=${importResult.characters[0].id}`);
       handleCloseDialog();
     }
   };

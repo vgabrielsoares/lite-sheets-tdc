@@ -51,6 +51,17 @@ function createTestStore(initialTheme: 'light' | 'dark' = 'dark') {
       app: appReducer,
     },
     preloadedState: {
+      characters: {
+        entities: {},
+        ids: [],
+        characters: [],
+        selectedCharacterId: null,
+        loading: false,
+        error: null,
+      },
+      notifications: {
+        notifications: [],
+      },
       app: {
         themeMode: initialTheme,
         sidebarOpen: false,

@@ -13,5 +13,8 @@ export type { CharacterSheetProps } from './CharacterSheet';
 export { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 export type { TabNavigationProps, CharacterTabId } from './TabNavigation';
 
+export { default as CharacterDetailClient } from './CharacterDetailClient';
+export { default as EditCharacterClient } from './EditCharacterClient';
+
 // Exportações de abas
 export * from './tabs';

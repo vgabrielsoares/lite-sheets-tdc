@@ -15,14 +15,14 @@ import {
 import type { Character } from '@/types';
 
 /**
- * Página de visualização de ficha de personagem
+ * Componente Client para visualização de ficha de personagem
  *
  * Exibe a ficha completa do personagem com sistema de abas,
  * permitindo visualização e edição de todos os dados.
  *
  * Implementa o layout base da ficha conforme Issue 3.1 da FASE 3.
  */
-export default function CharacterDetailPage() {
+export default function CharacterDetailClient() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const params = useParams();

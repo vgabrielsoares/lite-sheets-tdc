@@ -348,9 +348,12 @@ describe('Fluxo de Edição de Atributos e Sincronização Redux-IndexedDB', () 
           updateCharacter({
             id: testCharacter.id,
             updates: {
-              pv: {
-                ...testCharacter.pv,
-                max: 20,
+              combat: {
+                ...testCharacter.combat,
+                hp: {
+                  ...testCharacter.combat.hp,
+                  max: 20,
+                },
               },
             },
           })
@@ -361,7 +364,7 @@ describe('Fluxo de Edição de Atributos e Sincronização Redux-IndexedDB', () 
       await waitFor(
         async () => {
           const saved = await db.characters.get(testCharacter.id);
-          expect(saved?.pv.max).toBe(20);
+          expect(saved?.combat.hp.max).toBe(20);
         },
         { timeout: 2000 }
       );
@@ -381,9 +384,12 @@ describe('Fluxo de Edição de Atributos e Sincronização Redux-IndexedDB', () 
           updateCharacter({
             id: testCharacter.id,
             updates: {
-              pp: {
-                ...testCharacter.pp,
-                temporary: 5,
+              combat: {
+                ...testCharacter.combat,
+                pp: {
+                  ...testCharacter.combat.pp,
+                  temporary: 5,
+                },
               },
             },
           })
@@ -394,7 +400,7 @@ describe('Fluxo de Edição de Atributos e Sincronização Redux-IndexedDB', () 
       await waitFor(
         async () => {
           const saved = await db.characters.get(testCharacter.id);
-          expect(saved?.pp.temporary).toBe(5);
+          expect(saved?.combat.pp.temporary).toBe(5);
         },
         { timeout: 2000 }
       );
