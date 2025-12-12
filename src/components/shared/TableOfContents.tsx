@@ -73,7 +73,8 @@ export interface TableOfContentsProps {
   onSectionClick?: (sectionId: string) => void;
 }
 
-const TOC_WIDTH = 280; // Largura fixa do TOC
+const TOC_WIDTH = '17.5rem'; // Largura fixa do TOC (~280px)
+const TOC_WIDTH_PX = 280; // Valor em pixels para cálculos
 const HEADER_OFFSET = 130; // Offset para compensar header fixo (breadcrumb + tabs + padding)
 
 /**
@@ -178,10 +179,10 @@ export function TableOfContents({
           elevation={2}
           sx={{
             position: 'fixed',
-            top: 150,
+            top: '9.375rem',
             left: {
-              xs: 16,
-              lg: `calc((100vw - 900px) / 2 - 60px)`,
+              xs: '1rem',
+              lg: `max(1rem, calc((100vw - 56.25rem) / 2 - 3.75rem))`,
             },
             zIndex: 1000,
             borderRadius: '50%',
@@ -192,8 +193,8 @@ export function TableOfContents({
             aria-label="Abrir índice"
             color="primary"
             sx={{
-              width: 48,
-              height: 48,
+              width: '3rem',
+              height: '3rem',
             }}
           >
             <MenuOpenIcon />
@@ -215,13 +216,13 @@ export function TableOfContents({
         flexDirection: 'column',
         flexShrink: 0,
         position: 'fixed',
-        top: 150,
+        top: '9.375rem',
         // Posicionado à esquerda da ficha
         left: {
-          xs: 16,
-          lg: `calc((100vw - 900px) / 2 - ${TOC_WIDTH}px - 24px)`,
+          xs: '1rem',
+          lg: `max(1rem, calc((100vw - 56.25rem) / 2 - ${TOC_WIDTH} - 1rem))`,
         },
-        maxHeight: 'calc(100vh - 220px)',
+        maxHeight: 'calc(100vh - 13.75rem)',
         zIndex: 1000,
         overflow: 'hidden',
       }}
