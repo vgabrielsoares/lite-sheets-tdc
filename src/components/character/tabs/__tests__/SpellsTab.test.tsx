@@ -22,8 +22,12 @@ jest.mock('@/hooks/useNotifications', () => ({
 }));
 
 // Mock do uuid
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-1234',
+jest.mock('@/utils/uuid', () => ({
+  uuidv4: () => 'mock-uuid-1234',
+  isNativeUUIDAvailable: () => false,
+  isValidUUID: () => true,
+  generateBulkUUIDs: (count: number) =>
+    Array.from({ length: count }, (_, i) => `mock-uuid-${i + 1}`),
 }));
 
 describe('SpellsTab', () => {
@@ -207,71 +211,6 @@ describe('SpellsTab', () => {
 
     // Verifica que onUpdate não foi chamado
     expect(mockOnUpdate).not.toHaveBeenCalled();
-  });
-
-  // TODO: Fix flaky test - button selection issues
-  it.skip('should open view dialog when clicking view button', async () => {
-    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
-
-    // Expande o acordeão do 3º círculo
-    const thirdCircleAccordion = screen.getByText('3º Círculo');
-    fireEvent.click(thirdCircleAccordion);
-
-    // Aguarda o conteúdo aparecer
-    await waitFor(() => {
-      expect(screen.getByText('Bola de Fogo')).toBeInTheDocument();
-    });
-
-    // Encontra todos os botões "Ver" e clica no primeiro
-    const allButtons = screen.getAllByRole('button');
-    const viewButton = allButtons.find(
-      (btn) => btn.getAttribute('aria-label') === 'Ver detalhes'
-    );
-    expect(viewButton).toBeDefined();
-    if (viewButton) fireEvent.click(viewButton);
-
-    // Verifica se o diálogo foi aberto
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
-  });
-
-  // TODO: Fix flaky test - button selection issues
-  it.skip('should open edit dialog when clicking edit button in view dialog', async () => {
-    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
-
-    // Expande o acordeão
-    const thirdCircleAccordion = screen.getByText('3º Círculo');
-    fireEvent.click(thirdCircleAccordion);
-
-    // Aguarda aparecer
-    await waitFor(() => {
-      expect(screen.getByText('Bola de Fogo')).toBeInTheDocument();
-    });
-
-    // Encontra e clica no botão view
-    const allButtons = screen.getAllByRole('button');
-    const viewButton = allButtons.find(
-      (btn) => btn.getAttribute('aria-label') === 'Ver detalhes'
-    );
-    if (viewButton) fireEvent.click(viewButton);
-
-    // Aguarda o diálogo abrir
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
-
-    // Clica em editar dentro do diálogo
-    const editButton = within(screen.getByRole('dialog')).getByRole('button', {
-      name: /editar/i,
-    });
-    fireEvent.click(editButton);
-
-    // Verifica se mudou para o diálogo de edição
-    await waitFor(() => {
-      const dialog = screen.getByRole('dialog');
-      expect(within(dialog).queryByText('Editar Feitiço')).toBeInTheDocument();
-    });
   });
 
   it('should edit an existing spell', async () => {

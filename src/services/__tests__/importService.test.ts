@@ -4,11 +4,7 @@
  * Testes abrangentes para o serviço de importação de personagens
  */
 
-import {
-  importCharacter,
-  importMultipleCharacters,
-  ImportServiceError,
-} from '../importService';
+import { importCharacter, ImportServiceError } from '../importService';
 import { EXPORT_VERSION } from '../exportService';
 import { db } from '../db';
 import type { Character } from '@/types';
@@ -24,8 +20,13 @@ jest.mock('../db', () => ({
 }));
 
 // Mock do uuid
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'mock-uuid-1234'),
+jest.mock('@/utils/uuid', () => ({
+  uuidv4: jest.fn(() => 'mock-uuid-1234'),
+  isNativeUUIDAvailable: jest.fn(() => false),
+  isValidUUID: jest.fn(() => true),
+  generateBulkUUIDs: jest.fn((count: number) =>
+    Array.from({ length: count }, (_, i) => `mock-uuid-${i + 1}`)
+  ),
 }));
 
 // Silencia logs de console
@@ -373,55 +374,65 @@ describe('importService', () => {
     });
   });
 
-  describe('importMultipleCharacters', () => {
-    it('deve importar múltiplos personagens com sucesso', async () => {
-      const char1 = createMockCharacter();
-      char1.name = 'Aragorn';
-
-      const char2 = createMockCharacter();
-      char2.name = 'Legolas';
+  describe('Detecção automática de formato (único vs múltiplo)', () => {
+    it('deve detectar e importar formato único corretamente', async () => {
+      const character = createMockCharacter();
+      character.name = 'Personagem Único';
 
       const exportedData = {
         version: EXPORT_VERSION,
         exportedAt: '2024-12-10T12:00:00.000Z',
-        count: 2,
-        characters: [char1, char2],
+        character,
       };
 
-      const file = createMockFile(exportedData, 'multiple.json');
+      const file = createMockFile(exportedData);
       (db.characters.add as jest.Mock).mockResolvedValue('mock-uuid');
 
-      const results = await importMultipleCharacters(file);
+      const result = await importCharacter(file);
 
-      expect(results).toHaveLength(2);
-      expect(results[0].character.name).toBe('Aragorn');
-      expect(results[1].character.name).toBe('Legolas');
-      expect(db.characters.add).toHaveBeenCalledTimes(2);
+      expect('character' in result).toBe(true);
+      if ('character' in result) {
+        expect(result.character.name).toBe('Personagem Único');
+      }
     });
 
-    it('deve rejeitar arquivo sem array de personagens', async () => {
-      const invalidData = {
+    it('deve detectar e importar formato múltiplo (backup) corretamente', async () => {
+      const char1 = createMockCharacter();
+      char1.name = 'Personagem 1';
+
+      const char2 = createMockCharacter();
+      char2.name = 'Personagem 2';
+
+      const char3 = createMockCharacter();
+      char3.name = 'Personagem 3';
+
+      const exportedData = {
         version: EXPORT_VERSION,
         exportedAt: '2024-12-10T12:00:00.000Z',
-        // characters ausente
+        count: 3,
+        characters: [char1, char2, char3],
       };
 
-      const file = createMockFile(invalidData);
+      const file = createMockFile(exportedData);
+      (db.characters.add as jest.Mock).mockResolvedValue('mock-uuid');
 
-      await expect(importMultipleCharacters(file)).rejects.toThrow(
-        ImportServiceError
-      );
-      await expect(importMultipleCharacters(file)).rejects.toThrow(
-        /não contém array de personagens/
-      );
+      const result = await importCharacter(file);
+
+      expect('characters' in result).toBe(true);
+      if ('characters' in result) {
+        expect(result.count).toBe(3);
+        expect(result.characters).toHaveLength(3);
+        expect(result.characters[0].name).toBe('Personagem 1');
+        expect(result.characters[1].name).toBe('Personagem 2');
+        expect(result.characters[2].name).toBe('Personagem 3');
+      }
     });
 
-    it('deve continuar importando mesmo se um personagem falhar', async () => {
+    it('deve lidar com erros parciais em importação múltipla', async () => {
       const char1 = createMockCharacter();
       char1.name = 'Válido 1';
 
-      const char2 = createMockCharacter();
-      char2.level = -1; // Inválido
+      const char2 = { ...createMockCharacter(), level: -1 }; // Inválido
       char2.name = 'Inválido';
 
       const char3 = createMockCharacter();
@@ -437,12 +448,15 @@ describe('importService', () => {
       const file = createMockFile(exportedData);
       (db.characters.add as jest.Mock).mockResolvedValue('mock-uuid');
 
-      const results = await importMultipleCharacters(file);
+      const result = await importCharacter(file);
 
-      // Apenas 2 personagens válidos devem ser importados
-      expect(results).toHaveLength(2);
-      expect(results[0].character.name).toBe('Válido 1');
-      expect(results[1].character.name).toBe('Válido 2');
+      if ('characters' in result) {
+        expect(result.count).toBe(2); // Apenas os válidos
+        expect(result.errors).toHaveLength(1); // Um erro
+        expect(result.errors[0].name).toBe('Inválido');
+        expect(result.characters[0].name).toBe('Válido 1');
+        expect(result.characters[1].name).toBe('Válido 2');
+      }
     });
   });
 

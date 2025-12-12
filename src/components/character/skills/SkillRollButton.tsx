@@ -34,6 +34,7 @@ import {
 import CasinoIcon from '@mui/icons-material/Casino';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import HistoryIcon from '@mui/icons-material/History';
 import { rollD20, globalDiceHistory } from '@/utils/diceRoller';
 import type { DiceRollResult as RollResult } from '@/utils/diceRoller';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
@@ -105,11 +106,11 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
    * Executa a rolagem de dados
    */
   const handleRoll = useCallback(() => {
-    // Executar rolagem simples (sem vantagem/desvantagem)
+    // Usar 'disadvantage' se takeLowest=true, senão 'normal'
     const rollResult = rollD20(
       diceCount,
       modifier,
-      'normal',
+      takeLowest ? 'disadvantage' : 'normal',
       `Teste de ${skillLabel}`
     );
 
@@ -123,7 +124,7 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
     if (onRoll) {
       onRoll(rollResult);
     }
-  }, [diceCount, modifier, skillLabel, onRoll]);
+  }, [diceCount, modifier, takeLowest, skillLabel, onRoll]);
 
   /**
    * Rolagem rápida (sem abrir diálogo)
@@ -132,11 +133,11 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
     (event: React.MouseEvent) => {
       event.stopPropagation();
 
-      // Executar rolagem normal diretamente
+      // Usar 'disadvantage' se takeLowest=true, senão 'normal'
       const rollResult = rollD20(
         diceCount,
         modifier,
-        'normal',
+        takeLowest ? 'disadvantage' : 'normal',
         `Teste de ${skillLabel}`
       );
 
@@ -156,7 +157,7 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
         setResult(null);
       }, 3000);
     },
-    [diceCount, modifier, skillLabel, onRoll]
+    [diceCount, modifier, takeLowest, skillLabel, onRoll]
   );
 
   /**
@@ -206,9 +207,34 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
         onClick={(e) => e.stopPropagation()} // Evitar propagação para linha
       >
         <DialogTitle>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <CasinoIcon color="primary" />
-            <Typography variant="h6">Teste de {skillLabel}</Typography>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <CasinoIcon color="primary" />
+              <Typography variant="h6">Teste de {skillLabel}</Typography>
+            </Stack>
+            <Tooltip title="Ver histórico de rolagens">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Scroll até o FAB e simular clique
+                  const fab = document.querySelector(
+                    '[aria-label="Abrir histórico de rolagens"]'
+                  ) as HTMLElement;
+                  if (fab) {
+                    fab.click();
+                  }
+                }}
+                sx={{ ml: 'auto' }}
+              >
+                <HistoryIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </DialogTitle>
 

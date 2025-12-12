@@ -71,7 +71,7 @@ export const SKILL_KEY_ATTRIBUTES: Record<
   atletismo: 'constituicao',
   conducao: 'agilidade',
   destreza: 'agilidade',
-  determinacao: 'presenca',
+  determinacao: 'mente',
   enganacao: 'influencia',
   estrategia: 'mente',
   furtividade: 'agilidade',

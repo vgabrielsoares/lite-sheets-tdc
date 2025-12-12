@@ -183,14 +183,13 @@ export const AttributesDisplay = React.memo(function AttributesDisplay({
         </Tooltip>
       </Box>
 
-      {/* Todos os 6 atributos em uma linha horizontal com labels de categoria abaixo */}
+      {/* Todos os 6 atributos - mobile: 2 linhas, desktop: 1 linha */}
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'row',
+          flexDirection: { xs: 'column', sm: 'row' },
           gap: 1,
           width: '100%',
-          flexWrap: 'nowrap',
         }}
       >
         {/* Grupo Corporais (AGI, CON, FOR) */}

@@ -1226,7 +1226,7 @@ export function SkillUsageSidebar({
                     const totalDice = 1 + (craft.diceModifier || 0);
                     const diceCount = Math.abs(totalDice) || 1;
                     const takeLowest = totalDice < 1 || attributeValue === 0;
-                    const formula = `${diceCount}d20${takeLowest ? ' (menor)' : ''}${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+                    const formula = `${takeLowest ? '-' : ''}${diceCount}d20${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
 
                     return (
                       <Paper

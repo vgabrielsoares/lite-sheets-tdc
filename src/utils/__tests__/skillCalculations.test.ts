@@ -291,7 +291,7 @@ describe('skillCalculations', () => {
       expect(result.diceCount).toBe(2);
       expect(result.takeLowest).toBe(true); // escolhe o menor
       expect(result.modifier).toBe(2);
-      expect(result.formula).toBe('2d20+2'); // sem (menor) - UI usa cor vermelha
+      expect(result.formula).toBe('-2d20+2'); // prefixo "-" indica menor - UI usa cor vermelha
     });
 
     it('deve gerar fórmula com modificador negativo', () => {
@@ -349,7 +349,7 @@ describe('skillCalculations', () => {
 
       expect(result.diceCount).toBe(3); // 2 - 3 = -1 → 2 - (-1) = 3
       expect(result.takeLowest).toBe(true); // passou de negativo
-      expect(result.formula).toBe('3d20+5'); // sem (menor) - UI usa cor vermelha
+      expect(result.formula).toBe('-3d20+5'); // prefixo "-" indica menor - UI usa cor vermelha
     });
 
     it('deve combinar múltiplos modificadores de dados', () => {
@@ -743,7 +743,7 @@ describe('skillCalculations', () => {
       );
 
       // Influência 0 = 2d20 (menor), modificador 0
-      expect(result).toBe('2d20'); // sem (menor) - UI usa cor vermelha
+      expect(result).toBe('-2d20'); // prefixo "-" indica menor - UI usa cor vermelha
     });
 
     it('deve gerar fórmula com modificador negativo', () => {

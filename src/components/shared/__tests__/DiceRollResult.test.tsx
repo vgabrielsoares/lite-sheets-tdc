@@ -96,32 +96,36 @@ describe('DiceRollResult', () => {
   });
 
   describe('Críticos e Falhas', () => {
-    it('deve exibir tag de crítico quando isCritical é true', () => {
-      const criticalResult: DiceRollResultType = {
+    it('deve exibir TRIUNFO quando há 20 natural', () => {
+      const triumphResult: DiceRollResultType = {
         ...mockBaseResult,
         rolls: [20],
+        diceCount: 1,
         baseResult: 20,
         finalResult: 25,
+        rollType: 'normal',
         isCritical: true,
       };
 
-      render(<DiceRollResult result={criticalResult} />);
+      render(<DiceRollResult result={triumphResult} />);
 
-      expect(screen.getByText(/crítico/i)).toBeInTheDocument();
+      expect(screen.getByText(/TRIUNFO!/i)).toBeInTheDocument();
     });
 
-    it('deve exibir tag de falha crítica quando isCriticalFailure é true', () => {
-      const failureResult: DiceRollResultType = {
+    it('deve exibir DESASTRE quando há 1 natural', () => {
+      const disasterResult: DiceRollResultType = {
         ...mockBaseResult,
         rolls: [1],
+        diceCount: 1,
         baseResult: 1,
         finalResult: 6,
+        rollType: 'normal',
         isCriticalFailure: true,
       };
 
-      render(<DiceRollResult result={failureResult} />);
+      render(<DiceRollResult result={disasterResult} />);
 
-      expect(screen.getByText(/falha crítica/i)).toBeInTheDocument();
+      expect(screen.getByText(/DESASTRE!/i)).toBeInTheDocument();
     });
 
     it('deve destacar dado 20 em dourado', () => {

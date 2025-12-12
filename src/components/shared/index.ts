@@ -28,5 +28,17 @@ export type { DiceRollerProps } from './DiceRoller';
 export { DiceRollResult } from './DiceRollResult';
 export type { DiceRollResultProps } from './DiceRollResult';
 
+export { OnlineIndicator } from './OnlineIndicator';
+
+export { InstallPrompt } from './InstallPrompt';
+
+export { BackupReminder } from './BackupReminder';
+
 export { DiceRollHistory } from './DiceRollHistory';
 export type { DiceRollHistoryProps } from './DiceRollHistory';
+
+export { DiceHistoryFab } from './DiceHistoryFab';
+export type { DiceHistoryFabProps } from './DiceHistoryFab';
+
+export { SkipLink } from './SkipLink';
+export type { SkipLinkProps } from './SkipLink';

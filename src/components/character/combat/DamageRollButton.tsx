@@ -35,6 +35,7 @@ import {
 } from '@mui/material';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import StarsIcon from '@mui/icons-material/Stars';
+import HistoryIcon from '@mui/icons-material/History';
 import { rollDamageWithCritical, globalDiceHistory } from '@/utils/diceRoller';
 import type { DiceRollResult as RollResult } from '@/utils/diceRoller';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
@@ -290,9 +291,34 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
         onClick={(e) => e.stopPropagation()} // Evitar propagação para linha
       >
         <DialogTitle>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <FlashOnIcon color="error" />
-            <Typography variant="h6">Dano: {attackName}</Typography>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <FlashOnIcon color="error" />
+              <Typography variant="h6">Dano: {attackName}</Typography>
+            </Stack>
+            <Tooltip title="Ver histórico de rolagens">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Scroll até o FAB e simular clique
+                  const fab = document.querySelector(
+                    '[aria-label="Abrir histórico de rolagens"]'
+                  ) as HTMLElement;
+                  if (fab) {
+                    fab.click();
+                  }
+                }}
+                sx={{ ml: 'auto' }}
+              >
+                <HistoryIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </DialogTitle>
 

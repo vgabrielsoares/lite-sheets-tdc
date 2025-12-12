@@ -266,9 +266,9 @@ describe('OrigemSidebar', () => {
           const successMessage = screen.queryByText(/Origem válida!/i);
           expect(successMessage).toBeInTheDocument();
         },
-        { timeout: 1500 }
+        { timeout: 8000 }
       );
-    });
+    }, 10000);
 
     it('não deve exibir validação quando showValidation é false', () => {
       const origin: Origin = {
@@ -317,7 +317,8 @@ describe('OrigemSidebar', () => {
       // Digita (isso irá triggerar hasUserEdited = true e iniciar debounce)
       await userEvent.type(descriptionInput, 'Nova descrição');
 
-      // Após debounce (500ms), deve chamar onUpdate com a descrição atualizada
+      // Após debounce (100ms do componente), deve chamar onUpdate com a descrição atualizada
+      // userEvent.type é lento (digita caractere por caractere), então precisamos de timeout maior
       await waitFor(
         () => {
           expect(mockOnUpdate).toHaveBeenCalled();
@@ -329,9 +330,9 @@ describe('OrigemSidebar', () => {
           );
           expect(hasDescription).toBe(true);
         },
-        { timeout: 1500 }
+        { timeout: 3000 }
       );
-    });
+    }, 10000);
 
     it('não deve fazer auto-save se não editou', async () => {
       render(

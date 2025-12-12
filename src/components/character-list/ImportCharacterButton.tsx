@@ -32,7 +32,11 @@ import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/store/hooks';
 import { addCharacter } from '@/features/characters/charactersSlice';
 import { useNotifications } from '@/hooks/useNotifications';
-import { importCharacter, type ImportResult } from '@/services/importService';
+import {
+  importCharacter,
+  type ImportResult,
+  type ImportMultipleResult,
+} from '@/services/importService';
 
 /**
  * Props do componente ImportCharacterButton
@@ -82,7 +86,9 @@ export default function ImportCharacterButton({
 
   // Estados
   const [isImporting, setIsImporting] = useState(false);
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [importResult, setImportResult] = useState<
+    ImportResult | ImportMultipleResult | null
+  >(null);
   const [showResultDialog, setShowResultDialog] = useState(false);
 
   /**
@@ -106,26 +112,57 @@ export default function ImportCharacterButton({
     try {
       console.log(`📥 Iniciando importação de: ${file.name}`);
 
-      // Importa personagem
+      // Importa personagem(s)
       const result = await importCharacter(file);
 
-      console.log(`✅ Personagem importado: ${result.character.name}`);
+      // Verifica se é importação única ou múltipla
+      if ('character' in result) {
+        // Importação única
+        console.log(`✅ Personagem importado: ${result.character.name}`);
 
-      // Adiciona ao Redux store
-      dispatch(addCharacter(result.character));
+        // Adiciona ao Redux store
+        dispatch(addCharacter(result.character));
 
-      // Mostra resultado
-      setImportResult(result);
-      setShowResultDialog(true);
+        // Mostra resultado
+        setImportResult(result);
+        setShowResultDialog(true);
 
-      // Notificação de sucesso
-      showSuccess(
-        `Personagem "${result.character.name}" importado com sucesso!`
-      );
+        // Notificação de sucesso
+        showSuccess(
+          `Personagem "${result.character.name}" importado com sucesso!`
+        );
 
-      // Callback de sucesso
-      if (onImportSuccess) {
-        onImportSuccess(result.character.id);
+        // Callback de sucesso
+        if (onImportSuccess) {
+          onImportSuccess(result.character.id);
+        }
+      } else {
+        // Importação múltipla
+        console.log(`✅ ${result.count} personagens importados`);
+
+        // Adiciona todos ao Redux store
+        result.characters.forEach((character) => {
+          dispatch(addCharacter(character));
+        });
+
+        // Mostra resultado
+        setImportResult(result);
+        setShowResultDialog(true);
+
+        // Notificação de sucesso
+        const successCount = result.count;
+        const errorCount = result.errors.length;
+        const message =
+          errorCount > 0
+            ? `${successCount} personagens importados (${errorCount} falharam)`
+            : `${successCount} personagens importados com sucesso!`;
+
+        showSuccess(message);
+
+        // Callback de sucesso (primeiro personagem importado)
+        if (onImportSuccess && result.characters.length > 0) {
+          onImportSuccess(result.characters[0].id);
+        }
       }
     } catch (error: any) {
       console.error('❌ Erro ao importar personagem:', error);
@@ -155,8 +192,19 @@ export default function ImportCharacterButton({
    * Navega para a ficha importada
    */
   const handleViewCharacter = () => {
-    if (importResult?.character.id) {
+    if (!importResult) return;
+
+    // Para importação única, navega para o personagem
+    if ('character' in importResult) {
       router.push(`/characters/${importResult.character.id}`);
+      handleCloseDialog();
+    }
+    // Para importação múltipla, navega para o primeiro personagem
+    else if (
+      'characters' in importResult &&
+      importResult.characters.length > 0
+    ) {
+      router.push(`/characters/${importResult.characters[0].id}`);
       handleCloseDialog();
     }
   };
@@ -220,46 +268,101 @@ export default function ImportCharacterButton({
         </DialogTitle>
 
         <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
-            O personagem <strong>{importResult?.character.name}</strong> foi
-            importado com sucesso!
-          </DialogContentText>
+          {/* Mensagem diferente para importação única vs múltipla */}
+          {importResult && 'character' in importResult ? (
+            <>
+              <DialogContentText sx={{ mb: 2 }}>
+                O personagem <strong>{importResult.character.name}</strong> foi
+                importado com sucesso!
+              </DialogContentText>
 
-          {/* Informações da importação */}
-          {importResult && (
-            <Box sx={{ mb: 2 }}>
-              <List dense>
-                <ListItem>
-                  <ListItemText
-                    primary="Versão do Arquivo"
-                    secondary={importResult.originalVersion}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Nível"
-                    secondary={importResult.character.level}
-                  />
-                </ListItem>
-                {importResult.character.lineage && (
+              {/* Informações da importação única */}
+              <Box sx={{ mb: 2 }}>
+                <List dense>
                   <ListItem>
                     <ListItemText
-                      primary="Linhagem"
-                      secondary={importResult.character.lineage.name || 'N/A'}
+                      primary="Versão do Arquivo"
+                      secondary={importResult.originalVersion}
                     />
                   </ListItem>
-                )}
-                {importResult.character.origin && (
                   <ListItem>
                     <ListItemText
-                      primary="Origem"
-                      secondary={importResult.character.origin.name || 'N/A'}
+                      primary="Nível"
+                      secondary={importResult.character.level}
                     />
                   </ListItem>
-                )}
-              </List>
-            </Box>
-          )}
+                  {importResult.character.lineage && (
+                    <ListItem>
+                      <ListItemText
+                        primary="Linhagem"
+                        secondary={importResult.character.lineage.name || 'N/A'}
+                      />
+                    </ListItem>
+                  )}
+                  {importResult.character.origin && (
+                    <ListItem>
+                      <ListItemText
+                        primary="Origem"
+                        secondary={importResult.character.origin.name || 'N/A'}
+                      />
+                    </ListItem>
+                  )}
+                </List>
+              </Box>
+            </>
+          ) : importResult && 'characters' in importResult ? (
+            <>
+              <DialogContentText sx={{ mb: 2 }}>
+                <strong>{importResult.count} personagens</strong> foram
+                importados com sucesso!
+              </DialogContentText>
+
+              {/* Informações da importação múltipla */}
+              <Box sx={{ mb: 2 }}>
+                <List dense>
+                  <ListItem>
+                    <ListItemText
+                      primary="Versão do Arquivo"
+                      secondary={importResult.originalVersion}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="Personagens Importados"
+                      secondary={importResult.characters
+                        .map((c) => c.name)
+                        .join(', ')}
+                    />
+                  </ListItem>
+                  {importResult.errors.length > 0 && (
+                    <ListItem>
+                      <ListItemText
+                        primary="Erros"
+                        secondary={`${importResult.errors.length} personagens falharam na importação`}
+                      />
+                    </ListItem>
+                  )}
+                </List>
+              </Box>
+
+              {/* Lista de erros, se houver */}
+              {importResult.errors.length > 0 && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  <strong>Erros durante a importação:</strong>
+                  <List dense sx={{ mt: 1 }}>
+                    {importResult.errors.map((error, index) => (
+                      <ListItem key={index} sx={{ py: 0 }}>
+                        <ListItemText
+                          primary={error.name}
+                          secondary={error.error}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Alert>
+              )}
+            </>
+          ) : null}
 
           {/* Avisos, se houver */}
           {importResult && importResult.warnings.length > 0 && (

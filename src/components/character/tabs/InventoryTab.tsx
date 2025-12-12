@@ -34,8 +34,10 @@ export interface InventoryTabProps {
  * - Capacidade de carga
  * - Estado de carga
  * - Listagem de itens
+ *
+ * Memoizado para evitar re-renders desnecessários.
  */
-export function InventoryTab({
+export const InventoryTab = React.memo(function InventoryTab({
   character,
   onUpdate,
   onOpenItem,
@@ -153,4 +155,4 @@ export function InventoryTab({
       </Stack>
     </Box>
   );
-}
+});

@@ -193,7 +193,14 @@ export function ProficienciesList({
                     <Divider sx={{ my: 2 }} />
 
                     {/* Adicionar novo item */}
-                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: 1,
+                        alignItems: { xs: 'stretch', sm: 'center' },
+                      }}
+                    >
                       <TextField
                         size="small"
                         fullWidth
@@ -214,6 +221,7 @@ export function ProficienciesList({
                         startIcon={<AddIcon />}
                         onClick={() => handleAddItem(category.key)}
                         disabled={!newItems[category.key].trim()}
+                        sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
                       >
                         Adicionar
                       </Button>

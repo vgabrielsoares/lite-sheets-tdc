@@ -17,6 +17,8 @@ interface CharactersState {
   entities: Record<string, Character>;
   /** Array com IDs dos personagens na ordem */
   ids: string[];
+  /** Lista derivada de personagens (compatibilidade com testes legados) */
+  characters: Character[];
   /** ID do personagem atualmente selecionado */
   selectedCharacterId: string | null;
   /** Status de carregamento */
@@ -31,10 +33,20 @@ interface CharactersState {
 const initialState: CharactersState = {
   entities: {},
   ids: [],
+  characters: [],
   selectedCharacterId: null,
   loading: false,
   error: null,
 };
+
+/**
+ * Atualiza a lista derivada characters a partir de entities/ids
+ */
+function syncCharactersArray(state: CharactersState): void {
+  state.characters = state.ids
+    .map((id) => state.entities[id])
+    .filter((c): c is Character => Boolean(c));
+}
 
 /**
  * Thunk para carregar personagens do IndexedDB
@@ -53,9 +65,12 @@ export const loadCharacters = createAsyncThunk(
  */
 export const addCharacter = createAsyncThunk(
   'characters/addCharacter',
-  async (character: Character) => {
-    await characterService.create(character);
-    return character;
+  async (
+    character: Character | Omit<Character, 'id' | 'createdAt' | 'updatedAt'>
+  ) => {
+    // Service.create generates new ID/timestamps, so we must return its result
+    const created = await characterService.create(character as any);
+    return created;
   }
 );
 
@@ -339,6 +354,7 @@ const charactersSlice = createSlice({
         state.ids.push(character.id);
       });
       state.error = null;
+      syncCharactersArray(state);
     });
     builder.addCase(loadCharacters.rejected, (state, action) => {
       state.loading = false;
@@ -358,6 +374,7 @@ const charactersSlice = createSlice({
         state.ids.push(character.id);
       }
       state.error = null;
+      syncCharactersArray(state);
     });
     builder.addCase(addCharacter.rejected, (state, action) => {
       state.loading = false;
@@ -380,6 +397,7 @@ const charactersSlice = createSlice({
       } else {
         state.error = `Personagem com ID ${id} não encontrado`;
       }
+      syncCharactersArray(state);
     });
     builder.addCase(updateCharacter.rejected, (state, action) => {
       state.loading = false;
@@ -399,6 +417,7 @@ const charactersSlice = createSlice({
         state.ids.push(character.id);
       }
       state.error = null;
+      syncCharactersArray(state);
     });
     builder.addCase(saveCharacter.rejected, (state, action) => {
       state.loading = false;
@@ -419,6 +438,7 @@ const charactersSlice = createSlice({
         state.selectedCharacterId = null;
       }
       state.error = null;
+      syncCharactersArray(state);
     });
     builder.addCase(deleteCharacter.rejected, (state, action) => {
       state.loading = false;

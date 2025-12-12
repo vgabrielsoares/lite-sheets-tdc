@@ -28,6 +28,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info';
 
 import { Sidebar } from '@/components/shared';
+import { formatMeleeDamage } from '@/constants/lineage';
 import type { Lineage, LanguageName, AncestryTrait } from '@/types/character';
 import type { AttributeName } from '@/types/attributes';
 import type {
@@ -677,8 +678,7 @@ export function LinhagemSidebar({
                 </Typography>
                 <Typography variant="body2">
                   <strong>Dano Corpo-a-corpo:</strong>{' '}
-                  {sizeModifiers.meleeDamage >= 0 ? '+' : ''}
-                  {sizeModifiers.meleeDamage}
+                  {formatMeleeDamage(sizeModifiers.meleeDamage)}
                 </Typography>
                 <Typography variant="body2">
                   <strong>Defesa:</strong>{' '}

@@ -126,30 +126,30 @@ export function Sidebar({
       role="complementary"
       aria-label={title || 'Sidebar de detalhes'}
       sx={{
-        width: sidebarWidth,
+        width: { xs: '100vw', md: sidebarWidth },
         maxWidth: '100vw',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
-        // Position fixed para ficar fixo na tela independente do scroll
         position: 'fixed',
-        // Alinhado com o topo das tabs da ficha (breadcrumb ~48px + tabs ~48px + padding 24px)
-        top: 150,
-        // Posicionado à direita da ficha (ficha = 900px, sidebar = sidebarWidth, espaço entre = 24px)
-        // Cálculo: centro + metade da ficha + gap
+        // Mobile: comporta-se como modal fullscreen
+        top: { xs: 0, md: 150 },
         right: {
-          xs: 16,
+          xs: 0,
+          md: 16,
           lg: `calc((100vw - 900px) / 2 - ${sidebarWidth}px - 24px)`,
           xl: `calc((100vw - 900px) / 2 - ${sidebarWidth}px - 24px)`,
         },
         left: {
+          xs: 0,
           lg: `calc((100vw + 900px) / 2 + 24px)`,
           xl: `calc((100vw + 900px) / 2 + 24px)`,
         },
-        // Altura máxima: viewport - top offset - footer (~60px) - margens
-        maxHeight: 'calc(100vh - 220px)',
-        zIndex: 1000, // Acima do conteúdo mas abaixo de modais
-        overflow: 'hidden', // O scroll fica no conteúdo interno
+        // Mobile: altura total da tela
+        height: { xs: '100vh', md: 'auto' },
+        maxHeight: { xs: '100vh', md: 'calc(100vh - 220px)' },
+        zIndex: 1300, // Acima de tudo no mobile para comportar-se como modal
+        overflow: 'hidden',
       }}
     >
       {/* Header */}

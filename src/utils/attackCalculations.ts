@@ -39,7 +39,7 @@ export interface AttackRollCalculation {
   useName?: string;
   /** Se deve pegar o menor resultado (quando atributo = 0 ou modificadores negativos resultam em < 1 dado) */
   takeLowest: boolean;
-  /** Fórmula formatada (ex: "3d20+5" ou "2d20 (menor)+3") */
+  /** Fórmula formatada (ex: "3d20+5" ou "-2d20+3") */
   formula: string;
 }
 
@@ -150,7 +150,7 @@ export function calculateAttackRoll(
     }
 
     const modifierStr = attackBonus >= 0 ? `+${attackBonus}` : `${attackBonus}`;
-    const formula = `${finalDiceCount}d20${takeLowest ? ' (menor)' : ''}${modifierStr}`;
+    const formula = `${takeLowest ? '-' : ''}${finalDiceCount}d20${modifierStr}`;
 
     return {
       diceCount: finalDiceCount,
@@ -180,7 +180,7 @@ export function calculateAttackRoll(
     }
 
     const modifierStr = attackBonus >= 0 ? `+${attackBonus}` : `${attackBonus}`;
-    const formula = `${finalDiceCount}d20${takeLowest ? ' (menor)' : ''}${modifierStr}`;
+    const formula = `${takeLowest ? '-' : ''}${finalDiceCount}d20${modifierStr}`;
 
     return {
       diceCount: finalDiceCount,
@@ -289,9 +289,9 @@ export function calculateAttackRoll(
     useNumericModifiers +
     attackBonus;
 
-  // Formatar fórmula com "(menor)" quando aplicável
+  // Formatar fórmula com "-" quando aplicável
   const modifierStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
-  const formula = `${finalDiceCount}d20${takeLowest ? ' (menor)' : ''}${modifierStr}`;
+  const formula = `${takeLowest ? '-' : ''}${finalDiceCount}d20${modifierStr}`;
 
   return {
     diceCount: finalDiceCount,

@@ -26,7 +26,7 @@ import {
   Delete as DeleteIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import { v4 as uuidv4 } from 'uuid';
+import { uuidv4 } from '@/utils/uuid';
 import type { Character, AttributeName, Modifier } from '@/types';
 import type {
   SpellcastingSkillName,

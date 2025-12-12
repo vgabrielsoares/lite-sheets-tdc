@@ -18,7 +18,11 @@ import {
   ListItemText,
   Button,
 } from '@mui/material';
-import { Person as PersonIcon, Add as AddIcon } from '@mui/icons-material';
+import {
+  Person as PersonIcon,
+  Add as AddIcon,
+  HelpOutline as HelpIcon,
+} from '@mui/icons-material';
 
 /**
  * Item de navegação
@@ -45,6 +49,11 @@ const navItems: NavItem[] = [
     label: 'Nova Ficha',
     path: '/characters/new',
     icon: <AddIcon />,
+  },
+  {
+    label: 'Ajuda',
+    path: '/help',
+    icon: <HelpIcon />,
   },
 ];
 

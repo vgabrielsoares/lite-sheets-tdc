@@ -37,6 +37,7 @@ import AutoModeIcon from '@mui/icons-material/AutoMode';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import StarsIcon from '@mui/icons-material/Stars';
+import HistoryIcon from '@mui/icons-material/History';
 import {
   rollD20,
   rollDamageWithCritical,
@@ -432,9 +433,35 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <DialogTitle>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <AutoModeIcon color="secondary" />
-            <Typography variant="h6">Ataque Completo: {attackName}</Typography>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <AutoModeIcon color="primary" />
+              <Typography variant="h6">
+                Ataque Completo: {attackName}
+              </Typography>
+            </Stack>
+            <Tooltip title="Ver histórico de rolagens">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const fab = document.querySelector(
+                    '[aria-label="Abrir histórico de rolagens"]'
+                  ) as HTMLElement;
+                  if (fab) {
+                    fab.click();
+                  }
+                }}
+                sx={{ ml: 'auto' }}
+              >
+                <HistoryIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </DialogTitle>
 

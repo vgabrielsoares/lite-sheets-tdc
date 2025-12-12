@@ -58,6 +58,8 @@ export interface CombatTabProps {
  * Os componentes seguem o princípio DRY, reutilizando componentes
  * existentes de stats quando possível.
  *
+ * Memoizado para evitar re-renders desnecessários.
+ *
  * @example
  * ```tsx
  * <CombatTab
@@ -69,7 +71,7 @@ export interface CombatTabProps {
  * />
  * ```
  */
-export function CombatTab({
+export const CombatTab = React.memo(function CombatTab({
   character,
   onUpdate,
   onOpenHP,
@@ -390,4 +392,4 @@ export function CombatTab({
       </Stack>
     </Box>
   );
-}
+});

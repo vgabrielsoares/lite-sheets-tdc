@@ -107,7 +107,7 @@ export interface EditableNumberProps {
  * />
  * ```
  */
-export function EditableNumber({
+export const EditableNumber = React.memo(function EditableNumber({
   value,
   onChange,
   label,
@@ -317,4 +317,4 @@ export function EditableNumber({
       )}
     </Box>
   );
-}
+});

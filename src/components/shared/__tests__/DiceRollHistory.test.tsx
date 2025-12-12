@@ -30,6 +30,11 @@ jest.mock('@/utils/diceRoller', () => ({
 describe('DiceRollHistory', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRolls = []; // Reset mock rolls before each test
+    // Restore default mock implementation
+    (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockImplementation(
+      () => mockRolls
+    );
   });
 
   const mockRoll1: DiceRollResult = {
@@ -74,8 +79,6 @@ describe('DiceRollHistory', () => {
 
   describe('Estado Vazio', () => {
     it('deve exibir mensagem quando não há rolagens', () => {
-      mockRolls = [];
-
       render(<DiceRollHistory />);
 
       expect(screen.getByText(/nenhuma rolagem ainda/i)).toBeInTheDocument();
@@ -85,8 +88,6 @@ describe('DiceRollHistory', () => {
     });
 
     it('não deve exibir botão de limpar quando vazio', () => {
-      mockRolls = [];
-
       render(<DiceRollHistory />);
 
       expect(
@@ -337,9 +338,8 @@ describe('DiceRollHistory', () => {
         timestamp: new Date(`2024-12-08T10:${30 + i}:00`),
       }));
 
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue(
-        manyRolls.slice(0, 5)
-      );
+      // Update mockRolls so that size getter returns correct value
+      mockRolls = manyRolls;
 
       render(<DiceRollHistory maxEntries={5} />);
 
@@ -352,15 +352,18 @@ describe('DiceRollHistory', () => {
   });
 
   describe('Atualização Automática', () => {
-    it('deve atualizar histórico automaticamente', async () => {
+    beforeEach(() => {
       jest.useFakeTimers();
+    });
 
-      // Começa vazio
-      mockRolls = [];
+    afterEach(() => {
+      jest.useRealTimers();
+    });
 
+    it('deve atualizar histórico automaticamente', async () => {
       render(<DiceRollHistory />);
 
-      // Estado inicial vazio
+      // Initial state should be empty
       expect(screen.getByText(/nenhuma rolagem ainda/i)).toBeInTheDocument();
 
       // Simular adição de rolagem
@@ -375,8 +378,6 @@ describe('DiceRollHistory', () => {
           screen.queryByText(/nenhuma rolagem ainda/i)
         ).not.toBeInTheDocument();
       });
-
-      jest.useRealTimers();
     });
   });
 

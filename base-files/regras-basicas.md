@@ -31,7 +31,6 @@ Em casos de discordância, situações ambíguas ou procedimentos confusos, o na
 - **Inimigo:** Se refere a criaturas diretamente agressivas aos personagens, que podem ou não tentar um ataque.
 
 - **Atributos:** Os atributos de uma criatura dizem respeito a sua capacidade física e mental em uma medida separada por seis aspectos. Os atributos, naturalmente, podem ir de 0 a 5, sendo 1 equivalente à média de uma criatura humanoide normal.
-
   - **AGILIDADE** - A agilidade mede a destreza manual e física, reflexos, coordenação motora, flexibilidade e rapidez.
 
   - **CONSTITUIÇÃO** - A constituição mede a composição física de uma criatura, sua saúde e bem-estar, resistência.
@@ -57,7 +56,6 @@ Em casos de discordância, situações ambíguas ou procedimentos confusos, o na
 - **Modificador:** Os modificadores podem vir como um bônus ou uma penalidade, e geralmente afetam valores ou testes de uma criatura. O valor pode ser uma adição ou subtração pura (como -2 ou +2 em um ataque, por exemplo), ou uma adição e subtração de dados a serem rolados (como +2d20 ou -2d20). Caso o valor de um dado de teste fique menor que 1d20, o teste deverá ser feito como se o valor negativo fosse um bônus, mas o valor final é o menor. Por exemplo, se em um teste normal um jogador teria 1d20+5 e ele sofre uma penalidade de -2d20, o jogador deverá rolar 3d20+5 e usar o menor valor, dando um resultado como “17 12 8”, onde o resultado final seria 8+5, ou seja, 13. (Pode parecer que são muitos números, mas tudo já vai fazer sentido!)
 
 - **Nível de Dificuldade (ND):** O ND, ou Nível de Dificuldade, é o número alvo de resultado para se completar uma tarefa. Por exemplo, caso um teste tenha ND 15, o resultado final do teste feito pelo jogador deve ser maior ou igual a 15 para ter sucesso, caso contrário, é uma falha. A seguir, uma métrica básica dos ND:
-
   - <10 (Irrelevante)
   - 10 (Muito Fácil)
   - 15 (Fácil)
@@ -76,7 +74,6 @@ Em casos de discordância, situações ambíguas ou procedimentos confusos, o na
 - **Proficiência:** A proficiência, em termos de mecânica de jogo, é a habilidade de um personagem de usar algo da maneira que deve ser usada. Caso um jogador use um item ou habilidade sem ter a proficiência necessária, uma penalidade será aplicada em algum aspecto de jogo ou em testes.
 
 - **Alcance/Distância:** O alcance ou distância de algumas habilidades e efeitos são citados como títulos durante o livro. Eles são:
-
   - Pessoal (Só afeta o personagem)
   - Adjacente/Toque (1 metro, ou seja, o quadrado adjacente)
   - Curto (5 metros)
@@ -195,7 +192,7 @@ Cada proficiência tem um custo de acordo com sua quantidade de atributos. Prime
 | Atletismo     | Constituição | Sim   | -           | -            | -       |
 | Condução      | Agilidade    | Sim   | Sim         | Sim          | -       |
 | Destreza      | Agilidade    | Sim   | Sim         | Sim          | -       |
-| Determinação  | Presença     | -     | -           | -            | Sim     |
+| Determinação  | Mente        | -     | -           | -            | Sim     |
 | Enganação     | Influência   | -     | Sim         | -            | -       |
 | Estratégia    | Mente        | -     | -           | Sim          | -       |
 | Furtividade   | Agilidade    | Sim   | -           | -            | -       |

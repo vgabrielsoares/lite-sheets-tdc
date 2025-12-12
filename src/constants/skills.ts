@@ -169,7 +169,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   determinacao: {
     name: 'determinacao',
     label: 'Determinação',
-    keyAttribute: 'presenca',
+    keyAttribute: 'mente',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: false,

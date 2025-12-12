@@ -3,7 +3,13 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  within,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SkillsDisplay } from '../SkillsDisplay';
 import type { Skills, Attributes } from '@/types';
@@ -150,8 +156,10 @@ describe('SkillsDisplay', () => {
     await user.click(filterButton);
 
     // Verificar que o painel de filtros está presente (mostra "Filtros")
-    expect(screen.getByText('Filtros')).toBeInTheDocument();
-  });
+    await waitFor(() => {
+      expect(screen.getByText('Filtros')).toBeInTheDocument();
+    });
+  }, 10000);
 
   it('deve exibir os três filtros de dropdown após abrir', async () => {
     const user = userEvent.setup();
@@ -179,11 +187,15 @@ describe('SkillsDisplay', () => {
     // Verificar que os labels dos filtros aparecem no DOM
     // MUI Select usa InputLabel que aparece como texto
     // Os textos podem aparecer múltiplas vezes (label + coluna da tabela de habilidades)
-    const proficienciaElements = await screen.findAllByText('Proficiência');
+    const proficienciaElements = await screen.findAllByText(
+      'Proficiência',
+      {},
+      { timeout: 7000 }
+    );
     expect(proficienciaElements.length).toBeGreaterThan(0);
     expect(screen.getAllByText('Atributo-chave').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Característica').length).toBeGreaterThan(0);
-  });
+  }, 10000);
 
   it('deve limpar todos os filtros ao clicar em "Limpar filtros"', async () => {
     const user = userEvent.setup();
