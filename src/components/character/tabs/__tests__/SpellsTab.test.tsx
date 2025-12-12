@@ -1,0 +1,330 @@
+import React from 'react';
+import {
+  render,
+  screen,
+  fireEvent,
+  within,
+  waitFor,
+} from '@testing-library/react';
+import { SpellsTab } from '../SpellsTab';
+import { createDefaultCharacter } from '@/utils/characterFactory';
+import type { Character } from '@/types';
+import type { KnownSpell } from '@/types/spells';
+
+// Mock do hook useNotifications
+jest.mock('@/hooks/useNotifications', () => ({
+  useNotifications: () => ({
+    showSuccess: jest.fn(),
+    showError: jest.fn(),
+    showInfo: jest.fn(),
+    showWarning: jest.fn(),
+  }),
+}));
+
+// Mock do uuid
+jest.mock('@/utils/uuid', () => ({
+  uuidv4: () => 'mock-uuid-1234',
+  isNativeUUIDAvailable: () => false,
+  isValidUUID: () => true,
+  generateBulkUUIDs: (count: number) =>
+    Array.from({ length: count }, (_, i) => `mock-uuid-${i + 1}`),
+}));
+
+describe('SpellsTab', () => {
+  const mockSpells: KnownSpell[] = [
+    {
+      spellId: '1',
+      name: 'Bola de Fogo',
+      circle: 3,
+      matrix: 'arcana',
+      spellcastingSkill: 'arcano',
+      notes: 'Causa dano de fogo em área',
+    },
+    {
+      spellId: '2',
+      name: 'Cura Leve',
+      circle: 1,
+      matrix: 'natural',
+      spellcastingSkill: 'religiao',
+    },
+  ];
+
+  const mockCharacter: Character = (() => {
+    const base = createDefaultCharacter({
+      name: 'Gandalf',
+      playerName: 'Player 1',
+    });
+
+    return {
+      ...base,
+      level: 5,
+      attributes: {
+        agilidade: 2,
+        constituicao: 2,
+        forca: 1,
+        influencia: 3,
+        mente: 4,
+        presenca: 5,
+      },
+      combat: {
+        ...base.combat,
+        hp: {
+          max: 25,
+          current: 25,
+          temporary: 0,
+        },
+        pp: {
+          max: 10,
+          current: 10,
+          temporary: 0,
+        },
+      },
+      spellcasting: {
+        knownSpells: mockSpells,
+        maxKnownSpells: 10,
+        knownSpellsModifiers: 0,
+        spellcastingAbilities: [
+          {
+            id: 'ability-1',
+            skill: 'arcano',
+            attribute: 'presenca',
+            dcBonus: 0,
+            attackBonus: 0,
+          },
+        ],
+        masteredMatrices: ['arcana'],
+      },
+    };
+  })();
+
+  const mockOnUpdate = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should render SpellDashboard and SpellList', () => {
+    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
+
+    // Verifica se o dashboard está presente
+    expect(screen.getByText('Habilidades de Conjuração')).toBeInTheDocument();
+
+    // Verifica se a lista de feitiços está presente (múltiplas ocorrências possíveis)
+    const spellListHeadings = screen.getAllByText('Feitiços Conhecidos');
+    expect(spellListHeadings.length).toBeGreaterThan(0);
+  });
+
+  it('should display known spells in the list', () => {
+    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
+
+    // Verifica se os feitiços são exibidos
+    expect(screen.getByText('Bola de Fogo')).toBeInTheDocument();
+    expect(screen.getByText('Cura Leve')).toBeInTheDocument();
+  });
+
+  it('should open add spell dialog when clicking add button', async () => {
+    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
+
+    // Clica no botão adicionar
+    const addButtons = screen.getAllByRole('button', {
+      name: /adicionar feitiço/i,
+    });
+    // O primeiro botão é o da lista de feitiços
+    fireEvent.click(addButtons[addButtons.length - 1]);
+
+    // Verifica se o diálogo foi aberto
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      const dialogTitle = within(screen.getByRole('dialog')).getByText(
+        'Adicionar Feitiço'
+      );
+      expect(dialogTitle).toBeInTheDocument();
+    });
+  });
+
+  it('should add a new spell', async () => {
+    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
+
+    // Abre o diálogo
+    const addButtons = screen.getAllByRole('button', {
+      name: /adicionar feitiço/i,
+    });
+    fireEvent.click(addButtons[addButtons.length - 1]);
+
+    // Aguarda o diálogo abrir
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    // Preenche o formulário
+    const nameInput = screen.getByLabelText(/nome do feitiço/i);
+    fireEvent.change(nameInput, { target: { value: 'Raio Elétrico' } });
+
+    // Clica em adicionar
+    const submitButton = within(screen.getByRole('dialog')).getByRole(
+      'button',
+      {
+        name: /^adicionar$/i,
+      }
+    );
+    fireEvent.click(submitButton);
+
+    // Verifica se onUpdate foi chamado
+    await waitFor(() => {
+      expect(mockOnUpdate).toHaveBeenCalledWith({
+        spellcasting: expect.objectContaining({
+          knownSpells: expect.arrayContaining([
+            expect.objectContaining({
+              spellId: 'mock-uuid-1234',
+              name: 'Raio Elétrico',
+              circle: 1,
+              matrix: 'arcana',
+              spellcastingSkill: 'arcano',
+            }),
+          ]),
+        }),
+      });
+    });
+  });
+
+  it('should not add spell without name', async () => {
+    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
+
+    // Abre o diálogo
+    const addButtons = screen.getAllByRole('button', {
+      name: /adicionar feitiço/i,
+    });
+    fireEvent.click(addButtons[addButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    // Tenta adicionar sem nome
+    const submitButton = within(screen.getByRole('dialog')).getByRole(
+      'button',
+      {
+        name: /^adicionar$/i,
+      }
+    );
+    fireEvent.click(submitButton);
+
+    // Verifica que onUpdate não foi chamado
+    expect(mockOnUpdate).not.toHaveBeenCalled();
+  });
+
+  it('should edit an existing spell', async () => {
+    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
+
+    // Expande o acordeão
+    const thirdCircleAccordion = screen.getByText('3º Círculo');
+    fireEvent.click(thirdCircleAccordion);
+
+    // Aguarda aparecer
+    await waitFor(() => {
+      expect(screen.getByText('Bola de Fogo')).toBeInTheDocument();
+    });
+
+    // Clica no card do feitiço para abrir a sidebar (clica no título)
+    const spellTitle = screen.getByText('Bola de Fogo');
+    fireEvent.click(spellTitle);
+
+    // Aguarda a sidebar abrir
+    await waitFor(() => {
+      expect(screen.getByRole('complementary')).toBeInTheDocument();
+    });
+
+    // Edita o nome
+    const nameInput = screen.getByLabelText(/nome do feitiço/i);
+    fireEvent.change(nameInput, { target: { value: 'Bola de Fogo Maior' } });
+
+    // Aguarda o salvamento automático (debounced save)
+    await waitFor(
+      () => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+      },
+      { timeout: 2000 } // Aguarda até 2 segundos para o debounce (1s) + processamento
+    );
+  });
+
+  it('should delete a spell', async () => {
+    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
+
+    // Expande o acordeão do 3º círculo (onde está Bola de Fogo)
+    const thirdCircleAccordion = screen.getByText('3º Círculo');
+    fireEvent.click(thirdCircleAccordion);
+
+    // Clica no botão deletar
+    await waitFor(() => {
+      const deleteButtons = screen.getAllByRole('button', {
+        name: /remover feitiço/i,
+      });
+      fireEvent.click(deleteButtons[0]);
+    });
+
+    // Verifica se onUpdate foi chamado
+    await waitFor(() => {
+      expect(mockOnUpdate).toHaveBeenCalled();
+      const lastCall =
+        mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1][0];
+      // Verifica que um feitiço foi removido (de 2 para 1)
+      expect(lastCall.spellcasting.knownSpells).toHaveLength(1);
+    });
+  });
+
+  it('should handle empty spellcasting data gracefully', () => {
+    const characterWithoutSpells: Character = {
+      ...mockCharacter,
+      spellcasting: {
+        knownSpells: [],
+        maxKnownSpells: 10,
+        knownSpellsModifiers: 0,
+        spellcastingAbilities: [],
+        masteredMatrices: [],
+      },
+    };
+
+    render(
+      <SpellsTab character={characterWithoutSpells} onUpdate={mockOnUpdate} />
+    );
+
+    // Verifica que renderiza sem erros
+    expect(screen.getByText('Habilidades de Conjuração')).toBeInTheDocument();
+
+    const spellListHeadings = screen.getAllByText('Feitiços Conhecidos');
+    expect(spellListHeadings.length).toBeGreaterThan(0);
+
+    // Verifica empty state
+    expect(
+      screen.getByText(/nenhum feitiço conhecido ainda/i)
+    ).toBeInTheDocument();
+  });
+
+  it('should close dialog when clicking cancel', async () => {
+    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
+
+    // Abre o diálogo
+    const addButtons = screen.getAllByRole('button', {
+      name: /adicionar feitiço/i,
+    });
+    fireEvent.click(addButtons[addButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    // Clica em cancelar
+    const cancelButton = within(screen.getByRole('dialog')).getByRole(
+      'button',
+      {
+        name: /cancelar/i,
+      }
+    );
+    fireEvent.click(cancelButton);
+
+    // Verifica que o diálogo foi fechado
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+});
