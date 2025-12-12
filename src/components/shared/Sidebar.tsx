@@ -5,9 +5,10 @@ import { Box, Typography, IconButton, Paper, Divider } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
 const SIDEBAR_WIDTHS = {
-  sm: 320,
-  md: 480,
-  lg: 640,
+  sm: '20rem', // ~320px
+  md: '28rem', // ~448px
+  lg: '20rem', // ~320px (telas menores 1280-1919px)
+  xl: '28rem', // ~448px (1920px/1080p - ajustado para caber)
 } as const;
 
 export type SidebarWidth = keyof typeof SIDEBAR_WIDTHS;
@@ -35,7 +36,7 @@ export interface SidebarProps {
 
   /**
    * Largura da sidebar
-   * @default 'lg' (640px) - Padrão definido pela LinhagemSidebar
+   * @default 'lg' (28rem em 1080p via xl, 20rem em telas menores) - Padrão definido pela LinhagemSidebar
    */
   width?: SidebarWidth;
 
@@ -66,7 +67,7 @@ export interface SidebarProps {
  * - Header com título e botão de fechar
  * - Área de conteúdo com scroll customizado
  * - Padding padrão de 3 (24px) seguindo o padrão da LinhagemSidebar
- * - Largura padrão 'lg' (640px) seguindo o padrão da LinhagemSidebar
+ * - Largura padrão 'lg' (28rem em 1080p via breakpoint xl) seguindo o padrão da LinhagemSidebar
  * - Renderização inline (ao lado do conteúdo principal, não modal)
  * - Tratamento de tecla ESC para fechar
  *
@@ -118,36 +119,52 @@ export function Sidebar({
     return null;
   }
 
-  const sidebarWidth = SIDEBAR_WIDTHS[width];
-
   return (
     <Paper
       elevation={elevation}
       role="complementary"
       aria-label={title || 'Sidebar de detalhes'}
       sx={{
-        width: { xs: '100vw', md: sidebarWidth },
+        width: {
+          xs: '100vw',
+          md:
+            width === 'sm'
+              ? SIDEBAR_WIDTHS.sm
+              : width === 'md'
+                ? SIDEBAR_WIDTHS.md
+                : SIDEBAR_WIDTHS.lg,
+          lg:
+            width === 'sm'
+              ? SIDEBAR_WIDTHS.sm
+              : width === 'md'
+                ? SIDEBAR_WIDTHS.md
+                : SIDEBAR_WIDTHS.lg,
+          xl:
+            width === 'sm'
+              ? SIDEBAR_WIDTHS.sm
+              : width === 'md'
+                ? SIDEBAR_WIDTHS.md
+                : SIDEBAR_WIDTHS.xl,
+        },
         maxWidth: '100vw',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
         position: 'fixed',
         // Mobile: comporta-se como modal fullscreen
-        top: { xs: 0, md: 150 },
+        top: { xs: 0, md: '9.375rem' },
         right: {
           xs: 0,
-          md: 16,
-          lg: `calc((100vw - 900px) / 2 - ${sidebarWidth}px - 24px)`,
-          xl: `calc((100vw - 900px) / 2 - ${sidebarWidth}px - 24px)`,
+          md: '1rem',
         },
         left: {
           xs: 0,
-          lg: `calc((100vw + 900px) / 2 + 24px)`,
-          xl: `calc((100vw + 900px) / 2 + 24px)`,
+          lg: `calc((100vw + 56.25rem) / 2 + 1rem)`, // Posiciona após a ficha com 1rem de margem
+          xl: `calc((100vw + 56.25rem) / 2 + 1rem)`,
         },
         // Mobile: altura total da tela
         height: { xs: '100vh', md: 'auto' },
-        maxHeight: { xs: '100vh', md: 'calc(100vh - 220px)' },
+        maxHeight: { xs: '100vh', md: 'calc(100vh - 13.75rem)' },
         zIndex: 1300, // Acima de tudo no mobile para comportar-se como modal
         overflow: 'hidden',
       }}

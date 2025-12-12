@@ -3,12 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import AppLayout from '@/components/layout/AppLayout';
 import { CharacterSheet } from '@/components/character';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { useNotifications } from '@/hooks/useNotifications';
 import {
   selectCharacterById,
+  loadCharacterById,
   updateCharacter,
   clearError,
 } from '@/features/characters/charactersSlice';
@@ -36,25 +36,55 @@ export default function CharacterDetailClient({
 
   const character = useAppSelector((state) => selectCharacterById(state, id));
   const loading = useAppSelector((state) => state.characters.loading);
+  const error = useAppSelector((state) => state.characters.error);
 
   // Estado local para manter o personagem e evitar flash de loading
   const [loadedCharacter, setLoadedCharacter] = useState<Character | null>(
     null
   );
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [loadAttempted, setLoadAttempted] = useState(false);
 
-  // Atualiza o estado local quando o personagem muda APENAS se não estiver em loading
-  // Isso previne re-renders durante updates
+  // Carregar personagem do IndexedDB se não estiver no Redux (APENAS UMA VEZ)
   useEffect(() => {
-    if (character && !loading) {
+    // Se já temos o personagem no Redux, não precisa carregar
+    if (character) {
       setLoadedCharacter(character);
-      setIsInitialLoad(false);
-    } else if (character && isInitialLoad) {
-      // Primeira carga - sempre atualiza
-      setLoadedCharacter(character);
-      setIsInitialLoad(false);
+      setLoadAttempted(true);
+      return;
     }
-  }, [character, loading, isInitialLoad]);
+
+    // Se já tentamos carregar ou está carregando, não tenta novamente
+    if (loadAttempted || loading) {
+      return;
+    }
+
+    // Carregar do IndexedDB
+    setLoadAttempted(true);
+    dispatch(loadCharacterById(id))
+      .unwrap()
+      .catch((err) => {
+        console.error('❌ [CharacterDetail] Erro ao carregar:', err);
+      });
+  }, [character, id, dispatch, loadAttempted, loading]);
+
+  // Atualiza o estado local quando o personagem muda
+  useEffect(() => {
+    if (character) {
+      setLoadedCharacter(character);
+    }
+  }, [character]);
+
+  // Se não encontrou o personagem após carregar, redirecionar para home
+  useEffect(() => {
+    if (!loadedCharacter && loadAttempted && !loading) {
+      showError('Personagem não encontrado');
+      // Redirecionar para a home após 1 segundo
+      const timer = setTimeout(() => {
+        router.push('/');
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [loadedCharacter, loadAttempted, loading, router, showError]);
 
   /**
    * Atualiza os dados do personagem
@@ -64,13 +94,9 @@ export default function CharacterDetailClient({
     async (updates: Partial<Character>) => {
       if (!loadedCharacter) return;
 
-      console.log('🔄 handleUpdate CHAMADO com updates:', updates);
-
       try {
         // Limpa erros anteriores
         dispatch(clearError());
-
-        console.log('⏳ Disparando updateCharacter thunk...');
 
         // Atualiza o personagem
         await dispatch(
@@ -82,8 +108,6 @@ export default function CharacterDetailClient({
             },
           })
         ).unwrap();
-
-        console.log('✅ updateCharacter concluído com sucesso!');
 
         // Sucesso (opcional - pode remover se muito verboso)
         // showSuccess('Personagem atualizado com sucesso!');
@@ -103,53 +127,48 @@ export default function CharacterDetailClient({
     [loadedCharacter, dispatch, showError]
   );
 
-  // Loading state (apenas no carregamento inicial)
-  if (isInitialLoad && !loadedCharacter) {
+  // Loading state
+  if (!loadedCharacter && (loading || !loadAttempted)) {
     return (
-      <AppLayout maxWidth="xl">
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '60vh',
-            gap: 2,
-          }}
-        >
-          <CircularProgress />
-          <Typography>Carregando personagem...</Typography>
-        </Box>
-      </AppLayout>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          gap: 2,
+        }}
+      >
+        <CircularProgress />
+        <Typography>Carregando personagem...</Typography>
+      </Box>
     );
   }
 
   // Se não encontrou o personagem após carregar
-  if (!isInitialLoad && !loadedCharacter) {
+  if (!loadedCharacter && loadAttempted && !loading) {
     return (
-      <AppLayout maxWidth="xl">
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '60vh',
-            gap: 2,
-          }}
-        >
-          <Typography variant="h5">Personagem não encontrado</Typography>
-          <Typography color="text.secondary">
-            O personagem que você está procurando não existe.
-          </Typography>
-        </Box>
-      </AppLayout>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          gap: 2,
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="h5">Personagem não encontrado</Typography>
+        <Typography color="text.secondary">
+          Redirecionando para a página inicial...
+        </Typography>
+      </Box>
     );
   }
 
   return (
-    <AppLayout maxWidth={false}>
-      <CharacterSheet character={loadedCharacter!} onUpdate={handleUpdate} />
-    </AppLayout>
+    <CharacterSheet character={loadedCharacter!} onUpdate={handleUpdate} />
   );
 }
