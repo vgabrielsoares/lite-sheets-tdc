@@ -120,11 +120,6 @@ export function useCharacterCreation(): UseCharacterCreationReturn {
           addCharacter(newCharacter)
         ).unwrap();
 
-        // CRITICAL: Aguardar 100ms para garantir que a transação do IndexedDB
-        // foi completamente persistida antes de navegar.
-        // window.location.href pode cancelar operações I/O pendentes.
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
         // Salvar personagem criado (com ID real)
         setCreatedCharacter(savedCharacter);
 
@@ -133,10 +128,8 @@ export function useCharacterCreation(): UseCharacterCreationReturn {
 
         // Redirecionar para a visualização da ficha criada
         // USAR O ID RETORNADO PELO THUNK, NÃO O ID TEMPORÁRIO!
-        const targetUrl = `/characters?id=${savedCharacter.id}`;
-
-        // Usar window.location para garantir navegação sem cache
-        window.location.href = targetUrl;
+        // Usar router.push() que respeita o basePath do Next.js (GitHub Pages)
+        router.push(`/characters?id=${savedCharacter.id}`);
       } catch (err) {
         console.error('Erro ao criar personagem:', err);
         const errorMessage =
