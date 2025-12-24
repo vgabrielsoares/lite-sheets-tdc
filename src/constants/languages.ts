@@ -56,7 +56,7 @@ export const LANGUAGE_LABELS: Record<LanguageName, string> = {
  */
 export const LANGUAGE_DESCRIPTIONS: Record<LanguageName, string> = {
   comum:
-    'Idioma universal falado pela maioria das raças civilizadas. Todos os personagens conhecem este idioma.',
+    'Idioma universal falado pela maioria das espécies civilizadas. Todos os personagens conhecem este idioma.',
   primordial:
     'Idioma primordial, usado por criaturas mais antigas que o próprio tempo.',
   runico:
@@ -73,12 +73,12 @@ export const LANGUAGE_DESCRIPTIONS: Record<LanguageName, string> = {
   infernal:
     'Jahanami - Idioma dos habitantes dos planos infernais, cheio de particularidades.',
   glasnee:
-    "Oopar'neela - Idioma da raça Glasnee, perfeito para diplomacia, textos e assuntos acadêmicos.",
+    "Oopar'neela - Idioma da espécie Glasnee, perfeito para diplomacia, textos e assuntos acadêmicos.",
   orc: 'Meehun - Idioma dos orcs, direto e simples.',
   silvestre:
     'Zerleg - Idioma das criaturas das florestas selvagens, muito conhecido e disseminado.',
   goblinoide:
-    'Ururimi - Idioma dos goblins, hobgoblins e raças goblinóides relacionadas, podendo haver diferentes refinações.',
+    'Ururimi - Idioma dos goblins, hobgoblins e espécies goblinóides relacionadas, podendo haver diferentes refinações.',
 };
 
 /**
