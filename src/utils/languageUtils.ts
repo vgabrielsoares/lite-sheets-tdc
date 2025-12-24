@@ -35,16 +35,16 @@ export function getLineageLanguages(character: Character): LanguageName[] {
 }
 
 /**
- * Gets the total number of languages a character can know
- * This is the sum of Mente-based slots plus lineage bonuses
+ * Gets the total number of languages a character can know from Mente
+ * This does NOT include lineage languages, which are bonus extras
  *
  * @param character - The character
- * @returns Total allowed languages
+ * @returns Total allowed languages from Mente (includes Comum)
  */
 export function getMaxAllowedLanguages(character: Character): number {
   const baseSlots = getTotalLanguageSlots(character);
-  const lineageLanguages = getLineageLanguages(character);
-  return baseSlots + lineageLanguages.length;
+  // Lineage languages are bonus and don't count towards the Mente-based limit
+  return baseSlots;
 }
 
 /**
@@ -165,13 +165,17 @@ export function removeLanguage(
 
 /**
  * Gets available languages that can be selected
- * Excludes languages already known by the character
+ * Excludes languages already known by the character AND lineage languages
  *
  * @param character - The character
  * @returns Array of available language names
  */
 export function getAvailableLanguages(character: Character): LanguageName[] {
-  return LANGUAGE_LIST.filter((lang) => !character.languages.includes(lang));
+  const lineageLanguages = getLineageLanguages(character);
+  return LANGUAGE_LIST.filter(
+    (lang) =>
+      !character.languages.includes(lang) && !lineageLanguages.includes(lang)
+  );
 }
 
 /**
@@ -247,8 +251,14 @@ export function getLanguageSummary(character: Character): {
 } {
   const maxAllowed = getMaxAllowedLanguages(character);
   const total = character.languages.length;
+  const lineageLanguages = getLineageLanguages(character);
+  const fromLineage = lineageLanguages.length;
+
+  // fromMente is the limit from Mente attribute (Comum + Mente - 1)
   const fromMente = getTotalLanguageSlots(character);
-  const fromLineage = getLineageLanguages(character).length;
+
+  // Remaining slots are calculated from maxAllowed (Mente-based limit only)
+  // Lineage languages don't affect this calculation
   const remaining = Math.max(0, maxAllowed - total);
 
   return {
