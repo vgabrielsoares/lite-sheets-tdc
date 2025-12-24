@@ -11,7 +11,8 @@
 
 import type { DiceRoll } from '@/types/common';
 import type { Character, SkillName, AttributeName, Modifier } from '@/types';
-import { SKILL_PROFICIENCY_LEVELS } from '@/constants/skills';
+import { SKILL_PROFICIENCY_LEVELS, COMBAT_SKILLS } from '@/constants/skills';
+import { calculateSignatureAbilityBonus } from './calculations';
 
 /**
  * Tipo de resultado de ataque
@@ -179,12 +180,24 @@ export function calculateAttackRoll(
       finalDiceCount = realDiceCount;
     }
 
-    const modifierStr = attackBonus >= 0 ? `+${attackBonus}` : `${attackBonus}`;
+    // Bônus de assinatura (mesmo para proficiência leiga)
+    let signatureBonus = 0;
+    if (skill.isSignature) {
+      const isCombatSkill = COMBAT_SKILLS.includes(attackSkill);
+      signatureBonus = calculateSignatureAbilityBonus(
+        character.level,
+        isCombatSkill
+      );
+    }
+
+    const totalModifier = attackBonus + signatureBonus;
+    const modifierStr =
+      totalModifier >= 0 ? `+${totalModifier}` : `${totalModifier}`;
     const formula = `${takeLowest ? '-' : ''}${finalDiceCount}d20${modifierStr}`;
 
     return {
       diceCount: finalDiceCount,
-      modifier: attackBonus,
+      modifier: totalModifier,
       attribute: attr,
       skillName: attackSkill,
       takeLowest,
@@ -282,11 +295,22 @@ export function calculateAttackRoll(
     .filter((m) => !m.affectsDice)
     .reduce((sum, m) => sum + m.value, 0);
 
-  // 8. Modificador total (proficiência + modificadores skill + modificadores uso + bônus adicional)
+  // 8. Bônus de Habilidade de Assinatura
+  let signatureBonus = 0;
+  if (skill.isSignature) {
+    const isCombatSkill = COMBAT_SKILLS.includes(attackSkill);
+    signatureBonus = calculateSignatureAbilityBonus(
+      character.level,
+      isCombatSkill
+    );
+  }
+
+  // 9. Modificador total (proficiência + modificadores skill + modificadores uso + bônus assinatura + bônus adicional)
   const modifier =
     proficiencyModifier +
     skillNumericModifiers +
     useNumericModifiers +
+    signatureBonus +
     attackBonus;
 
   // Formatar fórmula com "-" quando aplicável
