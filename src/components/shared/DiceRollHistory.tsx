@@ -198,7 +198,7 @@ export function DiceRollHistory({
                   sx={{
                     borderLeft: result.isCritical
                       ? `4px solid ${theme.palette.warning.main}`
-                      : result.isCriticalFailure
+                      : result.isDisaster
                         ? `4px solid ${theme.palette.error.main}`
                         : 'none',
                   }}
@@ -224,7 +224,7 @@ export function DiceRollHistory({
                           color={
                             result.isCritical
                               ? 'warning'
-                              : result.isCriticalFailure
+                              : result.isDisaster
                                 ? 'error'
                                 : 'default'
                           }

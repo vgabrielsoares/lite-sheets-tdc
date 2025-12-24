@@ -96,27 +96,10 @@ export function DiceRollResult({
     (!nd || (result.finalResult >= nd && result.finalResult - nd <= 5));
 
   /**
-   * Detectar Desastre: 1 natural (1d20) OU mais da metade iguais (exceto 20)
-   * IMPORTANTE: NÃO se aplica a rolagens de dano
+   * Detectar Desastre: usar propriedade armazenada no resultado
+   * (já calculada durante a rolagem com a lógica correta)
    */
-  const isDisaster = (() => {
-    if (result.isDamageRoll) return false;
-    if (result.rolls.length === 1) {
-      return result.rolls[0] === 1;
-    }
-    const counts = new Map<number, number>();
-    result.rolls.forEach((roll) => {
-      if (roll !== 20) {
-        counts.set(roll, (counts.get(roll) || 0) + 1);
-      }
-    });
-    // "Mais da metade" = floor(length/2) + 1
-    // 2 dados: floor(2/2) + 1 = 2 (precisa ambos iguais)
-    // 3 dados: floor(3/2) + 1 = 2 (precisa 2 iguais)
-    // 4 dados: floor(4/2) + 1 = 3 (precisa 3 iguais)
-    const threshold = Math.floor(result.rolls.length / 2) + 1;
-    return Array.from(counts.values()).some((count) => count >= threshold);
-  })();
+  const isDisaster = result.isDisaster ?? false;
 
   /**
    * Determina a cor do resultado baseado em Triunfos/Desastres

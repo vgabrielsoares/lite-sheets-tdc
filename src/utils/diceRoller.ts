@@ -34,6 +34,8 @@ export interface DiceRollResult {
   isCritical?: boolean;
   /** Se houve falha crítica (1 natural) */
   isCriticalFailure?: boolean;
+  /** Se é desastre (1 natural OU mais da metade dos dados iguais, exceto 20) */
+  isDisaster?: boolean;
   /** Descrição do contexto da rolagem */
   context?: string;
   /** Se é rolagem de dano (não tem Triunfos/Desastres) */
@@ -41,6 +43,44 @@ export interface DiceRollResult {
 }
 
 export type RollType = 'normal' | 'advantage' | 'disadvantage';
+
+/**
+ * Detecta se uma rolagem é desastre
+ * Regras:
+ * - Rolagem de 1 único dado = 1: DESASTRE
+ * - Múltiplos dados: mais da metade iguais (exceto 20): DESASTRE
+ * - NÃO se aplica a rolagens de dano
+ *
+ * @param rolls - Array de valores rolados
+ * @param isDamageRoll - Se é rolagem de dano
+ * @returns true se é desastre, false caso contrário
+ */
+function detectDisaster(
+  rolls: number[],
+  isDamageRoll: boolean = false
+): boolean {
+  if (isDamageRoll) return false;
+
+  // Caso 1: Single d20 = 1
+  if (rolls.length === 1) {
+    return rolls[0] === 1;
+  }
+
+  // Caso 2: Múltiplos dados - mais da metade iguais (exceto 20)
+  const counts = new Map<number, number>();
+  rolls.forEach((roll) => {
+    if (roll !== 20) {
+      counts.set(roll, (counts.get(roll) || 0) + 1);
+    }
+  });
+
+  // "Mais da metade" = floor(length/2) + 1
+  // 2 dados: floor(2/2) + 1 = 2 (precisa ambos iguais)
+  // 3 dados: floor(3/2) + 1 = 2 (precisa 2 iguais)
+  // 4 dados: floor(4/2) + 1 = 3 (precisa 3 iguais)
+  const threshold = Math.floor(rolls.length / 2) + 1;
+  return Array.from(counts.values()).some((count) => count >= threshold);
+}
 
 /**
  * Rola dados d20 para testes de habilidade/atributo
@@ -99,6 +139,7 @@ function rollWithZeroAttribute(
     rollType: 'disadvantage', // Atributo 0 é sempre desvantagem
     isCritical: baseResult === 20,
     isCriticalFailure: baseResult === 1,
+    isDisaster: detectDisaster(rolls, false),
     context,
   };
 }
@@ -131,6 +172,7 @@ function rollWithNegativeDice(
     rollType: 'disadvantage',
     isCritical: baseResult === 20,
     isCriticalFailure: baseResult === 1,
+    isDisaster: detectDisaster(rolls, false),
     context,
   };
 }
@@ -161,6 +203,7 @@ function rollWithPositiveDice(
     rollType: 'normal',
     isCritical: baseResult === 20,
     isCriticalFailure: baseResult === 1,
+    isDisaster: detectDisaster(rolls, false),
     context,
   };
 }
@@ -208,6 +251,7 @@ export function rollDamage(
       rollType: 'normal',
       context,
       isDamageRoll: true,
+      isDisaster: false,
     };
   }
 
@@ -231,6 +275,7 @@ export function rollDamage(
     rollType: 'normal',
     context,
     isDamageRoll: true,
+    isDisaster: false,
   };
 }
 
@@ -270,6 +315,7 @@ export function rollDamageWithCritical(
       isCritical: true,
       context,
       isDamageRoll: true,
+      isDisaster: false,
     };
   }
 

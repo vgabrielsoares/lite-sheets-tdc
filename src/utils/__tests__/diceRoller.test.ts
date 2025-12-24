@@ -547,4 +547,178 @@ describe('Sistema de Rolagem de Dados', () => {
       expect(result.context).toBe('Dano de Espada');
     });
   });
+
+  describe('Detecção de Desastres', () => {
+    describe('Single d20 = 1', () => {
+      it('deve detectar desastre quando único d20 = 1', () => {
+        jest.spyOn(Math, 'random').mockReturnValue(0); // Rola 1
+
+        const result = rollD20(1, 0);
+
+        expect(result.rolls).toEqual([1]);
+        expect(result.isDisaster).toBe(true);
+        expect(result.isCriticalFailure).toBe(true);
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+
+      it('NÃO deve detectar desastre quando único d20 != 1', () => {
+        jest.spyOn(Math, 'random').mockReturnValue(0.5); // Rola 11
+
+        const result = rollD20(1, 0);
+
+        expect(result.rolls).toEqual([11]);
+        expect(result.isDisaster).toBe(false);
+        expect(result.isCriticalFailure).toBe(false);
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+    });
+
+    describe('Múltiplos dados - mais da metade iguais', () => {
+      it('deve detectar desastre com 2 dados iguais (2d20)', () => {
+        let callCount = 0;
+        const mockRolls = [7, 7]; // Ambos iguais
+        jest.spyOn(Math, 'random').mockImplementation(() => {
+          const value = (mockRolls[callCount] - 1) / 20;
+          callCount++;
+          return value;
+        });
+
+        const result = rollD20(2, 0);
+
+        expect(result.rolls).toEqual([7, 7]);
+        expect(result.isDisaster).toBe(true);
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+
+      it('deve detectar desastre com 2 de 3 dados iguais (3d20)', () => {
+        let callCount = 0;
+        const mockRolls = [10, 10, 5]; // 2 iguais de 3
+        jest.spyOn(Math, 'random').mockImplementation(() => {
+          const value = (mockRolls[callCount] - 1) / 20;
+          callCount++;
+          return value;
+        });
+
+        const result = rollD20(3, 0);
+
+        expect(result.rolls).toEqual([10, 10, 5]);
+        expect(result.isDisaster).toBe(true);
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+
+      it('deve detectar desastre com 3 de 4 dados iguais (4d20)', () => {
+        let callCount = 0;
+        const mockRolls = [8, 8, 8, 3]; // 3 iguais de 4
+        jest.spyOn(Math, 'random').mockImplementation(() => {
+          const value = (mockRolls[callCount] - 1) / 20;
+          callCount++;
+          return value;
+        });
+
+        const result = rollD20(4, 0);
+
+        expect(result.rolls).toEqual([8, 8, 8, 3]);
+        expect(result.isDisaster).toBe(true);
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+
+      it('NÃO deve detectar desastre com apenas 1 de 3 dados iguais', () => {
+        let callCount = 0;
+        const mockRolls = [10, 5, 3]; // Todos diferentes
+        jest.spyOn(Math, 'random').mockImplementation(() => {
+          const value = (mockRolls[callCount] - 1) / 20;
+          callCount++;
+          return value;
+        });
+
+        const result = rollD20(3, 0);
+
+        expect(result.rolls).toEqual([10, 5, 3]);
+        expect(result.isDisaster).toBe(false);
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+
+      it('NÃO deve detectar desastre quando os dados iguais são 20', () => {
+        let callCount = 0;
+        const mockRolls = [20, 20]; // Ambos 20
+        jest.spyOn(Math, 'random').mockImplementation(() => {
+          const value = (mockRolls[callCount] - 1) / 20;
+          callCount++;
+          return value;
+        });
+
+        const result = rollD20(2, 0);
+
+        expect(result.rolls).toEqual([20, 20]);
+        expect(result.isDisaster).toBe(false); // 20 não conta para desastre
+        expect(result.isCritical).toBe(true); // Mas é crítico
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+    });
+
+    describe('Atributo 0 e dados negativos', () => {
+      it('deve detectar desastre com atributo 0 (2d20, ambos iguais)', () => {
+        let callCount = 0;
+        const mockRolls = [5, 5];
+        jest.spyOn(Math, 'random').mockImplementation(() => {
+          const value = (mockRolls[callCount] - 1) / 20;
+          callCount++;
+          return value;
+        });
+
+        const result = rollD20(0, 0);
+
+        expect(result.rolls).toEqual([5, 5]);
+        expect(result.isDisaster).toBe(true);
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+
+      it('deve detectar desastre com -1d20 (3d20, 2+ iguais)', () => {
+        let callCount = 0;
+        const mockRolls = [12, 12, 8]; // 2 iguais
+        jest.spyOn(Math, 'random').mockImplementation(() => {
+          const value = (mockRolls[callCount] - 1) / 20;
+          callCount++;
+          return value;
+        });
+
+        const result = rollD20(-1, 0);
+
+        expect(result.rolls).toEqual([12, 12, 8]);
+        expect(result.isDisaster).toBe(true);
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+    });
+
+    describe('Rolagens de dano - NÃO devem ter desastres', () => {
+      it('NÃO deve marcar desastre em rolagem de dano', () => {
+        jest.spyOn(Math, 'random').mockReturnValue(0); // Todos os dados = 1
+
+        const result = rollDamage(3, 6, 0);
+
+        expect(result.rolls).toEqual([1, 1, 1]);
+        expect(result.isDisaster).toBe(false); // Dano não tem desastres
+        expect(result.isDamageRoll).toBe(true);
+
+        jest.spyOn(Math, 'random').mockRestore();
+      });
+
+      it('NÃO deve marcar desastre em dano crítico', () => {
+        const result = rollDamageWithCritical(2, 8, 3, true);
+
+        expect(result.isDisaster).toBe(false);
+        expect(result.isDamageRoll).toBe(true);
+        expect(result.isCritical).toBe(true);
+      });
+    });
+  });
 });
