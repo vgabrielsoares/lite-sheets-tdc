@@ -28,6 +28,7 @@ export interface SpellFiltersState {
   selectedCircles: SpellCircle[];
   selectedMatrices: SpellMatrix[];
   selectedSkills: string[];
+  selectedTags: string[];
 }
 
 export interface SpellFiltersProps {
@@ -58,6 +59,7 @@ export function SpellFilters({
     const circles = new Map<SpellCircle, number>();
     const matrices = new Map<SpellMatrix, number>();
     const skills = new Map<string, number>();
+    const tags = new Map<string, number>();
 
     spells.forEach((spell) => {
       // Círculos
@@ -71,6 +73,13 @@ export function SpellFilters({
         spell.spellcastingSkill,
         (skills.get(spell.spellcastingSkill) || 0) + 1
       );
+
+      // Tags
+      if (spell.tags) {
+        spell.tags.forEach((tag) => {
+          tags.set(tag, (tags.get(tag) || 0) + 1);
+        });
+      }
     });
 
     return {
@@ -89,6 +98,7 @@ export function SpellFilters({
           ] || b[0];
         return labelA.localeCompare(labelB);
       }),
+      tags: Array.from(tags.entries()).sort((a, b) => a[0].localeCompare(b[0])),
     };
   }, [spells]);
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,12 +134,21 @@ export function SpellFilters({
     });
   };
 
+  const handleTagChange = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value;
+    onFiltersChange({
+      ...filters,
+      selectedTags: typeof value === 'string' ? [] : value,
+    });
+  };
+
   const handleClearFilters = () => {
     onFiltersChange({
       searchQuery: '',
       selectedCircles: [],
       selectedMatrices: [],
       selectedSkills: [],
+      selectedTags: [],
     });
   };
 
@@ -137,7 +156,8 @@ export function SpellFilters({
     filters.searchQuery ||
     filters.selectedCircles.length > 0 ||
     filters.selectedMatrices.length > 0 ||
-    filters.selectedSkills.length > 0;
+    filters.selectedSkills.length > 0 ||
+    filters.selectedTags.length > 0;
 
   return (
     <Box>
@@ -264,6 +284,36 @@ export function SpellFilters({
                   </MenuItem>
                 );
               })}
+            </Select>
+          </FormControl>
+
+          {/* Filtro por tags */}
+          <FormControl size="small" sx={{ minWidth: 120, flex: 1 }}>
+            <InputLabel id="tag-filter-label">Tags</InputLabel>
+            <Select
+              labelId="tag-filter-label"
+              multiple
+              value={filters.selectedTags}
+              onChange={handleTagChange}
+              label="Tags"
+              disabled={availableOptions.tags.length === 0}
+              renderValue={(selected) =>
+                selected.length === 0 ? (
+                  <em>Todas</em>
+                ) : (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip key={value} label={value} size="small" />
+                    ))}
+                  </Box>
+                )
+              }
+            >
+              {availableOptions.tags.map(([tag, count]) => (
+                <MenuItem key={tag} value={tag}>
+                  {tag} ({count})
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Stack>
