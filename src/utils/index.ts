@@ -55,6 +55,13 @@ export {
   calculateCraftModifier,
 } from './calculations';
 
+// Color utilities
+export {
+  getRelativeLuminance,
+  getContrastColor,
+  getContrastRatio,
+} from './colorUtils';
+
 // Validation utilities
 export {
   isValidAttributeValue,
