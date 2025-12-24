@@ -61,6 +61,7 @@ import type {
 } from '@/types';
 import type { InventoryItem } from '@/types/inventory';
 import type { HealthPoints, PowerPoints } from '@/types/combat';
+import type { KnownSpell } from '@/types/spells';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
 
@@ -101,6 +102,7 @@ import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 import { ItemDetailsSidebar } from './inventory/ItemDetailsSidebar';
+import { SpellDetailsSidebar } from './spells/SpellDetailsSidebar';
 import { ConceptSidebar } from './sidebars/ConceptSidebar';
 import { NoteViewSidebar } from './sidebars/NoteViewSidebar';
 import { TableOfContents, TOCSection } from '@/components/shared';
@@ -195,6 +197,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
     | 'attribute'
     | 'skill'
     | 'item'
+    | 'spell'
     | 'concept'
     | 'note'
     | null
@@ -209,6 +212,9 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   // Item selecionado para a sidebar de detalhes
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  // Feitiço selecionado para a sidebar de detalhes
+  const [selectedSpell, setSelectedSpell] = useState<KnownSpell | null>(null);
 
   // Nota selecionada para a sidebar de visualização
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -489,6 +495,14 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Abre a sidebar de detalhes de um feitiço
+   */
+  const handleOpenSpellSidebar = (spell: KnownSpell) => {
+    setSelectedSpell(spell);
+    setActiveSidebar('spell');
+  };
+
+  /**
    * Abre a sidebar de conceito expandido
    */
   const handleOpenConceptSidebar = () => {
@@ -522,6 +536,26 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Handler para atualizar feitiço via sidebar
+   */
+  const handleUpdateSpellFromSidebar = (updatedSpell: KnownSpell) => {
+    if (!character.spellcasting) return;
+
+    const updatedSpells = character.spellcasting.knownSpells.map((spell) =>
+      spell.spellId === updatedSpell.spellId ? updatedSpell : spell
+    );
+
+    onUpdate({
+      spellcasting: {
+        ...character.spellcasting,
+        knownSpells: updatedSpells,
+      },
+    });
+    // Atualiza o feitiço selecionado para manter a sidebar sincronizada
+    setSelectedSpell(updatedSpell);
+  };
+
+  /**
    * Fecha qualquer sidebar aberta
    */
   const handleCloseSidebar = () => {
@@ -529,6 +563,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
     setSelectedAttribute(null);
     setSelectedSkill(null);
     setSelectedItem(null);
+    setSelectedSpell(null);
   };
 
   /**
@@ -955,6 +990,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenAttribute: handleOpenAttributeSidebar,
       onOpenSkill: handleOpenSkillSidebar,
       onOpenItem: handleOpenItemSidebar,
+      onOpenSpell: handleOpenSpellSidebar,
       onOpenConceptSidebar: handleOpenConceptSidebar,
       onOpenNote: handleOpenNoteSidebar,
       onSkillKeyAttributeChange: handleSkillKeyAttributeChange,
@@ -1279,6 +1315,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             />
           )}
 
+          {/* Sidebar de Detalhes de Feitiço */}
+          {activeSidebar === 'spell' && selectedSpell && (
+            <SpellDetailsSidebar
+              open={activeSidebar === 'spell'}
+              onClose={handleCloseSidebar}
+              spell={selectedSpell}
+              onSave={handleUpdateSpellFromSidebar}
+            />
+          )}
+
           {/* Sidebar de Conceito Expandido */}
           {activeSidebar === 'concept' && (
             <ConceptSidebar
@@ -1464,6 +1510,16 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           onClose={handleCloseSidebar}
           item={selectedItem}
           onUpdate={handleUpdateItemFromSidebar}
+        />
+      )}
+
+      {/* Sidebar de Detalhes de Feitiço em modo mobile (overlay) */}
+      {isMobile && activeSidebar === 'spell' && selectedSpell && (
+        <SpellDetailsSidebar
+          open={activeSidebar === 'spell'}
+          onClose={handleCloseSidebar}
+          spell={selectedSpell}
+          onSave={handleUpdateSpellFromSidebar}
         />
       )}
 

@@ -176,7 +176,7 @@ export function SpellDetailsSidebar({
   };
 
   return (
-    <Sidebar open={open} onClose={onClose} title="Editar Feitiço" width="md">
+    <Sidebar open={open} onClose={onClose} title="Editar Feitiço">
       <Stack spacing={3}>
         {/* Nome do Feitiço */}
         <TextField

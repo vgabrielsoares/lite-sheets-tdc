@@ -20,12 +20,7 @@ import {
 import { uuidv4 } from '@/utils/uuid';
 import type { Character, SkillName } from '@/types';
 import type { KnownSpell, SpellCircle, SpellMatrix } from '@/types/spells';
-import {
-  SpellDashboard,
-  SpellList,
-  SpellDetailsSidebar,
-  SpellLearningCalculator,
-} from '../spells';
+import { SpellDashboard, SpellList, SpellLearningCalculator } from '../spells';
 import {
   SPELL_CIRCLES,
   SPELL_MATRICES,
@@ -36,6 +31,8 @@ import { useNotifications } from '@/hooks/useNotifications';
 export interface SpellsTabProps {
   character: Character;
   onUpdate: (updates: Partial<Character>) => void;
+  /** Callback para abrir sidebar de detalhes de feitiço */
+  onOpenSpell?: (spell: KnownSpell) => void;
 }
 
 type SpellDialogMode = 'add' | 'edit' | 'view' | null;
@@ -57,11 +54,12 @@ type SpellDialogMode = 'add' | 'edit' | 'view' | null;
 export const SpellsTab = React.memo(function SpellsTab({
   character,
   onUpdate,
+  onOpenSpell,
 }: SpellsTabProps) {
   const { showSuccess, showError } = useNotifications();
   const [dialogMode, setDialogMode] = useState<SpellDialogMode>(null);
-  const [selectedSpell, setSelectedSpell] = useState<KnownSpell | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedSpellForDialog, setSelectedSpellForDialog] =
+    useState<KnownSpell | null>(null);
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -87,7 +85,7 @@ export const SpellsTab = React.memo(function SpellsTab({
 
   // Open edit dialog
   const handleOpenEditDialog = useCallback((spell: KnownSpell) => {
-    setSelectedSpell(spell);
+    setSelectedSpellForDialog(spell);
     setFormName(spell.name);
     setFormCircle(spell.circle);
     setFormMatrix(spell.matrix);
@@ -96,51 +94,12 @@ export const SpellsTab = React.memo(function SpellsTab({
     setDialogMode('edit');
   }, []);
 
-  // Open spell details sidebar
-  const handleOpenSpellSidebar = useCallback((spell: KnownSpell) => {
-    setSelectedSpell(spell);
-    setSidebarOpen(true);
-  }, []);
-
   // Close dialog
   const handleCloseDialog = useCallback(() => {
     setDialogMode(null);
-    setSelectedSpell(null);
+    setSelectedSpellForDialog(null);
     resetForm();
   }, [resetForm]);
-
-  // Close sidebar
-  const handleCloseSidebar = useCallback(() => {
-    setSidebarOpen(false);
-    setSelectedSpell(null);
-  }, []);
-
-  // Save spell from sidebar
-  const handleSaveSpellFromSidebar = useCallback(
-    (updatedSpell: KnownSpell) => {
-      if (!character.spellcasting) {
-        showError('Dados de conjuração não disponíveis');
-        return;
-      }
-
-      const updatedSpells = character.spellcasting.knownSpells.map((spell) =>
-        spell.spellId === updatedSpell.spellId ? updatedSpell : spell
-      );
-
-      onUpdate({
-        spellcasting: {
-          maxKnownSpells: character.spellcasting.maxKnownSpells,
-          knownSpellsModifiers: character.spellcasting.knownSpellsModifiers,
-          spellcastingAbilities: character.spellcasting.spellcastingAbilities,
-          masteredMatrices: character.spellcasting.masteredMatrices,
-          knownSpells: updatedSpells,
-        },
-      });
-
-      // Não mostra mensagem de sucesso para evitar spam com auto-save
-    },
-    [character, onUpdate, showError]
-  );
 
   // Add spell
   const handleAddSpell = useCallback(() => {
@@ -208,7 +167,7 @@ export const SpellsTab = React.memo(function SpellsTab({
 
   // Edit spell
   const handleEditSpell = useCallback(() => {
-    if (!selectedSpell || !formName.trim()) {
+    if (!selectedSpellForDialog || !formName.trim()) {
       showError('Nome do feitiço é obrigatório');
       return;
     }
@@ -219,12 +178,12 @@ export const SpellsTab = React.memo(function SpellsTab({
     }
 
     // Validar pré-requisito de círculo (se o círculo mudou)
-    if (formCircle !== selectedSpell.circle && formCircle > 1) {
+    if (formCircle !== selectedSpellForDialog.circle && formCircle > 1) {
       const previousCircle = (formCircle - 1) as SpellCircle;
       const hasPreviousCircleSpell = character.spellcasting.knownSpells.some(
         (spell) =>
           spell.circle === previousCircle &&
-          spell.spellId !== selectedSpell.spellId
+          spell.spellId !== selectedSpellForDialog.spellId
       );
 
       if (!hasPreviousCircleSpell) {
@@ -236,7 +195,7 @@ export const SpellsTab = React.memo(function SpellsTab({
     }
 
     const updatedSpells = character.spellcasting.knownSpells.map((spell) =>
-      spell.spellId === selectedSpell.spellId
+      spell.spellId === selectedSpellForDialog.spellId
         ? {
             ...spell,
             name: formName.trim(),
@@ -261,7 +220,7 @@ export const SpellsTab = React.memo(function SpellsTab({
     showSuccess(`Feitiço "${formName}" atualizado com sucesso`);
     handleCloseDialog();
   }, [
-    selectedSpell,
+    selectedSpellForDialog,
     formName,
     formCircle,
     formMatrix,
@@ -369,7 +328,7 @@ export const SpellsTab = React.memo(function SpellsTab({
       <Box id="section-spell-list">
         <SpellList
           spells={character.spellcasting?.knownSpells || []}
-          onOpenSpell={handleOpenSpellSidebar}
+          onOpenSpell={onOpenSpell}
           onDeleteSpell={handleDeleteSpell}
           onAddSpell={handleOpenAddDialog}
         />
@@ -475,15 +434,6 @@ export const SpellsTab = React.memo(function SpellsTab({
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Sidebar: Spell Details */}
-      <SpellDetailsSidebar
-        open={sidebarOpen}
-        onClose={handleCloseSidebar}
-        spell={selectedSpell}
-        onSave={handleSaveSpellFromSidebar}
-        initialMode="edit"
-      />
     </Box>
   );
 });
