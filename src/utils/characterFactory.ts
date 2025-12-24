@@ -14,7 +14,12 @@ import type {
 } from '@/types/character';
 import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName, Skill } from '@/types/skills';
-import type { CombatData, HealthPoints, PowerPoints } from '@/types/combat';
+import type {
+  CombatData,
+  HealthPoints,
+  PowerPoints,
+  Attack,
+} from '@/types/combat';
 import type {
   Inventory,
   InventoryItem,
@@ -95,6 +100,52 @@ function createDefaultPP(): PowerPoints {
 }
 
 /**
+ * Nome fixo do ataque desarmado (constante para comparações)
+ */
+export const UNARMED_ATTACK_NAME = 'Ataque Desarmado';
+
+/**
+ * Cria o ataque desarmado padrão
+ * Todos os personagens têm esse ataque por padrão
+ * - Usa Força e o uso "Atacar"
+ * - Crítico: 20/+1
+ * - Dano: 1d2 + Força
+ * - Não pode ser deletado
+ * - Nome não pode ser alterado
+ */
+function createUnarmedAttack(): Attack {
+  return {
+    name: UNARMED_ATTACK_NAME,
+    type: 'corpo-a-corpo',
+    attackSkill: 'luta',
+    attackSkillUseId: 'atacar',
+    attackAttribute: 'forca',
+    attackBonus: 0,
+    damageRoll: {
+      quantity: 1,
+      type: 'd2',
+      modifier: 0,
+    },
+    damageType: 'impacto',
+    criticalRange: 20,
+    criticalDamage: {
+      quantity: 1,
+      type: 'd2',
+      modifier: 0,
+    },
+    range: 'Adjacente/Toque (1m)',
+    description:
+      'Um ataque corpo a corpo desarmado usando punhos, chutes ou outras partes do corpo.',
+    ppCost: 0,
+    actionType: 'maior',
+    numberOfAttacks: 1,
+    addAttributeToDamage: true,
+    doubleAttributeDamage: false,
+    isDefaultAttack: true,
+  };
+}
+
+/**
  * Cria dados de combate padrão de nível 1
  */
 function createDefaultCombat(): CombatData {
@@ -127,7 +178,7 @@ function createDefaultCombat(): CombatData {
       modifiers: [],
       total: 2,
     },
-    attacks: [],
+    attacks: [createUnarmedAttack()],
     savingThrows: [
       {
         type: 'determinacao',

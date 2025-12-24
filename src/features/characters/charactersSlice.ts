@@ -50,17 +50,20 @@ function syncCharactersArray(state: CharactersState): void {
 
 /**
  * Thunk para carregar personagens do IndexedDB
+ * Aplica migração automática para garantir ataque desarmado em todos os personagens
  */
 export const loadCharacters = createAsyncThunk(
   'characters/loadCharacters',
   async () => {
     const characters = await characterService.getAll();
-    return characters;
+    // Aplicar migração para garantir ataque desarmado
+    return characters.map((char) => characterService.ensureUnarmedAttack(char));
   }
 );
 
 /**
  * Thunk para carregar um único personagem por ID do IndexedDB
+ * Aplica migração automática para garantir ataque desarmado
  */
 export const loadCharacterById = createAsyncThunk(
   'characters/loadCharacterById',
@@ -69,7 +72,8 @@ export const loadCharacterById = createAsyncThunk(
     if (!character) {
       throw new Error(`Personagem com ID ${characterId} não encontrado`);
     }
-    return character;
+    // Aplicar migração para garantir ataque desarmado
+    return characterService.ensureUnarmedAttack(character);
   }
 );
 
@@ -417,7 +421,7 @@ const charactersSlice = createSlice({
       const { id, updates } = action.payload;
       if (state.entities[id]) {
         const character = state.entities[id];
-        
+
         // Deep merge para skills (se presente)
         if (updates.skills) {
           character.skills = {

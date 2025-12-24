@@ -642,4 +642,66 @@ export const characterService = {
       );
     }
   },
+
+  /**
+   * Garante que um personagem tenha o ataque desarmado padrão
+   * Se não tiver, adiciona-o aos ataques
+   *
+   * @param character Personagem a verificar
+   * @returns Personagem com ataque desarmado garantido
+   */
+  ensureUnarmedAttack(character: Character): Character {
+    const UNARMED_ATTACK_NAME = 'Ataque Desarmado';
+
+    // Verificar se já tem o ataque desarmado
+    const hasUnarmed = character.combat?.attacks?.some(
+      (a) => a.name === UNARMED_ATTACK_NAME || a.isDefaultAttack
+    );
+
+    if (hasUnarmed) {
+      return character;
+    }
+
+    // Criar ataque desarmado
+    const unarmedAttack = {
+      name: UNARMED_ATTACK_NAME,
+      type: 'corpo-a-corpo' as const,
+      attackSkill: 'luta' as const,
+      attackSkillUseId: 'atacar',
+      attackAttribute: 'forca' as const,
+      attackBonus: 0,
+      damageRoll: {
+        quantity: 1,
+        type: 'd2' as const,
+        modifier: 0,
+      },
+      damageType: 'impacto' as const,
+      criticalRange: 20,
+      criticalDamage: {
+        quantity: 1,
+        type: 'd2' as const,
+        modifier: 0,
+      },
+      range: 'Adjacente/Toque (1m)',
+      description:
+        'Um ataque corpo a corpo desarmado usando punhos, chutes ou outras partes do corpo.',
+      ppCost: 0,
+      actionType: 'maior' as const,
+      numberOfAttacks: 1,
+      addAttributeToDamage: true,
+      doubleAttributeDamage: false,
+      isDefaultAttack: true,
+    };
+
+    // Garantir que combat.attacks existe
+    const attacks = character.combat?.attacks || [];
+
+    return {
+      ...character,
+      combat: {
+        ...character.combat,
+        attacks: [unarmedAttack, ...attacks],
+      },
+    };
+  },
 };
