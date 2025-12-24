@@ -170,6 +170,14 @@ export interface Attack {
   ppCost?: number;
   /** Tipo de ação necessária */
   actionType: ActionType;
+  /** Número de ataques (padrão: 1) */
+  numberOfAttacks?: number;
+  /** Se adiciona o modificador de atributo ao dano (padrão: true) */
+  addAttributeToDamage?: boolean;
+  /** Se adiciona o dobro do atributo ao dano (padrão: false, só funciona se addAttributeToDamage for true) */
+  doubleAttributeDamage?: boolean;
+  /** Se é um ataque padrão do sistema (como Ataque Desarmado) - não pode ser deletado */
+  isDefaultAttack?: boolean;
 }
 
 /**

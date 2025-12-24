@@ -19,6 +19,9 @@ import {
   InputAdornment,
   Divider,
   Alert,
+  Switch,
+  FormControlLabel,
+  Collapse,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -152,6 +155,10 @@ const DEFAULT_ATTACK: Attack = {
   description: '',
   ppCost: 0,
   actionType: 'maior',
+  numberOfAttacks: 1,
+  addAttributeToDamage: true,
+  doubleAttributeDamage: false,
+  isDefaultAttack: false,
 };
 
 /**
@@ -389,8 +396,13 @@ export function AttackForm({
             placeholder="Ex: Espada Longa, Bola de Fogo, Arco Longo"
             error={attack.name.trim().length === 0}
             helperText={
-              attack.name.trim().length === 0 ? 'Nome é obrigatório' : undefined
+              attack.isDefaultAttack
+                ? 'Ataque padrão do sistema - nome não pode ser alterado'
+                : attack.name.trim().length === 0
+                  ? 'Nome é obrigatório'
+                  : undefined
             }
+            disabled={attack.isDefaultAttack}
           />
 
           {/* Tipo de ataque e Tipo de ação */}
@@ -821,6 +833,70 @@ export function AttackForm({
               ))}
             </Select>
           </FormControl>
+
+          {/* Número de ataques */}
+          <TextField
+            label="Número de Ataques"
+            type="number"
+            value={attack.numberOfAttacks ?? 1}
+            onChange={(e) =>
+              updateField(
+                'numberOfAttacks',
+                Math.max(1, parseInt(e.target.value) || 1)
+              )
+            }
+            inputProps={{ min: 1 }}
+            fullWidth
+            helperText="Quantidade de ataques realizados com esta ação"
+          />
+
+          {/* Switch: Adicionar modificador de atributo ao dano */}
+          <Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={attack.addAttributeToDamage ?? true}
+                  onChange={(e) =>
+                    updateField('addAttributeToDamage', e.target.checked)
+                  }
+                  color="primary"
+                />
+              }
+              label="Adicionar modificador de atributo ao dano"
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', ml: 7 }}
+            >
+              Soma o valor do atributo usado no ataque ao dano
+            </Typography>
+
+            {/* Switch secundário: Dobrar atributo no dano (só aparece se o primeiro estiver ativo) */}
+            <Collapse in={attack.addAttributeToDamage ?? true}>
+              <Box sx={{ ml: 4, mt: 1 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={attack.doubleAttributeDamage ?? false}
+                      onChange={(e) =>
+                        updateField('doubleAttributeDamage', e.target.checked)
+                      }
+                      color="secondary"
+                    />
+                  }
+                  label="Adicionar o dobro do atributo"
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', ml: 7 }}
+                >
+                  Soma o dobro do valor do atributo ao dano (ao invés de 1x)
+                </Typography>
+              </Box>
+            </Collapse>
+          </Box>
 
           <Divider>
             <Typography variant="caption" color="text.secondary">

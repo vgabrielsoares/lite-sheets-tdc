@@ -81,7 +81,44 @@ const createMockCharacter = (
     combat: {
       attacks: [],
       conditions: [],
-    },
+      hp: { max: 15, current: 15, temporary: 0 },
+      pp: { max: 2, current: 2, temporary: 0 },
+      state: 'normal',
+      dyingState: { isDying: false, currentRounds: 0, maxRounds: 3 },
+      actionEconomy: {
+        majorAction: true,
+        minorAction1: true,
+        minorAction2: true,
+        reaction: true,
+        defensiveReaction: true,
+      },
+      defense: {
+        base: 15,
+        armorBonus: 0,
+        shieldBonus: 0,
+        otherBonuses: [],
+        total: 15,
+      },
+      ppLimit: { base: 2, modifiers: [], total: 2 },
+      savingThrows: [],
+      resistances: {
+        damageReduction: [],
+        damageResistances: [],
+        damageImmunities: [],
+        damageVulnerabilities: [],
+        conditionImmunities: [],
+      },
+      initiative: { modifier: 0 },
+      penalties: {
+        defensePenalty: 0,
+        savingThrowPenalties: {
+          determinacao: 0,
+          reflexo: 0,
+          tenacidade: 0,
+          vigor: 0,
+        },
+      },
+    } as any,
     spells: {
       knownSpells: [],
       preparedSpells: [],
@@ -121,7 +158,7 @@ const createMockCharacter = (
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
-  } as Character;
+  } as unknown as Character;
 };
 
 describe('attackCalculations', () => {
