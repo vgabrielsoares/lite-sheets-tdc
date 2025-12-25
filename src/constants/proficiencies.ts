@@ -140,3 +140,116 @@ export const TOOL_CATEGORY_LABELS: Record<ToolCategory, string> = {
   habilidade: 'Instrumentos de Habilidade',
   musical: 'Instrumentos Musicais',
 };
+
+/**
+ * Proficiências Padrão - Sistema de Adição Rápida
+ *
+ * Organiza todas as proficiências padrão do sistema por categoria,
+ * permitindo que jogadores as adicionem rapidamente com um clique.
+ */
+
+/**
+ * Proficiências com Armas (weapons)
+ */
+export const STANDARD_WEAPON_PROFICIENCIES = [
+  'Armas Simples',
+  'Armas Marciais',
+  'Armas Complexas',
+  'Armas Pesadas',
+] as const;
+
+/**
+ * Proficiências com Proteções (armor)
+ */
+export const STANDARD_ARMOR_PROFICIENCIES = [
+  'Armaduras Leves',
+  'Armaduras Médias',
+  'Armaduras Pesadas',
+  'Escudos',
+] as const;
+
+/**
+ * Proficiências com Veículos e Montarias (other)
+ */
+export const STANDARD_VEHICLE_PROFICIENCIES = [
+  'Montarias',
+  'Veículos Aéreos',
+  'Veículos Aquáticos',
+  'Veículos Terrestres',
+] as const;
+
+/**
+ * Proficiências com Itens Mágicos (other)
+ */
+export const STANDARD_MAGICAL_ITEM_PROFICIENCIES = [
+  'Artefatos Mágicos',
+  'Pergaminhos de Feitiço',
+] as const;
+
+/**
+ * Instrumentos de Habilidade (tools)
+ */
+export const STANDARD_SKILL_TOOLS = [
+  'Instrumentos de Arte',
+  'Instrumentos de Condução',
+  'Instrumentos de Curandeiro',
+  'Instrumentos de Destreza',
+  'Instrumentos de Enganação',
+  'Instrumentos de Escalada',
+  'Instrumentos de Herbalismo',
+  'Instrumentos de Jogatina',
+  'Instrumentos de Navegação',
+  'Instrumentos de Veneno',
+] as const;
+
+/**
+ * Instrumentos de Ofício (tools)
+ */
+export const STANDARD_CRAFT_TOOLS = [
+  'Instrumentos de Alquimia',
+  'Instrumentos de Artífice',
+  'Instrumentos de Caligrafia',
+  'Instrumentos de Carpintaria',
+  'Instrumentos de Cartografia',
+  'Instrumentos de Cervejeiro',
+  'Instrumentos de Costura',
+  'Instrumentos de Coureiro',
+  'Instrumentos de Cozinha',
+  'Instrumentos de Escultura',
+  'Instrumentos de Ferreiro',
+  'Instrumentos de Funilaria',
+  'Instrumentos de Joalheria',
+  'Instrumentos de Olaria',
+  'Instrumentos de Pedreiro',
+  'Instrumentos de Pesca',
+  'Instrumentos de Pintura',
+  'Instrumentos de Sapataria',
+  'Instrumentos de Vidraria',
+] as const;
+
+/**
+ * Todas as proficiências padrão organizadas por categoria da interface
+ */
+export const STANDARD_PROFICIENCIES = {
+  weapons: STANDARD_WEAPON_PROFICIENCIES,
+  armor: STANDARD_ARMOR_PROFICIENCIES,
+  tools: [...STANDARD_SKILL_TOOLS, ...STANDARD_CRAFT_TOOLS],
+  other: [
+    ...STANDARD_VEHICLE_PROFICIENCIES,
+    ...STANDARD_MAGICAL_ITEM_PROFICIENCIES,
+  ],
+} as const;
+
+/**
+ * Subcategorias para organização visual no componente
+ */
+export const PROFICIENCY_SUBCATEGORIES = {
+  tools: [
+    { label: 'Ferramentas de Habilidade', items: STANDARD_SKILL_TOOLS },
+    { label: 'Ferramentas de Ofício', items: STANDARD_CRAFT_TOOLS },
+  ],
+  other: [
+    { label: 'Veículos e Montarias', items: STANDARD_VEHICLE_PROFICIENCIES },
+    { label: 'Itens Mágicos', items: STANDARD_MAGICAL_ITEM_PROFICIENCIES },
+  ],
+} as const;
