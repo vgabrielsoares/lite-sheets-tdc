@@ -178,7 +178,7 @@ describe('LanguagesDisplay', () => {
       expect(screen.getByText(/Alfabeto: Comum/)).toBeInTheDocument();
       expect(
         screen.getByText(
-          /Idioma universal falado pela maioria das raças civilizadas/
+          /Idioma universal falado pela maioria das espécies civilizadas/
         )
       ).toBeInTheDocument();
     });

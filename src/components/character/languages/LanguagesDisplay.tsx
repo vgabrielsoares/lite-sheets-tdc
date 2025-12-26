@@ -135,7 +135,7 @@ export const LanguagesDisplay = memo(function LanguagesDisplay({
             <Typography variant="h6" component="h3">
               Idiomas Conhecidos
             </Typography>
-            <Tooltip title="Idiomas que o personagem conhece. Comum é sempre conhecido. Idiomas adicionais = Mente - 1.">
+            <Tooltip title="Idiomas que o personagem conhece. Comum é sempre conhecido. Idiomas adicionais = Mente - 1. Idiomas da linhagem são bônus extras e não contam no limite.">
               <InfoIcon fontSize="small" color="action" />
             </Tooltip>
           </Box>
@@ -143,6 +143,9 @@ export const LanguagesDisplay = memo(function LanguagesDisplay({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body2" color="text.secondary">
               {summary.total} / {summary.maxAllowed}
+              {summary.fromLineage > 0
+                ? ` (+${summary.fromLineage} da linhagem)`
+                : ''}
             </Typography>
             <IconButton
               size="small"

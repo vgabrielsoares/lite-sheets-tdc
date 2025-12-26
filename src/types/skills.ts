@@ -230,7 +230,7 @@ export const SKILL_DESCRIPTIONS: Record<SkillName, string> = {
   furtividade: 'Capacidade de se mover silenciosamente e sem ser detectado.',
   historia: 'Conhecimento sobre eventos históricos e culturas antigas.',
   iniciativa: 'Velocidade de reação no início do combate.',
-  instrucao: 'Capacidade de ensinar e transmitir conhecimento.',
+  instrucao: 'Repertório de estudo e conhecimento acadêmico.',
   intimidacao: 'Capacidade de ameaçar e intimidar outros.',
   investigacao: 'Capacidade de encontrar pistas e resolver mistérios.',
   luta: 'Capacidade de combate corpo a corpo desarmado ou com armas.',
@@ -244,10 +244,10 @@ export const SKILL_DESCRIPTIONS: Record<SkillName, string> = {
   rastreamento: 'Capacidade de seguir rastros e encontrar criaturas.',
   reflexo: 'Capacidade de reagir rapidamente a perigos.',
   religiao: 'Conhecimento sobre divindades, religiões e rituais.',
-  sobrevivencia: 'Capacidade de sobreviver em ambientes hostis.',
+  sobrevivencia: 'Capacidade de sobreviver em ambientes selvagens.',
   sociedade: 'Conhecimento sobre etiqueta, política e estruturas sociais.',
   sorte: 'Favor do destino e capacidade de alterar probabilidades.',
-  tenacidade: 'Resistência física a dano e efeitos prejudiciais.',
+  tenacidade: 'Resistência física, usada recuperar equilíbrio ou manter a postura.',
   vigor: 'Resistência a doenças, venenos e efeitos físicos.',
 } as const;
 

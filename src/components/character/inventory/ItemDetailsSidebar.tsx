@@ -371,19 +371,14 @@ export function ItemDetailsSidebar({
   // Não renderiza se não há item
   if (!localItem) {
     return (
-      <Sidebar
-        open={open}
-        onClose={onClose}
-        title="Detalhes do Item"
-        width="md"
-      >
+      <Sidebar open={open} onClose={onClose} title="Detalhes do Item">
         <Alert severity="warning">Nenhum item selecionado</Alert>
       </Sidebar>
     );
   }
 
   return (
-    <Sidebar open={open} onClose={onClose} title="Detalhes do Item" width="md">
+    <Sidebar open={open} onClose={onClose} title="Detalhes do Item">
       <Stack spacing={3}>
         {/* Informações Básicas */}
         <Box>

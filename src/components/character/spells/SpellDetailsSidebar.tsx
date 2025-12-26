@@ -13,9 +13,14 @@ import {
   MenuItem,
   Chip,
   Alert,
+  IconButton,
   SelectChangeEvent,
 } from '@mui/material';
-import { AutoAwesome as MagicIcon } from '@mui/icons-material';
+import {
+  AutoAwesome as MagicIcon,
+  Add as AddIcon,
+  Label as LabelIcon,
+} from '@mui/icons-material';
 import { Sidebar } from '@/components/shared/Sidebar';
 import type { KnownSpell, SpellCircle, SpellMatrix } from '@/types/spells';
 import type { SkillName } from '@/types/skills';
@@ -91,6 +96,7 @@ export function SpellDetailsSidebar({
 }: SpellDetailsSidebarProps): React.ReactElement | null {
   const [mode] = useState<'view' | 'edit'>('edit'); // Sempre em modo edit
   const [editedSpell, setEditedSpell] = useState<KnownSpell | null>(spell);
+  const [newTag, setNewTag] = useState('');
 
   // Reset state quando o feitiço muda
   useEffect(() => {
@@ -103,13 +109,21 @@ export function SpellDetailsSidebar({
   // Auto-save quando o feitiço debounced muda
   useEffect(() => {
     if (debouncedSpell && mode === 'edit' && spell) {
+      // Comparar tags (arrays precisam de comparação profunda)
+      const originalTags = spell.tags || [];
+      const editedTags = debouncedSpell.tags || [];
+      const tagsChanged =
+        originalTags.length !== editedTags.length ||
+        originalTags.some((tag, idx) => tag !== editedTags[idx]);
+
       // Só salva se houver mudanças
       const hasChanges =
         debouncedSpell.name !== spell.name ||
         debouncedSpell.circle !== spell.circle ||
         debouncedSpell.matrix !== spell.matrix ||
         debouncedSpell.spellcastingSkill !== spell.spellcastingSkill ||
-        debouncedSpell.notes !== spell.notes;
+        debouncedSpell.notes !== spell.notes ||
+        tagsChanged;
 
       if (hasChanges && debouncedSpell.name.trim()) {
         onSave(debouncedSpell);
@@ -160,6 +174,51 @@ export function SpellDetailsSidebar({
     []
   );
 
+  /**
+   * Adiciona nova tag
+   */
+  const handleAddTag = useCallback(() => {
+    if (!editedSpell || !newTag.trim()) return;
+
+    const currentTags = editedSpell.tags || [];
+    if (!currentTags.includes(newTag.trim())) {
+      setEditedSpell({
+        ...editedSpell,
+        tags: [...currentTags, newTag.trim()],
+      });
+    }
+    setNewTag('');
+  }, [editedSpell, newTag]);
+
+  /**
+   * Handler para adicionar tag ao pressionar Enter
+   */
+  const handleTagKeyPress = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAddTag();
+      }
+    },
+    [handleAddTag]
+  );
+
+  /**
+   * Remove tag
+   */
+  const handleRemoveTag = useCallback(
+    (tagToRemove: string) => {
+      if (!editedSpell) return;
+
+      const currentTags = editedSpell.tags || [];
+      setEditedSpell({
+        ...editedSpell,
+        tags: currentTags.filter((tag) => tag !== tagToRemove),
+      });
+    },
+    [editedSpell]
+  );
+
   if (!spell || !editedSpell) {
     return null;
   }
@@ -176,7 +235,7 @@ export function SpellDetailsSidebar({
   };
 
   return (
-    <Sidebar open={open} onClose={onClose} title="Editar Feitiço" width="md">
+    <Sidebar open={open} onClose={onClose} title="Editar Feitiço">
       <Stack spacing={3}>
         {/* Nome do Feitiço */}
         <TextField
@@ -278,6 +337,66 @@ export function SpellDetailsSidebar({
               </Select>
             </FormControl>
           </Stack>
+        </Box>
+
+        <Divider />
+
+        {/* Tags */}
+        <Box>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ mb: 2 }}
+          >
+            <Typography variant="subtitle1" fontWeight="bold">
+              Tags de Organização
+            </Typography>
+            <LabelIcon fontSize="small" color="action" />
+          </Stack>
+
+          {/* Input para adicionar tag */}
+          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+            <TextField
+              label="Nova tag"
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              onKeyPress={handleTagKeyPress}
+              size="small"
+              fullWidth
+              placeholder="Ex: Buff, Dano, Controle, Util..."
+            />
+            <IconButton
+              size="small"
+              onClick={handleAddTag}
+              disabled={!newTag.trim()}
+              color="primary"
+            >
+              <AddIcon />
+            </IconButton>
+          </Stack>
+
+          {/* Lista de tags */}
+          {editedSpell.tags && editedSpell.tags.length > 0 ? (
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {editedSpell.tags.map((tag) => (
+                <Chip
+                  key={tag}
+                  label={tag}
+                  onDelete={() => handleRemoveTag(tag)}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                  sx={{ borderRadius: 2 }}
+                />
+              ))}
+            </Stack>
+          ) : (
+            <Alert severity="info" sx={{ fontSize: '0.875rem' }}>
+              Nenhuma tag adicionada. Use tags para organizar seus feitiços (ex:
+              Dano, Buff, Controle, Cura, Utilário).
+            </Alert>
+          )}
         </Box>
 
         <Divider />

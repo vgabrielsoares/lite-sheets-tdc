@@ -50,6 +50,7 @@ export function SpellList({
     selectedCircles: [],
     selectedMatrices: [],
     selectedSkills: [],
+    selectedTags: [],
   });
 
   const [expandedCircles, setExpandedCircles] = useState<Set<SpellCircle>>(
@@ -88,6 +89,13 @@ export function SpellList({
     if (filters.selectedSkills.length > 0) {
       filtered = filtered.filter((spell) =>
         filters.selectedSkills.includes(spell.spellcastingSkill)
+      );
+    }
+
+    // Filtro por tags
+    if (filters.selectedTags.length > 0) {
+      filtered = filtered.filter((spell) =>
+        spell.tags?.some((tag) => filters.selectedTags.includes(tag))
       );
     }
 

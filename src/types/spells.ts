@@ -112,6 +112,8 @@ export interface KnownSpell {
   spellcastingSkill: SkillName;
   /** Anotações personalizadas do jogador */
   notes?: string;
+  /** Tags para organização */
+  tags?: string[];
 }
 
 /**

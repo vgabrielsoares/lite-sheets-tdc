@@ -13,7 +13,10 @@ export {
 } from './uuid';
 
 // Character factory
-export { createDefaultCharacter } from './characterFactory';
+export {
+  createDefaultCharacter,
+  UNARMED_ATTACK_NAME,
+} from './characterFactory';
 
 // Dice rolling utilities
 export {
@@ -51,6 +54,13 @@ export {
   getCraftMultiplier,
   calculateCraftModifier,
 } from './calculations';
+
+// Color utilities
+export {
+  getRelativeLuminance,
+  getContrastColor,
+  getContrastRatio,
+} from './colorUtils';
 
 // Validation utilities
 export {

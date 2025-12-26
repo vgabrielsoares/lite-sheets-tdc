@@ -192,3 +192,28 @@ export const SPELL_LEARNING_MAX_CHANCE = 99;
  * Usado na fórmula: 12 + Presença + Habilidade + Bônus
  */
 export const SPELL_BASE_DC = 12;
+
+/**
+ * Cores para as Habilidades de Conjuração
+ */
+export const SPELLCASTING_SKILL_COLORS: Record<SpellcastingSkill, string> = {
+  arcano: '#2196F3', // Azul
+  natureza: '#4CAF50', // Verde
+  religiao: '#FFD700', // Amarelo/Dourado
+};
+
+/**
+ * Cores para as Matrizes de Feitiço
+ */
+export const SPELL_MATRIX_COLORS: Record<SpellMatrix, string> = {
+  arcana: '#2196F3', // Azul
+  adiafana: '#424242', // Cinza Escuro
+  gnomica: '#9C27B0', // Roxo
+  mundana: '#9E9E9E', // Cinza
+  natural: '#81C784', // Verde claro
+  elfica: '#2E7D32', // Verde escuro
+  ana: '#FF9800', // Laranja
+  primordial: '#FFF59D', // Amarelo claro
+  luzidia: '#FFD700', // Amarelo dourado
+  infernal: '#FF6B6B', // Vermelho goiaba
+};

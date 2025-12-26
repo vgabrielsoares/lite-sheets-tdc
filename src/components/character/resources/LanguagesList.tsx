@@ -59,18 +59,15 @@ export function LanguagesList({
   );
 
   // Calcular limite de idiomas: Comum + (Mente - 1) + Modificador Extra
+  // NOTA: Idiomas da linhagem NÃO contam no limite (são bônus separados)
   const baseLimit = 1 + Math.max(0, menteValue - 1);
   const maxLanguages = baseLimit + extraLanguagesModifier;
   const currentCount = languages.length;
   const canAddMore = currentCount < maxLanguages;
 
-  // Idiomas disponíveis para adicionar (excluindo já conhecidos e da linhagem)
-  const allKnownLanguages = useMemo(
-    () => [...new Set([...languages, ...lineageLanguages])],
-    [languages, lineageLanguages]
-  );
+  // Idiomas disponíveis para adicionar (excluindo já conhecidos E da linhagem)
   const availableLanguages = LANGUAGE_LIST.filter(
-    (lang) => !allKnownLanguages.includes(lang)
+    (lang) => !languages.includes(lang) && !lineageLanguages.includes(lang)
   );
 
   const handleAddLanguage = () => {
@@ -106,10 +103,20 @@ export function LanguagesList({
               {maxLanguages}
               <br />
               <em>
-                Base: Mente ({menteValue}) - 1 = {Math.max(0, menteValue - 1)}{' '}
+                Base: Comum (1) + Mente ({menteValue}) - 1 ={' '}
+                {Math.max(0, menteValue - 1)} idiomas adicionais
                 {extraLanguagesModifier !== 0 &&
-                  `+ Modificador (${extraLanguagesModifier}) = ${baseLimit + extraLanguagesModifier - 1}`}
+                  ` + Modificador (${extraLanguagesModifier})`}
               </em>
+              {lineageLanguages.length > 0 && (
+                <>
+                  <br />
+                  <em>
+                    Idiomas da linhagem ({lineageLanguages.length}) são bônus e
+                    não contam no limite acima.
+                  </em>
+                </>
+              )}
             </Typography>
           </Alert>
 

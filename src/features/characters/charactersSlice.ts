@@ -50,17 +50,20 @@ function syncCharactersArray(state: CharactersState): void {
 
 /**
  * Thunk para carregar personagens do IndexedDB
+ * Aplica migração automática para garantir ataque desarmado em todos os personagens
  */
 export const loadCharacters = createAsyncThunk(
   'characters/loadCharacters',
   async () => {
     const characters = await characterService.getAll();
-    return characters;
+    // Aplicar migração para garantir ataque desarmado
+    return characters.map((char) => characterService.ensureUnarmedAttack(char));
   }
 );
 
 /**
  * Thunk para carregar um único personagem por ID do IndexedDB
+ * Aplica migração automática para garantir ataque desarmado
  */
 export const loadCharacterById = createAsyncThunk(
   'characters/loadCharacterById',
@@ -69,7 +72,8 @@ export const loadCharacterById = createAsyncThunk(
     if (!character) {
       throw new Error(`Personagem com ID ${characterId} não encontrado`);
     }
-    return character;
+    // Aplicar migração para garantir ataque desarmado
+    return characterService.ensureUnarmedAttack(character);
   }
 );
 
@@ -102,13 +106,8 @@ export const updateCharacter = createAsyncThunk(
     { id, updates }: { id: string; updates: Partial<Character> },
     { getState }
   ) => {
-    console.log('🔧 updateCharacter thunk iniciado para ID:', id);
-    console.log('🔧 Updates recebidos:', JSON.stringify(updates, null, 2));
-
     // Verificar se o personagem existe no IndexedDB
     let existingCharacter = await characterService.getById(id);
-
-    console.log('🔧 Personagem encontrado no IndexedDB:', !!existingCharacter);
 
     // Se não existir no IndexedDB mas existir no Redux, restaurar primeiro
     if (!existingCharacter) {
@@ -116,8 +115,6 @@ export const updateCharacter = createAsyncThunk(
       const reduxCharacter = state.characters.entities[id] as
         | Character
         | undefined;
-
-      console.log('🔧 Personagem encontrado no Redux:', !!reduxCharacter);
 
       if (reduxCharacter) {
         console.warn(
@@ -148,9 +145,7 @@ export const updateCharacter = createAsyncThunk(
     }
 
     // Agora atualizar normalmente
-    console.log('🔧 Atualizando personagem no IndexedDB...');
     await characterService.update(id, updates);
-    console.log('🔧 Personagem atualizado com sucesso!');
     return { id, updates };
   }
 );
@@ -425,8 +420,21 @@ const charactersSlice = createSlice({
       state.loading = false;
       const { id, updates } = action.payload;
       if (state.entities[id]) {
-        // Atualizar apenas os campos modificados, mantendo a mesma referência
-        Object.assign(state.entities[id], updates);
+        const character = state.entities[id];
+
+        // Deep merge para skills (se presente)
+        if (updates.skills) {
+          character.skills = {
+            ...character.skills,
+            ...updates.skills,
+          };
+          // Remove skills das updates para não fazer merge duplo
+          const { skills, ...otherUpdates } = updates;
+          Object.assign(character, otherUpdates);
+        } else {
+          // Atualizar apenas os campos modificados, mantendo a mesma referência
+          Object.assign(character, updates);
+        }
         state.error = null;
       } else {
         state.error = `Personagem com ID ${id} não encontrado`;

@@ -141,12 +141,47 @@ export function AttackRow({
   );
   const attackRollStr = attackRollCalc.formula;
 
-  // Formatar rolagem de dano
+  // Calcular modificador de atributo para o dano
+  const attackAttributeKey =
+    attack.attackAttribute ||
+    character.skills[attack.attackSkill]?.keyAttribute ||
+    'forca';
+  const attributeValue = character.attributes[attackAttributeKey] || 0;
+
+  // Calcular bônus de atributo no dano
+  const attributeDamageBonus =
+    (attack.addAttributeToDamage ?? true)
+      ? attack.doubleAttributeDamage
+        ? attributeValue * 2
+        : attributeValue
+      : 0;
+
+  // Modificador total de dano (inclui modificador base + atributo)
+  const totalDamageModifier = attack.damageRoll.modifier + attributeDamageBonus;
+
+  // Formatar rolagem de dano com modificador total
   const damageRollStr = formatDiceRoll(
     attack.damageRoll.quantity,
     attack.damageRoll.type,
-    attack.damageRoll.modifier
+    totalDamageModifier
   );
+
+  // Número de ataques
+  const numberOfAttacks = attack.numberOfAttacks ?? 1;
+
+  // Rolagem de dano com modificador de atributo incluído
+  const damageRollWithAttribute = {
+    ...attack.damageRoll,
+    modifier: totalDamageModifier,
+  };
+
+  // Dano crítico com modificador de atributo incluído
+  const criticalDamageWithAttribute = attack.criticalDamage
+    ? {
+        ...attack.criticalDamage,
+        modifier: attack.criticalDamage.modifier + attributeDamageBonus,
+      }
+    : { quantity: 1, type: 'd6' as const, modifier: attributeDamageBonus };
 
   // Cor baseada no tipo de ataque
   const typeColor =
@@ -204,6 +239,15 @@ export function AttackRow({
           noWrap
         >
           {attack.name}
+          {numberOfAttacks > 1 && (
+            <Typography
+              component="span"
+              variant="caption"
+              sx={{ ml: 1, color: 'text.secondary' }}
+            >
+              (×{numberOfAttacks})
+            </Typography>
+          )}
         </Typography>
 
         {/* Info rápida - Ataque */}
@@ -244,11 +288,9 @@ export function AttackRow({
         {/* Botão de rolagem de dano */}
         <DamageRollButton
           attackName={attack.name}
-          damageRoll={attack.damageRoll}
+          damageRoll={damageRollWithAttribute}
           damageType={attack.damageType}
-          criticalDamage={
-            attack.criticalDamage ?? { quantity: 1, type: 'd6', modifier: 0 }
-          }
+          criticalDamage={criticalDamageWithAttribute}
           size="small"
           color="error"
         />
@@ -257,12 +299,10 @@ export function AttackRow({
         <CombinedAttackButton
           attackName={attack.name}
           attackBonus={attack.attackBonus}
-          damageRoll={attack.damageRoll}
+          damageRoll={damageRollWithAttribute}
           damageType={attack.damageType}
           criticalRange={attack.criticalRange ?? 20}
-          criticalDamage={
-            attack.criticalDamage ?? { quantity: 1, type: 'd6', modifier: 0 }
-          }
+          criticalDamage={criticalDamageWithAttribute}
           character={character}
           attackSkill={attack.attackSkill}
           attackSkillUseId={attack.attackSkillUseId}
@@ -354,8 +394,9 @@ export function AttackRow({
                   </Typography>
                   <DamageRollButton
                     attackName={attack.name}
-                    damageRoll={attack.damageRoll}
+                    damageRoll={damageRollWithAttribute}
                     damageType={attack.damageType}
+                    criticalDamage={criticalDamageWithAttribute}
                     size="small"
                     color="error"
                   />
@@ -394,16 +435,10 @@ export function AttackRow({
                 <CombinedAttackButton
                   attackName={attack.name}
                   attackBonus={attack.attackBonus}
-                  damageRoll={attack.damageRoll}
+                  damageRoll={damageRollWithAttribute}
                   damageType={attack.damageType}
                   criticalRange={attack.criticalRange ?? 20}
-                  criticalDamage={
-                    attack.criticalDamage ?? {
-                      quantity: 1,
-                      type: 'd6',
-                      modifier: 0,
-                    }
-                  }
+                  criticalDamage={criticalDamageWithAttribute}
                   character={character}
                   attackSkill={attack.attackSkill}
                   attackSkillUseId={attack.attackSkillUseId}
@@ -456,17 +491,28 @@ export function AttackRow({
               >
                 <EditIcon fontSize="small" />
               </IconButton>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(attack.name);
-                }}
-                color="error"
-                aria-label={`Remover ${attack.name}`}
+              <Tooltip
+                title={
+                  attack.isDefaultAttack
+                    ? 'Ataque padrão do sistema não pode ser removido'
+                    : `Remover ${attack.name}`
+                }
               >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(attack.name);
+                    }}
+                    color="error"
+                    aria-label={`Remover ${attack.name}`}
+                    disabled={attack.isDefaultAttack}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
             </Box>
           </Stack>
         </Box>

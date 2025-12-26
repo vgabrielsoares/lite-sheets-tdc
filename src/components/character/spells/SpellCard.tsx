@@ -17,7 +17,10 @@ import {
   SPELL_CIRCLE_PP_COST,
   SPELL_COMPONENT_ABBREVIATIONS,
   SPELLCASTING_SKILL_LABELS,
+  SPELL_MATRIX_COLORS,
+  SPELLCASTING_SKILL_COLORS,
 } from '@/constants/spells';
+import { getContrastColor } from '@/utils';
 
 export interface SpellCardProps {
   spell: KnownSpell;
@@ -139,8 +142,18 @@ export function SpellCard({ spell, onClick, onDelete }: SpellCardProps) {
                 <Chip
                   label={matrixLabel}
                   size="small"
-                  variant="outlined"
-                  sx={{ fontSize: '0.65rem', height: 18 }}
+                  variant="filled"
+                  sx={{
+                    fontSize: '0.65rem',
+                    height: 18,
+                    backgroundColor: SPELL_MATRIX_COLORS[spell.matrix],
+                    color: getContrastColor(SPELL_MATRIX_COLORS[spell.matrix]),
+                    fontWeight: 600,
+                    '&:hover': {
+                      backgroundColor: SPELL_MATRIX_COLORS[spell.matrix],
+                      filter: 'brightness(0.9)',
+                    },
+                  }}
                 />
               </Tooltip>
 
@@ -149,14 +162,57 @@ export function SpellCard({ spell, onClick, onDelete }: SpellCardProps) {
                 <Chip
                   label={skillLabel}
                   size="small"
-                  variant="outlined"
+                  variant="filled"
                   sx={{
                     fontSize: '0.65rem',
                     height: 18,
+                    backgroundColor:
+                      SPELLCASTING_SKILL_COLORS[
+                        spell.spellcastingSkill as keyof typeof SPELLCASTING_SKILL_COLORS
+                      ] || '#757575',
+                    color: getContrastColor(
+                      SPELLCASTING_SKILL_COLORS[
+                        spell.spellcastingSkill as keyof typeof SPELLCASTING_SKILL_COLORS
+                      ] || '#757575'
+                    ),
+                    fontWeight: 600,
+                    '&:hover': {
+                      backgroundColor:
+                        SPELLCASTING_SKILL_COLORS[
+                          spell.spellcastingSkill as keyof typeof SPELLCASTING_SKILL_COLORS
+                        ] || '#757575',
+                      filter: 'brightness(0.9)',
+                    },
                   }}
                 />
               </Tooltip>
             </Box>
+
+            {/* Tags (se houver) */}
+            {spell.tags && spell.tags.length > 0 && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 0.5,
+                  mt: 1,
+                }}
+              >
+                {spell.tags.map((tag) => (
+                  <Chip
+                    key={tag}
+                    label={tag}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      fontSize: '0.65rem',
+                      height: 16,
+                      borderRadius: 2,
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
 
             {/* Anotações (se houver) */}
             {spell.notes && (

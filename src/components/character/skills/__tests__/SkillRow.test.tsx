@@ -1,10 +1,12 @@
 /**
  * Testes para SkillRow
+ *
+ * O SkillRow agora exibe valores estáticos (Chips) para atributo-chave
+ * e proficiência. A edição desses valores é feita apenas na sidebar.
  */
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { SkillRow } from '../SkillRow';
 import type { Skill, Attributes } from '@/types';
 
@@ -35,8 +37,6 @@ const mockSignatureSkill: Skill = {
 };
 
 describe('SkillRow', () => {
-  const mockOnKeyAttributeChange = jest.fn();
-  const mockOnProficiencyChange = jest.fn();
   const mockOnClick = jest.fn();
 
   beforeEach(() => {
@@ -50,8 +50,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
@@ -66,8 +64,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
@@ -77,21 +73,19 @@ describe('SkillRow', () => {
     expect(agiElements.length).toBeGreaterThan(0);
   });
 
-  it('deve exibir a proficiência selecionada', () => {
+  it('deve exibir a proficiência selecionada (abreviada)', () => {
     render(
       <SkillRow
         skill={mockSkill}
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
 
-    // Verificar que a proficiência correta está exibida
-    expect(screen.getByText('Versado')).toBeInTheDocument();
+    // Verificar que a proficiência correta está exibida (abreviada para "Ver")
+    expect(screen.getByText('Ver')).toBeInTheDocument();
   });
 
   it('deve calcular e exibir o modificador total corretamente', () => {
@@ -101,8 +95,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
@@ -119,8 +111,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
@@ -137,8 +127,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
@@ -152,42 +140,35 @@ describe('SkillRow', () => {
     }
   });
 
-  it('deve renderizar corretamente com callback de alteração de atributo', () => {
+  it('deve exibir o chip de atributo-chave', () => {
     render(
       <SkillRow
         skill={mockSkill}
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
 
-    const attributeSelect = screen.getByLabelText(
-      /Atributo-chave para Acrobacia/i
-    );
-    expect(attributeSelect).toBeInTheDocument();
-    expect(mockOnKeyAttributeChange).not.toHaveBeenCalled();
+    // Verificar que o chip de atributo está visível
+    const agiChips = screen.getAllByText('AGI');
+    expect(agiChips.length).toBeGreaterThan(0);
   });
 
-  it('deve renderizar corretamente com callback de alteração de proficiência', () => {
+  it('deve exibir o chip de proficiência', () => {
     render(
       <SkillRow
         skill={mockSkill}
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
 
-    // Verifica que a proficiência está exibida
-    expect(screen.getByText('Versado')).toBeInTheDocument();
-    expect(mockOnProficiencyChange).not.toHaveBeenCalled();
+    // Verifica que a proficiência está exibida como chip (abreviada)
+    expect(screen.getByText('Ver')).toBeInTheDocument();
   });
 
   it('deve exibir ícone de estrela quando é Habilidade de Assinatura', () => {
@@ -197,8 +178,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={5}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
@@ -215,8 +194,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={5}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
@@ -233,8 +210,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={true} // Sobrecarregado
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
@@ -256,8 +231,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );
@@ -280,8 +253,6 @@ describe('SkillRow', () => {
         attributes={mockAttributes}
         characterLevel={1}
         isOverloaded={false}
-        onKeyAttributeChange={mockOnKeyAttributeChange}
-        onProficiencyChange={mockOnProficiencyChange}
         onClick={mockOnClick}
       />
     );

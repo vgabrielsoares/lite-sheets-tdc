@@ -67,8 +67,14 @@ import type {
   Attributes,
   AttributeName,
   Modifier,
+  ProficiencyLevel,
 } from '@/types';
-import { SKILL_LABELS, ATTRIBUTE_LABELS, SKILL_METADATA } from '@/constants';
+import {
+  SKILL_LABELS,
+  ATTRIBUTE_LABELS,
+  SKILL_METADATA,
+  SKILL_PROFICIENCY_LABELS,
+} from '@/constants';
 import { SKILL_DESCRIPTIONS } from '@/types/skills';
 import { ATTRIBUTE_LIST } from '@/constants/attributes';
 import {
@@ -87,6 +93,13 @@ import {
 import { calculateSignatureAbilityBonus, getCraftMultiplier } from '@/utils';
 import { COMBAT_SKILLS } from '@/constants/skills';
 
+/** Lista ordenada de níveis de proficiência para selects */
+const PROFICIENCY_LEVEL_LIST: ProficiencyLevel[] = [
+  'leigo',
+  'adepto',
+  'versado',
+  'mestre',
+];
 export interface SkillUsageSidebarProps {
   /** Controla se a sidebar está aberta */
   open: boolean;
@@ -130,6 +143,27 @@ export interface SkillUsageSidebarProps {
   ) => void;
   /** Sentidos aguçados da linhagem (para usos de Percepção: Farejar, Observar, Ouvir) */
   keenSenses?: import('@/types').KeenSense[];
+  /** Callback quando atributo-chave principal da habilidade é alterado */
+  onUpdateKeyAttribute?: (
+    skillName: SkillName,
+    keyAttribute: AttributeName
+  ) => void;
+  /** Callback quando nível de proficiência da habilidade é alterado */
+  onUpdateProficiency?: (
+    skillName: SkillName,
+    proficiencyLevel: import('@/types').ProficiencyLevel
+  ) => void;
+  /** Dados de sorte do personagem (apenas para habilidade "sorte") */
+  luck?: import('@/types').LuckLevel;
+  /** Callback quando nível de sorte é alterado */
+  onLuckLevelChange?: (level: number) => void;
+  /** Callback quando modificadores de sorte são alterados */
+  onLuckModifiersChange?: (
+    diceModifier: number,
+    numericModifier: number
+  ) => void;
+  /** Callback quando o ofício ativo é alterado */
+  onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
 }
 
 interface EditingUse extends Partial<SkillUse> {
@@ -155,6 +189,12 @@ export function SkillUsageSidebar({
   crafts = [],
   onUpdateCraft,
   keenSenses = [],
+  onUpdateKeyAttribute,
+  onUpdateProficiency,
+  luck,
+  onLuckLevelChange,
+  onLuckModifiersChange,
+  onSelectedCraftChange,
 }: SkillUsageSidebarProps) {
   const [editingUse, setEditingUse] = useState<EditingUse | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -1234,21 +1274,191 @@ export function SkillUsageSidebar({
       width="lg"
     >
       <Stack spacing={3}>
-        {/* Informações da Habilidade Base */}
         <Box>
-          <Typography variant="h6" gutterBottom fontWeight={600}>
-            {SKILL_LABELS[skill.name]}
-          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              {SKILL_LABELS[skill.name]}
+            </Typography>
+            <Tooltip
+              title="Usos customizados permitem criar variações desta habilidade com atributos-chave e bônus diferentes para situações específicas."
+              enterDelay={150}
+            >
+              <IconButton size="small" sx={{ color: 'info.main' }}>
+                <InfoIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
           <Typography variant="body2" color="text.secondary" paragraph>
             {SKILL_DESCRIPTIONS[skill.name]}
           </Typography>
+        </Box>
 
-          <Alert severity="info" icon={<InfoIcon />}>
-            <Typography variant="caption">
-              Usos customizados permitem criar variações desta habilidade com
-              atributos-chave e bônus diferentes para situações específicas.
-            </Typography>
-          </Alert>
+        <Divider />
+
+        {/* Configuração da Habilidade - Adaptada por tipo */}
+        <Box>
+          <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+            Configuração da Habilidade
+          </Typography>
+
+          {/* Configuração especial para SORTE */}
+          {skill.name === 'sorte' && (
+            <>
+              <Typography variant="caption" color="text.secondary" paragraph>
+                Sorte é uma habilidade especial que usa níveis ao invés de
+                proficiência. Cada nível determina quantos dados são rolados e
+                qual bônus é aplicado.
+              </Typography>
+              <FormControl fullWidth size="small">
+                <InputLabel>Nível de Sorte</InputLabel>
+                <Select
+                  value={luck?.level ?? 0}
+                  onChange={(e) => {
+                    if (onLuckLevelChange) {
+                      onLuckLevelChange(Number(e.target.value));
+                    }
+                  }}
+                  label="Nível de Sorte"
+                  disabled={!onLuckLevelChange}
+                >
+                  {[0, 1, 2, 3, 4, 5, 6, 7].map((level) => {
+                    const formulas: Record<number, string> = {
+                      0: '1d20',
+                      1: '2d20',
+                      2: '2d20+2',
+                      3: '3d20+3',
+                      4: '3d20+6',
+                      5: '4d20+8',
+                      6: '4d20+12',
+                      7: '5d20+15',
+                    };
+                    return (
+                      <MenuItem key={level} value={level}>
+                        Nível {level} ({formulas[level]})
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+            </>
+          )}
+
+          {/* Configuração especial para OFÍCIO */}
+          {skill.name === 'oficio' && (
+            <>
+              <Typography variant="caption" color="text.secondary" paragraph>
+                Ofício é uma habilidade especial que usa seus ofícios
+                cadastrados. Selecione o ofício ativo para calcular a rolagem.
+              </Typography>
+              <FormControl fullWidth size="small">
+                <InputLabel>Ofício Ativo</InputLabel>
+                <Select
+                  value={skill.selectedCraftId || ''}
+                  onChange={(e) => {
+                    if (onSelectedCraftChange) {
+                      onSelectedCraftChange(skill.name, e.target.value);
+                    }
+                  }}
+                  label="Ofício Ativo"
+                  disabled={!onSelectedCraftChange || crafts.length === 0}
+                >
+                  <MenuItem value="">
+                    <em>Nenhum selecionado</em>
+                  </MenuItem>
+                  {crafts.map((craft) => (
+                    <MenuItem key={craft.id} value={craft.id}>
+                      {craft.name} ({ATTRIBUTE_LABELS[craft.attributeKey]}, Nv.
+                      {craft.level})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {crafts.length === 0 && (
+                <Typography
+                  variant="caption"
+                  color="warning.main"
+                  sx={{ mt: 1, display: 'block' }}
+                >
+                  Nenhum ofício cadastrado. Adicione ofícios na seção de
+                  Competências.
+                </Typography>
+              )}
+            </>
+          )}
+
+          {/* Configuração padrão para outras habilidades */}
+          {skill.name !== 'sorte' && skill.name !== 'oficio' && (
+            <>
+              <Typography variant="caption" color="text.secondary" paragraph>
+                Atributo-chave e nível de proficiência usados para cálculos
+                gerais.
+              </Typography>
+
+              <Stack spacing={2}>
+                {/* Atributo-Chave Principal */}
+                <FormControl fullWidth size="small">
+                  <InputLabel>Atributo-Chave</InputLabel>
+                  <Select
+                    value={skill.keyAttribute}
+                    onChange={(e) => {
+                      if (onUpdateKeyAttribute) {
+                        onUpdateKeyAttribute(
+                          skill.name,
+                          e.target.value as AttributeName
+                        );
+                      }
+                    }}
+                    label="Atributo-Chave"
+                    disabled={!onUpdateKeyAttribute}
+                  >
+                    {ATTRIBUTE_LIST.map((attr: AttributeName) => (
+                      <MenuItem key={attr} value={attr}>
+                        {ATTRIBUTE_LABELS[attr]}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {/* Nível de Proficiência */}
+                <FormControl fullWidth size="small">
+                  <InputLabel>Proficiência</InputLabel>
+                  <Select
+                    value={skill.proficiencyLevel}
+                    onChange={(e) => {
+                      if (onUpdateProficiency) {
+                        onUpdateProficiency(
+                          skill.name,
+                          e.target.value as ProficiencyLevel
+                        );
+                      }
+                    }}
+                    label="Proficiência"
+                    disabled={!onUpdateProficiency}
+                  >
+                    {PROFICIENCY_LEVEL_LIST.map((level) => (
+                      <MenuItem key={level} value={level}>
+                        {SKILL_PROFICIENCY_LABELS[level]} (×
+                        {level === 'leigo'
+                          ? '0'
+                          : level === 'adepto'
+                            ? '1'
+                            : level === 'versado'
+                              ? '2'
+                              : '3'}
+                        )
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+            </>
+          )}
         </Box>
 
         <Divider />
@@ -1299,27 +1509,15 @@ export function SkillUsageSidebar({
                   </Typography>
                 </Alert>
               ) : (
-                <Box>
-                  {currentSignatureSkill && (
-                    <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 2 }}>
-                      <Typography variant="body2">
-                        <strong>{SKILL_LABELS[currentSignatureSkill]}</strong> é
-                        atualmente sua Habilidade de Assinatura. Tornar{' '}
-                        <strong>{SKILL_LABELS[skill.name]}</strong> sua
-                        assinatura irá substituí-la.
-                      </Typography>
-                    </Alert>
-                  )}
-                  <Button
-                    variant="outlined"
-                    color="warning"
-                    startIcon={<StarIcon />}
-                    onClick={handleSetSignature}
-                    fullWidth
-                  >
-                    Tornar Habilidade de Assinatura
-                  </Button>
-                </Box>
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={<StarIcon />}
+                  onClick={handleSetSignature}
+                  fullWidth
+                >
+                  Tornar Habilidade de Assinatura
+                </Button>
               )}
             </Box>
 

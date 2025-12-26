@@ -152,9 +152,9 @@ describe('SpellList', () => {
 
     it('deve exibir filtros de seleção', () => {
       renderComponent();
-      // Verificar pela presença de selects (círculo, matriz, habilidade = 3)
+      // Verificar pela presença de selects (círculo, matriz, habilidade, tags = 4)
       const selects = screen.getAllByRole('combobox');
-      expect(selects.length).toBe(3);
+      expect(selects.length).toBe(4);
     });
   });
 

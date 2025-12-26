@@ -383,7 +383,7 @@ export function calculateSkillUseModifier(
 
   // Bônus de assinatura (usa regras da habilidade base)
   let signatureBonus = 0;
-  if (baseSkill.isSignature && proficiencyMultiplier > 0) {
+  if (baseSkill.isSignature) {
     const isCombat = metadata.isCombatSkill === true;
     signatureBonus = isCombat
       ? Math.max(1, Math.floor(characterLevel / 3))

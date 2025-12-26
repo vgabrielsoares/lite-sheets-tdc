@@ -10,6 +10,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Box, Link } from '@mui/material';
 
 export interface SkipLinkProps {
@@ -53,6 +54,13 @@ export function SkipLink({
   targetId = 'main-content',
   label = 'Pular para o conteúdo principal',
 }: SkipLinkProps) {
+  const [mounted, setMounted] = useState(false);
+
+  // Renderizar apenas no cliente para evitar erros de hidratação
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     const target = document.getElementById(targetId);
@@ -61,6 +69,11 @@ export function SkipLink({
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
+
+  // Não renderizar no servidor
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <Box
