@@ -7,8 +7,8 @@ import CloseIcon from '@mui/icons-material/Close';
 const SIDEBAR_WIDTHS = {
   sm: '20rem', // ~320px
   md: '28rem', // ~448px
-  lg: '20rem', // ~320px (telas menores 1280-1919px)
-  xl: '28rem', // ~448px (1920px/1080p - ajustado para caber)
+  lg: '24rem', // ~384px (padrão responsivo)
+  xl: '28rem', // ~448px (telas grandes)
 } as const;
 
 export type SidebarWidth = keyof typeof SIDEBAR_WIDTHS;
@@ -125,57 +125,50 @@ export function Sidebar({
       role="complementary"
       aria-label={title || 'Sidebar de detalhes'}
       sx={{
+        // Largura base - responsiva por breakpoint
         width: {
-          xs: '100vw',
-          md:
-            width === 'sm'
-              ? SIDEBAR_WIDTHS.sm
-              : width === 'md'
-                ? SIDEBAR_WIDTHS.md
-                : SIDEBAR_WIDTHS.lg,
-          lg:
-            width === 'sm'
-              ? SIDEBAR_WIDTHS.sm
-              : width === 'md'
-                ? SIDEBAR_WIDTHS.md
-                : SIDEBAR_WIDTHS.lg,
-          xl:
-            width === 'sm'
-              ? SIDEBAR_WIDTHS.sm
-              : width === 'md'
-                ? SIDEBAR_WIDTHS.md
-                : SIDEBAR_WIDTHS.xl,
+          xs: '100%', // Mobile: tela cheia (usa % para evitar problema com scrollbar)
+          md: SIDEBAR_WIDTHS.md, // Tablet: 28rem
+          lg: SIDEBAR_WIDTHS.lg, // Desktop: 24rem
+          xl: SIDEBAR_WIDTHS.xl, // Telas grandes: 28rem
         },
-        // Media query customizada para telas 1440p+ (2400px+)
-        '@media (min-width: 2400px)': {
-          width:
-            width === 'sm'
-              ? SIDEBAR_WIDTHS.sm
-              : width === 'md'
-                ? SIDEBAR_WIDTHS.md
-                : '40rem', // 640px para 1440p+
+        // Largura máxima - usar calc com 100% para evitar problema da scrollbar
+        maxWidth: {
+          xs: '100%',
+          md: 'calc(100% - 2rem)', // Margem de 1rem em cada lado
+          lg: SIDEBAR_WIDTHS.lg, // Respeitar largura definida
+          xl: SIDEBAR_WIDTHS.xl,
         },
-        maxWidth: '100vw',
+        // Media query customizada para telas 1440p+ (2560px+)
+        '@media (min-width: 2560px)': {
+          width: '36rem', // 576px para telas muito grandes
+        },
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
         position: 'fixed',
-        // Mobile: comporta-se como modal fullscreen
+        // Posicionamento vertical
         top: { xs: 0, md: '9.375rem' },
+        // Posicionamento horizontal - usar SOMENTE right como âncora
+        // Isso evita problemas com 100vw que inclui scrollbar
         right: {
           xs: 0,
           md: '1rem',
         },
+        // left: auto em todas as telas (exceto mobile fullscreen)
+        // Isso garante que right seja a âncora principal
         left: {
-          xs: 0,
-          lg: `calc((100vw + 56.25rem) / 2 + 1rem)`, // Posiciona após a ficha com 1rem de margem
-          xl: `calc((100vw + 56.25rem) / 2 + 1rem)`,
+          xs: 0, // Mobile: fullscreen
+          md: 'auto', // Todas as outras: usar right como âncora
         },
-        // Mobile: altura total da tela
+        // Altura
         height: { xs: '100vh', md: 'auto' },
         maxHeight: { xs: '100vh', md: 'calc(100vh - 13.75rem)' },
-        zIndex: 1300, // Acima de tudo no mobile para comportar-se como modal
+        // Z-index alto para mobile (comportamento de modal)
+        zIndex: { xs: 1300, md: 1200 },
         overflow: 'hidden',
+        // Transição suave ao abrir/fechar
+        transition: 'transform 0.2s ease-in-out, opacity 0.2s ease-in-out',
       }}
     >
       {/* Header */}
