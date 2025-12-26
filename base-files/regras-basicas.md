@@ -186,9 +186,9 @@ Cada proficiência tem um custo de acordo com sua quantidade de atributos. Prime
 | ------------- | ------------ | ----- | ----------- | ------------ | ------- |
 | Acerto        | Agilidade    | -     | -           | -            | Sim     |
 | Acrobacia     | Agilidade    | Sim   | -           | -            | -       |
-| Adestramento  | Influência   | -     | Sim         | -            | -       |
-| Arcano        | Mente        | -     | Sim         | Sim          | -       |
-| Arte          | Mente        | -     | Sim         | -            | -       |
+| Adestramento  | Influência   | -     | -           | Sim          | -       |
+| Arcano        | Mente        | -     | -           | Sim          | Sim     |
+| Arte          | Mente        | -     | -           | Sim          | -       |
 | Atletismo     | Constituição | Sim   | -           | -            | -       |
 | Condução      | Agilidade    | Sim   | Sim         | Sim          | -       |
 | Destreza      | Agilidade    | Sim   | Sim         | Sim          | -       |
@@ -215,8 +215,8 @@ Cada proficiência tem um custo de acordo com sua quantidade de atributos. Prime
 | Sobrevivência | Mente        | -     | -           | -            | -       |
 | Sociedade     | Influência   | -     | -           | -            | -       |
 | Sorte         | Especial     | -     | -           | -            | -       |
-| Tenacidade    | Força        | -     | -           | Sim          | -       |
-| Vigor         | Constituição | -     | -           | Sim          | -       |
+| Tenacidade    | Força        | -     | -           | -            | Sim     |
+| Vigor         | Constituição | -     | -           | -            | Sim     |
 
 ## Tamanho de Personagem
 
