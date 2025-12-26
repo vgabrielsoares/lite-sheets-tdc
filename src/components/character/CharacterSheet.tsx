@@ -958,6 +958,34 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
   };
 
   /**
+   * Handler para alterar o nível de sorte
+   */
+  const handleLuckLevelChange = (level: number) => {
+    onUpdate({
+      luck: {
+        ...character.luck,
+        level,
+      },
+    });
+  };
+
+  /**
+   * Handler para alterar os modificadores de sorte
+   */
+  const handleLuckModifiersChange = (
+    diceModifier: number,
+    numericModifier: number
+  ) => {
+    onUpdate({
+      luck: {
+        ...character.luck,
+        diceModifier,
+        numericModifier,
+      },
+    });
+  };
+
+  /**
    * Handler para atualizar campos específicos da linhagem
    * Usa handleUpdateLineage para garantir sincronização correta
    */
@@ -1302,6 +1330,12 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               crafts={character.crafts}
               onUpdateCraft={handleUpdateCraft}
               keenSenses={character.senses?.keenSenses}
+              onUpdateKeyAttribute={handleSkillKeyAttributeChange}
+              onUpdateProficiency={handleSkillProficiencyChange}
+              luck={character.luck}
+              onLuckLevelChange={handleLuckLevelChange}
+              onLuckModifiersChange={handleLuckModifiersChange}
+              onSelectedCraftChange={handleSelectedCraftChange}
             />
           )}
 
@@ -1500,6 +1534,12 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           crafts={character.crafts}
           onUpdateCraft={handleUpdateCraft}
           keenSenses={character.senses?.keenSenses}
+          onUpdateKeyAttribute={handleSkillKeyAttributeChange}
+          onUpdateProficiency={handleSkillProficiencyChange}
+          luck={character.luck}
+          onLuckLevelChange={handleLuckLevelChange}
+          onLuckModifiersChange={handleLuckModifiersChange}
+          onSelectedCraftChange={handleSelectedCraftChange}
         />
       )}
 

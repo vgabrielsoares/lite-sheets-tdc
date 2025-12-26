@@ -18,18 +18,15 @@
  * - Acessível por teclado (Tab, Enter, ESC)
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
-  Select,
-  MenuItem,
   Chip,
   Tooltip,
-  FormControl,
-  SelectChangeEvent,
   alpha,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Star as StarIcon,
@@ -78,16 +75,6 @@ export interface SkillRowProps {
   characterLevel: number;
   /** Se personagem está sobrecarregado */
   isOverloaded: boolean;
-  /** Callback quando atributo-chave é alterado */
-  onKeyAttributeChange: (
-    skillName: SkillName,
-    newAttribute: AttributeName
-  ) => void;
-  /** Callback quando proficiência é alterada */
-  onProficiencyChange: (
-    skillName: SkillName,
-    newProficiency: ProficiencyLevel
-  ) => void;
   /** Callback quando modificadores são alterados */
   onModifiersChange?: (skillName: SkillName, modifiers: Modifier[]) => void;
   /** Callback quando linha é clicada (abre sidebar) */
@@ -119,8 +106,6 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
     attributes,
     characterLevel,
     isOverloaded,
-    onKeyAttributeChange,
-    onProficiencyChange,
     onModifiersChange,
     onClick,
     crafts = [],
@@ -131,6 +116,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
     sizeSkillModifier,
   }) => {
     const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const metadata = SKILL_METADATA[skill.name];
 
     // Detectar se é habilidade "oficio" ou "sorte"
@@ -278,20 +264,6 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
     const isCustomAttribute = skill.keyAttribute !== metadata.keyAttribute;
 
     // Handlers
-    const handleKeyAttributeChange = (
-      event: SelectChangeEvent<AttributeName>
-    ) => {
-      event.stopPropagation(); // evitar trigger do onClick da linha
-      onKeyAttributeChange(skill.name, event.target.value as AttributeName);
-    };
-
-    const handleProficiencyChange = (
-      event: SelectChangeEvent<ProficiencyLevel>
-    ) => {
-      event.stopPropagation();
-      onProficiencyChange(skill.name, event.target.value as ProficiencyLevel);
-    };
-
     const handleModifiersChange = (
       diceModifier: number,
       numericModifier: number
@@ -299,20 +271,6 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
       if (onModifiersChange) {
         const newModifiers = buildModifiersArray(diceModifier, numericModifier);
         onModifiersChange(skill.name, newModifiers);
-      }
-    };
-
-    const handleSelectedCraftChange = (event: SelectChangeEvent<string>) => {
-      event.stopPropagation();
-      if (onSelectedCraftChange) {
-        onSelectedCraftChange(skill.name, event.target.value);
-      }
-    };
-
-    const handleLuckLevelChange = (event: SelectChangeEvent<number>) => {
-      event.stopPropagation();
-      if (onLuckLevelChange) {
-        onLuckLevelChange(Number(event.target.value));
       }
     };
 
@@ -399,10 +357,10 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
         sx={{
           display: 'grid',
           gridTemplateColumns: {
-            xs: '1fr auto',
+            xs: '1fr auto auto auto',
             sm: '1.8fr 100px 100px 160px 1.2fr',
           },
-          gap: { xs: 1, sm: 1.2 },
+          gap: { xs: 0.5, sm: 1.2 },
           alignItems: 'center',
           p: 1.5,
           borderRadius: 2,
@@ -452,201 +410,180 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
           <Box sx={{ display: 'flex', gap: 0.5 }}>{indicators}</Box>
         </Box>
 
-        {/* Atributo-chave atual (editável) OU Select de Ofício OU Select de Nível de Sorte */}
+        {/* Chips de configuração: Ofício, Sorte, ou Atributo+Proficiência */}
         {isOficioSkill ? (
-          // Select de ofício (apenas para habilidade "oficio")
-          <FormControl
-            size="small"
-            fullWidth
-            onClick={(e) => e.stopPropagation()}
-            sx={{ display: { xs: 'none', sm: 'block' }, gridColumn: 'span 2' }}
+          // Chip para ofício - ocupa 2 colunas em desktop
+          <Tooltip
+            title={
+              selectedCraft
+                ? `${selectedCraft.name} (${ATTRIBUTE_ABBREVIATIONS[selectedCraft.attributeKey]} Nv. ${selectedCraft.level})`
+                : 'Nenhum ofício selecionado'
+            }
+            enterDelay={150}
+            placement="top"
           >
-            <Tooltip
-              title={
+            <Chip
+              label={
                 selectedCraft
-                  ? `${selectedCraft.name} (${ATTRIBUTE_ABBREVIATIONS[selectedCraft.attributeKey]} Nv. ${selectedCraft.level})`
-                  : 'Selecione um ofício...'
+                  ? isMobile
+                    ? selectedCraft.name.substring(0, 8) +
+                      (selectedCraft.name.length > 8 ? '…' : '')
+                    : selectedCraft.name
+                  : 'Ofício'
               }
+              size="small"
+              variant={selectedCraft ? 'filled' : 'outlined'}
+              color={selectedCraft ? 'primary' : 'default'}
+              sx={{
+                maxWidth: { xs: 80, sm: 200 },
+                gridColumn: { xs: 'auto', sm: 'span 2' },
+                '& .MuiChip-label': {
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                },
+              }}
+            />
+          </Tooltip>
+        ) : isSorteSkill && luck ? (
+          // Chip para Sorte - exibe nível, ocupa 2 colunas em desktop
+          <Tooltip
+            title={`Sorte Nível ${luck.level}`}
+            enterDelay={150}
+            placement="top"
+          >
+            <Chip
+              label={isMobile ? `Nv.${luck.level}` : `Nível ${luck.level}`}
+              size="small"
+              variant="filled"
+              color="secondary"
+              sx={{
+                gridColumn: { xs: 'auto', sm: 'span 2' },
+              }}
+            />
+          </Tooltip>
+        ) : (
+          <>
+            {/* Chip para atributo-chave */}
+            <Tooltip
+              title={`Atributo: ${ATTRIBUTE_LABELS[skill.keyAttribute]}${isCustomAttribute ? ` (padrão: ${metadata.keyAttribute === 'especial' ? 'Especial' : ATTRIBUTE_LABELS[metadata.keyAttribute]})` : ''}`}
               enterDelay={150}
               placement="top"
             >
-              <Select
-                value={skill.selectedCraftId || ''}
-                onChange={handleSelectedCraftChange}
-                displayEmpty
-                aria-label="Selecionar ofício"
-                sx={{
-                  '& .MuiSelect-select': {
-                    py: 0.75,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    maxWidth: '150px',
-                  },
-                }}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxWidth: '300px',
-                    },
-                  },
-                }}
-              >
-                <MenuItem value="" disabled>
-                  <em>Selecione um ofício...</em>
-                </MenuItem>
-                {crafts.map((craft) => (
-                  <MenuItem
-                    key={craft.id}
-                    value={craft.id}
-                    sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      display: 'block',
-                    }}
-                    title={`${craft.name} (${ATTRIBUTE_ABBREVIATIONS[craft.attributeKey]} Nv. ${craft.level})`}
-                  >
-                    {craft.name} ({ATTRIBUTE_ABBREVIATIONS[craft.attributeKey]}{' '}
-                    Nv.
-                    {craft.level})
-                  </MenuItem>
-                ))}
-              </Select>
+              <Chip
+                label={ATTRIBUTE_ABBREVIATIONS[skill.keyAttribute]}
+                size="small"
+                variant={isCustomAttribute ? 'filled' : 'outlined'}
+                color={isCustomAttribute ? 'primary' : 'default'}
+              />
             </Tooltip>
-          </FormControl>
-        ) : isSorteSkill && luck ? (
-          // Select de Nível de sorte (apenas para habilidade "sorte")
-          <FormControl
-            size="small"
-            fullWidth
-            onClick={(e) => e.stopPropagation()}
-            sx={{ display: { xs: 'none', sm: 'block' }, gridColumn: 'span 2' }}
-          >
-            <Select
-              value={luck.level}
-              onChange={handleLuckLevelChange}
-              aria-label="Nível de sorte"
-              sx={{
-                '& .MuiSelect-select': {
-                  py: 0.75,
-                },
-              }}
-            >
-              <MenuItem value={0}>Nível 0 (1d20)</MenuItem>
-              <MenuItem value={1}>Nível 1 (2d20)</MenuItem>
-              <MenuItem value={2}>Nível 2 (2d20+2)</MenuItem>
-              <MenuItem value={3}>Nível 3 (3d20+3)</MenuItem>
-              <MenuItem value={4}>Nível 4 (3d20+6)</MenuItem>
-              <MenuItem value={5}>Nível 5 (4d20+8)</MenuItem>
-              <MenuItem value={6}>Nível 6 (4d20+12)</MenuItem>
-              <MenuItem value={7}>Nível 7 (5d20+15)</MenuItem>
-            </Select>
-          </FormControl>
-        ) : (
-          <>
-            {/* Atributo-chave atual (editável) */}
-            <FormControl
-              size="small"
-              fullWidth
-              onClick={(e) => e.stopPropagation()}
-              sx={{ display: { xs: 'none', sm: 'block' } }}
-            >
-              <Select
-                value={skill.keyAttribute}
-                onChange={handleKeyAttributeChange}
-                aria-label={`Atributo-chave para ${SKILL_LABELS[skill.name]}`}
-                sx={{
-                  '& .MuiSelect-select': {
-                    py: 0.75,
-                  },
-                  ...(isCustomAttribute && {
-                    borderColor: theme.palette.primary.main,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                  }),
-                }}
-              >
-                <MenuItem value="agilidade">AGI</MenuItem>
-                <MenuItem value="constituicao">CON</MenuItem>
-                <MenuItem value="forca">FOR</MenuItem>
-                <MenuItem value="influencia">INF</MenuItem>
-                <MenuItem value="mente">MEN</MenuItem>
-                <MenuItem value="presenca">PRE</MenuItem>
-              </Select>
-            </FormControl>
 
-            {/* Grau de proficiência (editável) */}
-            <FormControl
-              size="small"
-              fullWidth
-              onClick={(e) => e.stopPropagation()}
-              sx={{ display: { xs: 'none', sm: 'block' } }}
+            {/* Chip para proficiência - responsivo */}
+            <Tooltip
+              title={`Proficiência: ${SKILL_PROFICIENCY_LABELS[skill.proficiencyLevel]} (×${skill.proficiencyLevel === 'leigo' ? '0' : skill.proficiencyLevel === 'adepto' ? '1' : skill.proficiencyLevel === 'versado' ? '2' : '3'})`}
+              enterDelay={150}
+              placement="top"
             >
-              <Select
-                value={skill.proficiencyLevel}
-                onChange={handleProficiencyChange}
-                aria-label={`proficiência em ${SKILL_LABELS[skill.name]}`}
-                sx={{
-                  '& .MuiSelect-select': {
-                    py: 0.75,
-                  },
-                }}
-              >
-                <MenuItem value="leigo">Leigo</MenuItem>
-                <MenuItem value="adepto">Adepto</MenuItem>
-                <MenuItem value="versado">Versado</MenuItem>
-                <MenuItem value="mestre">Mestre</MenuItem>
-              </Select>
-            </FormControl>
+              <Chip
+                label={
+                  isMobile
+                    ? skill.proficiencyLevel.charAt(0).toUpperCase()
+                    : SKILL_PROFICIENCY_LABELS[skill.proficiencyLevel]
+                }
+                size="small"
+                variant={
+                  skill.proficiencyLevel !== 'leigo' ? 'filled' : 'outlined'
+                }
+                color={
+                  skill.proficiencyLevel === 'mestre'
+                    ? 'warning'
+                    : skill.proficiencyLevel === 'versado'
+                      ? 'success'
+                      : skill.proficiencyLevel === 'adepto'
+                        ? 'info'
+                        : 'default'
+                }
+              />
+            </Tooltip>
           </>
         )}
 
-        {/* Modificadores inline */}
-        <Box
-          onClick={(e) => e.stopPropagation()}
-          sx={{ display: { xs: 'none', sm: 'block' } }}
-        >
-          {isSorteSkill && luck ? (
-            <InlineModifiers
-              diceModifier={luck.diceModifier || 0}
-              numericModifier={luck.numericModifier || 0}
-              onUpdate={handleLuckModifiersChange}
-            />
-          ) : (
-            <InlineModifiers
-              diceModifier={extractDiceModifier(skill.modifiers)}
-              numericModifier={extractNumericModifier(skill.modifiers)}
-              onUpdate={handleModifiersChange}
-            />
-          )}
-        </Box>
-
-        {/* Resultado: Modificador + Fórmula (combinados) */}
+        {/* Modificadores (chips estáticos) - apenas desktop */}
         <Box
           sx={{
             display: { xs: 'none', sm: 'flex' },
             alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 1.5,
+            gap: 0.5,
           }}
         >
-          <Tooltip
-            title={`Modificador total: ${calculation.attributeValue} (atributo) x ${calculation.proficiencyMultiplier} (proficiência) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
-            enterDelay={150}
-          >
-            <Chip
-              label={
-                calculation.totalModifier >= 0
-                  ? `+${calculation.totalModifier}`
-                  : calculation.totalModifier
-              }
-              size="small"
-              color={calculation.totalModifier >= 0 ? 'success' : 'error'}
-              variant="outlined"
-              sx={{ fontWeight: 600 }}
-            />
-          </Tooltip>
+          {(() => {
+            const diceModifier =
+              isSorteSkill && luck
+                ? luck.diceModifier || 0
+                : extractDiceModifier(skill.modifiers);
+            const numericModifier =
+              isSorteSkill && luck
+                ? luck.numericModifier || 0
+                : extractNumericModifier(skill.modifiers);
 
+            return (
+              <>
+                {diceModifier !== 0 && (
+                  <Tooltip title="Modificador de dados" enterDelay={150}>
+                    <Chip
+                      label={`${diceModifier > 0 ? '+' : ''}${diceModifier}d`}
+                      size="small"
+                      color={diceModifier > 0 ? 'success' : 'error'}
+                      variant="outlined"
+                      sx={{
+                        fontWeight: 500,
+                        minWidth: 36,
+                        fontSize: '0.75rem',
+                      }}
+                    />
+                  </Tooltip>
+                )}
+                {numericModifier !== 0 && (
+                  <Tooltip title="Modificador numérico" enterDelay={150}>
+                    <Chip
+                      label={
+                        numericModifier > 0
+                          ? `+${numericModifier}`
+                          : numericModifier
+                      }
+                      size="small"
+                      color={numericModifier > 0 ? 'success' : 'error'}
+                      variant="outlined"
+                      sx={{
+                        fontWeight: 500,
+                        minWidth: 36,
+                        fontSize: '0.75rem',
+                      }}
+                    />
+                  </Tooltip>
+                )}
+                {diceModifier === 0 && numericModifier === 0 && (
+                  <Typography
+                    variant="caption"
+                    color="text.disabled"
+                    sx={{ px: 1 }}
+                  >
+                    —
+                  </Typography>
+                )}
+              </>
+            );
+          })()}
+        </Box>
+
+        {/* Fórmula de rolagem */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+          }}
+        >
           <Tooltip
             title={`Clique para rolar: ${rollFormula.formula}`}
             enterDelay={150}
@@ -663,8 +600,8 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                px: 1.5,
-                py: 0.5,
+                px: { xs: 0.75, sm: 1.5 },
+                py: { xs: 0.25, sm: 0.5 },
                 border: 1,
                 borderColor: 'primary.main',
                 borderRadius: 1,
@@ -686,92 +623,8 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
                 color={rollFormula.takeLowest ? 'error' : 'primary'}
                 fontWeight={700}
                 sx={{
-                  fontSize: '1rem',
+                  fontSize: { xs: '0.8rem', sm: '1rem' },
                   letterSpacing: '0.02em',
-                }}
-              >
-                {rollFormula.formula}
-              </Typography>
-            </Box>
-          </Tooltip>
-
-          {/* Botão de rolagem (invisível, controlado pela fórmula) */}
-          <Box sx={{ display: 'none' }}>
-            <SkillRollButton
-              skillLabel={SKILL_LABELS[skill.name]}
-              diceCount={rollFormula.diceCount}
-              modifier={calculation.totalModifier}
-              formula={rollFormula.formula}
-              takeLowest={rollFormula.takeLowest}
-              size="small"
-              color="primary"
-            />
-          </Box>
-        </Box>
-
-        {/* Mobile: Modificador + Rolagem */}
-        <Box
-          sx={{
-            display: { xs: 'flex', sm: 'none' },
-            gap: 1,
-            justifyContent: 'flex-end',
-          }}
-        >
-          <Tooltip
-            title={`Modificador total: ${calculation.attributeValue} (atributo) x ${calculation.proficiencyMultiplier} (proficiência) = ${calculation.baseModifier} (base) ${calculation.signatureBonus > 0 ? `+ ${calculation.signatureBonus} (assinatura)` : ''} ${extractNumericModifier(skill.modifiers) !== 0 ? `+ ${extractNumericModifier(skill.modifiers)} (modificadores)` : ''} ${calculation.otherModifiers !== 0 ? `+ ${calculation.otherModifiers} (outros)` : ''}`}
-            enterDelay={150}
-          >
-            <Chip
-              label={
-                calculation.totalModifier >= 0
-                  ? `+${calculation.totalModifier}`
-                  : calculation.totalModifier
-              }
-              size="small"
-              color={calculation.totalModifier >= 0 ? 'success' : 'error'}
-              variant="outlined"
-              sx={{ fontWeight: 600 }}
-            />
-          </Tooltip>
-          <Tooltip
-            title={`Clique para rolar: ${rollFormula.formula}`}
-            enterDelay={150}
-          >
-            <Box
-              onClick={(e) => {
-                e.stopPropagation();
-                // Encontrar o botão SkillRollButton e clicar nele
-                const button =
-                  e.currentTarget.nextElementSibling?.querySelector('button');
-                if (button) button.click();
-              }}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                px: 1,
-                py: 0.25,
-                border: 1,
-                borderColor: 'primary.main',
-                borderRadius: 1,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  borderColor: 'primary.dark',
-                },
-                '&:active': {
-                  transform: 'scale(0.98)',
-                },
-              }}
-            >
-              <Typography
-                variant="caption"
-                fontFamily="monospace"
-                color={rollFormula.takeLowest ? 'error' : 'primary'}
-                fontWeight={600}
-                sx={{
-                  fontSize: '0.875rem',
                 }}
               >
                 {rollFormula.formula}
