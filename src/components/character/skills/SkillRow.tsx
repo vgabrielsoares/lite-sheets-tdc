@@ -45,6 +45,10 @@ import type {
   Skill,
   Modifier,
   Craft,
+  DieSize,
+  SkillPoolCalculation,
+  SkillPoolFormula,
+  ArmorType,
 } from '@/types';
 import {
   SKILL_LABELS,
@@ -52,12 +56,11 @@ import {
   SKILL_PROFICIENCY_LABELS,
   ATTRIBUTE_LABELS,
   ATTRIBUTE_ABBREVIATIONS,
+  getSkillDieSize,
+  LUCK_LEVELS,
+  MAX_LUCK_LEVEL,
 } from '@/constants';
-import {
-  calculateSkillRoll,
-  getCraftMultiplier,
-  calculateSignatureAbilityBonus,
-} from '@/utils';
+import { calculateSkillRoll, calculateSignatureAbilityBonus } from '@/utils';
 import {
   InlineModifiers,
   extractDiceModifier,
@@ -75,6 +78,8 @@ export interface SkillRowProps {
   characterLevel: number;
   /** Se personagem está sobrecarregado */
   isOverloaded: boolean;
+  /** Tipo de armadura equipada (para penalidade de carga). null = sem armadura ou armadura leve */
+  equippedArmorType?: ArmorType | null;
   /** Callback quando modificadores são alterados */
   onModifiersChange?: (skillName: SkillName, modifiers: Modifier[]) => void;
   /** Callback quando linha é clicada (abre sidebar) */
@@ -106,6 +111,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
     attributes,
     characterLevel,
     isOverloaded,
+    equippedArmorType = null,
     onModifiersChange,
     onClick,
     crafts = [],
@@ -129,110 +135,98 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
         ? crafts.find((c) => c.id === skill.selectedCraftId)
         : null;
 
-    // Calcular modificador e rolagem
+    // Calcular pool de dados e fórmula de rolagem
     // Para ofício, usar o craft selecionado se houver
     // Para sorte, usar os dados de luck
-    let calculation, rollFormula;
+    let calculation: SkillPoolCalculation;
+    let rollFormula: SkillPoolFormula;
 
     if (isSorteSkill && luck) {
-      // Tabela de rolagens por Nível de sorte
-      const LUCK_ROLL_TABLE: Record<number, { dice: number; bonus: number }> = {
-        0: { dice: 1, bonus: 0 },
-        1: { dice: 2, bonus: 0 },
-        2: { dice: 2, bonus: 2 },
-        3: { dice: 3, bonus: 3 },
-        4: { dice: 3, bonus: 6 },
-        5: { dice: 4, bonus: 8 },
-        6: { dice: 4, bonus: 12 },
-        7: { dice: 5, bonus: 15 },
-      };
+      // Obter dados do nível de sorte da tabela centralizada (v0.0.2)
+      const luckData = LUCK_LEVELS[luck.level] ?? LUCK_LEVELS[MAX_LUCK_LEVEL];
 
-      // Obter dados do Nível de sorte ou calcular para níveis > 7
-      const luckData = LUCK_ROLL_TABLE[luck.level] ?? {
-        dice: luck.level,
-        bonus: luck.level * 3,
-      };
-
-      // Calcular bônus de assinatura se aplicável
-      const signatureBonus = skill.isSignature
-        ? calculateSignatureAbilityBonus(characterLevel, metadata.isCombatSkill)
+      // Calcular bônus de assinatura se aplicável (+Xd)
+      const signatureDiceBonus = skill.isSignature
+        ? calculateSignatureAbilityBonus(characterLevel)
         : 0;
 
-      // Calcular dados e modificadores totais
+      // Calcular total de dados
       const baseDice = luckData.dice;
-      const baseBonus = luckData.bonus;
-      const totalDice = baseDice + (luck.diceModifier || 0);
-      const totalModifier =
-        baseBonus + (luck.numericModifier || 0) + signatureBonus;
+      const otherDiceModifiers = luck.diceModifier || 0;
+      const totalDiceModifier = signatureDiceBonus + otherDiceModifiers;
+      const totalDice = baseDice + totalDiceModifier;
+      const isPenaltyRoll = totalDice <= 0;
 
-      // Criar cálculo customizado para sorte
+      // Criar cálculo customizado para sorte (sem penalidades de carga/proficiência)
       calculation = {
-        attributeValue: luck.level,
-        proficiencyMultiplier: 0, // Sorte não usa proficiência
-        baseModifier: baseBonus,
-        signatureBonus,
-        otherModifiers: luck.numericModifier || 0,
-        totalModifier,
+        attributeValue: baseDice,
+        proficiencyLevel: 'leigo' as ProficiencyLevel,
+        dieSize: luckData.dieSize,
+        signatureDiceBonus,
+        otherDiceModifiers,
+        loadDicePenalty: 0,
+        armorDicePenalty: 0,
+        proficiencyDicePenalty: 0,
+        instrumentDicePenalty: 0,
+        totalDiceModifier,
+        totalDice,
+        isPenaltyRoll,
       };
 
       // Calcular fórmula de rolagem
-      // Quando dados < 1, converte: 0->2, -1->3, -2->4, etc.
-      let diceCount = totalDice;
-      let takeLowest = false;
-      if (totalDice < 1) {
-        diceCount = 2 - totalDice; // 0->2, -1->3, -2->4
-        takeLowest = true;
-      }
-      // Se totalDice >= 1, não usa takeLowest mesmo se partiu de 0
-
+      const diceCount = isPenaltyRoll ? 2 : Math.min(totalDice, 8);
       rollFormula = {
         diceCount,
-        takeLowest,
-        modifier: totalModifier,
-        formula: `${diceCount}d20${totalModifier >= 0 ? '+' : ''}${totalModifier}`,
+        dieSize: luckData.dieSize,
+        isPenaltyRoll,
+        formula: isPenaltyRoll
+          ? `2${luckData.dieSize} (menor)`
+          : `${diceCount}${luckData.dieSize}`,
       };
     } else if (isOficioSkill && selectedCraft) {
       // Calcular usando o craft selecionado
+      // Ofício usa o atributo-chave do craft e o nível do craft determina os dados
       const craftAttributeValue = attributes[selectedCraft.attributeKey];
-      const craftMultiplier = getCraftMultiplier(selectedCraft.level);
-      const craftBaseModifier = craftAttributeValue * craftMultiplier;
+      const craftDieSize = getSkillDieSize(skill.proficiencyLevel);
 
-      // Calcular bônus de assinatura se aplicável
-      const signatureBonus = skill.isSignature
-        ? calculateSignatureAbilityBonus(characterLevel, metadata.isCombatSkill)
+      // Calcular bônus de assinatura se aplicável (+Xd)
+      const signatureDiceBonus = skill.isSignature
+        ? calculateSignatureAbilityBonus(characterLevel)
         : 0;
 
-      // Criar um cálculo customizado para o craft
+      // Modificadores de dados do craft
+      const otherDiceModifiers = selectedCraft.diceModifier || 0;
+      const totalDiceModifier = signatureDiceBonus + otherDiceModifiers;
+      const totalDice = craftAttributeValue + totalDiceModifier;
+      const isPenaltyRoll = totalDice <= 0;
+
       calculation = {
         attributeValue: craftAttributeValue,
-        proficiencyMultiplier: craftMultiplier,
-        baseModifier: craftBaseModifier,
-        signatureBonus,
-        otherModifiers: selectedCraft.numericModifier,
-        totalModifier:
-          craftBaseModifier + signatureBonus + selectedCraft.numericModifier,
+        proficiencyLevel: skill.proficiencyLevel,
+        dieSize: craftDieSize,
+        signatureDiceBonus,
+        otherDiceModifiers,
+        loadDicePenalty: 0,
+        armorDicePenalty: 0,
+        proficiencyDicePenalty: 0,
+        instrumentDicePenalty: 0,
+        totalDiceModifier,
+        totalDice,
+        isPenaltyRoll,
       };
 
-      // Calcular fórmula de rolagem
-      const totalDice = 1 + (selectedCraft.diceModifier || 0);
-      // Quando dados < 1, converte: 0->2, -1->3, -2->4, etc.
-      let diceCount = totalDice;
-      let takeLowest = false;
-      if (totalDice < 1) {
-        diceCount = 2 - totalDice;
-        takeLowest = true;
-      }
-      // Se craft attribute é 0 mas totalDice >= 1, não usa takeLowest
-
+      const diceCount = isPenaltyRoll ? 2 : Math.min(totalDice, 8);
       rollFormula = {
         diceCount,
-        takeLowest,
-        modifier: calculation.totalModifier,
-        formula: `${diceCount}d20${calculation.totalModifier >= 0 ? '+' : ''}${calculation.totalModifier}`,
+        dieSize: craftDieSize,
+        isPenaltyRoll,
+        formula: isPenaltyRoll
+          ? `2${craftDieSize} (menor)`
+          : `${diceCount}${craftDieSize}`,
       };
     } else {
-      // Cálculo normal para habilidades não-ofício ou ofício sem craft selecionado
-      // Incluir modificador de tamanho se existir
+      // Cálculo normal para habilidades padrão
+      // Incluir modificador de tamanho como modificador de dados se existir
       const effectiveModifiers: Modifier[] =
         sizeSkillModifier && sizeSkillModifier !== 0
           ? [
@@ -241,7 +235,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
                 name: 'Tamanho',
                 value: sizeSkillModifier,
                 type: sizeSkillModifier > 0 ? 'bonus' : 'penalidade',
-                affectsDice: false,
+                affectsDice: true,
               },
             ]
           : skill.modifiers;
@@ -254,7 +248,11 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
         skill.isSignature,
         characterLevel,
         effectiveModifiers,
-        isOverloaded
+        {
+          isOverloaded,
+          equippedArmorType: equippedArmorType ?? null,
+          hasRequiredInstrument: true, // TODO: check inventory for instruments
+        }
       );
       calculation = result.calculation;
       rollFormula = result.rollFormula;
@@ -308,34 +306,65 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
       );
     }
     if (metadata.hasCargaPenalty) {
+      // Mostrar penalidade ativa de carga (sobrepeso + armadura)
+      const hasLoadPenalty = calculation.loadDicePenalty < 0;
+      const hasArmorPenalty = calculation.armorDicePenalty < 0;
+      const isActive = hasLoadPenalty || hasArmorPenalty;
+
+      const penaltyParts: string[] = [];
+      if (hasLoadPenalty)
+        penaltyParts.push(`Sobrecarga: ${calculation.loadDicePenalty}d`);
+      if (hasArmorPenalty)
+        penaltyParts.push(`Armadura: ${calculation.armorDicePenalty}d`);
+
+      const tooltipText = isActive
+        ? `Penalidade de Carga ativa: ${penaltyParts.join(', ')}`
+        : 'Penalidade de Carga (inativa)';
+
       indicators.push(
-        <Tooltip
-          key="load"
-          title="Sofre penalidade quando Sobrecarregado"
-          enterDelay={150}
-        >
+        <Tooltip key="load" title={tooltipText} enterDelay={150}>
           <LoadIcon
             fontSize="small"
-            color={isOverloaded ? 'warning' : 'disabled'}
+            color={isActive ? 'warning' : 'disabled'}
           />
         </Tooltip>
       );
     }
     if (metadata.requiresInstrument) {
+      const isActive = calculation.instrumentDicePenalty < 0;
       indicators.push(
-        <Tooltip key="instrument" title="Requer instrumento" enterDelay={150}>
-          <InstrumentIcon fontSize="small" color="action" />
+        <Tooltip
+          key="instrument"
+          title={
+            isActive
+              ? `Sem instrumento: ${calculation.instrumentDicePenalty}d`
+              : 'Requer instrumento'
+          }
+          enterDelay={150}
+        >
+          <InstrumentIcon
+            fontSize="small"
+            color={isActive ? 'error' : 'action'}
+          />
         </Tooltip>
       );
     }
     if (metadata.requiresProficiency) {
+      const isActive = calculation.proficiencyDicePenalty < 0;
       indicators.push(
         <Tooltip
           key="proficiency"
-          title="Requer proficiência para uso efetivo"
+          title={
+            isActive
+              ? `Sem proficiência: ${calculation.proficiencyDicePenalty}d`
+              : 'Requer proficiência para uso efetivo'
+          }
           enterDelay={150}
         >
-          <ProficiencyIcon fontSize="small" color="action" />
+          <ProficiencyIcon
+            fontSize="small"
+            color={isActive ? 'error' : 'action'}
+          />
         </Tooltip>
       );
     }
@@ -480,7 +509,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
 
             {/* Chip para proficiência - responsivo */}
             <Tooltip
-              title={`Proficiência: ${SKILL_PROFICIENCY_LABELS[skill.proficiencyLevel]} (×${skill.proficiencyLevel === 'leigo' ? '0' : skill.proficiencyLevel === 'adepto' ? '1' : skill.proficiencyLevel === 'versado' ? '2' : '3'})`}
+              title={`Proficiência: ${SKILL_PROFICIENCY_LABELS[skill.proficiencyLevel]} (${getSkillDieSize(skill.proficiencyLevel)})`}
               enterDelay={150}
               placement="top"
             >
@@ -585,7 +614,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
           }}
         >
           <Tooltip
-            title={`Clique para rolar: ${skill.proficiencyLevel === 'leigo' ? 'd6' : skill.proficiencyLevel === 'adepto' ? 'd8' : skill.proficiencyLevel === 'versado' ? 'd10' : 'd12'}`}
+            title={`Clique para rolar: ${rollFormula.formula}`}
             enterDelay={150}
           >
             <Box
@@ -620,7 +649,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
               <Typography
                 variant="body2"
                 fontFamily="monospace"
-                color={rollFormula.takeLowest ? 'error' : 'primary'}
+                color={rollFormula.isPenaltyRoll ? 'error' : 'primary'}
                 fontWeight={700}
                 sx={{
                   fontSize: { xs: '0.8rem', sm: '1rem' },
@@ -638,7 +667,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
               skillLabel={SKILL_LABELS[skill.name]}
               attributeValue={calculation.attributeValue}
               proficiencyLevel={skill.proficiencyLevel}
-              diceModifier={extractDiceModifier(skill.modifiers)}
+              diceModifier={calculation.totalDiceModifier}
               size="small"
               color="primary"
             />
