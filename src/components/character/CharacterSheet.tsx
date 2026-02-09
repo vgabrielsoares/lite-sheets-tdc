@@ -1256,7 +1256,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               onClose={handleCloseSidebar}
               archetypeBreakdown={calculateArchetypeHPBreakdown(
                 character.archetypes ?? [],
-                character.attributes.constituicao
+                character.attributes.corpo
               )}
               baseHP={15}
             />
@@ -1275,7 +1275,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               onClose={handleCloseSidebar}
               archetypeBreakdown={calculateArchetypePPBreakdown(
                 character.archetypes ?? [],
-                character.attributes.presenca
+                character.attributes.essencia
               )}
               basePP={2}
             />
@@ -1460,7 +1460,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           onClose={handleCloseSidebar}
           archetypeBreakdown={calculateArchetypeHPBreakdown(
             character.archetypes ?? [],
-            character.attributes.constituicao
+            character.attributes.corpo
           )}
           baseHP={15}
         />
@@ -1479,7 +1479,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           onClose={handleCloseSidebar}
           archetypeBreakdown={calculateArchetypePPBreakdown(
             character.archetypes ?? [],
-            character.attributes.presenca
+            character.attributes.essencia
           )}
           basePP={2}
         />
