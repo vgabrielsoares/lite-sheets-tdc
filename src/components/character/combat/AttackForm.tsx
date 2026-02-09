@@ -129,7 +129,6 @@ const SECONDARY_ATTACK_SKILLS: SkillName[] = [
   'sorte',
   'vigor',
   'determinacao',
-  'iniciativa',
   'reflexo',
 ];
 

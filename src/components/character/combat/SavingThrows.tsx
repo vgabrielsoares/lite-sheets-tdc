@@ -19,9 +19,9 @@ import {
 } from '@mui/icons-material';
 import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName } from '@/types/skills';
-import type { ProficiencyLevel, Modifier } from '@/types/common';
+import type { ProficiencyLevel, Modifier, DieSize } from '@/types/common';
 import type { SavingThrowType, CombatPenalties } from '@/types/combat';
-import { SKILL_PROFICIENCY_LEVELS } from '@/constants/skills';
+import { getSkillDieSize } from '@/constants/skills';
 import { ATTRIBUTE_LABELS } from '@/constants/attributes';
 import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
 
@@ -34,7 +34,7 @@ export interface SavingThrowsProps {
   characterLevel: number;
   /** Habilidade de assinatura do personagem */
   signatureSkill?: SkillName;
-  /** Penalidades de combate (opcional, para aplicar -1d20 por sucesso) */
+  /** Penalidades de combate (opcional, para aplicar -Xd por sucesso) */
   penalties?: CombatPenalties;
 }
 
@@ -54,15 +54,17 @@ interface SavingThrowInfo {
 }
 
 /**
- * Resultado do cálculo de um teste de resistência
+ * Resultado do cálculo de um teste de resistência (pool de dados v0.0.2)
  */
 interface SavingThrowCalculation {
-  /** Modificador numérico total */
-  modifier: number;
   /** Quantidade de dados a rolar */
   diceCount: number;
-  /** Se deve escolher o menor (rolagem com penalidade de dados) */
-  takeLowest: boolean;
+  /** Tamanho do dado (d6/d8/d10/d12) */
+  dieSize: DieSize;
+  /** Se deve escolher o menor (rolagem com penalidade extrema) */
+  isPenaltyRoll: boolean;
+  /** Fórmula legível (ex: "3d8", "2d6 (menor)") */
+  formula: string;
 }
 
 /**
@@ -176,7 +178,13 @@ export function SavingThrows({
   ): SavingThrowCalculation => {
     const skill = skills[info.skill];
     if (!skill) {
-      return { modifier: 0, diceCount: 1, takeLowest: false };
+      const dieSize = 'd6' as DieSize;
+      return {
+        diceCount: 2,
+        dieSize,
+        isPenaltyRoll: true,
+        formula: `2${dieSize} (menor)`,
+      };
     }
 
     const attributeValue = attributes[info.attribute];
@@ -192,13 +200,7 @@ export function SavingThrows({
       ...useModifiers,
     ];
 
-    // Separa modificadores de dados dos numéricos
-    const valueModifiers = allModifiers.filter((mod) => !mod.affectsDice);
-    const diceModifiers = allModifiers.filter(
-      (mod) => mod.affectsDice === true
-    );
-
-    // Calcula modificador numérico usando apenas valueModifiers
+    // Calcula a pool de dados usando o sistema v0.0.2
     const calculation = calculateSkillTotalModifier(
       info.skill,
       info.attribute,
@@ -206,55 +208,39 @@ export function SavingThrows({
       skill.proficiencyLevel,
       isSignature,
       characterLevel,
-      valueModifiers
+      allModifiers
     );
 
-    // Calcula quantidade de dados: atributo + modificadores de dados
-    const diceModifiersTotal = diceModifiers.reduce(
-      (sum, mod) => sum + (mod.value || 0),
-      0
-    );
-
-    // Aplica penalidade de combate se existir (-1d20 por sucesso)
+    // Aplica penalidade de combate se existir (-Xd por sucesso do oponente)
     const combatPenalty = penalties?.savingThrowPenalties[info.type] ?? 0;
+    const effectiveTotalDice = calculation.totalDice + combatPenalty;
 
-    const effectiveDiceCount =
-      attributeValue + diceModifiersTotal + combatPenalty;
+    const dieSize = calculation.dieSize;
 
-    // Se effectiveDiceCount <= 0, rola 2 - effectiveDiceCount dados e pega o menor
-    let diceCount: number;
-    let takeLowest: boolean;
-
-    if (effectiveDiceCount <= 0) {
-      diceCount = 2 - effectiveDiceCount; // 0 -> 2d20, -1 -> 3d20, etc
-      takeLowest = true;
-    } else {
-      diceCount = effectiveDiceCount;
-      takeLowest = false;
+    // Se effectiveTotalDice <= 0, rola 2d e usa o menor
+    if (effectiveTotalDice <= 0) {
+      return {
+        diceCount: 2,
+        dieSize,
+        isPenaltyRoll: true,
+        formula: `2${dieSize} (menor)`,
+      };
     }
 
+    const diceCount = Math.min(effectiveTotalDice, 8);
     return {
-      modifier: calculation.totalModifier,
       diceCount,
-      takeLowest,
+      dieSize,
+      isPenaltyRoll: false,
+      formula: `${diceCount}${dieSize}`,
     };
   };
 
   /**
-   * Formata o modificador com sinal
-   */
-  const formatModifier = (value: number): string => {
-    if (value >= 0) return `+${value}`;
-    return `${value}`;
-  };
-
-  /**
-   * Obtém a descrição da rolagem
+   * Obtém a descrição da rolagem (pool de dados v0.0.2)
    */
   const getRollDescription = (calc: SavingThrowCalculation): string => {
-    const modifierStr = formatModifier(calc.modifier);
-    const prefix = calc.takeLowest ? '-' : '';
-    return `${prefix}${calc.diceCount}d20${modifierStr}`;
+    return calc.formula;
   };
 
   return (
@@ -303,8 +289,8 @@ export function SavingThrows({
                       {attributeValue})
                     </Typography>
                     <Typography variant="caption" display="block">
-                      Proficiência: {PROFICIENCY_LABELS[proficiency]} (×
-                      {SKILL_PROFICIENCY_LEVELS[proficiency]})
+                      Proficiência: {PROFICIENCY_LABELS[proficiency]} (
+                      {getSkillDieSize(proficiency)})
                     </Typography>
                     <Typography variant="caption" display="block">
                       Uso: {info.resistUse}
@@ -362,27 +348,29 @@ export function SavingThrows({
                     {info.label}
                   </Typography>
 
-                  {/* Modificador */}
+                  {/* Fórmula da pool de dados */}
                   <Typography
                     variant="h5"
                     component="div"
                     fontWeight="bold"
                     sx={{ color: info.color }}
                   >
-                    {formatModifier(calc.modifier)}
+                    {calc.diceCount}
+                    {calc.dieSize}
                   </Typography>
 
-                  {/* Dados - vermelho se takeLowest */}
+                  {/* Indicador de penalidade */}
                   <Typography
                     variant="caption"
                     component="div"
                     sx={{
-                      color: calc.takeLowest ? 'error.main' : 'text.secondary',
-                      fontWeight: calc.takeLowest ? 'bold' : 'normal',
+                      color: calc.isPenaltyRoll
+                        ? 'error.main'
+                        : 'text.secondary',
+                      fontWeight: calc.isPenaltyRoll ? 'bold' : 'normal',
                     }}
                   >
-                    {calc.takeLowest ? '-' : ''}
-                    {calc.diceCount}d20
+                    {calc.isPenaltyRoll ? '(menor)' : getRollDescription(calc)}
                   </Typography>
 
                   {/* Badges */}
