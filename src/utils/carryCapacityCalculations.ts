@@ -4,7 +4,7 @@
  * Funções utilitárias para calcular capacidade de carga do personagem,
  * estados de encumbrance, capacidade de empurrar/levantar, e peso de moedas.
  *
- * Fórmula base: 5 + (Força × 5) + sizeModifier + otherModifiers
+ * Fórmula base: 5 + (Corpo × 5) + sizeModifier + otherModifiers
  *
  * Estados de carga:
  * - Normal: peso ≤ capacidade máxima
@@ -34,7 +34,7 @@ export type EncumbranceState = 'normal' | 'sobrecarregado' | 'imobilizado';
  * Resultado completo do cálculo de capacidade de carga
  */
 export interface CarryCapacityResult {
-  /** Capacidade base (5 + Força × 5) */
+  /** Capacidade base (5 + Corpo × 5) */
   base: number;
   /** Modificador de tamanho aplicado */
   sizeModifier: number;
@@ -51,13 +51,13 @@ export interface CarryCapacityResult {
 /**
  * Calcula a capacidade de carga base
  *
- * Fórmula: 5 + (Força × 5)
+ * Fórmula: 5 + (Corpo × 5)
  *
- * @param forca - Valor do atributo Força (0-5, podendo exceder)
+ * @param corpo - Valor do atributo Corpo (0-5, podendo exceder)
  * @returns Capacidade de carga base
  */
-export function calculateBaseCarryCapacity(forca: number): number {
-  return BASE_CARRYING_CAPACITY + forca * STRENGTH_CARRY_MULTIPLIER;
+export function calculateBaseCarryCapacity(corpo: number): number {
+  return BASE_CARRYING_CAPACITY + corpo * STRENGTH_CARRY_MULTIPLIER;
 }
 
 /**
@@ -74,19 +74,19 @@ export function getSizeCarryModifier(size: CreatureSize): number {
 /**
  * Calcula a capacidade de carga total
  *
- * Fórmula: 5 + (Força × 5) + sizeModifier + otherModifiers
+ * Fórmula: 5 + (Corpo × 5) + sizeModifier + otherModifiers
  *
- * @param forca - Valor do atributo Força
+ * @param corpo - Valor do atributo Corpo
  * @param sizeModifier - Modificador de tamanho (aditivo)
  * @param otherModifiers - Outros modificadores (itens, habilidades)
  * @returns Capacidade de carga total
  */
 export function calculateCarryCapacity(
-  forca: number,
+  corpo: number,
   sizeModifier: number = 0,
   otherModifiers: number = 0
 ): number {
-  const base = calculateBaseCarryCapacity(forca);
+  const base = calculateBaseCarryCapacity(corpo);
   return Math.max(0, Math.floor(base + sizeModifier + otherModifiers));
 }
 
@@ -256,19 +256,19 @@ export function calculateTotalWeight(
 /**
  * Calcula a capacidade de carga completa do personagem
  *
- * @param forca - Valor do atributo Força
+ * @param corpo - Valor do atributo Corpo
  * @param size - Tamanho da criatura
  * @param otherModifiers - Outros modificadores
  * @returns Resultado completo do cálculo
  */
 export function calculateFullCarryCapacity(
-  forca: number,
+  corpo: number,
   size: CreatureSize,
   otherModifiers: number = 0
 ): CarryCapacityResult {
-  const base = calculateBaseCarryCapacity(forca);
+  const base = calculateBaseCarryCapacity(corpo);
   const sizeModifier = getSizeCarryModifier(size);
-  const total = calculateCarryCapacity(forca, sizeModifier, otherModifiers);
+  const total = calculateCarryCapacity(corpo, sizeModifier, otherModifiers);
 
   return {
     base,
@@ -283,7 +283,7 @@ export function calculateFullCarryCapacity(
 /**
  * Gera um objeto CarryingCapacity completo para o personagem
  *
- * @param forca - Valor do atributo Força
+ * @param corpo - Valor do atributo Corpo
  * @param size - Tamanho da criatura
  * @param items - Lista de itens do inventário
  * @param currency - Dados de moedas do personagem
@@ -291,15 +291,15 @@ export function calculateFullCarryCapacity(
  * @returns Objeto CarryingCapacity completo
  */
 export function generateCarryingCapacity(
-  forca: number,
+  corpo: number,
   size: CreatureSize,
   items: InventoryItem[],
   currency: Currency,
   otherModifiers: number = 0
 ): CarryingCapacity {
-  const base = calculateBaseCarryCapacity(forca);
+  const base = calculateBaseCarryCapacity(corpo);
   const sizeModifier = getSizeCarryModifier(size);
-  const total = calculateCarryCapacity(forca, sizeModifier, otherModifiers);
+  const total = calculateCarryCapacity(corpo, sizeModifier, otherModifiers);
   const currentWeight = calculateTotalWeight(items, currency);
 
   return {

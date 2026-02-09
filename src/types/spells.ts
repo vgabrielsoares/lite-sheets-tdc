@@ -136,8 +136,8 @@ export interface SpellcastingAbility {
   id: string;
   /** Habilidade usada para conjuração */
   skill: SpellcastingSkillName;
-  /** Atributo usado para cálculos (padrão: Presença) */
-  attribute: 'presenca' | 'influencia' | 'constituicao';
+  /** Atributo usado para cálculos (padrão: Essência) */
+  attribute: 'essencia' | 'influencia' | 'corpo' | 'instinto';
   /** Modificador especial adicional ao ND */
   dcBonus: number;
   /** Modificador especial adicional ao bônus de ataque */

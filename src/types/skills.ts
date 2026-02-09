@@ -44,6 +44,7 @@ export const SKILL_LIST = [
   'sobrevivencia',
   'sociedade',
   'sorte',
+  'sintonia',
   'tenacidade',
   'vigor',
 ] as const;
@@ -66,9 +67,9 @@ export const SKILL_KEY_ATTRIBUTES: Record<
   acerto: 'agilidade',
   acrobacia: 'agilidade',
   adestramento: 'influencia',
-  arcano: 'mente',
+  arcano: 'essencia',
   arte: 'mente',
-  atletismo: 'constituicao',
+  atletismo: 'corpo',
   conducao: 'agilidade',
   destreza: 'agilidade',
   determinacao: 'mente',
@@ -80,22 +81,23 @@ export const SKILL_KEY_ATTRIBUTES: Record<
   instrucao: 'mente',
   intimidacao: 'influencia',
   investigacao: 'mente',
-  luta: 'forca',
+  luta: 'corpo',
   medicina: 'mente',
-  natureza: 'presenca',
+  natureza: 'instinto',
   oficio: 'especial',
-  percepcao: 'presenca',
+  percepcao: 'instinto',
   performance: 'influencia',
-  perspicacia: 'presenca',
+  perspicacia: 'instinto',
   persuasao: 'influencia',
-  rastreamento: 'presenca',
+  rastreamento: 'instinto',
   reflexo: 'agilidade',
-  religiao: 'presenca',
+  religiao: 'influencia',
   sobrevivencia: 'mente',
   sociedade: 'influencia',
   sorte: 'especial',
-  tenacidade: 'forca',
-  vigor: 'constituicao',
+  sintonia: 'essencia',
+  tenacidade: 'corpo',
+  vigor: 'corpo',
 } as const;
 
 /**
@@ -111,6 +113,9 @@ export const COMBAT_SKILLS: SkillName[] = [
   'natureza',
   'reflexo',
   'religiao',
+  'sintonia',
+  'tenacidade',
+  'vigor',
 ];
 
 /**
@@ -247,7 +252,10 @@ export const SKILL_DESCRIPTIONS: Record<SkillName, string> = {
   sobrevivencia: 'Capacidade de sobreviver em ambientes selvagens.',
   sociedade: 'Conhecimento sobre etiqueta, política e estruturas sociais.',
   sorte: 'Favor do destino e capacidade de alterar probabilidades.',
-  tenacidade: 'Resistência física, usada recuperar equilíbrio ou manter a postura.',
+  sintonia:
+    'Resistência a efeitos mágicos e espirituais, conexão com o sobrenatural.',
+  tenacidade:
+    'Resistência física, usada recuperar equilíbrio ou manter a postura.',
   vigor: 'Resistência a doenças, venenos e efeitos físicos.',
 } as const;
 

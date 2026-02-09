@@ -62,12 +62,13 @@ const SKILL_LABELS: Record<SpellcastingSkillName, string> = {
 };
 
 const ATTRIBUTE_LABELS: Record<
-  'presenca' | 'influencia' | 'constituicao',
+  'corpo' | 'influencia' | 'essencia' | 'instinto',
   string
 > = {
-  presenca: 'Presença',
+  corpo: 'Corpo',
   influencia: 'Influência',
-  constituicao: 'Constituição',
+  essencia: 'Essência',
+  instinto: 'Instinto',
 };
 
 /**
@@ -92,8 +93,8 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
   // Form state
   const [formSkill, setFormSkill] = useState<SpellcastingSkillName>('arcano');
   const [formAttribute, setFormAttribute] = useState<
-    'presenca' | 'influencia' | 'constituicao'
-  >('presenca');
+    'corpo' | 'influencia' | 'essencia' | 'instinto'
+  >('essencia');
   const [formDcBonus, setFormDcBonus] = useState(0);
   const [formAttackBonus, setFormAttackBonus] = useState(0);
 
@@ -110,7 +111,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
   // Fórmula: Nível + Presença + Modificadores
   const ppLimitBase = calculatePPPerRound(
     character.level,
-    character.attributes.presenca,
+    character.attributes.essencia,
     0
   );
   const ppLimitModifiers = (character.combat?.ppLimit?.modifiers || []).reduce(
@@ -242,7 +243,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
   // Handlers
   const handleOpenAddDialog = () => {
     setFormSkill('arcano');
-    setFormAttribute('presenca');
+    setFormAttribute('essencia');
     setFormDcBonus(0);
     setFormAttackBonus(0);
     setAddDialogOpen(true);
@@ -362,7 +363,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
     const lines = [
       `Limite de PP por Rodada:`,
       `• Nível: +${character.level}`,
-      `• Presença: +${character.attributes.presenca}`,
+      `• Essência: +${character.attributes.essencia}`,
     ];
 
     if (ppLimitModifiers !== 0) {
@@ -377,7 +378,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
     return lines.join('\n');
   }, [
     character.level,
-    character.attributes.presenca,
+    character.attributes.essencia,
     ppLimitModifiers,
     ppPerRound,
   ]);
@@ -753,14 +754,19 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                 value={formAttribute}
                 onChange={(e) =>
                   setFormAttribute(
-                    e.target.value as 'presenca' | 'influencia' | 'constituicao'
+                    e.target.value as
+                      | 'corpo'
+                      | 'influencia'
+                      | 'essencia'
+                      | 'instinto'
                   )
                 }
                 label="Atributo Base"
               >
-                <MenuItem value="presenca">Presença</MenuItem>
+                <MenuItem value="corpo">Corpo</MenuItem>
                 <MenuItem value="influencia">Influência</MenuItem>
-                <MenuItem value="constituicao">Constituição</MenuItem>
+                <MenuItem value="essencia">Essência</MenuItem>
+                <MenuItem value="instinto">Instinto</MenuItem>
               </Select>
             </FormControl>
 
@@ -832,14 +838,19 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                 value={formAttribute}
                 onChange={(e) =>
                   setFormAttribute(
-                    e.target.value as 'presenca' | 'influencia' | 'constituicao'
+                    e.target.value as
+                      | 'corpo'
+                      | 'influencia'
+                      | 'essencia'
+                      | 'instinto'
                   )
                 }
                 label="Atributo Base"
               >
-                <MenuItem value="presenca">Presença</MenuItem>
+                <MenuItem value="corpo">Corpo</MenuItem>
                 <MenuItem value="influencia">Influência</MenuItem>
-                <MenuItem value="constituicao">Constituição</MenuItem>
+                <MenuItem value="essencia">Essência</MenuItem>
+                <MenuItem value="instinto">Instinto</MenuItem>
               </Select>
             </FormControl>
 

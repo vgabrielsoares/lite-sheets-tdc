@@ -2,8 +2,8 @@
  * Utilitários para cálculos de descanso e recuperação
  *
  * Regras:
- * - Dormir: Nível × Constituição + Modificadores
- * - Relaxar (Meditar): Nível × Presença + Modificadores
+ * - Dormir: Nível × Corpo + Modificadores
+ * - Relaxar (Meditar): Nível × Essência + Modificadores
  * - Total: (Dormir + Relaxar) × Multiplicador de Qualidade
  * - Arredondar para baixo
  */
@@ -87,8 +87,8 @@ export interface RestRecovery {
  * Calcula recuperação de PV e PP durante um descanso
  *
  * @param level - Nível do personagem
- * @param constitution - Valor do atributo Constituição
- * @param presenca - Valor do atributo Presença
+ * @param corpo - Valor do atributo Corpo
+ * @param essencia - Valor do atributo Essência
  * @param quality - Qualidade do descanso
  * @param useSleep - Se o personagem dormiu (padrão: true)
  * @param useMeditate - Se o personagem relaxou/meditou (padrão: true)
@@ -98,8 +98,8 @@ export interface RestRecovery {
  */
 export function calculateRestRecovery(
   level: number,
-  constitution: number,
-  presenca: number,
+  corpo: number,
+  essencia: number,
   quality: RestQuality = 'normal',
   useSleep: boolean = true,
   useMeditate: boolean = true,
@@ -107,10 +107,10 @@ export function calculateRestRecovery(
   meditateModifiers: number = 0
 ): RestRecovery {
   // Calcular recuperação base de Dormir (recupera PV)
-  const sleepBase = useSleep ? level * constitution + sleepModifiers : 0;
+  const sleepBase = useSleep ? level * corpo + sleepModifiers : 0;
 
   // Calcular recuperação base de Relaxar/Meditar (recupera PP)
-  const meditateBase = useMeditate ? level * presenca + meditateModifiers : 0;
+  const meditateBase = useMeditate ? level * essencia + meditateModifiers : 0;
 
   // Aplicar multiplicador de qualidade
   const multiplier = getQualityMultiplier(quality);
@@ -133,24 +133,24 @@ export function calculateRestRecovery(
  */
 export function validateRestInputs(
   level: number,
-  constitution: number,
-  presenca: number
+  corpo: number,
+  essencia: number
 ): { valid: boolean; error?: string } {
   if (level < 1) {
     return { valid: false, error: 'Nível deve ser maior que 0' };
   }
 
-  if (constitution < 0) {
+  if (corpo < 0) {
     return {
       valid: false,
-      error: 'Constituição não pode ser negativa',
+      error: 'Corpo não pode ser negativo',
     };
   }
 
-  if (presenca < 0) {
+  if (essencia < 0) {
     return {
       valid: false,
-      error: 'Presença não pode ser negativa',
+      error: 'Essência não pode ser negativa',
     };
   }
 

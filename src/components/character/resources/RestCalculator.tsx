@@ -66,15 +66,15 @@ export function RestCalculator({
   const [showInfo, setShowInfo] = useState(false);
 
   const level = character.level;
-  const constitution = character.attributes.constituicao;
-  const presenca = character.attributes.presenca;
+  const corpo = character.attributes.corpo;
+  const essencia = character.attributes.essencia;
 
   const recovery = useMemo(
     () =>
       calculateRestRecovery(
         level,
-        constitution,
-        presenca,
+        corpo,
+        essencia,
         quality,
         useSleep,
         useMeditate,
@@ -83,8 +83,8 @@ export function RestCalculator({
       ),
     [
       level,
-      constitution,
-      presenca,
+      corpo,
+      essencia,
       quality,
       useSleep,
       useMeditate,
@@ -144,14 +144,14 @@ export function RestCalculator({
                   </Typography>
                   <Typography variant="body2" component="div">
                     <strong>Dormir (Recupera PV):</strong>
-                    <br />• Cálculo: Nível × Constituição × Multiplicador
-                    <br />• Exemplo atual: {level} × {constitution} ×{' '}
+                    <br />• Cálculo: Nível × Corpo × Multiplicador
+                    <br />• Exemplo atual: {level} × {corpo} ×{' '}
                     {recovery.multiplier} = {recovery.pvRecovery} PV
                     <br />
                     <br />
                     <strong>Relaxar (Recupera PP):</strong>
-                    <br />• Cálculo: Nível × Presença × Multiplicador
-                    <br />• Exemplo atual: {level} × {presenca} ×{' '}
+                    <br />• Cálculo: Nível × Essência × Multiplicador
+                    <br />• Exemplo atual: {level} × {essencia} ×{' '}
                     {recovery.multiplier} = {recovery.ppRecovery} PP
                     <br />
                     <br />
@@ -190,8 +190,7 @@ export function RestCalculator({
                           <strong>Dormir</strong> (Recupera PV)
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Base: {level} × {constitution} ={' '}
-                          {level * constitution}
+                          Base: {level} × {corpo} = {level * corpo}
                           {sleepModifiers !== 0 &&
                             ` (${sleepModifiers >= 0 ? '+' : ''}${sleepModifiers})`}
                         </Typography>
@@ -213,7 +212,7 @@ export function RestCalculator({
                           <strong>Relaxar/Meditar</strong> (Recupera PP)
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Base: {level} × {presenca} = {level * presenca}
+                          Base: {level} × {essencia} = {level * essencia}
                           {meditateModifiers !== 0 &&
                             ` (${meditateModifiers >= 0 ? '+' : ''}${meditateModifiers})`}
                         </Typography>

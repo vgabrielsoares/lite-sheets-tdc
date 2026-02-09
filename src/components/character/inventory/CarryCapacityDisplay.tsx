@@ -106,7 +106,7 @@ export function CarryCapacityDisplay({
 
   // Calcular capacidade de carga
   const carryingCapacity = useMemo(() => {
-    const forca = character.attributes?.forca ?? 1;
+    const corpo = character.attributes?.corpo ?? 1;
     const items = character.inventory?.items ?? [];
     const currency = character.inventory?.currency ?? {
       physical: { cobre: 0, ouro: 0, platina: 0 },
@@ -114,7 +114,7 @@ export function CarryCapacityDisplay({
     };
 
     return generateCarryingCapacity(
-      forca,
+      corpo,
       size,
       items,
       currency,

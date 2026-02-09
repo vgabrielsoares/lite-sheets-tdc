@@ -81,9 +81,9 @@ export function validateAttributeModifier(
 }
 
 /**
- * Calcula capacidade de carga baseada em Força e modificadores de tamanho
+ * Calcula capacidade de carga baseada em Corpo e modificadores de tamanho
  *
- * @param strength - Valor do atributo Força
+ * @param strength - Valor do atributo Corpo
  * @param size - Tamanho da criatura
  * @param otherModifiers - Outros modificadores de carga
  * @returns Capacidade de carga total

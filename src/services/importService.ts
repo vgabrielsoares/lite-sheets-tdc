@@ -131,11 +131,11 @@ function validateAttributes(attributes: any, warnings: string[]): void {
 
   const requiredAttributes = [
     'agilidade',
-    'constituicao',
-    'forca',
+    'corpo',
     'influencia',
     'mente',
-    'presenca',
+    'essencia',
+    'instinto',
   ];
 
   for (const attr of requiredAttributes) {
