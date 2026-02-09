@@ -180,7 +180,8 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
           false
         );
 
-        return calc.totalModifier;
+        // TODO: [Phase 5] Rework spell DC/attack to use pool system instead of flat modifier
+        return calc.totalDice;
       }
 
       // Caso contrário, usar modificador geral da habilidade
@@ -195,7 +196,8 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
         false
       );
 
-      return calc.totalModifier;
+      // TODO: [Phase 5] Rework spell DC/attack to use pool system instead of flat modifier
+      return calc.totalDice;
     },
     [character]
   );

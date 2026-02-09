@@ -127,7 +127,8 @@ export function SpellLearningCalculator({
         false
       );
 
-      return calc.totalModifier;
+      // TODO: [Phase 5] Rework spell learning to use pool system instead of flat modifier
+      return calc.totalDice;
     }
 
     // Caso contrário, usar modificador geral da habilidade
@@ -142,7 +143,8 @@ export function SpellLearningCalculator({
       false
     );
 
-    return calc.totalModifier;
+    // TODO: [Phase 5] Rework spell learning to use pool system instead of flat modifier
+    return calc.totalDice;
   };
 
   const skillModifier = calculateSkillModifier(selectedSkill);
