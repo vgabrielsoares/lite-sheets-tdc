@@ -16,15 +16,18 @@ export type Timestamp = string;
 
 /**
  * Níveis de proficiência para habilidades
- * - Leigo: x0 (sem multiplicador)
- * - Adepto: x1 (multiplicador 1)
- * - Versado: x2 (multiplicador 2)
- * - Mestre: x3 (multiplicador 3)
+ * No sistema v0.0.2, o grau determina o tamanho do dado:
+ * - Leigo: d6
+ * - Adepto: d8
+ * - Versado: d10
+ * - Mestre: d12
  */
 export type ProficiencyLevel = 'leigo' | 'adepto' | 'versado' | 'mestre';
 
 /**
- * Mapeamento de níveis de proficiência para seus multiplicadores
+ * @deprecated Usar PROFICIENCY_DIE_MAP no lugar.
+ * Mantido temporariamente para compatibilidade durante migração.
+ * Mapeamento de níveis de proficiência para seus multiplicadores (sistema antigo d20).
  */
 export const PROFICIENCY_MULTIPLIERS: Record<ProficiencyLevel, number> = {
   leigo: 0,
@@ -32,6 +35,82 @@ export const PROFICIENCY_MULTIPLIERS: Record<ProficiencyLevel, number> = {
   versado: 2,
   mestre: 3,
 } as const;
+
+/**
+ * Tamanhos de dado de habilidade (determinados pelo grau de proficiência)
+ * Usado no novo sistema de pool de dados com contagem de sucessos.
+ */
+export type DieSize = 'd6' | 'd8' | 'd10' | 'd12';
+
+/**
+ * Mapeamento de níveis de proficiência para tamanhos de dado
+ * Leigo rola d6, Adepto d8, Versado d10, Mestre d12
+ */
+export const PROFICIENCY_DIE_MAP: Record<ProficiencyLevel, DieSize> = {
+  leigo: 'd6',
+  adepto: 'd8',
+  versado: 'd10',
+  mestre: 'd12',
+} as const;
+
+/**
+ * Mapeamento de DieSize para número de lados
+ */
+export const DIE_SIZE_TO_SIDES: Record<DieSize, number> = {
+  d6: 6,
+  d8: 8,
+  d10: 10,
+  d12: 12,
+} as const;
+
+/**
+ * Resultado individual de um dado na pool
+ */
+export interface DicePoolDie {
+  /** Valor rolado no dado */
+  value: number;
+  /** Tamanho do dado usado (d6, d8, d10, d12) */
+  dieSize: DieSize;
+  /** Se este dado conta como sucesso (valor ≥ 6) */
+  isSuccess: boolean;
+  /** Se este dado cancela um sucesso (valor = 1) */
+  isCancellation: boolean;
+}
+
+/**
+ * Resultado de uma rolagem de pool de dados (sistema v0.0.2)
+ *
+ * Mecânica: Rola X dados do tamanho determinado pelo grau,
+ * conta resultados ≥ 6 como sucessos (✶),
+ * resultados = 1 cancelam 1 sucesso cada.
+ * Mínimo de 0✶.
+ */
+export interface DicePoolResult {
+  /** Fórmula da rolagem (ex: "3d8") */
+  formula: string;
+  /** Dados individuais com detalhes */
+  dice: DicePoolDie[];
+  /** Valores brutos rolados (para compatibilidade) */
+  rolls: number[];
+  /** Tamanho do dado usado */
+  dieSize: DieSize;
+  /** Quantidade de dados rolados */
+  diceCount: number;
+  /** Quantidade de sucessos brutos (resultados ≥ 6) */
+  successes: number;
+  /** Quantidade de cancelamentos (resultados = 1) */
+  cancellations: number;
+  /** Sucessos líquidos: max(0, successes - cancellations) */
+  netSuccesses: number;
+  /** Timestamp da rolagem */
+  timestamp: Date;
+  /** Descrição do contexto da rolagem */
+  context?: string;
+  /** Se a rolagem usou a regra de atributo 0 / penalidade extrema (2d, menor) */
+  isPenaltyRoll: boolean;
+  /** Bônus/penalidade em dados aplicados (+Xd / -Xd) */
+  diceModifier: number;
+}
 
 /**
  * Tipos de deslocamento disponíveis

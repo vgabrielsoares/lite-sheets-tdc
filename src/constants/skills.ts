@@ -7,12 +7,20 @@
  * - Graus de proficiência (Leigo, Adepto, Versado, Mestre)
  */
 
-import { SkillName, AttributeName, ProficiencyLevel } from '@/types';
+import {
+  SkillName,
+  AttributeName,
+  ProficiencyLevel,
+  DieSize,
+  PROFICIENCY_DIE_MAP,
+} from '@/types';
 import { SKILL_LIST } from '@/types';
 
 /**
+ * @deprecated Usar PROFICIENCY_DIE_MAP do types no lugar.
  * Graus de proficiência em habilidades
- * O multiplicador é aplicado ao atributo-chave para calcular o bônus
+ * No sistema antigo, o multiplicador era aplicado ao atributo-chave.
+ * No sistema novo (v0.0.2), o grau determina o tamanho do dado.
  */
 export const SKILL_PROFICIENCY_LEVELS: Record<ProficiencyLevel, number> = {
   leigo: 0,
@@ -20,6 +28,19 @@ export const SKILL_PROFICIENCY_LEVELS: Record<ProficiencyLevel, number> = {
   versado: 2,
   mestre: 3,
 };
+
+/**
+ * Mapeamento de graus de proficiência para tamanhos de dado
+ * Re-exportado de @/types para conveniência
+ */
+export const PROFICIENCY_TO_DIE_SIZE = PROFICIENCY_DIE_MAP;
+
+/**
+ * Retorna o tamanho do dado para um nível de proficiência
+ */
+export function getSkillDieSize(proficiencyLevel: ProficiencyLevel): DieSize {
+  return PROFICIENCY_DIE_MAP[proficiencyLevel];
+}
 
 /**
  * Nomes amigáveis dos graus de proficiência

@@ -10,6 +10,9 @@ export type {
   UUID,
   Timestamp,
   ProficiencyLevel,
+  DieSize,
+  DicePoolDie,
+  DicePoolResult,
   MovementType,
   SenseType,
   KeenSense,
@@ -34,6 +37,8 @@ export type {
 
 export {
   PROFICIENCY_MULTIPLIERS,
+  PROFICIENCY_DIE_MAP,
+  DIE_SIZE_TO_SIDES,
   CURRENCY_SYMBOLS,
   CURRENCY_CONVERSION,
   DIFFICULTY_VALUES,
