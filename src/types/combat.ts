@@ -2,7 +2,7 @@
  * Combat - Tipos relacionados a combate
  *
  * Este arquivo contém os tipos e interfaces relacionados ao sistema de combate,
- * incluindo ataques, defesa, iniciativa e economia de ações.
+ * incluindo ataques, defesa e economia de ações.
  */
 
 import type { DiceRoll, DamageType, Resource, Modifier } from './common';
@@ -276,7 +276,9 @@ export interface Condition {
 }
 
 /**
- * Informações de iniciativa
+ * @deprecated Iniciativa não existe mais como habilidade em v0.0.2.
+ * Em v0.0.2, a ordem de turno é voluntária (Turno Rápido ou Turno Lento).
+ * Mantido para compatibilidade com dados salvos.
  */
 export interface Initiative {
   /** Modificador de iniciativa */

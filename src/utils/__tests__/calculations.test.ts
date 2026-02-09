@@ -138,21 +138,26 @@ describe('calculatePPPerRound', () => {
 });
 
 describe('calculateSignatureAbilityBonus', () => {
-  it('should calculate bonus for non-combat skills (equals level)', () => {
+  it('should calculate bonus based on level tiers (v0.0.2: +1d/+2d/+3d)', () => {
+    // Tier 1: Level 1-5 = +1d
     expect(calculateSignatureAbilityBonus(1, false)).toBe(1);
-    expect(calculateSignatureAbilityBonus(5, false)).toBe(5);
-    expect(calculateSignatureAbilityBonus(10, false)).toBe(10);
-    expect(calculateSignatureAbilityBonus(15, false)).toBe(15);
+    expect(calculateSignatureAbilityBonus(5, false)).toBe(1);
+    // Tier 2: Level 6-10 = +2d
+    expect(calculateSignatureAbilityBonus(6, false)).toBe(2);
+    expect(calculateSignatureAbilityBonus(10, false)).toBe(2);
+    // Tier 3: Level 11-15 = +3d (max)
+    expect(calculateSignatureAbilityBonus(11, false)).toBe(3);
+    expect(calculateSignatureAbilityBonus(15, false)).toBe(3);
   });
 
-  it('should calculate bonus for combat skills (level ÷ 3, min 1)', () => {
-    expect(calculateSignatureAbilityBonus(1, true)).toBe(1); // 1 ÷ 3 = 0.33, min 1
-    expect(calculateSignatureAbilityBonus(2, true)).toBe(1); // 2 ÷ 3 = 0.66, min 1
-    expect(calculateSignatureAbilityBonus(3, true)).toBe(1); // 3 ÷ 3 = 1
-    expect(calculateSignatureAbilityBonus(4, true)).toBe(1); // 4 ÷ 3 = 1.33, round down
-    expect(calculateSignatureAbilityBonus(6, true)).toBe(2); // 6 ÷ 3 = 2
-    expect(calculateSignatureAbilityBonus(9, true)).toBe(3); // 9 ÷ 3 = 3
-    expect(calculateSignatureAbilityBonus(10, true)).toBe(3); // 10 ÷ 3 = 3.33, round down
+  it('should ignore isCombatSkill parameter (v0.0.2: no distinction)', () => {
+    // v0.0.2: combat and non-combat get the same bonus
+    expect(calculateSignatureAbilityBonus(1, true)).toBe(1);
+    expect(calculateSignatureAbilityBonus(5, true)).toBe(1);
+    expect(calculateSignatureAbilityBonus(6, true)).toBe(2);
+    expect(calculateSignatureAbilityBonus(9, true)).toBe(2);
+    expect(calculateSignatureAbilityBonus(10, true)).toBe(2);
+    expect(calculateSignatureAbilityBonus(11, true)).toBe(3);
   });
 });
 
@@ -163,14 +168,16 @@ describe('calculateTotalSkillModifier', () => {
     expect(calculateTotalSkillModifier(4, 'mestre', false, 1, false)).toBe(12); // 4 × 3 + 0
   });
 
-  it('should add signature bonus for non-combat skills (= level)', () => {
-    expect(calculateTotalSkillModifier(2, 'versado', true, 5, false)).toBe(9); // 2 × 2 + 5
-    expect(calculateTotalSkillModifier(3, 'adepto', true, 7, false)).toBe(10); // 3 × 1 + 7
-    expect(calculateTotalSkillModifier(1, 'leigo', true, 10, false)).toBe(10); // 1 × 0 + 10
+  it('should add signature bonus for non-combat skills (v0.0.2: +1d/+2d/+3d)', () => {
+    // v0.0.2: bonus = Math.min(3, ceil(level/5))
+    expect(calculateTotalSkillModifier(2, 'versado', true, 5, false)).toBe(5); // 2 × 2 + 1
+    expect(calculateTotalSkillModifier(3, 'adepto', true, 7, false)).toBe(5); // 3 × 1 + 2
+    expect(calculateTotalSkillModifier(1, 'leigo', true, 10, false)).toBe(2); // 1 × 0 + 2
   });
 
-  it('should add signature bonus for combat skills (= level ÷ 3, min 1)', () => {
-    expect(calculateTotalSkillModifier(2, 'versado', true, 9, true)).toBe(7); // 2 × 2 + 3
+  it('should add same signature bonus for combat skills (v0.0.2: no distinction)', () => {
+    // v0.0.2: same formula, isCombatSkill ignored
+    expect(calculateTotalSkillModifier(2, 'versado', true, 9, true)).toBe(6); // 2 × 2 + 2
     expect(calculateTotalSkillModifier(3, 'adepto', true, 6, true)).toBe(5); // 3 × 1 + 2
     expect(calculateTotalSkillModifier(4, 'mestre', true, 3, true)).toBe(13); // 4 × 3 + 1
   });
@@ -179,22 +186,24 @@ describe('calculateTotalSkillModifier', () => {
     expect(calculateTotalSkillModifier(2, 'versado', false, 1, false, 5)).toBe(
       9
     ); // 2 × 2 + 0 + 5
-    expect(calculateTotalSkillModifier(3, 'adepto', true, 5, false, 3)).toBe(
-      11
-    ); // 3 × 1 + 5 + 3
+    // v0.0.2: level 5 = +1 bonus
+    expect(calculateTotalSkillModifier(3, 'adepto', true, 5, false, 3)).toBe(7); // 3 × 1 + 1 + 3
+    // v0.0.2: level 9 = +2 bonus
     expect(calculateTotalSkillModifier(4, 'mestre', true, 9, true, -2)).toBe(
-      13
-    ); // 4 × 3 + 3 - 2
+      12
+    ); // 4 × 3 + 2 - 2
   });
 
   it('should handle attribute value 0', () => {
     expect(calculateTotalSkillModifier(0, 'adepto', false, 1, false)).toBe(0); // 0 × 1 + 0
-    expect(calculateTotalSkillModifier(0, 'versado', true, 5, false)).toBe(5); // 0 × 2 + 5
+    // v0.0.2: level 5 = +1 bonus
+    expect(calculateTotalSkillModifier(0, 'versado', true, 5, false)).toBe(1); // 0 × 2 + 1
   });
 
   it('should handle leigo proficiency (multiplier 0)', () => {
     expect(calculateTotalSkillModifier(3, 'leigo', false, 1, false)).toBe(0); // 3 × 0 + 0
-    expect(calculateTotalSkillModifier(3, 'leigo', true, 8, false)).toBe(8); // 3 × 0 + 8
+    // v0.0.2: level 8 = +2 bonus
+    expect(calculateTotalSkillModifier(3, 'leigo', true, 8, false)).toBe(2); // 3 × 0 + 2
   });
 });
 

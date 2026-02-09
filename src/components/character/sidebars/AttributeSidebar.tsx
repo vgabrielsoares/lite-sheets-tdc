@@ -564,10 +564,10 @@ function getAttributeImpacts(
         color: 'warning.main',
       });
 
-      // Iniciativa
+      // Reflexo
       impacts.push({
-        title: 'Iniciativa em Combate',
-        description: `A habilidade Iniciativa usa Agilidade como atributo-chave, determinando a ordem de combate.`,
+        title: 'Reflexo',
+        description: `A habilidade Reflexo usa Agilidade como atributo-chave, permitindo reagir rapidamente a perigos e esquivar de ataques.`,
         icon: <DirectionsRunIcon color="success" />,
         color: 'success.main',
       });

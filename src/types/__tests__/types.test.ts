@@ -110,8 +110,8 @@ describe('Type System', () => {
   });
 
   describe('Skill Constants', () => {
-    it('should have 34 skills', () => {
-      expect(SKILL_LIST).toHaveLength(34);
+    it('should have 33 skills', () => {
+      expect(SKILL_LIST).toHaveLength(33);
     });
 
     it('should have key attributes for all skills', () => {
@@ -123,7 +123,6 @@ describe('Type System', () => {
     it('should have combat skills defined', () => {
       expect(COMBAT_SKILLS).toContain('acerto');
       expect(COMBAT_SKILLS).toContain('determinacao');
-      expect(COMBAT_SKILLS).toContain('iniciativa');
       expect(COMBAT_SKILLS).toContain('luta');
       expect(COMBAT_SKILLS).toContain('natureza');
       expect(COMBAT_SKILLS).toContain('reflexo');

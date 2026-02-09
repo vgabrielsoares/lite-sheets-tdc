@@ -22,7 +22,11 @@ import {
 import { AttributesDisplay } from '../attributes';
 import { SkillsDisplay, CraftsDisplay } from '../skills';
 import { LanguagesDisplay } from '../languages';
-import { getEncumbranceState, calculateCarryCapacity } from '@/utils';
+import {
+  getEncumbranceState,
+  calculateCarryCapacity,
+  getEquippedArmorType,
+} from '@/utils';
 import { getSizeModifiers } from '@/constants/lineage';
 
 export interface MainTabProps {
@@ -184,6 +188,12 @@ export const MainTab = React.memo(function MainTab({
   const isOverloaded =
     encumbranceState === 'sobrecarregado' || encumbranceState === 'imobilizado';
 
+  // Detectar tipo de armadura equipada para penalidades de carga
+  const equippedArmorType = useMemo(
+    () => getEquippedArmorType(character.inventory.items),
+    [character.inventory.items]
+  );
+
   // Obter modificador de defesa pelo tamanho
   const sizeModifiers = getSizeModifiers(character.size);
   const sizeDefenseBonus = sizeModifiers.defense;
@@ -290,6 +300,7 @@ export const MainTab = React.memo(function MainTab({
                 attributes={character.attributes}
                 characterLevel={character.level}
                 isOverloaded={isOverloaded}
+                equippedArmorType={equippedArmorType}
                 onKeyAttributeChange={onSkillKeyAttributeChange}
                 onProficiencyChange={onSkillProficiencyChange}
                 onModifiersChange={onSkillModifiersChange}

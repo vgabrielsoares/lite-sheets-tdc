@@ -7,8 +7,8 @@ import { SKILL_METADATA, COMBAT_SKILLS } from '../skills';
 
 describe('Metadados de Habilidades - Validação contra Regras Básicas', () => {
   describe('Habilidades de Combate', () => {
-    it('deve ter exatamente 11 habilidades de combate', () => {
-      expect(COMBAT_SKILLS).toHaveLength(11);
+    it('deve ter exatamente 10 habilidades de combate', () => {
+      expect(COMBAT_SKILLS).toHaveLength(10);
     });
 
     it('deve marcar Acerto como habilidade de combate', () => {
@@ -21,10 +21,6 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
 
     it('deve marcar Determinação como habilidade de combate', () => {
       expect(SKILL_METADATA.determinacao.isCombatSkill).toBe(true);
-    });
-
-    it('deve marcar Iniciativa como habilidade de combate', () => {
-      expect(SKILL_METADATA.iniciativa.isCombatSkill).toBe(true);
     });
 
     it('deve marcar Luta como habilidade de combate', () => {
@@ -56,7 +52,6 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
         'acerto',
         'arcano',
         'determinacao',
-        'iniciativa',
         'luta',
         'natureza',
         'reflexo',
@@ -88,10 +83,6 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
 
     it('deve marcar Furtividade com penalidade de carga', () => {
       expect(SKILL_METADATA.furtividade.hasCargaPenalty).toBe(true);
-    });
-
-    it('deve marcar Iniciativa com penalidade de carga', () => {
-      expect(SKILL_METADATA.iniciativa.hasCargaPenalty).toBe(true);
     });
 
     it('deve marcar Performance com penalidade de carga', () => {

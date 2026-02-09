@@ -87,7 +87,7 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'O que é a Habilidade de Assinatura?',
     answer:
-      'É uma habilidade especial do personagem. Ganha bônus igual ao nível do personagem (ou nível ÷ 3 para habilidades de combate, mínimo 1). Você escolhe qual habilidade é sua assinatura.',
+      'É uma habilidade especial do personagem. Ganha dados extras ao rolar: +1d (nível 1-5), +2d (nível 6-10), +3d (nível 11-15). Você escolhe qual habilidade é sua assinatura.',
     category: 'Edição',
     tags: ['assinatura', 'bônus'],
   },

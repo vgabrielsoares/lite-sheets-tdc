@@ -426,7 +426,7 @@ describe('proficiencyCalculations', () => {
       });
       const counts = countProficienciesByLevel(skills);
 
-      expect(counts.leigo).toBe(30); // 34 - 4
+      expect(counts.leigo).toBe(29); // 33 - 4
       expect(counts.adepto).toBe(2);
       expect(counts.versado).toBe(1);
       expect(counts.mestre).toBe(1);
@@ -436,7 +436,7 @@ describe('proficiencyCalculations', () => {
       const skills = createMockSkills({});
       const counts = countProficienciesByLevel(skills);
 
-      expect(counts.leigo).toBe(34);
+      expect(counts.leigo).toBe(33);
       expect(counts.adepto).toBe(0);
       expect(counts.versado).toBe(0);
       expect(counts.mestre).toBe(0);

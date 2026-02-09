@@ -29,7 +29,7 @@ describe('SpellLearningCalculator', () => {
       },
       skills: {
         ...baseCharacter.skills,
-        // Set arcano to 'versado' proficiency (3×2=6 modifier)
+        // Set arcano to 'versado' proficiency (d10 die, totalDice = essencia)
         arcano: {
           ...baseCharacter.skills.arcano,
           proficiencyLevel: 'versado',
@@ -133,9 +133,9 @@ describe('SpellLearningCalculator', () => {
 
       // Aguardar expansão do componente
       await waitFor(() => {
-        // Mente 3, Arcano versado (essencia 1×2=2), 1º círculo, não primeiro feitiço (já tem 2 feitiços)
-        // (3×5) + 2 + 30 = 47%
-        const percentageDisplays = screen.getAllByText('47%');
+        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // (3×5) + 1 + 30 = 46%
+        const percentageDisplays = screen.getAllByText('46%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -147,14 +147,15 @@ describe('SpellLearningCalculator', () => {
       const expandButton = screen.getByLabelText('Expandir');
       fireEvent.click(expandButton);
 
-      // Trocar para Natureza (leigo, modificador 0)
+      // Trocar para Natureza (leigo, instinto=1)
       const skillSelect = screen.getByLabelText('Habilidade de Conjuração');
       fireEvent.mouseDown(skillSelect);
       const listbox = within(screen.getByRole('listbox'));
       fireEvent.click(listbox.getByText(/Natureza/));
 
-      // (3×5) + 0 + 30 = 45%
-      const percentageDisplays = screen.getAllByText('45%');
+      // v0.0.2: modHabilidade = totalDice = instinto(1) + 0 = 1
+      // (3×5) + 1 + 30 = 46%
+      const percentageDisplays = screen.getAllByText('46%');
       expect(percentageDisplays.length).toBeGreaterThan(0);
     });
 
@@ -176,8 +177,9 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(listbox.getByText('2º Círculo'));
 
       await waitFor(() => {
-        // (3×5) + 2 + 10 = 27%
-        const percentageDisplays = screen.getAllByText('27%');
+        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // (3×5) + 1 + 10 = 26%
+        const percentageDisplays = screen.getAllByText('26%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -209,9 +211,9 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(expandButton);
 
       await waitFor(() => {
-        // Mente 3, Arcano versado (essencia 1×2=2), 1º círculo, primeiro feitiço
-        // (3×5) + 2 + 0 = 17%
-        const percentageDisplays = screen.getAllByText('17%');
+        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // (3×5) + 1 + 0 = 16%
+        const percentageDisplays = screen.getAllByText('16%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -233,8 +235,9 @@ describe('SpellLearningCalculator', () => {
       fireEvent.change(matrizInput, { target: { value: '5' } });
 
       await waitFor(() => {
-        // (3×5) + 2 + 30 + 5 = 52%
-        const percentageDisplays = screen.getAllByText('52%');
+        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // (3×5) + 1 + 30 + 5 = 51%
+        const percentageDisplays = screen.getAllByText('51%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -249,7 +252,7 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(expandButton);
 
       await waitFor(() => {
-        // (3×5) + 2 + 30 = 47% -> "Moderado"
+        // v0.0.2: (3×5) + 1 + 30 = 46% -> "Moderado"
         expect(screen.getByText('Moderado')).toBeInTheDocument();
       });
     });
@@ -283,11 +286,12 @@ describe('SpellLearningCalculator', () => {
       const matrixInput = screen.getByLabelText('Mod. Matriz');
       fireEvent.change(matrixInput, { target: { value: '20' } });
 
-      // (5×5) + 15 + 30 + 20 = 90% (abaixo do limite, mas vamos usar outros mods)
+      // v0.0.2: modHabilidade = totalDice = mente(5) + 0 = 5
+      // (5×5) + 5 + 30 + 20 = 80% (abaixo do limite, mas vamos usar outros mods)
       const otherInput = screen.getByLabelText('Outros Modificadores');
       fireEvent.change(otherInput, { target: { value: '20' } });
 
-      // (5×5) + 15 + 30 + 20 + 20 = 110 -> limitado a 99%
+      // (5×5) + 5 + 30 + 20 + 20 = 100 -> limitado a 99%
       const percentageDisplays = screen.getAllByText('99%');
       expect(percentageDisplays.length).toBeGreaterThan(0);
     });
