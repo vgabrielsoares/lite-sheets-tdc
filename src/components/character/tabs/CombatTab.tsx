@@ -357,14 +357,14 @@ export const CombatTab = React.memo(function CombatTab({
             {/* Rodadas Morrendo */}
             <DyingRounds
               dyingState={character.combat.dyingState}
-              constituicao={character.attributes.constituicao}
+              corpo={character.attributes.corpo}
               onChange={handleDyingStateChange}
             />
 
             {/* Limite de PP por Rodada */}
             <PPLimit
               characterLevel={character.level}
-              presenca={character.attributes.presenca}
+              essencia={character.attributes.essencia}
               ppLimit={character.combat.ppLimit}
               onChange={handlePPLimitChange}
               onOpenDetails={onOpenPPLimit}

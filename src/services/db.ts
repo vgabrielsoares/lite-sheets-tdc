@@ -12,6 +12,10 @@
 
 import Dexie, { Table } from 'dexie';
 import type { Character } from '@/types';
+import {
+  needsMigration,
+  migrateCharacterV1toV2,
+} from '@/utils/characterMigration';
 
 /**
  * Classe principal do banco de dados IndexedDB
@@ -31,14 +35,28 @@ export class CharacterDatabase extends Dexie {
   constructor() {
     super('LiteSheetsTDC');
 
-    // Versão 1 do banco de dados
+    // Versão 1 do banco de dados (schema original)
     this.version(1).stores({
-      // Schema: [primary key], [indexes]
-      // '+' indica auto-increment (não usado para UUID)
-      // '&' indica unique index
-      // Indexes permitem buscas mais rápidas e ordenação
       characters: 'id, name, level, createdAt, updatedAt',
     });
+
+    // Versão 2: migração de atributos v0.0.1 → v0.0.2
+    // Schema de índices não muda, mas os dados dos personagens são migrados
+    this.version(2)
+      .stores({
+        characters: 'id, name, level, createdAt, updatedAt',
+      })
+      .upgrade(async (tx) => {
+        const table = tx.table<Character, string>('characters');
+        const allCharacters = await table.toArray();
+
+        for (const char of allCharacters) {
+          if (needsMigration(char)) {
+            const migrated = migrateCharacterV1toV2(char);
+            await table.put(migrated);
+          }
+        }
+      });
   }
 }
 

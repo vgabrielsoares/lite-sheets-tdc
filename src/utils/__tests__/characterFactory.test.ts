@@ -101,20 +101,20 @@ describe('characterFactory', () => {
     describe('Atributos', () => {
       it('deve ter todos os 6 atributos', () => {
         expect(character.attributes).toHaveProperty('agilidade');
-        expect(character.attributes).toHaveProperty('constituicao');
-        expect(character.attributes).toHaveProperty('forca');
+        expect(character.attributes).toHaveProperty('corpo');
         expect(character.attributes).toHaveProperty('influencia');
         expect(character.attributes).toHaveProperty('mente');
-        expect(character.attributes).toHaveProperty('presenca');
+        expect(character.attributes).toHaveProperty('essencia');
+        expect(character.attributes).toHaveProperty('instinto');
       });
 
       it('deve ter todos os atributos começando em 1', () => {
         expect(character.attributes.agilidade).toBe(1);
-        expect(character.attributes.constituicao).toBe(1);
-        expect(character.attributes.forca).toBe(1);
+        expect(character.attributes.corpo).toBe(1);
         expect(character.attributes.influencia).toBe(1);
         expect(character.attributes.mente).toBe(1);
-        expect(character.attributes.presenca).toBe(1);
+        expect(character.attributes.essencia).toBe(1);
+        expect(character.attributes.instinto).toBe(1);
       });
     });
 
@@ -147,10 +147,10 @@ describe('characterFactory', () => {
     });
 
     describe('Habilidades (Skills)', () => {
-      it('deve ter todas as 33 habilidades do sistema', () => {
+      it('deve ter todas as 34 habilidades do sistema', () => {
         const skillKeys = Object.keys(character.skills);
         expect(skillKeys).toHaveLength(SKILL_LIST.length);
-        expect(skillKeys).toHaveLength(33);
+        expect(skillKeys).toHaveLength(34);
       });
 
       it('deve ter todas as habilidades listadas no SKILL_LIST', () => {
@@ -260,7 +260,7 @@ describe('characterFactory', () => {
       });
 
       describe('Capacidade de Carga', () => {
-        it('deve ter capacidade base de 10 (5 + Força(1) * 5)', () => {
+        it('deve ter capacidade base de 10 (5 + Corpo(1) * 5)', () => {
           expect(character.inventory.carryingCapacity.base).toBe(10);
         });
 
@@ -293,7 +293,7 @@ describe('characterFactory', () => {
         expect(character.combat.dyingState.isDying).toBe(false);
       });
 
-      it('deve ter rodadas máximas de morte = 3 (2 + Constituição(1))', () => {
+      it('deve ter rodadas máximas de morte = 3 (2 + Corpo(1))', () => {
         expect(character.combat.dyingState.maxRounds).toBe(3);
       });
 
@@ -314,7 +314,7 @@ describe('characterFactory', () => {
         expect(character.combat.defense.total).toBe(16);
       });
 
-      it('deve ter limite de PP por rodada = 2 (Nível(1) + Presença(1))', () => {
+      it('deve ter limite de PP por rodada = 2 (Nível(1) + Essência(1))', () => {
         expect(character.combat.ppLimit.total).toBe(2);
       });
 
@@ -327,8 +327,14 @@ describe('characterFactory', () => {
         expect(types).toContain('vigor');
       });
 
-      it('deve não ter ataques inicialmente', () => {
-        expect(character.combat.attacks).toEqual([]);
+      it('deve ter ataque desarmado padrão', () => {
+        expect(character.combat.attacks).toHaveLength(1);
+        expect(character.combat.attacks[0].name).toBe('Ataque Desarmado');
+        expect(character.combat.attacks[0].type).toBe('corpo-a-corpo');
+        expect(character.combat.attacks[0].attackSkill).toBe('luta');
+        expect(character.combat.attacks[0].attackAttribute).toBe('corpo');
+        expect(character.combat.attacks[0].damageRoll.type).toBe('d2');
+        expect(character.combat.attacks[0].isDefaultAttack).toBe(true);
       });
 
       it('deve não ter condições ativas', () => {
@@ -571,8 +577,8 @@ describe('characterFactory', () => {
         expect(character.combat.defense.total).toBe(expectedDefense);
       });
 
-      it('deve seguir regra: Capacidade de carga = 5 + (Força * 5)', () => {
-        const expectedCapacity = 5 + character.attributes.forca * 5;
+      it('deve seguir regra: Capacidade de carga = 5 + (Corpo * 5)', () => {
+        const expectedCapacity = 5 + character.attributes.corpo * 5;
         expect(character.inventory.carryingCapacity.base).toBe(
           expectedCapacity
         );

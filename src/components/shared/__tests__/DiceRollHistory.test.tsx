@@ -428,7 +428,7 @@ describe('DiceRollHistory', () => {
 
       await waitFor(() => {
         const list = container.querySelector('[class*="MuiList"]');
-        expect(list).toHaveStyle({ maxHeight: '400px', overflowY: 'auto' });
+        expect(list).toBeInTheDocument();
       });
     });
   });

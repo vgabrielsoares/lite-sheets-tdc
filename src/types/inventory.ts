@@ -60,7 +60,7 @@ export type WeaponProficiencyCategory = 'simples' | 'marcial' | 'complexa';
  * Propriedades especiais de armas
  */
 export type WeaponProperty =
-  | 'acuidade' // Pode usar Agilidade ou Força
+  | 'acuidade' // Pode usar Agilidade ou Corpo
   | 'alcance' // Alcance estendido
   | 'arremesso' // Pode ser arremessada
   | 'carregamento' // Requer ação para recarregar
@@ -111,7 +111,7 @@ export interface Armor extends InventoryItem {
   defenseBonus: number;
   /** Penalidade de agilidade (se aplicável) */
   agilityPenalty?: number;
-  /** Requisito de atributo (Força para armaduras pesadas) */
+  /** Requisito de atributo (Corpo para armaduras pesadas) */
   attributeRequirement?: {
     attribute: AttributeName;
     value: number;
@@ -157,7 +157,7 @@ export interface Tool extends InventoryItem {
  * Capacidade de carga do personagem
  */
 export interface CarryingCapacity {
-  /** Capacidade base (5 + Força × 5) */
+  /** Capacidade base (5 + Corpo × 5) */
   base: number;
   /** Modificadores de tamanho (da linhagem) */
   sizeModifier: number;
@@ -245,7 +245,7 @@ export interface Inventory {
 export const BASE_CARRYING_CAPACITY = 5;
 
 /**
- * Multiplicador de Força para capacidade de carga
+ * Multiplicador de Corpo para capacidade de carga
  */
 export const STRENGTH_CARRY_MULTIPLIER = 5;
 

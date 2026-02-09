@@ -41,7 +41,7 @@ describe('skillCalculations', () => {
     it('deve calcular modificador corretamente para Adepto (x1)', () => {
       const result = calculateSkillTotalModifier(
         'atletismo',
-        'constituicao',
+        'corpo',
         2,
         'adepto',
         false,
@@ -58,7 +58,7 @@ describe('skillCalculations', () => {
     it('deve calcular modificador corretamente para Versado (x2)', () => {
       const result = calculateSkillTotalModifier(
         'percepcao',
-        'presenca',
+        'instinto',
         3,
         'versado',
         false,
@@ -92,7 +92,7 @@ describe('skillCalculations', () => {
     it('deve aplicar bônus de Habilidade de Assinatura para habilidade NÃO-COMBATE', () => {
       const result = calculateSkillTotalModifier(
         'atletismo', // não-combate
-        'constituicao',
+        'corpo',
         2,
         'adepto',
         true, // é assinatura
@@ -126,7 +126,7 @@ describe('skillCalculations', () => {
     it('deve aplicar bônus de Assinatura mínimo de 1 para habilidade de combate (nível baixo)', () => {
       const result = calculateSkillTotalModifier(
         'luta', // combate
-        'forca',
+        'corpo',
         2,
         'adepto',
         true, // é assinatura
@@ -220,7 +220,7 @@ describe('skillCalculations', () => {
     it('NÃO deve aplicar penalidade de carga quando habilidade NÃO tem propriedade Carga', () => {
       const result = calculateSkillTotalModifier(
         'percepcao', // NÃO tem propriedade Carga
-        'presenca',
+        'instinto',
         3,
         'versado',
         false,
@@ -237,7 +237,7 @@ describe('skillCalculations', () => {
     it('deve funcionar corretamente com atributo 0', () => {
       const result = calculateSkillTotalModifier(
         'atletismo',
-        'constituicao',
+        'corpo',
         0, // atributo 0
         'adepto',
         false,
@@ -259,7 +259,7 @@ describe('skillCalculations', () => {
 
       const result = calculateSkillTotalModifier(
         'atletismo', // tem propriedade Carga
-        'constituicao',
+        'corpo',
         3,
         'versado',
         true, // assinatura
@@ -380,11 +380,11 @@ describe('skillCalculations', () => {
   describe('calculateSkillRoll', () => {
     const attributes: Attributes = {
       agilidade: 2,
-      constituicao: 3,
-      forca: 1,
+      corpo: 3,
       influencia: 2,
       mente: 2,
-      presenca: 1,
+      essencia: 1,
+      instinto: 1,
     };
 
     it('deve combinar cálculo de modificador e fórmula de rolagem', () => {
@@ -416,7 +416,7 @@ describe('skillCalculations', () => {
 
       const result = calculateSkillRoll(
         'atletismo',
-        'constituicao',
+        'corpo',
         attributes,
         'adepto',
         false,
@@ -437,7 +437,7 @@ describe('skillCalculations', () => {
     it('deve funcionar com Habilidade de Assinatura', () => {
       const result = calculateSkillRoll(
         'percepcao',
-        'presenca',
+        'instinto',
         attributes,
         'versado',
         true, // assinatura
@@ -490,9 +490,11 @@ describe('skillCalculations', () => {
 
   describe('requiresInstrument', () => {
     it('deve retornar true para habilidades que requerem instrumento', () => {
-      expect(requiresInstrument('arte')).toBe(true);
       expect(requiresInstrument('medicina')).toBe(true);
       expect(requiresInstrument('conducao')).toBe(true);
+      expect(requiresInstrument('destreza')).toBe(true);
+      expect(requiresInstrument('enganacao')).toBe(true);
+      expect(requiresInstrument('oficio')).toBe(true);
     });
 
     it('deve retornar false para habilidades que NÃO requerem instrumento', () => {
@@ -536,16 +538,16 @@ describe('skillCalculations', () => {
   describe('calculateSkillUseModifier', () => {
     const mockAttributes: Attributes = {
       agilidade: 3,
-      constituicao: 2,
-      forca: 4,
+      corpo: 4,
       influencia: 1,
       mente: 2,
-      presenca: 3,
+      essencia: 3,
+      instinto: 1,
     };
 
     it('deve calcular modificador de uso customizado com atributo diferente', () => {
       const skillUse = {
-        keyAttribute: 'forca' as const,
+        keyAttribute: 'corpo' as const,
         bonus: 2,
         skillName: 'acrobacia' as const,
       };
@@ -566,20 +568,20 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Força 4 × Versado (2) + Bônus +2 = 8 + 2 = 10
+      // Corpo 4 × Versado (2) + Bônus +2 = 8 + 2 = 10
       expect(result).toBe(10);
     });
 
     it('deve incluir bônus de assinatura em uso customizado (habilidade não-combate)', () => {
       const skillUse = {
-        keyAttribute: 'forca' as const,
+        keyAttribute: 'corpo' as const,
         bonus: 1,
         skillName: 'atletismo' as const,
       };
 
       const baseSkill: Skill = {
         name: 'atletismo',
-        keyAttribute: 'constituicao',
+        keyAttribute: 'corpo',
         proficiencyLevel: 'adepto',
         isSignature: true, // Habilidade de Assinatura
         modifiers: [],
@@ -593,20 +595,20 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Força 4 × Adepto (1) + Assinatura (7, não-combate) + Bônus +1 = 4 + 7 + 1 = 12
+      // Corpo 4 × Adepto (1) + Assinatura (7, não-combate) + Bônus +1 = 4 + 7 + 1 = 12
       expect(result).toBe(12);
     });
 
     it('deve incluir bônus de assinatura reduzido em uso customizado (habilidade de combate)', () => {
       const skillUse = {
-        keyAttribute: 'constituicao' as const,
+        keyAttribute: 'mente' as const,
         bonus: 0,
         skillName: 'luta' as const,
       };
 
       const baseSkill: Skill = {
         name: 'luta',
-        keyAttribute: 'forca',
+        keyAttribute: 'corpo',
         proficiencyLevel: 'mestre',
         isSignature: true, // Habilidade de Assinatura
         modifiers: [],
@@ -620,7 +622,7 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Constituição 2 × Mestre (3) + Assinatura (9÷3 = 3, combate) + Bônus 0 = 6 + 3 = 9
+      // Mente 2 × Mestre (3) + Assinatura (9÷3 = 3, combate) + Bônus 0 = 6 + 3 = 9
       expect(result).toBe(9);
     });
 
@@ -653,7 +655,7 @@ describe('skillCalculations', () => {
 
     it('deve incluir modificadores da habilidade base', () => {
       const skillUse = {
-        keyAttribute: 'presenca' as const,
+        keyAttribute: 'essencia' as const,
         bonus: 3,
         skillName: 'persuasao' as const,
       };
@@ -677,7 +679,7 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Presença 3 × Adepto (1) + Modificadores (2-1) + Bônus +3 = 3 + 1 + 3 = 7
+      // Essência 3 × Adepto (1) + Modificadores (2-1) + Bônus +3 = 3 + 1 + 3 = 7
       expect(result).toBe(7);
     });
   });
@@ -685,16 +687,16 @@ describe('skillCalculations', () => {
   describe('calculateSkillUseRollFormula', () => {
     const mockAttributes: Attributes = {
       agilidade: 3,
-      constituicao: 2,
-      forca: 4,
+      corpo: 4,
       influencia: 0, // Atributo 0 para testar regra especial
       mente: 2,
-      presenca: 3,
+      essencia: 3,
+      instinto: 3,
     };
 
     it('deve gerar fórmula correta para uso customizado', () => {
       const skillUse = {
-        keyAttribute: 'forca' as const,
+        keyAttribute: 'corpo' as const,
         bonus: 2,
         skillName: 'acrobacia' as const,
       };
@@ -715,7 +717,7 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Força 4 = 4d20, modificador +10
+      // Corpo 4 = 4d20, modificador +10
       expect(result).toBe('4d20+10');
     });
 
@@ -775,14 +777,14 @@ describe('skillCalculations', () => {
 
     it('deve gerar fórmula sem modificador quando zero', () => {
       const skillUse = {
-        keyAttribute: 'presenca' as const,
+        keyAttribute: 'instinto' as const,
         bonus: 0,
         skillName: 'percepcao' as const,
       };
 
       const baseSkill: Skill = {
         name: 'percepcao',
-        keyAttribute: 'presenca',
+        keyAttribute: 'instinto',
         proficiencyLevel: 'leigo',
         isSignature: false,
         modifiers: [],
@@ -796,7 +798,7 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Presença 3 = 3d20, modificador 0
+      // Instinto 3 = 3d20, modificador 0
       expect(result).toBe('3d20');
     });
   });

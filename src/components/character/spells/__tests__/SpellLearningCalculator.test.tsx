@@ -58,7 +58,7 @@ describe('SpellLearningCalculator', () => {
           {
             id: 'ability-1',
             skill: 'arcano',
-            attribute: 'presenca',
+            attribute: 'essencia',
             dcBonus: 0,
             attackBonus: 0,
           },
@@ -133,9 +133,9 @@ describe('SpellLearningCalculator', () => {
 
       // Aguardar expansão do componente
       await waitFor(() => {
-        // Mente 3, Arcano versado (3×2=6), 1º círculo, não primeiro feitiço (já tem 2 feitiços)
-        // (3×5) + 6 + 30 = 51%
-        const percentageDisplays = screen.getAllByText('51%');
+        // Mente 3, Arcano versado (essencia 1×2=2), 1º círculo, não primeiro feitiço (já tem 2 feitiços)
+        // (3×5) + 2 + 30 = 47%
+        const percentageDisplays = screen.getAllByText('47%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -176,8 +176,8 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(listbox.getByText('2º Círculo'));
 
       await waitFor(() => {
-        // (3×5) + 6 + 10 = 31%
-        const percentageDisplays = screen.getAllByText('31%');
+        // (3×5) + 2 + 10 = 27%
+        const percentageDisplays = screen.getAllByText('27%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -194,7 +194,7 @@ describe('SpellLearningCalculator', () => {
             {
               id: 'ability-1',
               skill: 'arcano',
-              attribute: 'presenca',
+              attribute: 'essencia',
               dcBonus: 0,
               attackBonus: 0,
             },
@@ -209,9 +209,9 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(expandButton);
 
       await waitFor(() => {
-        // Mente 3, Arcano versado (3×2=6), 1º círculo, primeiro feitiço
-        // (3×5) + 6 + 0 = 21%
-        const percentageDisplays = screen.getAllByText('21%');
+        // Mente 3, Arcano versado (essencia 1×2=2), 1º círculo, primeiro feitiço
+        // (3×5) + 2 + 0 = 17%
+        const percentageDisplays = screen.getAllByText('17%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -233,8 +233,8 @@ describe('SpellLearningCalculator', () => {
       fireEvent.change(matrizInput, { target: { value: '5' } });
 
       await waitFor(() => {
-        // (3×5) + 6 + 30 + 5 = 56%
-        const percentageDisplays = screen.getAllByText('56%');
+        // (3×5) + 2 + 30 + 5 = 52%
+        const percentageDisplays = screen.getAllByText('52%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -249,8 +249,8 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(expandButton);
 
       await waitFor(() => {
-        // (3×5) + 6 + 30 = 51% -> "Bom"
-        expect(screen.getByText('Bom')).toBeInTheDocument();
+        // (3×5) + 2 + 30 = 47% -> "Moderado"
+        expect(screen.getByText('Moderado')).toBeInTheDocument();
       });
     });
   });
@@ -260,11 +260,11 @@ describe('SpellLearningCalculator', () => {
       const character = createMockCharacter({
         attributes: {
           agilidade: 1,
-          constituicao: 1,
-          forca: 1,
+          corpo: 1,
           influencia: 1,
           mente: 5,
-          presenca: 1,
+          essencia: 1,
+          instinto: 1,
         },
         skills: {
           arcano: {

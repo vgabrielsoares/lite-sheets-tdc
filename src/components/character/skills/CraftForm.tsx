@@ -45,11 +45,11 @@ interface CraftFormProps {
 
 const ATTRIBUTE_OPTIONS: { value: AttributeName; label: string }[] = [
   { value: 'agilidade', label: 'Agilidade' },
-  { value: 'constituicao', label: 'Constituição' },
-  { value: 'forca', label: 'Força' },
-  { value: 'influencia', label: 'Influência' },
+  { value: 'corpo', label: 'Corpo' },
+  { value: 'influencia', label: 'Influência' },
   { value: 'mente', label: 'Mente' },
-  { value: 'presenca', label: 'Presença' },
+  { value: 'essencia', label: 'Essência' },
+  { value: 'instinto', label: 'Instinto' },
 ];
 
 const LEVEL_OPTIONS: { value: 0 | 1 | 2 | 3 | 4 | 5; label: string }[] = [

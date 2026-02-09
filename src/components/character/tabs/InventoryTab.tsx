@@ -94,11 +94,11 @@ export const InventoryTab = React.memo(function InventoryTab({
    * Calcula a capacidade máxima de carga
    */
   const maxCapacity = useMemo(() => {
-    const forca = character.attributes?.forca ?? 1;
+    const corpo = character.attributes?.corpo ?? 1;
     const size = (character.size ?? 'medio') as CreatureSize;
     const sizeModifier = getSizeCarryModifier(size);
-    return calculateCarryCapacity(forca, sizeModifier, 0);
-  }, [character.attributes?.forca, character.size]);
+    return calculateCarryCapacity(corpo, sizeModifier, 0);
+  }, [character.attributes?.corpo, character.size]);
 
   /**
    * Calcula o peso das moedas físicas

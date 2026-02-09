@@ -20,11 +20,11 @@ describe('AttributeSidebar', () => {
     // Set default attribute values for testing
     mockCharacter.attributes = {
       agilidade: 2,
-      constituicao: 3,
-      forca: 1,
+      corpo: 3,
       influencia: 2,
       mente: 3,
-      presenca: 1,
+      essencia: 1,
+      instinto: 1,
     };
     mockOnClose.mockClear();
     mockOnUpdateAttribute.mockClear();
@@ -63,12 +63,12 @@ describe('AttributeSidebar', () => {
     });
 
     it('should show info for attribute above 5', () => {
-      mockCharacter.attributes.forca = 6;
+      mockCharacter.attributes.corpo = 6;
       render(
         <AttributeSidebar
           open={true}
           onClose={mockOnClose}
-          attribute="forca"
+          attribute="corpo"
           character={mockCharacter}
           onUpdateAttribute={mockOnUpdateAttribute}
         />
@@ -101,11 +101,11 @@ describe('AttributeSidebar', () => {
     it('should display correct description for each attribute', () => {
       const attributes: AttributeName[] = [
         'agilidade',
-        'constituicao',
-        'forca',
+        'corpo',
         'influencia',
         'mente',
-        'presenca',
+        'essencia',
+        'instinto',
       ];
 
       attributes.forEach((attr) => {
@@ -198,33 +198,33 @@ describe('AttributeSidebar', () => {
       expect(screen.getByText('Iniciativa em Combate')).toBeInTheDocument();
     });
 
-    it('should show HP and dying state for Constituição', () => {
-      mockCharacter.attributes.constituicao = 3;
+    it('should show GA and dying state for Corpo', () => {
+      mockCharacter.attributes.corpo = 3;
       render(
         <AttributeSidebar
           open={true}
           onClose={mockOnClose}
-          attribute="constituicao"
+          attribute="corpo"
           character={mockCharacter}
           onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
-      expect(screen.getByText('Pontos de Vida')).toBeInTheDocument();
+      expect(screen.getByText('Guarda (GA)')).toBeInTheDocument();
       expect(screen.getByText('Estado Morrendo')).toBeInTheDocument();
       expect(
         screen.getByText(/você pode sobreviver até 5 rodadas/)
       ).toBeInTheDocument();
     });
 
-    it('should show PP and PP limit for Presença', () => {
-      mockCharacter.attributes.presenca = 2;
+    it('should show PP and PP limit for Essência', () => {
+      mockCharacter.attributes.essencia = 2;
       mockCharacter.level = 5;
       render(
         <AttributeSidebar
           open={true}
           onClose={mockOnClose}
-          attribute="presenca"
+          attribute="essencia"
           character={mockCharacter}
           onUpdateAttribute={mockOnUpdateAttribute}
         />
@@ -237,13 +237,13 @@ describe('AttributeSidebar', () => {
       ).toBeInTheDocument();
     });
 
-    it('should show carry capacity for Força', () => {
-      mockCharacter.attributes.forca = 3;
+    it('should show carry capacity for Corpo', () => {
+      mockCharacter.attributes.corpo = 3;
       render(
         <AttributeSidebar
           open={true}
           onClose={mockOnClose}
-          attribute="forca"
+          attribute="corpo"
           character={mockCharacter}
           onUpdateAttribute={mockOnUpdateAttribute}
         />
@@ -251,10 +251,10 @@ describe('AttributeSidebar', () => {
 
       expect(screen.getByText('Capacidade de Carga')).toBeInTheDocument();
       expect(
-        screen.getByText(/você pode carregar 20 de peso/)
+        screen.getByText(/você pode carregar 20 espaços/)
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/Pode empurrar 40 e levantar 10/)
+        screen.getByText(/Pode empurrar 30 e levantar 15/)
       ).toBeInTheDocument();
     });
 
@@ -323,7 +323,7 @@ describe('AttributeSidebar', () => {
     });
 
     it('should mark skills with changed key attribute as crossed out', () => {
-      // Change luta to use Agilidade instead of Força
+      // Change luta to use Agilidade instead of Corpo
       mockCharacter.skills.luta = {
         ...mockCharacter.skills.luta,
         keyAttribute: 'agilidade',
@@ -333,7 +333,7 @@ describe('AttributeSidebar', () => {
         <AttributeSidebar
           open={true}
           onClose={mockOnClose}
-          attribute="forca"
+          attribute="corpo"
           character={mockCharacter}
           onUpdateAttribute={mockOnUpdateAttribute}
         />
@@ -346,27 +346,27 @@ describe('AttributeSidebar', () => {
     });
 
     it('should show custom key skills section when applicable', () => {
-      // Change atletismo (normally Constituição) to use Força
-      mockCharacter.skills.atletismo = {
-        ...mockCharacter.skills.atletismo,
-        keyAttribute: 'forca',
+      // Change acrobacia (normally Agilidade) to use Corpo
+      mockCharacter.skills.acrobacia = {
+        ...mockCharacter.skills.acrobacia,
+        keyAttribute: 'corpo',
       };
 
       render(
         <AttributeSidebar
           open={true}
           onClose={mockOnClose}
-          attribute="forca"
+          attribute="corpo"
           character={mockCharacter}
           onUpdateAttribute={mockOnUpdateAttribute}
         />
       );
 
       expect(
-        screen.getByText('Habilidades Alteradas para Usar Força')
+        screen.getByText('Habilidades Alteradas para Usar Corpo')
       ).toBeInTheDocument();
-      expect(screen.getByText('atletismo')).toBeInTheDocument();
-      expect(screen.getByText(/Padrão: Constituição/)).toBeInTheDocument();
+      expect(screen.getByText('acrobacia')).toBeInTheDocument();
+      expect(screen.getByText(/Padrão: Agilidade/)).toBeInTheDocument();
     });
 
     it('should display skill descriptions', () => {
@@ -380,19 +380,19 @@ describe('AttributeSidebar', () => {
         />
       );
 
-      // Mente skills include arcano, arte, estrategia, etc
-      expect(screen.getByText(SKILL_DESCRIPTIONS.arcano)).toBeInTheDocument();
+      // Mente skills include arte, estrategia, etc (arcano moved to essencia)
+      expect(screen.getByText(SKILL_DESCRIPTIONS.arte)).toBeInTheDocument();
     });
   });
 
   describe('Dice Roll Formula', () => {
     it('should show 1d20 for attribute value 1', () => {
-      mockCharacter.attributes.presenca = 1;
+      mockCharacter.attributes.essencia = 1;
       render(
         <AttributeSidebar
           open={true}
           onClose={mockOnClose}
-          attribute="presenca"
+          attribute="essencia"
           character={mockCharacter}
           onUpdateAttribute={mockOnUpdateAttribute}
         />
@@ -443,11 +443,11 @@ describe('AttributeSidebar', () => {
     it('should render without crashing for all attributes', () => {
       const attributes: AttributeName[] = [
         'agilidade',
-        'constituicao',
-        'forca',
+        'corpo',
         'influencia',
         'mente',
-        'presenca',
+        'essencia',
+        'instinto',
       ];
 
       attributes.forEach((attr) => {
@@ -467,14 +467,14 @@ describe('AttributeSidebar', () => {
 
     it('should handle edge cases gracefully', () => {
       // Test with extreme attribute values
-      mockCharacter.attributes.forca = 10;
+      mockCharacter.attributes.corpo = 10;
       mockCharacter.attributes.mente = 0;
 
       const { rerender } = render(
         <AttributeSidebar
           open={true}
           onClose={mockOnClose}
-          attribute="forca"
+          attribute="corpo"
           character={mockCharacter}
           onUpdateAttribute={mockOnUpdateAttribute}
         />

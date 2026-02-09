@@ -46,6 +46,7 @@ export function createDefaultCombatPenalties(): CombatPenaltiesState {
     savingThrowPenalties: {
       determinacao: 0,
       reflexo: 0,
+      sintonia: 0,
       tenacidade: 0,
       vigor: 0,
     },
@@ -163,6 +164,7 @@ export function hasAnyPenalty(penalties: CombatPenaltiesState): boolean {
 export const SAVING_THROW_LABELS: Record<SavingThrowType, string> = {
   determinacao: 'Determinação',
   reflexo: 'Reflexo',
+  sintonia: 'Sintonia',
   tenacidade: 'Tenacidade',
   vigor: 'Vigor',
 };
@@ -173,6 +175,7 @@ export const SAVING_THROW_LABELS: Record<SavingThrowType, string> = {
 export const SAVING_THROW_COLORS: Record<SavingThrowType, string> = {
   determinacao: '#9C27B0', // Roxo
   reflexo: '#4CAF50', // Verde
+  sintonia: '#2196F3', // Azul
   tenacidade: '#FFC107', // Amarelo
   vigor: '#F44336', // Vermelho
 };

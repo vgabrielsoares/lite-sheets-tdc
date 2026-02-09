@@ -66,6 +66,7 @@ export const SKILL_LABELS: Record<SkillName, string> = {
   sobrevivencia: 'Sobrevivência',
   sociedade: 'Sociedade',
   sorte: 'Sorte',
+  sintonia: 'Sintonia',
   tenacidade: 'Tenacidade',
   vigor: 'Vigor',
 };
@@ -124,7 +125,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   arcano: {
     name: 'arcano',
     label: 'Arcano',
-    keyAttribute: 'mente',
+    keyAttribute: 'essencia',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: true,
@@ -142,7 +143,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   atletismo: {
     name: 'atletismo',
     label: 'Atletismo',
-    keyAttribute: 'constituicao',
+    keyAttribute: 'corpo',
     hasCargaPenalty: true,
     requiresInstrument: false,
     requiresProficiency: false,
@@ -250,7 +251,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   luta: {
     name: 'luta',
     label: 'Luta',
-    keyAttribute: 'forca',
+    keyAttribute: 'corpo',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: false,
@@ -268,7 +269,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   natureza: {
     name: 'natureza',
     label: 'Natureza',
-    keyAttribute: 'presenca',
+    keyAttribute: 'instinto',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: false,
@@ -286,7 +287,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   percepcao: {
     name: 'percepcao',
     label: 'Percepção',
-    keyAttribute: 'presenca',
+    keyAttribute: 'instinto',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: false,
@@ -304,7 +305,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   perspicacia: {
     name: 'perspicacia',
     label: 'Perspicácia',
-    keyAttribute: 'presenca',
+    keyAttribute: 'instinto',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: false,
@@ -322,7 +323,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   rastreamento: {
     name: 'rastreamento',
     label: 'Rastreamento',
-    keyAttribute: 'presenca',
+    keyAttribute: 'instinto',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: true,
@@ -340,7 +341,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   religiao: {
     name: 'religiao',
     label: 'Religião',
-    keyAttribute: 'presenca',
+    keyAttribute: 'influencia',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: true,
@@ -373,10 +374,19 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
     requiresProficiency: false,
     isCombatSkill: false,
   },
+  sintonia: {
+    name: 'sintonia',
+    label: 'Sintonia',
+    keyAttribute: 'essencia',
+    hasCargaPenalty: false,
+    requiresInstrument: false,
+    requiresProficiency: false,
+    isCombatSkill: true,
+  },
   tenacidade: {
     name: 'tenacidade',
     label: 'Tenacidade',
-    keyAttribute: 'forca',
+    keyAttribute: 'corpo',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: false,
@@ -385,7 +395,7 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
   vigor: {
     name: 'vigor',
     label: 'Vigor',
-    keyAttribute: 'constituicao',
+    keyAttribute: 'corpo',
     hasCargaPenalty: false,
     requiresInstrument: false,
     requiresProficiency: false,

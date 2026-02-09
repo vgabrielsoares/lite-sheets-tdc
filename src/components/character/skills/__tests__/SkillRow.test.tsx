@@ -13,11 +13,11 @@ import type { Skill, Attributes } from '@/types';
 // Mock dos dados
 const mockAttributes: Attributes = {
   agilidade: 2,
-  constituicao: 3,
-  forca: 1,
+  corpo: 3,
   influencia: 2,
   mente: 2,
-  presenca: 1,
+  essencia: 1,
+  instinto: 1,
 };
 
 const mockSkill: Skill = {
@@ -30,7 +30,7 @@ const mockSkill: Skill = {
 
 const mockSignatureSkill: Skill = {
   name: 'atletismo',
-  keyAttribute: 'constituicao',
+  keyAttribute: 'corpo',
   proficiencyLevel: 'adepto',
   isSignature: true,
   modifiers: [],
@@ -73,7 +73,7 @@ describe('SkillRow', () => {
     expect(agiElements.length).toBeGreaterThan(0);
   });
 
-  it('deve exibir a proficiência selecionada (abreviada)', () => {
+  it('deve exibir a proficiência selecionada', () => {
     render(
       <SkillRow
         skill={mockSkill}
@@ -84,8 +84,8 @@ describe('SkillRow', () => {
       />
     );
 
-    // Verificar que a proficiência correta está exibida (abreviada para "Ver")
-    expect(screen.getByText('Ver')).toBeInTheDocument();
+    // Verificar que a proficiência correta está exibida (label completo em desktop)
+    expect(screen.getByText('Versado')).toBeInTheDocument();
   });
 
   it('deve calcular e exibir o modificador total corretamente', () => {
@@ -99,9 +99,9 @@ describe('SkillRow', () => {
       />
     );
 
-    // Agilidade 2, Versado (x2) = +4
-    const modifiers = screen.getAllByText('+4');
-    expect(modifiers.length).toBeGreaterThan(0);
+    // Agilidade 2, Versado (x2) = +4, verificado na fórmula: 2d20+4
+    const formulas = screen.getAllByText(/\+4/);
+    expect(formulas.length).toBeGreaterThan(0);
   });
 
   it('deve exibir a fórmula de rolagem corretamente', () => {
@@ -167,8 +167,8 @@ describe('SkillRow', () => {
       />
     );
 
-    // Verifica que a proficiência está exibida como chip (abreviada)
-    expect(screen.getByText('Ver')).toBeInTheDocument();
+    // Verifica que a proficiência está exibida como chip (label completo em desktop)
+    expect(screen.getByText('Versado')).toBeInTheDocument();
   });
 
   it('deve exibir ícone de estrela quando é Habilidade de Assinatura', () => {
@@ -198,9 +198,9 @@ describe('SkillRow', () => {
       />
     );
 
-    // Constituição 3, Adepto (x1) = 3, + bônus assinatura 5 (não-combate) = +8
-    const modifiers = screen.getAllByText('+8');
-    expect(modifiers.length).toBeGreaterThan(0);
+    // Corpo 3, Adepto (x1) = 3, + bônus assinatura 5 (não-combate) = +8, fórmula: 3d20+8
+    const formulas = screen.getAllByText(/\+8/);
+    expect(formulas.length).toBeGreaterThan(0);
   });
 
   it('deve aplicar penalidade de carga quando sobrecarregado', () => {
@@ -214,15 +214,15 @@ describe('SkillRow', () => {
       />
     );
 
-    // Agilidade 2, Versado (x2) = 4, - penalidade carga 5 = -1
-    const modifiers = screen.getAllByText('-1');
-    expect(modifiers.length).toBeGreaterThan(0);
+    // Agilidade 2, Versado (x2) = 4, - penalidade carga 5 = -1, fórmula: 2d20-1
+    const formulas = screen.getAllByText(/2d20-1/);
+    expect(formulas.length).toBeGreaterThan(0);
   });
 
   it('deve destacar visualmente quando atributo foi customizado', () => {
     const customSkill: Skill = {
       ...mockSkill,
-      keyAttribute: 'forca', // Diferente do padrão (agilidade)
+      keyAttribute: 'corpo', // Diferente do padrão (agilidade)
     };
 
     render(

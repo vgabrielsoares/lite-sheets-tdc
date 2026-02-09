@@ -61,7 +61,7 @@ describe('CarryCapacityDisplay', () => {
     it('deve exibir o peso atual e capacidade máxima', () => {
       render(<CarryCapacityDisplay character={baseCharacter} />);
 
-      // Força 1 padrão = 5 + 5 = 10 de capacidade
+      // Corpo 1 padrão = 5 + 5 = 10 de capacidade
       expect(screen.getByText(/Peso Atual/)).toBeInTheDocument();
       expect(screen.getByText(/0 \/ 10/)).toBeInTheDocument();
     });
@@ -80,12 +80,12 @@ describe('CarryCapacityDisplay', () => {
   });
 
   describe('Cálculos de capacidade', () => {
-    it('deve calcular capacidade baseada em Força', () => {
+    it('deve calcular capacidade baseada em Corpo', () => {
       const character: Character = {
         ...baseCharacter,
         attributes: {
           ...baseCharacter.attributes,
-          forca: 3, // 5 + (3 × 5) = 20
+          corpo: 3, // 5 + (3 × 5) = 20
         },
       };
 
@@ -238,7 +238,7 @@ describe('CarryCapacityDisplay', () => {
         ...baseCharacter,
         attributes: {
           ...baseCharacter.attributes,
-          forca: 2, // 5 + (2 × 5) = 15
+          corpo: 2, // 5 + (2 × 5) = 15
         },
       };
 
@@ -299,7 +299,7 @@ describe('CarryCapacityDisplay', () => {
         size: 'pequeno', // -2 de capacidade
         attributes: {
           ...baseCharacter.attributes,
-          forca: 2, // Base: 15, com modificador: 13
+          corpo: 2, // Base: 15, com modificador: 13
         },
       };
 
@@ -314,7 +314,7 @@ describe('CarryCapacityDisplay', () => {
         size: 'grande', // +2 de capacidade
         attributes: {
           ...baseCharacter.attributes,
-          forca: 2, // Base: 15, com modificador: 17
+          corpo: 2, // Base: 15, com modificador: 17
         },
       };
 

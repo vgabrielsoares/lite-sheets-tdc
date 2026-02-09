@@ -74,16 +74,16 @@ describe('senseCalculations', () => {
   describe('calculateSenseModifier', () => {
     const defaultAttributes: Attributes = {
       agilidade: 1,
-      constituicao: 1,
-      forca: 1,
+      corpo: 1,
       influencia: 1,
       mente: 1,
-      presenca: 2,
+      essencia: 1,
+      instinto: 2,
     };
 
     const defaultPerceptionSkill: Skill = {
       name: 'percepcao',
-      keyAttribute: 'presenca',
+      keyAttribute: 'instinto',
       proficiencyLevel: 'leigo',
       isSignature: false,
       modifiers: [],
@@ -99,7 +99,7 @@ describe('senseCalculations', () => {
         false
       );
 
-      // Presença 2 × Leigo 0 = 0
+      // Instinto 2 × Leigo 0 = 0
       expect(result.baseModifier).toBe(0);
       expect(result.keenSenseBonus).toBe(0);
       expect(result.totalModifier).toBe(0);
@@ -169,27 +169,27 @@ describe('senseCalculations', () => {
         false
       );
 
-      // Presença 2 = 2d20
+      // Instinto 2 = 2d20
       expect(result.diceCount).toBe(2);
       expect(result.takeLowest).toBe(false);
     });
 
     it('should handle attribute 0 (disadvantage)', () => {
-      const zeroPresencaAttributes: Attributes = {
+      const zeroInstintoAttributes: Attributes = {
         ...defaultAttributes,
-        presenca: 0,
+        instinto: 0,
       };
 
       const result = calculateSenseModifier(
         'Observar',
         defaultPerceptionSkill,
-        zeroPresencaAttributes,
+        zeroInstintoAttributes,
         1,
         undefined,
         false
       );
 
-      // Presença 0 = 2d20 take lowest
+      // Instinto 0 = 2d20 take lowest
       expect(result.diceCount).toBe(2);
       expect(result.takeLowest).toBe(true);
     });
@@ -209,7 +209,7 @@ describe('senseCalculations', () => {
         false
       );
 
-      // Presença 2 × Adepto 1 = 2
+      // Instinto 2 × Adepto 1 = 2
       expect(result.baseModifier).toBe(2);
     });
 
@@ -230,7 +230,7 @@ describe('senseCalculations', () => {
         false
       );
 
-      // Presença 2 × Versado 2 = 4 base
+      // Instinto 2 × Versado 2 = 4 base
       // + 5 keen sense = 9 total
       expect(result.baseModifier).toBe(4);
       expect(result.keenSenseBonus).toBe(5);
@@ -254,7 +254,7 @@ describe('senseCalculations', () => {
         false
       );
 
-      // Presença 2 = 2d20
+      // Instinto 2 = 2d20
       // Modifier: 2 (base) + 5 (keen) = 7
       expect(result.formula).toBe('2d20+7');
     });

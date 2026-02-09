@@ -52,8 +52,8 @@ import { calculateSignatureAbilityBonus } from './calculations';
  * calculateSkillTotalModifier('acrobacia', 'agilidade', 2, 'versado', false, 1, [], false);
  * // { attributeValue: 2, proficiencyMultiplier: 2, baseModifier: 4, signatureBonus: 0, otherModifiers: 0, totalModifier: 4 }
  *
- * // Atletismo (Constituição 3, Adepto, assinatura, nível 5, sobrecarregado)
- * calculateSkillTotalModifier('atletismo', 'constituicao', 3, 'adepto', true, 5, [], true);
+ * // Atletismo (Corpo 3, Adepto, assinatura, nível 5, sobrecarregado)
+ * calculateSkillTotalModifier('atletismo', 'corpo', 3, 'adepto', true, 5, [], true);
  * // { attributeValue: 3, proficiencyMultiplier: 1, baseModifier: 3, signatureBonus: 5, otherModifiers: -5, totalModifier: 3 }
  */
 export function calculateSkillTotalModifier(
@@ -204,7 +204,7 @@ export function calculateSkillRollFormula(
  * @returns Objeto com cálculo completo e fórmula de rolagem
  *
  * @example
- * const attributes = { agilidade: 2, constituicao: 3, forca: 1, influencia: 2, mente: 2, presenca: 1 };
+ * const attributes = { agilidade: 2, corpo: 3, influencia: 2, mente: 2, essencia: 1, instinto: 1 };
  * calculateSkillRoll('acrobacia', 'agilidade', attributes, 'versado', false, 1, [], false);
  * // {
  * //   calculation: { attributeValue: 2, proficiencyMultiplier: 2, baseModifier: 4, signatureBonus: 0, otherModifiers: 0, totalModifier: 4 },
@@ -336,7 +336,7 @@ export function isCombatSkill(skillName: SkillName): boolean {
  *   id: '1',
  *   name: 'Acrobacia em Combate',
  *   skillName: 'acrobacia',
- *   keyAttribute: 'forca',
+ *   keyAttribute: 'corpo',
  *   bonus: 2,
  * };
  * const skill: Skill = {
@@ -346,7 +346,7 @@ export function isCombatSkill(skillName: SkillName): boolean {
  *   isSignature: false,
  *   modifiers: [],
  * };
- * const attributes: Attributes = { agilidade: 3, forca: 2, ... };
+ * const attributes: Attributes = { agilidade: 3, corpo: 2, ... };
  * calculateSkillUseModifier(skillUse, skill, attributes, 5, false);
  * // Returns: (2 * 2) + 2 = 6 (Força 2 × Versado + bônus +2)
  */

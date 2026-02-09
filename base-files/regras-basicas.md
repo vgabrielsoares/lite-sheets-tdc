@@ -30,44 +30,34 @@ Em casos de discordância, situações ambíguas ou procedimentos confusos, o na
 
 - **Inimigo:** Se refere a criaturas diretamente agressivas aos personagens, que podem ou não tentar um ataque.
 
-- **Atributos:** Os atributos de uma criatura dizem respeito a sua capacidade física e mental em uma medida separada por seis aspectos. Os atributos, naturalmente, podem ir de 0 a 5, sendo 1 equivalente à média de uma criatura humanoide normal.
-  - **AGILIDADE** - A agilidade mede a destreza manual e física, reflexos, coordenação motora, flexibilidade e rapidez.
+- **Atributos:** Os atributos de uma criatura dizem respeito a sua capacidade física e mental em uma medida separada por seis aspectos. Os atributos, naturalmente, podem ir de 0 a 5, sendo 1 equivalente à média de uma criatura humanoide normal. São dois Atributos Físicos (Agilidade e Corpo), dois Atributos Mentais (Influência e Mente) e dois Atributos Espirituais (Essência e Instinto).
+  - **AGILIDADE (Agi)** - A agilidade mede a destreza manual e física, reflexos, coordenação motora, flexibilidade e rapidez. Foco: esquiva, ataques à distância, armas com propriedades ideais, destreza, acrobacia, furtividade.
 
-  - **CONSTITUIÇÃO** - A constituição mede a composição física de uma criatura, sua saúde e bem-estar, resistência.
+  - **CORPO (Cor)** - O corpo mede as capacidades físicas de uma criatura, sua saúde, força e resistência. Foco: combate corpo a corpo, vigor, atletismo, luta, testes de resistência.
 
-  - **FORÇA** - A força mede as capacidades físicas dos músculos, atletismo.
+  - **INFLUÊNCIA (Inf)** - A influência diz respeito às habilidades sociais de uma criatura e seu carisma. Foco: persuasão, enganação, intimidação.
 
-  - **INFLUÊNCIA** - A influência diz respeito às habilidades sociais de uma criatura e seu carisma.
+  - **MENTE (Men)** - A mente diz respeito à inteligência, raciocínio lógico, capacidade de armazenar informações e conhecimentos. Foco: quantidade de habilidades proficientes, aprendizado de feitiços.
 
-  - **MENTE** - A mente diz respeito à inteligência, raciocínio lógico, capacidade de armazenar informações e conhecimentos.
+  - **ESSÊNCIA (Ess)** - A Essência diz respeito às capacidades mágicas e potencial energético. Foco: PP, poder mágico, conjuração, testes de Sintonia.
 
-  - **PRESENÇA** - A presença diz respeito aos sentidos naturais, capacidades mágicas e resiliência mental.
+  - **INSTINTO (Ins)** - O Instinto diz respeito aos sentidos e instintos naturais. Foco: percepção, rastreamento, perspicácia, natureza.
 
-- **Pontos de Vida (PV):** É a grandeza que mede a saúde e bem-estar de uma criatura. Ao ser ferido e sofrer dano, é esse número que devemos subtrair (os PV). Para a maioria das criaturas controladas pelo narrador, quando os PV chegam a 0, ela morre. Para os jogadores, ficar com 0 de PV os deixa morrendo, mas não mortos! Ainda…
+- **Guarda (GA):** É a grandeza que representa a capacidade de defesa e proteção de uma criatura, sua primeira linha contra danos. Todo dano é primeiro subtraído da GA. Personagens começam com 15 de GA base no nível 1 e ganham mais GA ao subir de nível de acordo com o arquétipo escolhido.
 
-- **Pontos de Poder (PP):** É a grandeza que mede as capacidades mágicas e energéticas de um jogador. Os PP geralmente são consumidos por habilidades especiais. Não há penalidade para os jogadores ao chegar a 0 de PP, além de não serem mais capazes de usar poderes que consumam esses pontos.
+- **Vitalidade (PV):** É a grandeza que mede a saúde e bem-estar real de uma criatura. Quando a GA chega a 0, o dano excedente começa a reduzir a PV. A PV é calculada como piso(GA_máxima / 3). Para a maioria das criaturas controladas pelo narrador, quando os PV chegam a 0, ela morre. Para os jogadores, ficar com 0 de PV significa Ferimento Crítico e estado Morrendo.
 
-- **Habilidades:** As habilidades, ou perícias, são tarefas específicas que todo personagem pode fazer, tudo em diferentes graus de habilidade. Há quatro graus de proficiência em habilidades: leigo (x0), adepto (x1), versado (x2) e mestre (x3). Cada grau adiciona um modificador ao teste de habilidade, equivalente à multiplicação do atributo usado na rolagem.
+- **Pontos de Poder (PP):** É a grandeza que mede as capacidades mágicas e energéticas de um jogador. Os PP geralmente são consumidos por habilidades especiais. Personagens começam com 2 PP base. Não há penalidade para os jogadores ao chegar a 0 de PP, além de não serem mais capazes de usar poderes que consumam esses pontos.
+
+- **Pontos de Feitiço (PF):** Somente para conjuradores. É a grandeza específica para lançar feitiços. Gastar PF também consome PP - não é possível conjurar com 0 PP. O custo de PF varia por círculo do feitiço (1º=0, 2º=1, 3º=3, 4º=5, 5º=7, 6º=9, 7º=15, 8º=20).
+
+- **Habilidades:** As habilidades, ou perícias, são tarefas específicas que todo personagem pode fazer, tudo em diferentes graus de habilidade. Há quatro graus de proficiência em habilidades: leigo (d6), adepto (d8), versado (d10) e mestre (d12). O grau de proficiência determina o tamanho do dado rolado no pool de dados da habilidade.
 
 - **Arquétipo:** Os arquétipos são a principal forma de progresso de um personagem. A todo novo nível ganho, um jogador pode escolher um dos seis arquétipos para se avançar. Os arquétipos são seis: Acadêmico, Acólito, Combatente, Feiticeiro, Ladino e Natural, cada um com sua devida particularidade. Combine arquétipos de diferentes níveis para personalizar seu personagem.
 
 - **Classe:** As classes funcionam como especializações para os personagens. Cada personagem pode ter até três classes, e cada classe é composta por combinações de um ou dois arquétipos. A soma dos níveis de todas as classes deve ser igual ou menor ao nível do personagem.
 
-- **Modificador:** Os modificadores podem vir como um bônus ou uma penalidade, e geralmente afetam valores ou testes de uma criatura. O valor pode ser uma adição ou subtração pura (como -2 ou +2 em um ataque, por exemplo), ou uma adição e subtração de dados a serem rolados (como +2d20 ou -2d20). Caso o valor de um dado de teste fique menor que 1d20, o teste deverá ser feito como se o valor negativo fosse um bônus, mas o valor final é o menor. Por exemplo, se em um teste normal um jogador teria 1d20+5 e ele sofre uma penalidade de -2d20, o jogador deverá rolar 3d20+5 e usar o menor valor, dando um resultado como “17 12 8”, onde o resultado final seria 8+5, ou seja, 13. (Pode parecer que são muitos números, mas tudo já vai fazer sentido!)
-
-- **Nível de Dificuldade (ND):** O ND, ou Nível de Dificuldade, é o número alvo de resultado para se completar uma tarefa. Por exemplo, caso um teste tenha ND 15, o resultado final do teste feito pelo jogador deve ser maior ou igual a 15 para ter sucesso, caso contrário, é uma falha. A seguir, uma métrica básica dos ND:
-  - <10 (Irrelevante)
-  - 10 (Muito Fácil)
-  - 15 (Fácil)
-  - 17 (Médio)
-  - 20 (Difícil)
-  - 22 (Desafiador)
-  - 25 (Muito Difícil)
-  - 30 (Extremo)
-  - 35 (Insano)
-  - 40 (Lendário)
-  - 45 (Impossível)
-  - 50 (Divino)
+- **Modificador:** Os modificadores podem vir como um bônus ou uma penalidade, e geralmente afetam testes de uma criatura. Modificadores sempre são expressos como adição ou subtração de dados a serem rolados (como +1d, +2d, -1d, -2d). Não existem mais modificadores numéricos simples (+1, +2, -1, -2). Há um limite de 8 dados rolados no máximo por teste de habilidade. Quando penalidades reduziriam o pool abaixo de 0 dados, role 2d e escolha o menor valor.
 
 - **Nível de Ameaça (NA):** O NA, ou Nível de Ameaça, é o valor que mede a periculosidade e poder de inimigos.
 
@@ -100,20 +90,30 @@ Esses termos serão repetidos, citados e explicados algumas vezes durante o livr
 
 ## Mecânica Básica de Resolução
 
-A mecânica básica de resolução do jogo é feita através da rolagem de dados. Praticamente todos os testes do jogo são feitos a partir de habilidades (ou perícias). As habilidades precisam de um atributo-chave e um grau de proficiência. A quantidade de d20 rolada é igual ao número do atributo-chave. E dependendo do grau de proficiência, o jogador pode adicionar um bônus à rolagem.
+A mecânica básica de resolução do jogo usa **pool de dados d6 com contagem de sucessos**. Praticamente todos os testes do jogo são feitos a partir de habilidades (ou perícias). As habilidades precisam de um atributo-chave e um grau de proficiência.
 
-Os graus de habilidade são:
+### Como Funciona
 
-- Leigo (x0)
-- Adepto (x1)
-- Versado (x2)
-- Mestre (x3)
+1. **Quantidade de dados**: Role um número de dados igual ao valor do atributo-chave (+ modificadores de quantidade de dados)
+2. **Tamanho dos dados**: Determinado pelo grau de proficiência:
+   - **Leigo**: d6
+   - **Adepto**: d8
+   - **Versado**: d10
+   - **Mestre**: d12
+3. **Contar sucessos (✶)**: Cada resultado **≥ 6** no dado conta como **1 sucesso (✶)**
+4. **Resultados 1**: Cada resultado **1** cancela **1 sucesso**
+5. **Mínimo**: O mínimo de sucessos é **0✶** (não pode ser negativo)
 
-O bônus por grau de proficiência é igual à multiplicação pelo atributo-chave da habilidade.
+### Regras Especiais
 
-Por exemplo, se um personagem com 2 de Agilidade e Versado na Habilidade Reflexo fizer um teste dessa habilidade, ele rolará 2d20 (e escolherá o maior resultado) e adicionará +4 (do seu grau de habilidade Versado (x2)) ao resultado final.
+- **Atributo 0**: Role 2d6 e considere apenas o **menor** valor para verificar sucessos
+- **Limite máximo**: Nunca role mais de **8 dados** em um teste de habilidade
+- **Penalidade extrema**: Se penalidades reduziriam o pool para negativo, role **2d e escolha o menor**
+- **Modificadores**: Não existem modificadores numéricos (+1, +2). Todos são **+Xd** ou **-Xd**
 
-Atributos 0 rolam 2d20 e escolhem o menor resultado.
+### Exemplo
+
+Um personagem com 3 de Agilidade e Versado (d10) em Reflexo faz um teste dessa habilidade. Ele rola **3d10**. Resultados: 8, 6, 2. Conta **2 sucessos (✶)** (o 8 e o 6 são ≥ 6). Se tivesse tirado 8, 6, 1, seria **1✶** (o 1 cancela um sucesso).
 
 ## Guia de Criação de Personagem
 
@@ -123,7 +123,7 @@ Atributos 0 rolam 2d20 e escolhem o menor resultado.
 
 - **3- Linhagem:** A linhagem de seu personagem afeta desde faculdades culturais quanto físicas. Nesse ponto, além da espécie de seu personagem, você decide também como ele foi criado, com que habilidades especiais ele nasceu e mais.
 
-- **4- Atributos:** Seus atributos são seis. Seus números ditam o quão naturalmente bom seu personagem é em uma tarefa. Eles são: Agilidade, Constituição, Força, Influência, Mente e Presença. O número máximo de um atributo no 1º nível é 3.
+- **4- Atributos:** Seus atributos são seis. Seus números ditam o quão naturalmente bom seu personagem é em uma tarefa. Eles são: **Agilidade (Agi)**, **Corpo (Cor)**, **Influência (Inf)**, **Mente (Men)**, **Essência (Ess)** e **Instinto (Ins)**. O número máximo de um atributo no 1º nível é 3.
 
 - **5- Arquétipos:** Os Arquétipos do seu personagem definem os fundamentos de suas habilidades e capacidades gerais, servindo de base para tudo que ele é capaz dentro de um mundo de RPG.
 
@@ -137,19 +137,23 @@ Atributos 0 rolam 2d20 e escolhem o menor resultado.
 
 Todos os personagens dos jogadores devem ser aventureiros, mas todos eles começaram de algum lugar. O primeiro nível de seu arquétipo te dá vários benefícios, além do conceito, origem, particularidades e linhagem. Mas, antes de tudo isso, um personagem tem alguns ganhos que caracterizam o ponto de partida antes mesmo dos Arquétipos e Classes:
 
-- **Pontos de Vida -** Os personagens começam com 15 de PV base.
+- **Guarda (GA) -** Os personagens começam com 15 de GA base.
 
-- **Pontos de Poder -** Os personagens começam com 2 de PP base.
+- **Vitalidade (PV) -** Calculada automaticamente como piso(GA_máxima / 3). No nível 1 com GA 15, seria piso(15/3) = 5 PV.
+
+- **Pontos de Poder (PP) -** Os personagens começam com 2 de PP base.
+
+- **Pontos de Feitiço (PF) -** Apenas conjuradores têm PF. Não se aplica a todos os personagens.
 
 - **Habilidades Proficientes -** Os personagens começam com um número de proficiência com habilidades (perícias) igual a 3 + Mente.
 
 - **Proficiência -** Os personagens começam com a proficiência com Armas Simples. Além disso, é possível adquirir outras proficiências como visto abaixo em Proficiências de Personagem.
 
-- **Atributos -** Além dos aumentos de atributos concedidos pela origem e linhagem, você também tem 2 pontos para distribuir.
+- **Atributos -** Todos os atributos começam em 1. Além dos aumentos de atributos concedidos pela origem e linhagem, você também tem 2 pontos para distribuir (máximo 3 em um atributo no nível 1).
 
-- **Habilidade de Assinatura -** Os personagens começam com uma habilidade de assinatura, que ganha um bônus especial de acordo com o nível do personagem. Veja mais no Capítulo 2.1.
+- **Habilidade de Assinatura -** Os personagens começam com uma habilidade de assinatura, que ganha um bônus de +1d (níveis 1-5), +2d (níveis 6-10) ou +3d (níveis 11-15).
 
-- **Idiomas -** Todos os personagens conhecem o idioma Comum. Além disso, os personagens começam com uma quantidade de idiomas conhecidos igual a seu valor de Mente - 1 (mínimo de 0). Confira os idiomas no Capítulo 8.2.
+- **Idiomas -** Todos os personagens conhecem o idioma Comum. Além disso, os personagens começam com uma quantidade de idiomas conhecidos igual a seu valor de **Mente - 1** (mínimo de 0). Confira os idiomas no Capítulo 8.2.
 
 - **Equipamentos -** Mochila, Cartão do Banco e 10 PO$.
 
@@ -163,18 +167,18 @@ Cada proficiência tem um custo de acordo com sua quantidade de atributos. Prime
 
 É possível guardar seus pontos e voltar a esse sistema de compra no futuro quando se houver aprimorado alguns dos atributos relevantes, já que os pontos são retroativos. Ou seja, ao se aumentar o atributo fora da criação de personagem, é possível voltar aqui e comprar proficiências. Caso algum ganho de arquétipo ou classe conceda uma proficiência que tenha sido comprada dessa forma, o jogador recebe os pontos usados de volta.
 
-- **1 Arma Marcial (1 Agi ou 1 For) -** Proficiência com X
-- **Armas Marciais (3 Agi ou 3 For) -** Proficiência com X
+- **1 Arma Marcial (1 Agi ou 1 Cor) -** Proficiência com X
+- **Armas Marciais (3 Agi ou 3 Cor) -** Proficiência com X
 - **1 Arma Complexa (2 Agi ou 1 Men) -** Proficiência com X
 - **Armas Complexas (4 Agi ou 3 Men) -** Proficiência com X
-- **1 Arma Pesada (2 For) -** Proficiência com X
-- **Armas Pesada (4 For) -** Proficiência com X
-- **1 Armadura Leve (1 Agi ou 1 Con) -** Proficiência com X
-- **Armaduras Leves (3 Agi ou 3 Con) -** Proficiência com X
-- **1 Armadura Média (2 Agi, 2 Con ou 2 For) -** Proficiência com X
-- **Armaduras Médias (4 Agi, 4 Con ou 4 For) -** Proficiência com X
-- **1 Armadura Pesada (3 Con ou 3 For) -** Proficiência com X
-- **Armaduras Pesadas (5 Con ou 5 For) -** Proficiência com X
+- **1 Arma Pesada (2 Cor) -** Proficiência com X
+- **Armas Pesada (4 Cor) -** Proficiência com X
+- **1 Armadura Leve (1 Agi ou 1 Cor) -** Proficiência com X
+- **Armaduras Leves (3 Agi ou 3 Cor) -** Proficiência com X
+- **1 Armadura Média (2 Agi, 2 Cor) -** Proficiência com X
+- **Armaduras Médias (4 Agi ou 4 Cor) -** Proficiência com X
+- **1 Armadura Pesada (3 Cor) -** Proficiência com X
+- **Armaduras Pesadas (5 Cor) -** Proficiência com X
 - **1 Habilidade (1 Atr) -** Proficiência com X
 - **1 Idioma (1 Inf ou 1 Men) -** Proficiência com X
 - **1 Instrumento de Habilidade (1 Atr) -** Proficiência com X
@@ -182,41 +186,41 @@ Cada proficiência tem um custo de acordo com sua quantidade de atributos. Prime
 
 ## Habilidades de Personagem
 
-| Habilidade    | Atributo     | Carga | Instrumento | Proficiência | Combate |
-| ------------- | ------------ | ----- | ----------- | ------------ | ------- |
-| Acerto        | Agilidade    | -     | -           | -            | Sim     |
-| Acrobacia     | Agilidade    | Sim   | -           | -            | -       |
-| Adestramento  | Influência   | -     | -           | Sim          | -       |
-| Arcano        | Mente        | -     | -           | Sim          | Sim     |
-| Arte          | Mente        | -     | -           | Sim          | -       |
-| Atletismo     | Constituição | Sim   | -           | -            | -       |
-| Condução      | Agilidade    | Sim   | Sim         | Sim          | -       |
-| Destreza      | Agilidade    | Sim   | Sim         | Sim          | -       |
-| Determinação  | Mente        | -     | -           | -            | Sim     |
-| Enganação     | Influência   | -     | Sim         | -            | -       |
-| Estratégia    | Mente        | -     | -           | Sim          | -       |
-| Furtividade   | Agilidade    | Sim   | -           | -            | -       |
-| História      | Mente        | -     | -           | -            | -       |
-| Iniciativa    | Agilidade    | Sim   | -           | -            | Sim     |
-| Instrução     | Mente        | -     | -           | Sim          | -       |
-| Intimidação   | Influência   | -     | -           | -            | -       |
-| Investigação  | Mente        | -     | -           | -            | -       |
-| Luta          | Força        | -     | -           | -            | Sim     |
-| Medicina      | Mente        | -     | Sim         | Sim          | -       |
-| Natureza      | Presença     | -     | -           | -            | Sim     |
-| Ofício        | Especial     | -     | Sim         | -            | -       |
-| Percepção     | Presença     | -     | -           | -            | -       |
-| Performance   | Influência   | Sim   | -           | -            | -       |
-| Perspicácia   | Presença     | -     | -           | -            | -       |
-| Persuasão     | Influência   | -     | -           | -            | -       |
-| Rastreamento  | Presença     | -     | -           | Sim          | -       |
-| Reflexo       | Agilidade    | Sim   | -           | -            | Sim     |
-| Religião      | Presença     | -     | -           | Sim          | Sim     |
-| Sobrevivência | Mente        | -     | -           | -            | -       |
-| Sociedade     | Influência   | -     | -           | -            | -       |
-| Sorte         | Especial     | -     | -           | -            | -       |
-| Tenacidade    | Força        | -     | -           | -            | Sim     |
-| Vigor         | Constituição | -     | -           | -            | Sim     |
+| Habilidade    | Atributo   | Carga | Instrumento | Proficiência | Combate |
+| ------------- | ---------- | ----- | ----------- | ------------ | ------- |
+| Acerto        | Agilidade  | -     | -           | -            | Sim     |
+| Acrobacia     | Agilidade  | Sim   | -           | -            | -       |
+| Adestramento  | Influência | -     | -           | Sim          | -       |
+| Arcano        | Mente      | -     | -           | Sim          | Sim     |
+| Arte          | Mente      | -     | -           | Sim          | -       |
+| Atletismo     | Corpo      | Sim   | -           | -            | -       |
+| Condução      | Agilidade  | Sim   | Sim         | Sim          | -       |
+| Determinação  | Mente      | -     | -           | -            | Sim     |
+| Destreza      | Agilidade  | Sim   | Sim         | Sim          | -       |
+| Enganação     | Influência | -     | Sim         | -            | -       |
+| Estratégia    | Mente      | -     | -           | Sim          | -       |
+| Furtividade   | Agilidade  | Sim   | -           | -            | -       |
+| História      | Mente      | -     | -           | -            | -       |
+| Instrução     | Mente      | -     | -           | Sim          | -       |
+| Intimidação   | Influência | -     | -           | -            | -       |
+| Investigação  | Mente      | -     | -           | -            | -       |
+| Luta          | Corpo      | -     | -           | -            | Sim     |
+| Medicina      | Mente      | -     | Sim         | Sim          | -       |
+| Natureza      | Instinto   | -     | -           | -            | Sim     |
+| Ofício        | Especial   | -     | Sim         | -            | -       |
+| Percepção     | Instinto   | -     | -           | -            | -       |
+| Performance   | Influência | Sim   | -           | -            | -       |
+| Perspicácia   | Instinto   | -     | -           | -            | -       |
+| Persuasão     | Influência | -     | -           | -            | -       |
+| Rastreamento  | Instinto   | -     | -           | Sim          | -       |
+| Reflexo       | Agilidade  | Sim   | -           | -            | Sim     |
+| Religião      | Essência   | -     | -           | Sim          | Sim     |
+| Sintonia      | Essência   | -     | -           | -            | Sim     |
+| Sobrevivência | Mente      | -     | -           | -            | -       |
+| Sociedade     | Influência | -     | -           | -            | -       |
+| Sorte         | Especial   | -     | -           | -            | -       |
+| Tenacidade    | Corpo      | -     | -           | -            | Sim     |
+| Vigor         | Corpo      | -     | -           | -            | Sim     |
 
 ## Tamanho de Personagem
 

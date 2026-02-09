@@ -78,7 +78,7 @@ describe('CombatTab', () => {
       );
 
       expect(screen.getByText('Rodadas Morrendo')).toBeInTheDocument();
-      // Default character: 2 + 1 (Const) = 3 max rounds
+      // Default character: 2 + 1 (Corpo) = 3 max rounds
       expect(screen.getByText('0 / 3')).toBeInTheDocument();
     });
 
@@ -88,9 +88,9 @@ describe('CombatTab', () => {
       );
 
       expect(screen.getByText('Limite de PP/Rodada')).toBeInTheDocument();
-      // Level 1 + Presença 1 = 2
+      // Level 1 + Essência 1 = 2
       expect(screen.getByText('Nível +1')).toBeInTheDocument();
-      expect(screen.getByText('Presença +1')).toBeInTheDocument();
+      expect(screen.getByText('Essência +1')).toBeInTheDocument();
     });
 
     it('should render defense component', () => {
@@ -267,7 +267,7 @@ describe('CombatTab', () => {
 
   describe('Dynamic Calculations', () => {
     it('should reflect correct dying rounds based on Constitution', () => {
-      mockCharacter.attributes.constituicao = 3;
+      mockCharacter.attributes.corpo = 3;
 
       renderWithTheme(
         <CombatTab character={mockCharacter} onUpdate={mockOnUpdate} />
@@ -279,7 +279,7 @@ describe('CombatTab', () => {
 
     it('should reflect correct PP limit based on level and Presença', () => {
       mockCharacter.level = 5;
-      mockCharacter.attributes.presenca = 3;
+      mockCharacter.attributes.essencia = 3;
 
       renderWithTheme(
         <CombatTab character={mockCharacter} onUpdate={mockOnUpdate} />

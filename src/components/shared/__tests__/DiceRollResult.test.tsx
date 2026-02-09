@@ -121,6 +121,7 @@ describe('DiceRollResult', () => {
         finalResult: 6,
         rollType: 'normal',
         isCriticalFailure: true,
+        isDisaster: true,
       };
 
       render(<DiceRollResult result={disasterResult} />);

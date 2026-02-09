@@ -163,13 +163,13 @@ export default function ArchetypeDisplay({
 
   // Calcular PV e PP totais baseados nos arquétipos
   const totalHP = useMemo(
-    () => calculateArchetypeHP(archetypes, attributes.constituicao),
-    [archetypes, attributes.constituicao]
+    () => calculateArchetypeHP(archetypes, attributes.corpo),
+    [archetypes, attributes.corpo]
   );
 
   const totalPP = useMemo(
-    () => calculateArchetypePP(archetypes, attributes.presenca),
-    [archetypes, attributes.presenca]
+    () => calculateArchetypePP(archetypes, attributes.essencia),
+    [archetypes, attributes.essencia]
   );
 
   // Handler para mudança de nível em um arquétipo

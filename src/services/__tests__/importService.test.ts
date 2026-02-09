@@ -56,11 +56,11 @@ describe('importService', () => {
       level: 5,
       attributes: {
         agilidade: 3,
-        constituicao: 2,
-        forca: 3,
+        corpo: 3,
         influencia: 2,
         mente: 2,
-        presenca: 3,
+        essencia: 3,
+        instinto: 1,
       },
       combat: {
         hp: {
@@ -82,7 +82,7 @@ describe('importService', () => {
         },
         atletismo: {
           proficiencyLevel: 'adepto',
-          keyAttribute: 'forca',
+          keyAttribute: 'corpo',
           otherModifiers: 0,
         },
       },
@@ -126,7 +126,7 @@ describe('importService', () => {
         expect(result.character.id).toBe('mock-uuid-1234'); // Novo ID
         expect(result.character.id).not.toBe('original-id-123'); // ID original diferente
       }
-      expect(result.wasMigrated).toBe(false);
+      expect(result.wasMigrated).toBe(true);
       expect(result.originalVersion).toBe(EXPORT_VERSION);
       expect(result.warnings).toEqual([]);
 
@@ -317,7 +317,7 @@ describe('importService', () => {
 
     it('deve gerar aviso para atributo acima do máximo padrão', async () => {
       const mockChar = createMockCharacter();
-      mockChar.attributes.forca = 7; // Acima do máximo padrão
+      mockChar.attributes.corpo = 7; // Acima do máximo padrão
 
       const exportedData = {
         version: EXPORT_VERSION,
@@ -331,7 +331,7 @@ describe('importService', () => {
       const result = await importCharacter(file);
 
       expect(result.warnings).toContain(
-        'Atributo forca excede valor padrão máximo (5): 7'
+        'Atributo corpo excede valor padrão máximo (5): 7'
       );
     });
 

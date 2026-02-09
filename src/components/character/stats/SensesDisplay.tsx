@@ -202,7 +202,7 @@ const VisionCard: React.FC<VisionCardProps> = ({ vision }) => {
 export const SensesDisplay: React.FC<SensesDisplayProps> = memo(
   ({ character, onOpenDetails }) => {
     // Calculate encumbrance state
-    const carryCapacity = calculateCarryCapacity(character.attributes.forca);
+    const carryCapacity = calculateCarryCapacity(character.attributes.corpo);
     const currentLoad = character.inventory.items.reduce(
       (total, item) => total + (item.weight || 0) * (item.quantity || 1),
       0

@@ -73,7 +73,7 @@ export function isValidLevel1AttributeValue(value: number): boolean {
  *
  * @example
  * isValidAttributeName('agilidade'); // true
- * isValidAttributeName('forca'); // true
+ * isValidAttributeName('corpo'); // true
  * isValidAttributeName('invalid'); // false
  */
 export function isValidAttributeName(name: string): name is AttributeName {

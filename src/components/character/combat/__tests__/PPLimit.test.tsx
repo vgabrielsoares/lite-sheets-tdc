@@ -34,7 +34,7 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={1}
-          presenca={1}
+          essencia={1}
           ppLimit={defaultPPLimit}
           onChange={mockOnChange}
         />
@@ -47,13 +47,13 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={1}
-          presenca={1}
+          essencia={1}
           ppLimit={defaultPPLimit}
           onChange={mockOnChange}
         />
       );
 
-      // Level 1 + Presença 1 = 2
+      // Level 1 + Essência 1 = 2
       expect(screen.getByText('2')).toBeInTheDocument();
       expect(screen.getByText('PP máx/rodada')).toBeInTheDocument();
     });
@@ -62,31 +62,31 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={3}
-          presenca={2}
+          essencia={2}
           ppLimit={defaultPPLimit}
           onChange={mockOnChange}
         />
       );
 
       expect(screen.getByText('Nível +3')).toBeInTheDocument();
-      expect(screen.getByText('Presença +2')).toBeInTheDocument();
+      expect(screen.getByText('Essência +2')).toBeInTheDocument();
     });
   });
 
   describe('Limit Calculation', () => {
-    it('should calculate limit as Level + Presença', () => {
+    it('should calculate limit as Level + Essência', () => {
       const testCases = [
-        { level: 1, presenca: 1, expected: '2' },
-        { level: 5, presenca: 3, expected: '8' },
-        { level: 10, presenca: 5, expected: '15' },
-        { level: 3, presenca: 0, expected: '3' },
+        { level: 1, essencia: 1, expected: '2' },
+        { level: 5, essencia: 3, expected: '8' },
+        { level: 10, essencia: 5, expected: '15' },
+        { level: 3, essencia: 0, expected: '3' },
       ];
 
-      testCases.forEach(({ level, presenca, expected }) => {
+      testCases.forEach(({ level, essencia, expected }) => {
         const { unmount } = renderWithTheme(
           <PPLimit
             characterLevel={level}
-            presenca={presenca}
+            essencia={essencia}
             ppLimit={defaultPPLimit}
             onChange={mockOnChange}
           />
@@ -107,7 +107,7 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={3}
-          presenca={2}
+          essencia={2}
           ppLimit={ppLimitWithModifiers}
           onChange={mockOnChange}
         />
@@ -129,7 +129,7 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={3}
-          presenca={2}
+          essencia={2}
           ppLimit={ppLimitWithNegativeModifiers}
           onChange={mockOnChange}
         />
@@ -147,7 +147,7 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={3}
-          presenca={2}
+          essencia={2}
           ppLimit={defaultPPLimit}
           ppSpentThisRound={3}
           onChange={mockOnChange}
@@ -162,7 +162,7 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={3}
-          presenca={2}
+          essencia={2}
           ppLimit={defaultPPLimit}
           ppSpentThisRound={0}
           onChange={mockOnChange}
@@ -181,7 +181,7 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={3}
-          presenca={2}
+          essencia={2}
           ppLimit={defaultPPLimit}
           ppSpentThisRound={3} // 5 - 3 = 2 remaining
           onChange={mockOnChange}
@@ -199,7 +199,7 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={1}
-          presenca={1}
+          essencia={1}
           ppLimit={defaultPPLimit}
           onChange={mockOnChange}
           onOpenDetails={mockOnOpenDetails}
@@ -215,7 +215,7 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={1}
-          presenca={1}
+          essencia={1}
           ppLimit={defaultPPLimit}
           onChange={mockOnChange}
           onOpenDetails={mockOnOpenDetails}
@@ -232,7 +232,7 @@ describe('PPLimit', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={1}
-          presenca={1}
+          essencia={1}
           ppLimit={defaultPPLimit}
           onChange={mockOnChange}
         />
@@ -243,11 +243,11 @@ describe('PPLimit', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle 0 presença correctly', () => {
+    it('should handle 0 essência correctly', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={1}
-          presenca={0}
+          essencia={0}
           ppLimit={defaultPPLimit}
           onChange={mockOnChange}
         />
@@ -255,14 +255,14 @@ describe('PPLimit', () => {
 
       // 1 + 0 = 1
       expect(screen.getByText('1')).toBeInTheDocument();
-      expect(screen.getByText('Presença +0')).toBeInTheDocument();
+      expect(screen.getByText('Essência +0')).toBeInTheDocument();
     });
 
     it('should handle high level characters', () => {
       renderWithTheme(
         <PPLimit
           characterLevel={15}
-          presenca={5}
+          essencia={5}
           ppLimit={defaultPPLimit}
           onChange={mockOnChange}
         />

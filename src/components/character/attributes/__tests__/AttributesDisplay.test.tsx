@@ -10,11 +10,11 @@ import type { Attributes } from '@/types';
 describe('AttributesDisplay', () => {
   const mockAttributes: Attributes = {
     agilidade: 2,
-    constituicao: 3,
-    forca: 1,
+    corpo: 3,
     influencia: 2,
     mente: 3,
-    presenca: 1,
+    essencia: 1,
+    instinto: 1,
   };
 
   const mockOnAttributeClick = jest.fn();
@@ -42,29 +42,25 @@ describe('AttributesDisplay', () => {
       expect(screen.getByText('Mentais')).toBeInTheDocument();
     });
 
-    it('deve renderizar todos os 6 atributos', () => {
+    it('deve renderizar os 4 atributos corporais e mentais', () => {
       render(<AttributesDisplay attributes={mockAttributes} />);
 
       expect(screen.getByText('AGI')).toBeInTheDocument();
-      expect(screen.getByText('CON')).toBeInTheDocument();
-      expect(screen.getByText('FOR')).toBeInTheDocument();
+      expect(screen.getByText('COR')).toBeInTheDocument();
       expect(screen.getByText('INF')).toBeInTheDocument();
       expect(screen.getByText('MEN')).toBeInTheDocument();
-      expect(screen.getByText('PRE')).toBeInTheDocument();
     });
 
     it('deve exibir os valores corretos dos atributos', () => {
       render(<AttributesDisplay attributes={mockAttributes} />);
 
       // Verifica que existem múltiplos valores - devido ao layout horizontal
-      // AGI=2, INF=2, CON=3, MEN=3, FOR=1, PRE=1
+      // AGI=2, INF=2, COR=3, MEN=3 (ESS e INS não são renderizados neste componente)
       const twos = screen.getAllByText('2');
       const threes = screen.getAllByText('3');
-      const ones = screen.getAllByText('1');
 
       expect(twos.length).toBeGreaterThanOrEqual(2); // AGI e INF
-      expect(threes.length).toBeGreaterThanOrEqual(2); // CON e MEN
-      expect(ones.length).toBeGreaterThanOrEqual(2); // FOR e PRE
+      expect(threes.length).toBeGreaterThanOrEqual(2); // COR e MEN
     });
   });
 
@@ -127,7 +123,7 @@ describe('AttributesDisplay', () => {
     it('deve exibir atributo com valor máximo (5)', () => {
       const maxAttributes: Attributes = {
         ...mockAttributes,
-        forca: 5,
+        corpo: 5,
       };
 
       render(<AttributesDisplay attributes={maxAttributes} />);

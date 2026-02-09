@@ -1,10 +1,10 @@
 /**
  * Utility functions for RPG system calculations
  *
- * All calculations follow Tabuleiro do Caos RPG rules:
+ * All calculations follow Tabuleiro do Caos RPG rules (livro v0.1.7):
  * - Always round DOWN for fractional results
- * - Attributes range from 0 to 5 by default (can exceed in special cases)
- * - Attribute value 0: Roll 2d20 and take LOWEST result
+ * - Attributes range from 0 to 5 by default (can exceed in special cases, max 6)
+ * - Attribute value 0: Roll 2d6 and take LOWEST result
  */
 
 import type { ProficiencyLevel } from '@/types';
@@ -77,12 +77,12 @@ export function calculateSkillModifier(
 
 /**
  * Calculates the carry capacity for a character
- * Formula: 5 + (Força × 5)
- * Result is in "Peso" units (RPG measurement)
+ * Formula: 5 + (Corpo × 5)
+ * Result is in "Espaço" units (RPG measurement)
  *
- * @param forca - The Força (Strength) attribute value
+ * @param corpo - The Corpo (Body) attribute value
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
- * @returns The total carry capacity in "Peso" units
+ * @returns The total carry capacity in "Espaço" units
  *
  * @example
  * calculateCarryCapacity(1); // 10 (5 + 1 × 5)
@@ -90,17 +90,17 @@ export function calculateSkillModifier(
  * calculateCarryCapacity(2, 5); // 20 (5 + 2 × 5 + 5)
  */
 export function calculateCarryCapacity(
-  forca: number,
+  corpo: number,
   otherBonuses: number = 0
 ): number {
-  return 5 + forca * 5 + otherBonuses;
+  return 5 + corpo * 5 + otherBonuses;
 }
 
 /**
  * Calculates the maximum number of rounds a character can stay in "Morrendo" (Dying) state
- * Formula: 2 + Constituição + outros modificadores
+ * Formula: 2 + Corpo + outros modificadores
  *
- * @param constituicao - The Constituição (Constitution) attribute value
+ * @param corpo - The Corpo (Body) attribute value
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
  * @returns The maximum number of rounds before death
  *
@@ -110,18 +110,18 @@ export function calculateCarryCapacity(
  * calculateMaxDyingRounds(2, 1); // 5 (2 + 2 + 1)
  */
 export function calculateMaxDyingRounds(
-  constituicao: number,
+  corpo: number,
   otherBonuses: number = 0
 ): number {
-  return 2 + constituicao + otherBonuses;
+  return 2 + corpo + otherBonuses;
 }
 
 /**
  * Calculates the maximum PP (Power Points) a character can spend per round
- * Formula: Nível do Personagem + Presença + outros modificadores
+ * Formula: Nível do Personagem + Essência + outros modificadores
  *
  * @param characterLevel - The character's current level
- * @param presenca - The Presença (Presence) attribute value
+ * @param essencia - The Essência (Essence) attribute value
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
  * @returns The maximum PP that can be spent in a single round
  *
@@ -132,10 +132,10 @@ export function calculateMaxDyingRounds(
  */
 export function calculatePPPerRound(
   characterLevel: number,
-  presenca: number,
+  essencia: number,
   otherBonuses: number = 0
 ): number {
-  return characterLevel + presenca + otherBonuses;
+  return characterLevel + essencia + otherBonuses;
 }
 
 /**
@@ -200,10 +200,10 @@ export function calculateTotalSkillModifier(
 
 /**
  * Calculates HP recovery from a Descanso (Rest) using the Dormir (Sleep) action
- * Formula: Nível do Personagem × Constituição + outros modificadores
+ * Formula: Nível do Personagem × Corpo + outros modificadores
  *
  * @param characterLevel - The character's current level
- * @param constituicao - The Constituição (Constitution) attribute value
+ * @param corpo - The Corpo (Body) attribute value
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
  * @returns The amount of HP recovered
  *
@@ -214,10 +214,10 @@ export function calculateTotalSkillModifier(
  */
 export function calculateRestHPRecovery(
   characterLevel: number,
-  constituicao: number,
+  corpo: number,
   otherBonuses: number = 0
 ): number {
-  return characterLevel * constituicao + otherBonuses;
+  return characterLevel * corpo + otherBonuses;
 }
 
 /**
@@ -288,9 +288,9 @@ export function calculateMaxLift(carryCapacity: number): number {
 
 /**
  * Calculates the spell difficulty class (ND) for a character's spells
- * Formula: 12 + Presença + Habilidade de Conjuração + Bônus de ND
+ * Formula: 12 + Essência + Habilidade de Conjuração + Bônus de ND
  *
- * @param presenca - The Presença (Presence) attribute value
+ * @param essencia - The Essência (Essence) attribute value
  * @param spellcastingSkillModifier - The modifier from the spellcasting skill (Arcano, Religião, etc.)
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
  * @returns The spell difficulty class
@@ -300,18 +300,18 @@ export function calculateMaxLift(carryCapacity: number): number {
  * calculateSpellDC(3, 6, 2); // 23 (12 + 3 + 6 + 2)
  */
 export function calculateSpellDC(
-  presenca: number,
+  essencia: number,
   spellcastingSkillModifier: number,
   otherBonuses: number = 0
 ): number {
-  return 12 + presenca + spellcastingSkillModifier + otherBonuses;
+  return 12 + essencia + spellcastingSkillModifier + otherBonuses;
 }
 
 /**
  * Calculates the spell attack bonus for a character
- * Formula: Presença + Habilidade de Conjuração + Bônus de Ataque
+ * Formula: Essência + Habilidade de Conjuração + Bônus de Ataque
  *
- * @param presenca - The Presença (Presence) attribute value
+ * @param essencia - The Essência (Essence) attribute value
  * @param spellcastingSkillModifier - The modifier from the spellcasting skill (Arcano, Religião, etc.)
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
  * @returns The spell attack bonus
@@ -321,11 +321,11 @@ export function calculateSpellDC(
  * calculateSpellAttackBonus(3, 6, 2); // 11 (3 + 6 + 2)
  */
 export function calculateSpellAttackBonus(
-  presenca: number,
+  essencia: number,
   spellcastingSkillModifier: number,
   otherBonuses: number = 0
 ): number {
-  return presenca + spellcastingSkillModifier + otherBonuses;
+  return essencia + spellcastingSkillModifier + otherBonuses;
 }
 
 /**

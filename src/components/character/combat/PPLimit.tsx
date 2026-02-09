@@ -19,8 +19,8 @@ import type { PPLimit as PPLimitType, Modifier } from '@/types';
 export interface PPLimitProps {
   /** Nível do personagem */
   characterLevel: number;
-  /** Valor do atributo Presença */
-  presenca: number;
+  /** Valor do atributo Essência */
+  essencia: number;
   /** Limite de PP (base, modificadores, total) */
   ppLimit: PPLimitType;
   /** PP atuais gastos nesta rodada */
@@ -34,7 +34,7 @@ export interface PPLimitProps {
 /**
  * PPLimit - Componente para exibir limite de PP por rodada
  *
- * Fórmula: Nível do Personagem + Presença + Outros Modificadores
+ * Fórmula: Nível do Personagem + Essência + Outros Modificadores
  *
  * Exibe:
  * - Limite calculado automaticamente
@@ -50,7 +50,7 @@ export interface PPLimitProps {
  * ```tsx
  * <PPLimit
  *   characterLevel={5}
- *   presenca={3}
+ *   essencia={3}
  *   ppLimit={character.combat.ppLimit}
  *   ppSpentThisRound={2}
  *   onOpenDetails={() => openPPLimitSidebar()}
@@ -59,7 +59,7 @@ export interface PPLimitProps {
  */
 export function PPLimit({
   characterLevel,
-  presenca,
+  essencia,
   ppLimit,
   ppSpentThisRound = 0,
   onChange,
@@ -70,7 +70,7 @@ export function PPLimit({
   const [modifierInput, setModifierInput] = useState('');
 
   // Calcular limite total usando a fórmula centralizada
-  const baseLimit = calculatePPPerRound(characterLevel, presenca, 0);
+  const baseLimit = calculatePPPerRound(characterLevel, essencia, 0);
 
   // Somar modificadores adicionais
   const modifiersTotal = ppLimit.modifiers.reduce(
@@ -135,7 +135,7 @@ export function PPLimit({
   const tooltipLines = [
     'Limite de PP por Rodada:',
     `• Nível: +${characterLevel}`,
-    `• Presença: +${presenca}`,
+    `• Essência: +${essencia}`,
   ];
 
   if (ppLimit.modifiers.length > 0) {
@@ -253,10 +253,10 @@ export function PPLimit({
               variant="outlined"
             />
           </Tooltip>
-          <Tooltip title="Bônus do atributo Presença" arrow enterDelay={150}>
+          <Tooltip title="Bônus do atributo Essência" arrow enterDelay={150}>
             <Chip
               size="small"
-              label={`Presença +${presenca}`}
+              label={`Essência +${essencia}`}
               color="default"
               variant="outlined"
             />

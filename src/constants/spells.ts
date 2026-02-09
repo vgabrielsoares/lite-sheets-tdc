@@ -189,7 +189,7 @@ export const SPELL_LEARNING_MAX_CHANCE = 99;
 
 /**
  * ND base de feitiços (constante do sistema)
- * Usado na fórmula: 12 + Presença + Habilidade + Bônus
+ * Usado na fórmula: 12 + Essência + Habilidade + Bônus
  */
 export const SPELL_BASE_DC = 12;
 

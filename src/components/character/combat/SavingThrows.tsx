@@ -15,6 +15,7 @@ import {
   Speed as ReflexIcon,
   FitnessCenter as StrengthIcon,
   Favorite as VigorIcon,
+  AutoFixHigh as AutoFixHighIcon,
 } from '@mui/icons-material';
 import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName } from '@/types/skills';
@@ -91,20 +92,31 @@ const SAVING_THROWS: SavingThrowInfo[] = [
       'O Reflexo é testado contra efeitos que requerem velocidade, equilíbrio ágil e rápido tempo de reação.',
   },
   {
+    type: 'sintonia',
+    skill: 'sintonia',
+    attribute: 'essencia',
+    resistUse: 'Resistir',
+    label: 'Sintonia',
+    icon: <AutoFixHighIcon />,
+    color: '#2196F3', // azul
+    description:
+      'A Sintonia é testada contra efeitos mágicos e espirituais que afetam a conexão do personagem com o sobrenatural.',
+  },
+  {
     type: 'tenacidade',
     skill: 'tenacidade',
-    attribute: 'forca',
+    attribute: 'corpo',
     resistUse: 'Resistir',
     label: 'Tenacidade',
     icon: <StrengthIcon />,
     color: '#afac00ff', // amarelo
     description:
-      'A Tenacidade é testada contra efeitos que requerem força muscular, de equilíbrio e de resistência.',
+      'A Tenacidade é testada contra efeitos que requerem força do corpo, de equilíbrio e de resistência.',
   },
   {
     type: 'vigor',
     skill: 'vigor',
-    attribute: 'constituicao',
+    attribute: 'corpo',
     resistUse: 'Resistir',
     label: 'Vigor',
     icon: <VigorIcon />,

@@ -174,7 +174,7 @@ export const MainTab = React.memo(function MainTab({
   onSelectedCraftChange,
 }: MainTabProps) {
   // Calcular se personagem está sobrecarregado
-  const carryCapacity = calculateCarryCapacity(character.attributes.forca);
+  const carryCapacity = calculateCarryCapacity(character.attributes.corpo);
   // Calcular carga atual somando peso de todos os itens
   const currentLoad = character.inventory.items.reduce(
     (total, item) => total + (item.weight || 0) * (item.quantity || 1),

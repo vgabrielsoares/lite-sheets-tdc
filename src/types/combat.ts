@@ -55,7 +55,7 @@ export interface DyingState {
   isDying: boolean;
   /** Rodadas atuais no estado morrendo */
   currentRounds: number;
-  /** Rodadas máximas antes da morte (2 + Constituição + modificadores) */
+  /** Rodadas máximas antes da morte (2 + Corpo + modificadores) */
   maxRounds: number;
   /** Modificadores adicionais para rodadas máximas (de habilidades, itens, etc.) */
   otherModifiers?: number;
@@ -200,7 +200,7 @@ export interface AttackResult {
  * Limite de PP por rodada
  */
 export interface PPLimit {
-  /** Limite base (Nível + Presença) */
+  /** Limite base (Nível + Essência) */
   base: number;
   /** Modificadores ao limite */
   modifiers: Modifier[];
@@ -214,8 +214,9 @@ export interface PPLimit {
 export type SavingThrowType =
   | 'determinacao' // Mente
   | 'reflexo' // Agilidade
-  | 'tenacidade' // Força
-  | 'vigor'; // Constituição
+  | 'sintonia' // Essência
+  | 'tenacidade' // Corpo
+  | 'vigor'; // Corpo
 
 /**
  * Informações de teste de resistência

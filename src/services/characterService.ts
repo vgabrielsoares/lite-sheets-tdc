@@ -668,7 +668,7 @@ export const characterService = {
       type: 'corpo-a-corpo' as const,
       attackSkill: 'luta' as const,
       attackSkillUseId: 'atacar',
-      attackAttribute: 'forca' as const,
+      attackAttribute: 'corpo' as const,
       attackBonus: 0,
       damageRoll: {
         quantity: 1,

@@ -371,6 +371,10 @@ export interface Experience {
  * Interface principal do Character
  */
 export interface Character extends BaseEntity {
+  // Versão do Schema
+  /** Versão do schema da ficha (2 para v0.0.2+) */
+  schemaVersion: number;
+
   // Informações Básicas
   /** Nome do personagem */
   name: string;
@@ -484,14 +488,15 @@ export interface Character extends BaseEntity {
  * Valores padrão para um personagem de nível 1
  */
 export const DEFAULT_LEVEL_1_CHARACTER: Partial<Character> = {
+  schemaVersion: 2,
   level: 1,
   attributes: {
     agilidade: 1,
-    constituicao: 1,
-    forca: 1,
+    corpo: 1,
     influencia: 1,
     mente: 1,
-    presenca: 1,
+    essencia: 1,
+    instinto: 1,
   },
   combat: {
     hp: {

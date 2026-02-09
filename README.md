@@ -1,8 +1,10 @@
 # Lite Sheets TDC
 
-**Versão**: 1.0.0 (MVP 1)
+**Versão**: 0.0.2 (v0.1.7 do livro)
 
 Sistema de criação e gerenciamento de fichas de RPG para **Tabuleiro do Caos** totalmente no navegador, com experiência PWA, funcionamento offline, responsividade e foco em acessibilidade. Ideal para jogadores e mestres que buscam praticidade, performance e facilidade de uso, sem depender de backend ou banco de dados externo.
+
+**Nota**: Esta versão reflete as regras atualizadas do livro v0.1.7, incluindo o novo sistema de dados (pool d6+ com contagem de sucessos), 6 novos atributos, sistema GA/PV, e habilidades redesenhadas.
 
 ---
 
@@ -55,10 +57,12 @@ Sistema de criação e gerenciamento de fichas de RPG para **Tabuleiro do Caos**
 
 ### Sistema de Jogo
 
-- **Rolagem de dados**: Sistema integrado de rolagem de d20 com suporte a vantagem/desvantagem e modificadores
-- **Cálculos automáticos**: Defesa, modificadores de habilidades, idiomas baseados em Mente, e mais
-- **Gerenciamento de recursos**: Controle de PV/PP com valores temporários, economia de ações em combate
-- **Inventário completo**: Sistema de moedas, itens, peso e capacidade de carga
+- **Rolagem de dados**: Sistema integrado de pool de d6+ com contagem de sucessos (✶), suporte a diferentes tamanhos de dado por proficiência (d6/d8/d10/d12) e modificadores de quantidade de dados (+Xd/-Xd)
+- **6 Atributos**: Agilidade (Agi), Corpo (Cor), Influência (Inf), Mente (Men), Essência (Ess), Instinto (Ins) — organizados em 3 categorias: Físico, Mental, Espiritual
+- **Cálculos automáticos**: Guarda (GA), Vitalidade (PV = piso(GA/3)), modificadores de habilidades, idiomas baseados em Mente-1, capacidade de carga baseada em Corpo, e mais
+- **Gerenciamento de recursos**: Controle de GA/PV/PP (e PF para conjuradores), dados de recurso (água, comida, tochas, flechas, etc.), economia de ações em combate (Turno Rápido/Lento, Reações, Ações Livres)
+- **33 Habilidades**: Proficiências determinam o tamanho do dado rolado (Leigo=d6, Adepto=d8, Versado=d10, Mestre=d12). Novas habilidades: Sintonia (Ess) e Tenacidade (Cor). Iniciativa foi removida.
+- **Inventário completo**: Sistema de moedas, itens com durabilidade (dados de recurso d2-d100), espaço de carga (não mais peso), 20 categorias de itens
 
 ### Experiência do Usuário
 
@@ -266,7 +270,7 @@ O Lite Sheets TDC possui uma **Central de Ajuda integrada** acessível pelo menu
 - **Atalhos de Teclado**: Documentação completa de navegação:
   - Navegação geral (Tab, Enter, Esc)
   - Edição de campos (Enter para editar, Esc para cancelar)
-  - Rolagem de dados (Shift+D para rolar d20)
+  - Rolagem de dados (Shift+D para rolar pool de dados)
   - Atalhos de acessibilidade
 
 - **Guia de Exportação/Importação**: Passo a passo detalhado:
@@ -276,11 +280,13 @@ O Lite Sheets TDC possui uma **Central de Ajuda integrada** acessível pelo menu
   - Dicas de segurança e boas práticas
 
 - **Sistema de Rolagem**: Explicação da mecânica:
-  - Rolagem básica de d20
-  - Vantagem/Desvantagem
-  - Modificadores e bônus
-  - Dados de dano (d4, d6, d8, d10, d12)
-  - Exemplos práticos
+  - Rolagem pool de d6+ com contagem de sucessos (✶)
+  - Tamanho de dado por proficiência (d6/d8/d10/d12)
+  - Modificadores de quantidade de dados (+Xd/-Xd)
+  - Contagem de sucessos: resultados ≥ 6 = 1✶, resultados 1 cancelam 1✶
+  - Limite de 8 dados por teste
+  - Atributo 0: role 2d e escolha o menor
+  - Exemplos práticos com pool de dados
 
 ### Como Acessar
 
@@ -341,8 +347,10 @@ Este projeto segue as diretrizes **WCAG 2.1 Nível AA** para garantir acessibili
 ## Documentação Adicional
 
 - **[CHANGELOG.md](./CHANGELOG.md)**: Histórico de versões e mudanças
-- **[DEVELOPMENT-PLAN-LITE-SHEETS-MVP-1.md](./DEVELOPMENT-PLAN-LITE-SHEETS-MVP-1.md)**: Planejamento detalhado do MVP 1
-- **Base Files**: Documentos de referência do sistema Tabuleiro do Caos em `base-files/`
+- **Base Files**: Documentos de referência do sistema Tabuleiro do Caos (livro v0.1.7) em `base-files/`
+  - `v0.0.2.md`: Regras completas da v0.0.2 (1680 linhas)
+  - `regras-basicas.md`: Regras básicas atualizadas do jogo
+  - `mvp-um.md`: Especificações do MVP 1
 
 ---
 

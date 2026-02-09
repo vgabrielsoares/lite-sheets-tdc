@@ -45,11 +45,11 @@ import { DEFAULT_WEAPON_PROFICIENCY } from '@/constants/proficiencies';
 function createDefaultAttributes(): Attributes {
   return {
     agilidade: ATTRIBUTE_DEFAULT,
-    constituicao: ATTRIBUTE_DEFAULT,
-    forca: ATTRIBUTE_DEFAULT,
+    corpo: ATTRIBUTE_DEFAULT,
     influencia: ATTRIBUTE_DEFAULT,
     mente: ATTRIBUTE_DEFAULT,
-    presenca: ATTRIBUTE_DEFAULT,
+    essencia: ATTRIBUTE_DEFAULT,
+    instinto: ATTRIBUTE_DEFAULT,
   };
 }
 
@@ -107,9 +107,9 @@ export const UNARMED_ATTACK_NAME = 'Ataque Desarmado';
 /**
  * Cria o ataque desarmado padrão
  * Todos os personagens têm esse ataque por padrão
- * - Usa Força e o uso "Atacar"
+ * - Usa Corpo e o uso "Atacar"
  * - Crítico: 20/+1
- * - Dano: 1d2 + Força
+ * - Dano: 1d2 + Corpo
  * - Não pode ser deletado
  * - Nome não pode ser alterado
  */
@@ -119,7 +119,7 @@ function createUnarmedAttack(): Attack {
     type: 'corpo-a-corpo',
     attackSkill: 'luta',
     attackSkillUseId: 'atacar',
-    attackAttribute: 'forca',
+    attackAttribute: 'corpo',
     attackBonus: 0,
     damageRoll: {
       quantity: 1,
@@ -156,7 +156,7 @@ function createDefaultCombat(): CombatData {
     dyingState: {
       isDying: false,
       currentRounds: 0,
-      maxRounds: 3, // 2 + Constituição (1)
+      maxRounds: 3, // 2 + Corpo (1)
     },
     actionEconomy: {
       majorAction: true,
@@ -174,7 +174,7 @@ function createDefaultCombat(): CombatData {
       total: 16, // 15 + Agilidade (1)
     },
     ppLimit: {
-      base: 2, // Nível (1) + Presença (1)
+      base: 2, // Nível (1) + Essência (1)
       modifiers: [],
       total: 2,
     },
@@ -217,6 +217,7 @@ function createDefaultCombat(): CombatData {
       savingThrowPenalties: {
         determinacao: 0,
         reflexo: 0,
+        sintonia: 0,
         tenacidade: 0,
         vigor: 0,
       },
@@ -229,7 +230,7 @@ function createDefaultCombat(): CombatData {
  */
 function createDefaultCarryingCapacity(): CarryingCapacity {
   return {
-    base: 10, // 5 + (Força (1) * 5)
+    base: 10, // 5 + (Corpo (1) * 5)
     sizeModifier: 0,
     otherModifiers: 0,
     modifiers: 0,
@@ -425,6 +426,9 @@ export function createDefaultCharacter(
     id,
     createdAt: now.toString(),
     updatedAt: now.toString(),
+
+    // Versão do schema
+    schemaVersion: 2,
 
     // Informações Básicas
     name: params.name,

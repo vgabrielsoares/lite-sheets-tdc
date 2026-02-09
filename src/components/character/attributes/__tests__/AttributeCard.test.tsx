@@ -28,11 +28,11 @@ describe('AttributeCard', () => {
     it('should render all six attributes correctly', () => {
       const attributes: AttributeName[] = [
         'agilidade',
-        'constituicao',
-        'forca',
+        'corpo',
         'influencia',
         'mente',
-        'presenca',
+        'essencia',
+        'instinto',
       ];
 
       attributes.forEach((attr) => {
@@ -57,7 +57,7 @@ describe('AttributeCard', () => {
     });
 
     it('should show indicator for attribute above default (>5)', () => {
-      render(<AttributeCard name="forca" value={6} />);
+      render(<AttributeCard name="corpo" value={6} />);
 
       expect(screen.getByText('Acima do padrão')).toBeInTheDocument();
     });
@@ -106,7 +106,7 @@ describe('AttributeCard', () => {
     });
 
     it('should show trending up icon for value above 5', () => {
-      const { container } = render(<AttributeCard name="forca" value={6} />);
+      const { container } = render(<AttributeCard name="corpo" value={6} />);
 
       // Check for trending up icon
       const trendingIcon = container.querySelector(

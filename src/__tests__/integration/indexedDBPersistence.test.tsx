@@ -80,7 +80,7 @@ describe('Persistência em IndexedDB (Integração)', () => {
       character.experience.current = 2000;
       character.concept = 'Guerreiro corajoso';
       // lineage e origin devem ser objetos complexos, não strings - omitindo para este teste
-      character.attributes.forca = 4;
+      character.attributes.corpo = 4;
       character.attributes.agilidade = 3;
       character.combat.hp.current = 45;
       character.combat.hp.max = 50;
@@ -108,7 +108,7 @@ describe('Persistência em IndexedDB (Integração)', () => {
         experience: { current: 2000 },
         concept: 'Guerreiro corajoso',
         attributes: expect.objectContaining({
-          forca: 4,
+          corpo: 4,
           agilidade: 3,
         }),
         combat: expect.objectContaining({
@@ -267,14 +267,14 @@ describe('Persistência em IndexedDB (Integração)', () => {
       await db.characters.update(character.id, {
         attributes: {
           ...character.attributes,
-          forca: 5,
+          corpo: 5,
           agilidade: 4,
         },
       });
 
       // Assert
       const updated = await db.characters.get(character.id);
-      expect(updated?.attributes.forca).toBe(5);
+      expect(updated?.attributes.corpo).toBe(5);
       expect(updated?.attributes.agilidade).toBe(4);
       expect(updated?.attributes.mente).toBe(1); // Não alterado
     });
@@ -433,7 +433,7 @@ describe('Persistência em IndexedDB (Integração)', () => {
       await db.characters.add(character);
       await db.characters.update(character.id, { level: 5 });
       await db.characters.update(character.id, {
-        attributes: { ...character.attributes, forca: 3 },
+        attributes: { ...character.attributes, corpo: 3 },
       });
       await db.characters.update(character.id, {
         experience: { ...character.experience, current: 1000 },
@@ -444,7 +444,7 @@ describe('Persistência em IndexedDB (Integração)', () => {
       expect(final).toMatchObject({
         name: 'Test Character',
         level: 5,
-        attributes: expect.objectContaining({ forca: 3 }),
+        attributes: expect.objectContaining({ corpo: 3 }),
         experience: expect.objectContaining({ current: 1000 }),
       });
     });
