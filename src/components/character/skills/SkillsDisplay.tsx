@@ -173,7 +173,10 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
 
       SKILL_LIST.forEach((skillName) => {
         const skill = skills[skillName];
-        counts[skill.proficiencyLevel]++;
+        // Verifica se a skill existe (pode não existir em fichas antigas)
+        if (skill) {
+          counts[skill.proficiencyLevel]++;
+        }
       });
 
       return counts;
@@ -183,6 +186,9 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
     const filteredSkills = useMemo(() => {
       return SKILL_LIST.filter((skillName) => {
         const skill = skills[skillName];
+        // Ignora skills que não existem (fichas antigas)
+        if (!skill) return false;
+
         const label = SKILL_LABELS[skillName].toLowerCase();
 
         // Filtro de busca
@@ -520,27 +526,33 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
           </Paper>
         ) : (
           <Stack spacing={1}>
-            {filteredSkills.map((skillName) => (
-              <SkillRow
-                key={skillName}
-                skill={skills[skillName]}
-                attributes={attributes}
-                characterLevel={characterLevel}
-                isOverloaded={isOverloaded}
-                onModifiersChange={onModifiersChange}
-                onClick={onSkillClick}
-                crafts={crafts}
-                onSelectedCraftChange={onSelectedCraftChange}
-                luck={luck}
-                onLuckLevelChange={onLuckLevelChange}
-                onLuckModifiersChange={onLuckModifiersChange}
-                sizeSkillModifier={
-                  sizeSkillModifiers?.[
-                    skillName as keyof typeof sizeSkillModifiers
-                  ]
-                }
-              />
-            ))}
+            {filteredSkills.map((skillName) => {
+              const skill = skills[skillName];
+              // Proteção adicional: se skill não existir, não renderiza
+              if (!skill) return null;
+
+              return (
+                <SkillRow
+                  key={skillName}
+                  skill={skill}
+                  attributes={attributes}
+                  characterLevel={characterLevel}
+                  isOverloaded={isOverloaded}
+                  onModifiersChange={onModifiersChange}
+                  onClick={onSkillClick}
+                  crafts={crafts}
+                  onSelectedCraftChange={onSelectedCraftChange}
+                  luck={luck}
+                  onLuckLevelChange={onLuckLevelChange}
+                  onLuckModifiersChange={onLuckModifiersChange}
+                  sizeSkillModifier={
+                    sizeSkillModifiers?.[
+                      skillName as keyof typeof sizeSkillModifiers
+                    ]
+                  }
+                />
+              );
+            })}
           </Stack>
         )}
       </Box>
