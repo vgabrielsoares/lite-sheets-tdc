@@ -8,6 +8,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { Character } from '@/types';
 import { characterService } from '@/services/characterService';
+import {
+  needsMigration,
+  migrateCharacterV1toV2,
+} from '@/utils/characterMigration';
 
 /**
  * Estado da slice de personagens
@@ -50,20 +54,35 @@ function syncCharactersArray(state: CharactersState): void {
 
 /**
  * Thunk para carregar personagens do IndexedDB
- * Aplica migração automática para garantir ataque desarmado em todos os personagens
+ * Aplica migração v1→v2 (se necessário) e garante ataque desarmado em todos os personagens.
+ * Personagens migrados são persistidos de volta ao IndexedDB.
+ * Retorna { characters, migratedNames } para possibilitar notificação ao usuário.
  */
 export const loadCharacters = createAsyncThunk(
   'characters/loadCharacters',
   async () => {
     const characters = await characterService.getAll();
-    // Aplicar migração para garantir ataque desarmado
-    return characters.map((char) => characterService.ensureUnarmedAttack(char));
+    const migratedNames: string[] = [];
+
+    const processed = await Promise.all(
+      characters.map(async (char) => {
+        let c = char;
+        if (needsMigration(c)) {
+          c = migrateCharacterV1toV2(c);
+          migratedNames.push(c.name);
+          await characterService.update(c.id, c);
+        }
+        return characterService.ensureUnarmedAttack(c);
+      })
+    );
+
+    return { characters: processed, migratedNames };
   }
 );
 
 /**
  * Thunk para carregar um único personagem por ID do IndexedDB
- * Aplica migração automática para garantir ataque desarmado
+ * Aplica migração v1→v2 (se necessário) e garante ataque desarmado.
  */
 export const loadCharacterById = createAsyncThunk(
   'characters/loadCharacterById',
@@ -72,8 +91,12 @@ export const loadCharacterById = createAsyncThunk(
     if (!character) {
       throw new Error(`Personagem com ID ${characterId} não encontrado`);
     }
-    // Aplicar migração para garantir ataque desarmado
-    return characterService.ensureUnarmedAttack(character);
+    let c = character;
+    if (needsMigration(c)) {
+      c = migrateCharacterV1toV2(c);
+      await characterService.update(c.id, c);
+    }
+    return characterService.ensureUnarmedAttack(c);
   }
 );
 
@@ -358,7 +381,7 @@ const charactersSlice = createSlice({
       state.loading = false;
       state.entities = {};
       state.ids = [];
-      action.payload.forEach((character) => {
+      action.payload.characters.forEach((character) => {
         state.entities[character.id] = character;
         state.ids.push(character.id);
       });

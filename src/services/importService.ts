@@ -15,6 +15,11 @@ import {
   isValidSkillName,
   isValidProficiencyLevel,
 } from '@/utils/validators';
+import {
+  needsMigration,
+  migrateCharacterV1toV2,
+  CURRENT_SCHEMA_VERSION,
+} from '@/utils/characterMigration';
 
 /**
  * Estrutura de dados exportados em lote
@@ -342,10 +347,16 @@ function validateCharacterData(character: any): string[] {
  * @returns Dados migrados
  */
 function migrateCharacterData(data: Character, fromVersion: string): Character {
-  // Por enquanto, sem migrações necessárias
-  // No futuro, adicionar lógica de migração por versão
-
   console.log(`ℹ️ Migração de versão ${fromVersion} → ${EXPORT_VERSION}`);
+
+  // Migração de atributos v1 → v2
+  if (needsMigration(data as unknown as Record<string, unknown>)) {
+    console.log('🔄 Aplicando migração de atributos v1 → v2');
+    const migrated = migrateCharacterV1toV2(
+      data as unknown as Record<string, unknown>
+    );
+    return migrated as unknown as Character;
+  }
 
   return data;
 }
@@ -467,9 +478,12 @@ async function importMultipleCharactersFromData(
       const warnings = validateCharacterData(character);
       allWarnings.push(...warnings);
 
-      // Migra dados se necessário
+      // Migra dados se necessário (versão do formato ou schema do personagem)
       let processedCharacter = character;
-      if (data.version !== EXPORT_VERSION) {
+      if (
+        data.version !== EXPORT_VERSION ||
+        needsMigration(character as unknown as Record<string, unknown>)
+      ) {
         processedCharacter = migrateCharacterData(character, data.version);
         wasMigrated = true;
       }
@@ -607,11 +621,14 @@ export async function importCharacter(
     // Valida dados do personagem
     const warnings = validateCharacterData(singleData.character);
 
-    // Migra dados se necessário
+    // Migra dados se necessário (versão do formato ou schema do personagem)
     let character = singleData.character;
     let wasMigrated = false;
 
-    if (singleData.version !== EXPORT_VERSION) {
+    if (
+      singleData.version !== EXPORT_VERSION ||
+      needsMigration(character as unknown as Record<string, unknown>)
+    ) {
       character = migrateCharacterData(character, singleData.version);
       wasMigrated = true;
     }
