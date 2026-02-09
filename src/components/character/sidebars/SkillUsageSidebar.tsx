@@ -72,8 +72,12 @@ import type {
 import {
   SKILL_LABELS,
   ATTRIBUTE_LABELS,
-  SKILL_METADATA,
   SKILL_PROFICIENCY_LABELS,
+  LUCK_LEVELS,
+  LUCK_BETTING_TABLE,
+  LUCK_BET_PLACE_LEVELS,
+  MIN_LUCK_LEVEL,
+  MAX_LUCK_LEVEL,
 } from '@/constants';
 import { SKILL_DESCRIPTIONS } from '@/types/skills';
 import { ATTRIBUTE_LIST } from '@/constants/attributes';
@@ -90,8 +94,17 @@ import {
   getKeenSenseBonus,
   PERCEPTION_USE_TO_SENSE,
 } from '@/utils/senseCalculations';
-import { calculateSignatureAbilityBonus, getCraftMultiplier } from '@/utils';
-import { COMBAT_SKILLS } from '@/constants/skills';
+import { calculateSignatureAbilityBonus } from '@/utils';
+import { getSkillDieSize } from '@/constants/skills';
+
+/** Labels descritivos para custos de ação */
+const ACTION_COST_LABELS: Record<string, string> = {
+  '▶': '1 Ação',
+  '▶▶': '2 Ações (Turno Rápido)',
+  '▶▶▶': '3 Ações (Turno Lento)',
+  '↩': 'Reação',
+  '∆': 'Ação Livre',
+};
 
 /** Lista ordenada de níveis de proficiência para selects */
 const PROFICIENCY_LEVEL_LIST: ProficiencyLevel[] = [
@@ -1017,7 +1030,48 @@ export function SkillUsageSidebar({
 
             {/* Nome */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Tooltip title={defaultUse.name} placement="top" arrow>
+              <Tooltip
+                title={
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>
+                      {defaultUse.name}
+                    </Typography>
+                    {defaultUse.description && (
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ mt: 0.5 }}
+                      >
+                        {defaultUse.description}
+                      </Typography>
+                    )}
+                    {defaultUse.testInfo && (
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        fontStyle="italic"
+                        sx={{ mt: 0.5 }}
+                      >
+                        {defaultUse.testInfo}
+                      </Typography>
+                    )}
+                    {defaultUse.alternateAttribute && (
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ mt: 0.5 }}
+                      >
+                        Atributo alt.:{' '}
+                        {ATTRIBUTE_LABELS[defaultUse.alternateAttribute]}
+                        {defaultUse.alternateAttributeNote &&
+                          ` — ${defaultUse.alternateAttributeNote}`}
+                      </Typography>
+                    )}
+                  </Box>
+                }
+                placement="top"
+                arrow
+              >
                 <Typography
                   variant="body2"
                   fontWeight={600}
@@ -1049,14 +1103,48 @@ export function SkillUsageSidebar({
                   flexWrap: isSmallScreen && !isExpanded ? 'wrap' : 'nowrap',
                 }}
               >
+                {/* Custo de Ação */}
+                {defaultUse.actionCost && (
+                  <Tooltip
+                    title={
+                      ACTION_COST_LABELS[defaultUse.actionCost] ??
+                      defaultUse.actionCost
+                    }
+                    placement="top"
+                    arrow
+                  >
+                    <Chip
+                      label={defaultUse.actionCost}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        minWidth: 'fit-content',
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                      }}
+                    />
+                  </Tooltip>
+                )}
+
                 {/* Atributo */}
-                <Chip
-                  label={ATTRIBUTE_LABELS[useAttribute]}
-                  size="small"
-                  variant={isCustomAttribute ? 'filled' : 'outlined'}
-                  color={isCustomAttribute ? 'primary' : 'default'}
-                  sx={{ minWidth: 'fit-content' }}
-                />
+                <Tooltip
+                  title={
+                    defaultUse.alternateAttribute
+                      ? `Alt: ${ATTRIBUTE_LABELS[defaultUse.alternateAttribute]}${defaultUse.alternateAttributeNote ? ` — ${defaultUse.alternateAttributeNote}` : ''}`
+                      : ''
+                  }
+                  disableHoverListener={!defaultUse.alternateAttribute}
+                  placement="top"
+                  arrow
+                >
+                  <Chip
+                    label={ATTRIBUTE_LABELS[useAttribute]}
+                    size="small"
+                    variant={isCustomAttribute ? 'filled' : 'outlined'}
+                    color={isCustomAttribute ? 'primary' : 'default'}
+                    sx={{ minWidth: 'fit-content' }}
+                  />
+                </Tooltip>
 
                 {/* Modificadores (apenas exibição, não editáveis aqui) */}
                 {hasCustomModifiers && !isEditing && (
@@ -1309,9 +1397,9 @@ export function SkillUsageSidebar({
           {skill.name === 'sorte' && (
             <>
               <Typography variant="caption" color="text.secondary" paragraph>
-                Sorte é uma habilidade especial que usa níveis ao invés de
-                proficiência. Cada nível determina quantos dados são rolados e
-                qual bônus é aplicado.
+                Sorte é uma habilidade especial com 7 níveis de progressão,
+                independente do nível do personagem. Cada nível determina a
+                quantidade e tamanho dos dados a rolar.
               </Typography>
               <FormControl fullWidth size="small">
                 <InputLabel>Nível de Sorte</InputLabel>
@@ -1325,25 +1413,125 @@ export function SkillUsageSidebar({
                   label="Nível de Sorte"
                   disabled={!onLuckLevelChange}
                 >
-                  {[0, 1, 2, 3, 4, 5, 6, 7].map((level) => {
-                    const formulas: Record<number, string> = {
-                      0: '1d20',
-                      1: '2d20',
-                      2: '2d20+2',
-                      3: '3d20+3',
-                      4: '3d20+6',
-                      5: '4d20+8',
-                      6: '4d20+12',
-                      7: '5d20+15',
-                    };
+                  {Array.from(
+                    { length: MAX_LUCK_LEVEL - MIN_LUCK_LEVEL + 1 },
+                    (_, i) => MIN_LUCK_LEVEL + i
+                  ).map((level) => {
+                    const entry = LUCK_LEVELS[level];
                     return (
                       <MenuItem key={level} value={level}>
-                        Nível {level} ({formulas[level]})
+                        Nível {level} ({entry?.formula ?? `${level}d12`})
                       </MenuItem>
                     );
                   })}
                 </Select>
               </FormControl>
+
+              {/* Tabela de Apostas - Referência */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Tabela de Apostas
+                </Typography>
+                <Typography variant="caption" color="text.secondary" paragraph>
+                  Ao apostar, role Sorte e consulte a tabela abaixo. Uso requer
+                  1d6 horas.
+                </Typography>
+                <Box
+                  component="table"
+                  sx={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    '& th, & td': {
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      px: 1,
+                      py: 0.5,
+                      fontSize: '0.75rem',
+                    },
+                    '& th': {
+                      bgcolor: 'action.hover',
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <Box component="th">Teste</Box>
+                      <Box component="th">Resultado</Box>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LUCK_BETTING_TABLE.map((entry) => (
+                      <tr key={entry.successes}>
+                        <Box component="td" sx={{ textAlign: 'center' }}>
+                          {entry.successes}✶
+                        </Box>
+                        <Box
+                          component="td"
+                          sx={{
+                            color:
+                              entry.multiplier < 0
+                                ? 'error.main'
+                                : entry.multiplier === 0
+                                  ? 'text.secondary'
+                                  : 'success.main',
+                          }}
+                        >
+                          {entry.result}
+                        </Box>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Box>
+              </Box>
+
+              {/* Níveis de Local de Aposta */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Locais de Aposta
+                </Typography>
+                <Box
+                  component="table"
+                  sx={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    '& th, & td': {
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      px: 1,
+                      py: 0.5,
+                      fontSize: '0.75rem',
+                    },
+                    '& th': {
+                      bgcolor: 'action.hover',
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <Box component="th">Local</Box>
+                      <Box component="th">×</Box>
+                      <Box component="th">Nível</Box>
+                      <Box component="th">×</Box>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LUCK_BET_PLACE_LEVELS.map((entry) => (
+                      <tr key={entry.place}>
+                        <Box component="td">{entry.place}</Box>
+                        <Box component="td" sx={{ textAlign: 'center' }}>
+                          ×{entry.placeMultiplier}
+                        </Box>
+                        <Box component="td">{entry.betLevel}</Box>
+                        <Box component="td" sx={{ textAlign: 'center' }}>
+                          ×{entry.betMultiplier}
+                        </Box>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Box>
+              </Box>
             </>
           )}
 
@@ -1469,11 +1657,8 @@ export function SkillUsageSidebar({
                 Habilidade de Assinatura
               </Typography>
               <Typography variant="caption" color="text.secondary" paragraph>
-                Escolha UMA habilidade especial que recebe bônus adicional igual
-                ao seu nível
-                {COMBAT_SKILLS.includes(skill.name) &&
-                  ' (÷3 para habilidades de combate)'}
-                .
+                Escolha UMA habilidade especial que recebe dados extras: +1d
+                (nível 1-5), +2d (nível 6-10), +3d (nível 11-15).
               </Typography>
 
               {isCurrentSignature ? (
@@ -1494,15 +1679,10 @@ export function SkillUsageSidebar({
                     <strong>{SKILL_LABELS[skill.name]}</strong> é sua Habilidade
                     de Assinatura e recebe{' '}
                     <strong>
-                      +
-                      {calculateSignatureAbilityBonus(
-                        characterLevel,
-                        COMBAT_SKILLS.includes(skill.name)
-                      )}
+                      +{calculateSignatureAbilityBonus(characterLevel)}d
                     </strong>{' '}
-                    de bônus
-                    {COMBAT_SKILLS.includes(skill.name) &&
-                      ` (nível ${characterLevel} ÷ 3 = ${Math.floor(characterLevel / 3) || 1})`}
+                    de bônus em dados
+                    {` (nível ${characterLevel}: +${calculateSignatureAbilityBonus(characterLevel)}d)`}
                     .
                   </Typography>
                 </Alert>
@@ -1661,25 +1841,25 @@ export function SkillUsageSidebar({
                 <Stack spacing={1}>
                   {crafts.map((craft) => {
                     const attributeValue = attributes[craft.attributeKey];
-                    const multiplier = getCraftMultiplier(craft.level);
-                    const baseModifier = attributeValue * multiplier;
 
-                    // Calcular bônus de assinatura se aplicável
+                    // Calcular bônus de assinatura (+Xd) se aplicável — v0.0.2: sem distinção combate/não-combate
                     const signatureBonus = skill.isSignature
-                      ? calculateSignatureAbilityBonus(
-                          characterLevel,
-                          SKILL_METADATA[skill.name].isCombatSkill
-                        )
+                      ? calculateSignatureAbilityBonus(characterLevel)
                       : 0;
 
-                    const totalModifier =
-                      baseModifier + signatureBonus + craft.numericModifier;
-
-                    // Calcular fórmula de rolagem
-                    const totalDice = 1 + (craft.diceModifier || 0);
-                    const diceCount = Math.abs(totalDice) || 1;
-                    const takeLowest = totalDice < 1 || attributeValue === 0;
-                    const formula = `${takeLowest ? '-' : ''}${diceCount}d20${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+                    // Pool de dados v0.0.2: atributo + assinatura + modificadores de dados
+                    const totalDice =
+                      attributeValue +
+                      signatureBonus +
+                      (craft.diceModifier || 0);
+                    const isPenaltyRoll = totalDice <= 0;
+                    const effectiveDice = isPenaltyRoll
+                      ? 2
+                      : Math.min(totalDice, 8);
+                    const dieSize = getSkillDieSize(skill.proficiencyLevel);
+                    const formula = isPenaltyRoll
+                      ? `2${dieSize} (menor)`
+                      : `${effectiveDice}${dieSize}`;
 
                     return (
                       <Paper
@@ -1750,14 +1930,14 @@ export function SkillUsageSidebar({
                               variant="caption"
                               color="text.secondary"
                             >
-                              Multiplicador: <strong>×{multiplier}</strong>
+                              Dado: <strong>{dieSize}</strong>
                             </Typography>
                             <Typography
                               variant="caption"
                               color="primary"
                               fontWeight={600}
                             >
-                              Base: <strong>+{baseModifier}</strong>
+                              Pool: <strong>{formula}</strong>
                             </Typography>
                             {signatureBonus > 0 && (
                               <Typography
@@ -1765,7 +1945,7 @@ export function SkillUsageSidebar({
                                 color="warning.main"
                                 fontWeight={600}
                               >
-                                Assinatura: <strong>+{signatureBonus}</strong>
+                                Assinatura: <strong>+{signatureBonus}d</strong>
                               </Typography>
                             )}
                           </Box>
@@ -1812,13 +1992,9 @@ export function SkillUsageSidebar({
                               }}
                             >
                               <Chip
-                                label={
-                                  totalModifier >= 0
-                                    ? `+${totalModifier}`
-                                    : totalModifier
-                                }
+                                label={formula}
                                 size="small"
-                                color={totalModifier >= 0 ? 'success' : 'error'}
+                                color={isPenaltyRoll ? 'error' : 'success'}
                                 variant="outlined"
                                 sx={{ fontWeight: 600 }}
                               />
@@ -1904,7 +2080,7 @@ export function SkillUsageSidebar({
           signatureAction === 'set'
             ? currentSignatureSkill
               ? `Tem certeza que deseja tornar "${SKILL_LABELS[skill.name]}" sua Habilidade de Assinatura? Isso irá remover "${SKILL_LABELS[currentSignatureSkill]}" como sua habilidade especial.`
-              : `Tem certeza que deseja tornar "${SKILL_LABELS[skill.name]}" sua Habilidade de Assinatura? Esta habilidade receberá bônus especial igual ao seu nível.`
+              : `Tem certeza que deseja tornar "${SKILL_LABELS[skill.name]}" sua Habilidade de Assinatura? Esta habilidade receberá +${calculateSignatureAbilityBonus(characterLevel)}d de bônus em dados.`
             : `Tem certeza que deseja remover "${SKILL_LABELS[skill.name]}" como sua Habilidade de Assinatura? Você perderá o bônus especial desta habilidade.`
         }
         onConfirm={handleConfirmSignature}
