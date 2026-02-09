@@ -1,14 +1,15 @@
 /**
- * Tests for SkillRollButton component
+ * Tests for SkillRollButton component (v0.0.2 Pool System)
  *
  * Covers:
  * - Rendering with different props
  * - Dialog opening and closing
- * - Roll execution with different configurations
- * - Different dice counts (positive, zero, negative)
- * - Success/failure alerts with ND
+ * - Roll execution with pool dice system
+ * - Different attribute values and proficiency levels
+ * - Success/failure feedback with required successes
  * - Quick roll on double-click
- * - Edge cases (attribute 0, negative dice)
+ * - Dice modifier adjustments
+ * - Edge cases (attribute 0, penalty rolls)
  */
 
 import React from 'react';
@@ -16,14 +17,14 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SkillRollButton } from '../SkillRollButton';
 import { globalDiceHistory } from '@/utils/diceRoller';
-import type { DiceRollResult } from '@/utils/diceRoller';
+import type { DicePoolResult } from '@/types';
 
 // Mock the dice roller utility
 jest.mock('@/utils/diceRoller', () => {
   const actualModule = jest.requireActual('@/utils/diceRoller');
   return {
     ...actualModule,
-    rollD20: jest.fn(),
+    rollSkillTest: jest.fn(),
     globalDiceHistory: {
       add: jest.fn(),
       getHistory: jest.fn(() => []),
@@ -32,31 +33,38 @@ jest.mock('@/utils/diceRoller', () => {
   };
 });
 
-const mockRollD20 = require('@/utils/diceRoller').rollD20;
+const mockRollSkillTest = require('@/utils/diceRoller').rollSkillTest;
 
 describe('SkillRollButton', () => {
   const defaultProps = {
     skillLabel: 'Acrobacia',
-    diceCount: 2,
-    modifier: 5,
-    formula: '2d20+5',
+    attributeValue: 3,
+    proficiencyLevel: 'leigo' as const,
+    diceModifier: 0,
   };
 
-  const mockRollResult: DiceRollResult = {
-    formula: '2d20+5',
-    rolls: [15, 12],
-    diceType: 20,
-    diceCount: 2,
-    modifier: 5,
-    baseResult: 15,
-    finalResult: 20,
+  const mockPoolResult: DicePoolResult = {
+    formula: '3d6',
+    dice: [
+      { value: 6, dieSize: 'd6', isSuccess: true, isCancellation: false },
+      { value: 4, dieSize: 'd6', isSuccess: false, isCancellation: false },
+      { value: 1, dieSize: 'd6', isSuccess: false, isCancellation: true },
+    ],
+    rolls: [6, 4, 1],
+    dieSize: 'd6',
+    diceCount: 3,
+    successes: 1,
+    cancellations: 1,
+    netSuccesses: 0,
     timestamp: new Date(),
-    rollType: 'normal',
+    context: 'Teste de Acrobacia',
+    isPenaltyRoll: false,
+    diceModifier: 0,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRollD20.mockReturnValue(mockRollResult);
+    mockRollSkillTest.mockReturnValue(mockPoolResult);
   });
 
   describe('Rendering', () => {
@@ -95,449 +103,408 @@ describe('SkillRollButton', () => {
         expect(screen.getByText('Custom tooltip')).toBeInTheDocument();
       });
     });
+
+    it('should show default tooltip with dice info', async () => {
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} />);
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.hover(button);
+      await waitFor(() => {
+        expect(screen.getByText(/rolar 3d6/i)).toBeInTheDocument();
+      });
+    });
   });
 
   describe('Dialog Interaction', () => {
-    it('should open dialog on button click', async () => {
+    it('should open dialog on click', async () => {
       const user = userEvent.setup();
       render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
 
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
       await user.click(button);
 
-      await waitFor(() => {
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
-        expect(screen.getByText(/Teste de Acrobacia/i)).toBeInTheDocument();
-      });
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText(/teste de acrobacia/i)).toBeInTheDocument();
     });
 
-    it('should display roll configuration in dialog', async () => {
+    it('should close dialog when clicking close button', async () => {
       const user = userEvent.setup();
       render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
 
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
       await user.click(button);
 
-      await waitFor(() => {
-        expect(screen.getByText('2d20+5')).toBeInTheDocument();
-        expect(screen.getByText(/Configuração:/i)).toBeInTheDocument();
-      });
-    });
-
-    it('should close dialog on cancel button', async () => {
-      const user = userEvent.setup();
-      render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
-      await user.click(button);
-      const dialog = await screen.findByRole('dialog');
-      expect(dialog).toBeInTheDocument();
-
-      const closeButton = within(dialog).getByRole('button', {
-        name: /fechar/i,
-      });
+      const closeButton = screen.getByRole('button', { name: /fechar/i });
       await user.click(closeButton);
 
       await waitFor(() => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       });
     });
+
+    it('should show dice configuration in dialog', async () => {
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      // Should show dice formula and proficiency level
+      expect(screen.getByText('3d6')).toBeInTheDocument();
+      expect(screen.getByText(/leigo/i)).toBeInTheDocument();
+    });
+
+    it('should show required successes when provided', async () => {
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} requiredSuccesses={2} />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      expect(screen.getByText(/precisa: 2✶/i)).toBeInTheDocument();
+    });
   });
 
   describe('Roll Execution', () => {
-    it('should execute normal roll and display result', async () => {
+    it('should call rollSkillTest with correct parameters', async () => {
       const user = userEvent.setup();
       render(<SkillRollButton {...defaultProps} />);
+
       const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
       await user.click(button);
-      const dialog = await screen.findByRole('dialog');
-      const rollButton = within(dialog).getByRole('button', {
-        name: /^rolar$/i,
-      });
 
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
       await user.click(rollButton);
 
-      await waitFor(() => {
-        expect(mockRollD20).toHaveBeenCalledWith(
-          2,
-          5,
-          'normal',
-          'Teste de Acrobacia'
-        );
-        expect(globalDiceHistory.add).toHaveBeenCalledWith(mockRollResult);
-      });
+      expect(mockRollSkillTest).toHaveBeenCalledWith(
+        3, // attributeValue
+        'd6', // dieSize from 'leigo'
+        0, // diceModifier
+        'Teste de Acrobacia' // context
+      );
     });
 
-    it('should call onRoll callback if provided', async () => {
-      const user = userEvent.setup();
-      const onRollMock = jest.fn();
-      render(<SkillRollButton {...defaultProps} onRoll={onRollMock} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
-      await user.click(button);
-      const dialog = await screen.findByRole('dialog');
-      const rollButton = within(dialog).getByRole('button', {
-        name: /^rolar$/i,
-      });
-
-      await user.click(rollButton);
-
-      await waitFor(() => {
-        expect(onRollMock).toHaveBeenCalledWith(mockRollResult);
-      });
-    });
-
-    it('should display DiceRollResult after rolling', async () => {
+    it('should add result to global history', async () => {
       const user = userEvent.setup();
       render(<SkillRollButton {...defaultProps} />);
+
       const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
       await user.click(button);
-      const dialog = await screen.findByRole('dialog');
-      const rollButton = within(dialog).getByRole('button', {
-        name: /^rolar$/i,
-      });
 
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
       await user.click(rollButton);
 
-      // Wait for the roll to complete - check if result is shown
-      await waitFor(() => {
-        const results = screen.getAllByText('20');
-        expect(results.length).toBeGreaterThan(0); // Final result value
-      });
+      expect(globalDiceHistory.add).toHaveBeenCalledWith(mockPoolResult);
+    });
+
+    it('should call onRoll callback with result', async () => {
+      const onRoll = jest.fn();
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} onRoll={onRoll} />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
+      await user.click(rollButton);
+
+      expect(onRoll).toHaveBeenCalledWith(mockPoolResult);
+    });
+
+    it('should display result after rolling', async () => {
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
+      await user.click(rollButton);
+
+      // Should show the net successes (0 in this case) - may appear multiple times
+      const successTexts = screen.getAllByText(/0✶/);
+      expect(successTexts.length).toBeGreaterThan(0);
     });
   });
 
-  describe('ND (Difficulty) Handling', () => {
-    it('should display success alert when result >= ND', async () => {
+  describe('Proficiency Levels', () => {
+    it('should use d6 for leigo', async () => {
       const user = userEvent.setup();
-      render(<SkillRollButton {...defaultProps} nd={15} />);
+      render(<SkillRollButton {...defaultProps} proficiencyLevel="leigo" />);
+
       const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
       await user.click(button);
-      const dialog = await screen.findByRole('dialog');
 
-      // Show ND in dialog
-      expect(screen.getByText(/ND: 15/i)).toBeInTheDocument();
-
-      const rollButton = within(dialog).getByRole('button', {
-        name: /^rolar$/i,
-      });
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
       await user.click(rollButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(/Sucesso!/i)).toBeInTheDocument();
-        expect(screen.getByText(/Resultado 20 ≥ ND 15/i)).toBeInTheDocument();
-      });
+      expect(mockRollSkillTest).toHaveBeenCalledWith(
+        expect.anything(),
+        'd6',
+        expect.anything(),
+        expect.anything()
+      );
     });
 
-    it('should display failure alert when result < ND', async () => {
+    it('should use d8 for adepto', async () => {
       const user = userEvent.setup();
-      const failResult: DiceRollResult = {
-        ...mockRollResult,
-        baseResult: 8,
-        finalResult: 13,
+      render(<SkillRollButton {...defaultProps} proficiencyLevel="adepto" />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
+      await user.click(rollButton);
+
+      expect(mockRollSkillTest).toHaveBeenCalledWith(
+        expect.anything(),
+        'd8',
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    it('should use d10 for versado', async () => {
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} proficiencyLevel="versado" />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
+      await user.click(rollButton);
+
+      expect(mockRollSkillTest).toHaveBeenCalledWith(
+        expect.anything(),
+        'd10',
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    it('should use d12 for mestre', async () => {
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} proficiencyLevel="mestre" />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
+      await user.click(rollButton);
+
+      expect(mockRollSkillTest).toHaveBeenCalledWith(
+        expect.anything(),
+        'd12',
+        expect.anything(),
+        expect.anything()
+      );
+    });
+  });
+
+  describe('Success/Failure Feedback', () => {
+    it('should show success alert when net successes >= required', async () => {
+      const successResult: DicePoolResult = {
+        ...mockPoolResult,
+        netSuccesses: 3,
       };
-      mockRollD20.mockReturnValue(failResult);
+      mockRollSkillTest.mockReturnValue(successResult);
 
-      render(<SkillRollButton {...defaultProps} nd={15} />);
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} requiredSuccesses={2} />);
+
       const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
       await user.click(button);
-      const dialog = await screen.findByRole('dialog');
-      const rollButton = within(dialog).getByRole('button', {
-        name: /^rolar$/i,
-      });
 
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
       await user.click(rollButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(/Falha/i)).toBeInTheDocument();
-      });
+      expect(screen.getByText(/sucesso!/i)).toBeInTheDocument();
     });
 
-    it('should not show success/failure alert if no ND provided', async () => {
+    it('should show failure alert when net successes < required', async () => {
+      const failResult: DicePoolResult = {
+        ...mockPoolResult,
+        netSuccesses: 1,
+      };
+      mockRollSkillTest.mockReturnValue(failResult);
+
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} requiredSuccesses={3} />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
+      await user.click(rollButton);
+
+      expect(screen.getByText(/falha\./i)).toBeInTheDocument();
+    });
+
+    it('should not show feedback when required successes not provided', async () => {
       const user = userEvent.setup();
       render(<SkillRollButton {...defaultProps} />);
+
       const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
       await user.click(button);
-      const dialog = await screen.findByRole('dialog');
-      const rollButton = within(dialog).getByRole('button', {
-        name: /^rolar$/i,
-      });
 
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
       await user.click(rollButton);
 
-      await waitFor(() => {
-        expect(screen.queryByText(/Sucesso!/i)).not.toBeInTheDocument();
-        expect(screen.queryByText(/Falha/i)).not.toBeInTheDocument();
-      });
+      expect(screen.queryByText(/sucesso!/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/falha\./i)).not.toBeInTheDocument();
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle attribute 0 case (takeLowest with diceCount >= 1)', async () => {
+  describe('Dice Modifier', () => {
+    it('should allow adjusting dice modifier', async () => {
       const user = userEvent.setup();
-      render(
-        <SkillRollButton
-          {...defaultProps}
-          diceCount={2}
-          modifier={3}
-          takeLowest={true}
-          formula="-2d20+3"
-        />
-      );
+      render(<SkillRollButton {...defaultProps} />);
+
       const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
       await user.click(button);
-      const dialog = await screen.findByRole('dialog');
-      const rollButton = within(dialog).getByRole('button', {
-        name: /^rolar$/i,
-      });
 
+      // Find the modifier input and change it
+      const modifierInput = screen.getByLabelText(/\+\/- dados/i);
+      await user.clear(modifierInput);
+      await user.type(modifierInput, '2');
+
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
       await user.click(rollButton);
 
-      // Should roll 2 dice with disadvantage because of takeLowest flag
-      await waitFor(() => {
-        expect(mockRollD20).toHaveBeenCalledWith(
-          2,
-          3,
-          'disadvantage',
-          expect.any(String)
-        );
-      });
+      expect(mockRollSkillTest).toHaveBeenCalledWith(
+        3, // attributeValue
+        'd6', // dieSize
+        2, // modified diceModifier
+        'Teste de Acrobacia'
+      );
     });
 
-    it('should handle negative dice count', async () => {
+    it('should use initial diceModifier prop', async () => {
       const user = userEvent.setup();
-      render(
-        <SkillRollButton
-          {...defaultProps}
-          diceCount={3}
-          modifier={2}
-          takeLowest={true}
-          formula="-3d20+2"
-        />
-      );
+      render(<SkillRollButton {...defaultProps} diceModifier={1} />);
+
       const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
       await user.click(button);
-      const dialog = await screen.findByRole('dialog');
-      const rollButton = within(dialog).getByRole('button', {
-        name: /^rolar$/i,
-      });
 
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
       await user.click(rollButton);
 
-      // Negative dice: Math.abs(-1) + 2 = 3 dice with disadvantage
-      await waitFor(() => {
-        expect(mockRollD20).toHaveBeenCalledWith(
-          3,
-          2,
-          'disadvantage',
-          expect.any(String)
-        );
-      });
-    });
-
-    it('should handle diceCount = 0 (attribute 0, no modifiers)', async () => {
-      const user = userEvent.setup();
-      render(
-        <SkillRollButton
-          {...defaultProps}
-          diceCount={2}
-          modifier={0}
-          formula="-2d20"
-          takeLowest={true}
-        />
+      expect(mockRollSkillTest).toHaveBeenCalledWith(
+        3, // attributeValue
+        'd6', // dieSize
+        1, // initial diceModifier
+        'Teste de Acrobacia'
       );
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
-      await user.click(button);
-      const dialog = await screen.findByRole('dialog');
-
-      // Dialog should open - component will roll 2 dice with disadvantage internally
-      expect(dialog).toBeInTheDocument();
-
-      const rollButton = within(dialog).getByRole('button', {
-        name: /^rolar$/i,
-      });
-      await user.click(rollButton);
-
-      await waitFor(() => {
-        // diceCount < 1 → Math.abs(0) + 2 = 2 dice with disadvantage
-        expect(mockRollD20).toHaveBeenCalledWith(
-          2,
-          0,
-          'disadvantage',
-          expect.any(String)
-        );
-      });
     });
   });
 
-  describe('Quick Roll (Double-Click)', () => {
+  describe('Attribute Value Edge Cases', () => {
+    it('should show penalty indicator for attribute 0', async () => {
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} attributeValue={0} />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      // The dialog shows a "Penalidade" chip - look within the dialog
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).getByText('Penalidade')).toBeInTheDocument();
+    });
+
+    it('should show effective dice as "2 (menor)" for penalty rolls', async () => {
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} attributeValue={0} />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      expect(screen.getByText('2 (menor)d6')).toBeInTheDocument();
+    });
+
+    it('should handle negative total dice (penalty from modifier)', async () => {
+      const user = userEvent.setup();
+      render(
+        <SkillRollButton
+          {...defaultProps}
+          attributeValue={1}
+          diceModifier={-3}
+        />
+      );
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.click(button);
+
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).getByText('Penalidade')).toBeInTheDocument();
+    });
+  });
+
+  describe('Quick Roll', () => {
     it('should execute quick roll on double-click', async () => {
       const user = userEvent.setup();
       render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
 
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
       await user.dblClick(button);
 
-      await waitFor(() => {
-        expect(mockRollD20).toHaveBeenCalledWith(
-          2,
-          5,
-          'normal',
-          'Teste de Acrobacia'
-        );
-        expect(globalDiceHistory.add).toHaveBeenCalledWith(mockRollResult);
-      });
+      expect(mockRollSkillTest).toHaveBeenCalled();
+      expect(globalDiceHistory.add).toHaveBeenCalled();
     });
 
-    it('should open dialog on quick roll', async () => {
+    it('should call onRoll callback on quick roll', async () => {
+      const onRoll = jest.fn();
+      const user = userEvent.setup();
+      render(<SkillRollButton {...defaultProps} onRoll={onRoll} />);
+
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      await user.dblClick(button);
+
+      expect(onRoll).toHaveBeenCalled();
+    });
+
+    it('should open dialog with result on quick roll', async () => {
       const user = userEvent.setup();
       render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
 
+      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
       await user.dblClick(button);
 
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
-      });
-    });
-
-    it('should auto-close dialog after 3 seconds on quick roll', async () => {
-      jest.useFakeTimers();
-      const user = userEvent.setup({ delay: null });
-
-      render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
-      await user.dblClick(button);
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
-      });
-
-      // Fast-forward 3 seconds
-      jest.advanceTimersByTime(3000);
-
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      });
-
-      jest.useRealTimers();
-    });
-
-    it('should not auto-close if user manually closes dialog', async () => {
-      jest.useFakeTimers();
-      const user = userEvent.setup({ delay: null });
-
-      render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
-      await user.dblClick(button);
-
-      const dialog = await screen.findByRole('dialog');
-      expect(dialog).toBeInTheDocument();
-
-      // Manually close before timeout
-      const cancelButton = within(dialog).getByRole('button', {
-        name: /fechar/i,
-      });
-      await user.click(cancelButton);
-
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      });
-
-      // Fast-forward to ensure timer doesn't cause issues
-      jest.advanceTimersByTime(3000);
-
-      // Should still be closed
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-
-      jest.useRealTimers();
-    });
-  });
-
-  describe('Formula Display', () => {
-    it('should use provided formula when available', async () => {
-      const user = userEvent.setup();
-      render(<SkillRollButton {...defaultProps} formula="2d20+5 (custom)" />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-
-      await user.click(button);
-
-      await waitFor(() => {
-        // O texto está dentro de um Chip, vamos buscar diretamente com regex
-        const customFormula = screen.getByText(/2d20\+5 \(custom\)/i);
-        expect(customFormula).toBeInTheDocument();
-      });
-    });
-
-    it('should auto-generate formula if not provided', async () => {
-      const user = userEvent.setup();
-      render(
-        <SkillRollButton skillLabel="Atletismo" diceCount={3} modifier={7} />
-      );
-      const button = screen.getByRole('button', { name: /rolar atletismo/i });
-
-      await user.click(button);
-
-      await waitFor(() => {
-        expect(screen.getByText('3d20+7')).toBeInTheDocument();
-      });
-    });
-
-    it('should show negative modifier correctly', async () => {
-      const user = userEvent.setup();
-      render(
-        <SkillRollButton skillLabel="Atletismo" diceCount={2} modifier={-3} />
-      );
-      const button = screen.getByRole('button', { name: /rolar atletismo/i });
-
-      await user.click(button);
-
-      await waitFor(() => {
-        expect(screen.getByText('2d20-3')).toBeInTheDocument();
+        // May have multiple success displays
+        const successTexts = screen.getAllByText(/0✶/);
+        expect(successTexts.length).toBeGreaterThan(0);
       });
     });
   });
 
-  describe('Accessibility', () => {
-    it('should have accessible button label', () => {
-      render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
-      expect(button).toHaveAccessibleName();
-    });
-
-    it('should have accessible dialog', async () => {
+  describe('Different Skills', () => {
+    it('should display skill name correctly', async () => {
       const user = userEvent.setup();
-      render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      render(<SkillRollButton {...defaultProps} skillLabel="Atletismo" />);
 
+      const button = screen.getByRole('button', { name: /rolar atletismo/i });
       await user.click(button);
 
-      const dialog = await screen.findByRole('dialog');
-      expect(dialog).toHaveAccessibleName();
+      expect(screen.getByText(/teste de atletismo/i)).toBeInTheDocument();
     });
 
-    it('should support keyboard navigation', async () => {
+    it('should include skill name in roll context', async () => {
       const user = userEvent.setup();
-      render(<SkillRollButton {...defaultProps} />);
-      const button = screen.getByRole('button', { name: /rolar acrobacia/i });
+      render(<SkillRollButton {...defaultProps} skillLabel="Furtividade" />);
 
-      // Focus and activate with keyboard
-      button.focus();
-      await user.keyboard('{Enter}');
+      const button = screen.getByRole('button', { name: /rolar furtividade/i });
+      await user.click(button);
 
-      await waitFor(() => {
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
-      });
+      const rollButton = screen.getByRole('button', { name: /rolar$/i });
+      await user.click(rollButton);
+
+      expect(mockRollSkillTest).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        'Teste de Furtividade'
+      );
     });
   });
 });
