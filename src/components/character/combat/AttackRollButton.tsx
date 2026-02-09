@@ -37,7 +37,11 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import StarsIcon from '@mui/icons-material/Stars';
 import HistoryIcon from '@mui/icons-material/History';
-import { rollD20, globalDiceHistory } from '@/utils/diceRoller';
+import {
+  rollD20,
+  globalDiceHistory,
+  legacyRollToHistoryEntry,
+} from '@/utils/diceRoller';
 import { calculateAttackRoll } from '@/utils/attackCalculations';
 import type { DiceRollResult as RollResult } from '@/utils/diceRoller';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
@@ -164,8 +168,8 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
       `Ataque: ${attackName}`
     );
 
-    // Adicionar ao histórico global
-    globalDiceHistory.add(rollResult);
+    // Adicionar ao histórico global (convertendo para formato compatível)
+    globalDiceHistory.add(legacyRollToHistoryEntry(rollResult));
 
     // Determinar se acertou
     const defense = defenseInput ? parseInt(defenseInput, 10) : undefined;
@@ -195,7 +199,7 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
         `Ataque: ${attackName}`
       );
 
-      globalDiceHistory.add(rollResult);
+      globalDiceHistory.add(legacyRollToHistoryEntry(rollResult));
 
       const defense = targetDefense;
       const hit =
@@ -331,7 +335,11 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
             {/* Resultado da rolagem */}
             {result && (
               <Box>
-                <DiceRollResult result={result} showBreakdown animate />
+                <DiceRollResult
+                  result={legacyRollToHistoryEntry(result)}
+                  showBreakdown
+                  animate
+                />
 
                 {/* Indicador de crítico */}
                 {critical && (

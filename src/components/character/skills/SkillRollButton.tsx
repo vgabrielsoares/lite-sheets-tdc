@@ -1,15 +1,17 @@
 /**
- * SkillRollButton - Botão de rolagem integrado com habilidades
+ * SkillRollButton - Botão de rolagem integrado com habilidades (v0.0.2)
  *
- * Permite rolar dados para testes de habilidade com configuração automática
- * baseada nos valores da habilidade (atributo, proficiência, modificadores).
+ * Permite rolar dados para testes de habilidade usando o novo sistema de pool:
+ * - Dados = valor do atributo + modificadores de dado
+ * - Tamanho do dado = grau de proficiência (d6/d8/d10/d12)
+ * - Conta sucessos (✶): resultados ≥ 6
+ * - Resultado = 1 cancela 1 sucesso
  *
  * Funcionalidades:
  * - Rolagem rápida com um clique
  * - Pré-preenchimento automático de valores
- * - Feedback visual de sucesso/falha (se ND fornecido)
+ * - Feedback visual de sucessos/falhas
  * - Integração com histórico global de rolagens
- * - Suporte a vantagem/desvantagem
  */
 
 'use client';
@@ -27,33 +29,32 @@ import {
   Typography,
   Chip,
   Stack,
-  ToggleButtonGroup,
-  ToggleButton,
+  TextField,
   Alert,
 } from '@mui/material';
 import CasinoIcon from '@mui/icons-material/Casino';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import StarIcon from '@mui/icons-material/Star';
 import CancelIcon from '@mui/icons-material/Cancel';
 import HistoryIcon from '@mui/icons-material/History';
-import { rollD20, globalDiceHistory } from '@/utils/diceRoller';
-import type { DiceRollResult as RollResult } from '@/utils/diceRoller';
+import { rollSkillTest, globalDiceHistory } from '@/utils/diceRoller';
+import type { DicePoolResult } from '@/types';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
+import { getSkillDieSize } from '@/constants/skills';
+import type { ProficiencyLevel, DieSize } from '@/types';
 
 export interface SkillRollButtonProps {
   /** Nome da habilidade (para contexto) */
   skillLabel: string;
-  /** Número de dados (baseado no atributo-chave) */
-  diceCount: number;
-  /** Modificador total (proficiência + bônus + outros) */
-  modifier: number;
-  /** Nível de Dificuldade (opcional, para comparação) */
-  nd?: number;
-  /** Fórmula de rolagem (ex: "2d20+5") */
-  formula?: string;
-  /** Se deve usar menor resultado quando diceCount < 1 */
-  takeLowest?: boolean;
+  /** Valor do atributo-chave */
+  attributeValue: number;
+  /** Nível de proficiência (determina o tamanho do dado) */
+  proficiencyLevel: ProficiencyLevel;
+  /** Modificador de dados (+Xd ou -Xd) */
+  diceModifier?: number;
+  /** Número de sucessos necessários (opcional, para feedback visual) */
+  requiredSuccesses?: number;
   /** Callback quando rolar (opcional) */
-  onRoll?: (result: RollResult) => void;
+  onRoll?: (result: DicePoolResult) => void;
   /** Tamanho do botão */
   size?: 'small' | 'medium' | 'large';
   /** Cor do botão */
@@ -72,11 +73,10 @@ export interface SkillRollButtonProps {
  */
 export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
   skillLabel,
-  diceCount,
-  modifier,
-  nd,
-  formula,
-  takeLowest = false,
+  attributeValue,
+  proficiencyLevel,
+  diceModifier = 0,
+  requiredSuccesses,
   onRoll,
   size = 'small',
   color = 'primary',
@@ -84,60 +84,53 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
   tooltipText,
 }) => {
   const [open, setOpen] = useState(false);
-  const [result, setResult] = useState<RollResult | null>(null);
+  const [result, setResult] = useState<DicePoolResult | null>(null);
+  const [tempDiceModifier, setTempDiceModifier] = useState(diceModifier);
 
-  /**
-   * Abre o diálogo de rolagem
-   */
-  const handleOpen = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation(); // Evitar trigger de click na linha
-    setOpen(true);
-    setResult(null); // Limpar resultado anterior
-  }, []);
+  const dieSize = getSkillDieSize(proficiencyLevel);
 
-  /**
-   * Fecha o diálogo
-   */
+  /** Abre o diálogo de rolagem */
+  const handleOpen = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      setOpen(true);
+      setResult(null);
+      setTempDiceModifier(diceModifier);
+    },
+    [diceModifier]
+  );
+
+  /** Fecha o diálogo */
   const handleClose = useCallback(() => {
     setOpen(false);
   }, []);
 
-  /**
-   * Executa a rolagem de dados
-   */
+  /** Executa a rolagem de dados */
   const handleRoll = useCallback(() => {
-    // Usar 'disadvantage' se takeLowest=true, senão 'normal'
-    const rollResult = rollD20(
-      diceCount,
-      modifier,
-      takeLowest ? 'disadvantage' : 'normal',
+    const rollResult = rollSkillTest(
+      attributeValue,
+      dieSize,
+      tempDiceModifier,
       `Teste de ${skillLabel}`
     );
 
-    // Adicionar ao histórico global
     globalDiceHistory.add(rollResult);
-
-    // Atualizar estado
     setResult(rollResult);
 
-    // Callback externo
     if (onRoll) {
       onRoll(rollResult);
     }
-  }, [diceCount, modifier, takeLowest, skillLabel, onRoll]);
+  }, [attributeValue, dieSize, tempDiceModifier, skillLabel, onRoll]);
 
-  /**
-   * Rolagem rápida (sem abrir diálogo)
-   */
+  /** Rolagem rápida (sem abrir diálogo) */
   const handleQuickRoll = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
 
-      // Usar 'disadvantage' se takeLowest=true, senão 'normal'
-      const rollResult = rollD20(
-        diceCount,
-        modifier,
-        takeLowest ? 'disadvantage' : 'normal',
+      const rollResult = rollSkillTest(
+        attributeValue,
+        dieSize,
+        diceModifier,
         `Teste de ${skillLabel}`
       );
 
@@ -147,7 +140,6 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
         onRoll(rollResult);
       }
 
-      // Mostrar resultado brevemente
       setResult(rollResult);
       setOpen(true);
 
@@ -157,22 +149,25 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
         setResult(null);
       }, 3000);
     },
-    [diceCount, modifier, takeLowest, skillLabel, onRoll]
+    [attributeValue, dieSize, diceModifier, skillLabel, onRoll]
   );
 
-  /**
-   * Determina se a rolagem foi bem-sucedida
-   */
-  const isSuccess = result && nd ? result.finalResult >= nd : undefined;
+  /** Determina se a rolagem foi bem-sucedida */
+  const isSuccess =
+    result && requiredSuccesses !== undefined
+      ? result.netSuccesses >= requiredSuccesses
+      : result
+        ? result.netSuccesses > 0
+        : undefined;
 
-  /**
-   * Texto do tooltip
-   */
+  /** Total de dados a serem rolados */
+  const totalDice = attributeValue + tempDiceModifier;
+  const effectiveDice = totalDice <= 0 ? '2 (menor)' : Math.min(totalDice, 8);
+
+  /** Texto do tooltip */
   const tooltip =
     tooltipText ||
-    (formula
-      ? `Rolar ${formula}${nd ? ` (ND ${nd})` : ''}`
-      : `Rolar teste de ${skillLabel}`);
+    `Rolar ${attributeValue}${dieSize}${requiredSuccesses ? ` (precisa ${requiredSuccesses}✶)` : ''}`;
 
   return (
     <>
@@ -204,7 +199,7 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
         onClose={handleClose}
         maxWidth="sm"
         fullWidth
-        onClick={(e) => e.stopPropagation()} // Evitar propagação para linha
+        onClick={(e) => e.stopPropagation()}
       >
         <DialogTitle>
           <Stack
@@ -222,7 +217,6 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Scroll até o FAB e simular clique
                   const fab = document.querySelector(
                     '[aria-label="Abrir histórico de rolagens"]'
                   ) as HTMLElement;
@@ -247,16 +241,28 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                 <Chip
-                  label={`${diceCount}d20${modifier >= 0 ? '+' : ''}${modifier}`}
+                  label={`${effectiveDice}${dieSize}`}
                   size="small"
                   color="primary"
                 />
-                {nd && (
-                  <Chip label={`ND: ${nd}`} size="small" color="warning" />
-                )}
-                {takeLowest && diceCount >= 1 && (
+                <Chip
+                  label={
+                    proficiencyLevel.charAt(0).toUpperCase() +
+                    proficiencyLevel.slice(1)
+                  }
+                  size="small"
+                  variant="outlined"
+                />
+                {requiredSuccesses !== undefined && (
                   <Chip
-                    label="Atributo 0"
+                    label={`Precisa: ${requiredSuccesses}✶`}
+                    size="small"
+                    color="warning"
+                  />
+                )}
+                {totalDice <= 0 && (
+                  <Chip
+                    label="Penalidade"
                     size="small"
                     color="error"
                     variant="outlined"
@@ -265,28 +271,51 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
               </Stack>
             </Box>
 
+            {/* Modificador de dados temporário */}
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Modificador de Dados (bônus/penalidade temporário):
+              </Typography>
+              <TextField
+                type="number"
+                value={tempDiceModifier}
+                onChange={(e) =>
+                  setTempDiceModifier(parseInt(e.target.value) || 0)
+                }
+                inputProps={{ min: -10, max: 10, step: 1 }}
+                size="small"
+                sx={{ width: 100 }}
+                label="+/- dados"
+              />
+            </Box>
+
             {/* Resultado da rolagem */}
             {result && (
               <Box>
-                <DiceRollResult result={result} showBreakdown animate nd={nd} />
+                <DiceRollResult
+                  result={result}
+                  showBreakdown
+                  animate
+                  requiredSuccesses={requiredSuccesses}
+                />
 
-                {/* Feedback de sucesso/falha com ND */}
-                {nd !== undefined && isSuccess !== undefined && (
+                {/* Feedback de sucesso/falha */}
+                {requiredSuccesses !== undefined && isSuccess !== undefined && (
                   <Alert
                     severity={isSuccess ? 'success' : 'error'}
-                    icon={isSuccess ? <CheckCircleIcon /> : <CancelIcon />}
+                    icon={isSuccess ? <StarIcon /> : <CancelIcon />}
                     sx={{ mt: 2 }}
                   >
                     <Typography variant="body2">
                       {isSuccess ? (
                         <>
-                          <strong>Sucesso!</strong> Resultado{' '}
-                          {result.finalResult} ≥ ND {nd}
+                          <strong>Sucesso!</strong> {result.netSuccesses}✶ ≥{' '}
+                          {requiredSuccesses}✶ necessários
                         </>
                       ) : (
                         <>
-                          <strong>Falha.</strong> Resultado {result.finalResult}{' '}
-                          {'<'} ND {nd}
+                          <strong>Falha.</strong> {result.netSuccesses}✶ {'<'}{' '}
+                          {requiredSuccesses}✶ necessários
                         </>
                       )}
                     </Typography>

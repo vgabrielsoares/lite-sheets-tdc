@@ -585,7 +585,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
           }}
         >
           <Tooltip
-            title={`Clique para rolar: ${rollFormula.formula}`}
+            title={`Clique para rolar: ${skill.proficiencyLevel === 'leigo' ? 'd6' : skill.proficiencyLevel === 'adepto' ? 'd8' : skill.proficiencyLevel === 'versado' ? 'd10' : 'd12'}`}
             enterDelay={150}
           >
             <Box
@@ -636,10 +636,9 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
           <Box sx={{ display: 'none' }}>
             <SkillRollButton
               skillLabel={SKILL_LABELS[skill.name]}
-              diceCount={rollFormula.diceCount}
-              modifier={calculation.totalModifier}
-              formula={rollFormula.formula}
-              takeLowest={rollFormula.takeLowest}
+              attributeValue={calculation.attributeValue}
+              proficiencyLevel={skill.proficiencyLevel}
+              diceModifier={extractDiceModifier(skill.modifiers)}
               size="small"
               color="primary"
             />

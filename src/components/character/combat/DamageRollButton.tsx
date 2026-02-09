@@ -37,7 +37,7 @@ import FlashOnIcon from '@mui/icons-material/FlashOn';
 import StarsIcon from '@mui/icons-material/Stars';
 import HistoryIcon from '@mui/icons-material/History';
 import { rollDamageWithCritical, globalDiceHistory } from '@/utils/diceRoller';
-import type { DiceRollResult as RollResult } from '@/utils/diceRoller';
+import type { DamageDiceRollResult } from '@/utils/diceRoller';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
 import type { DiceRoll, DamageType } from '@/types';
 
@@ -53,7 +53,7 @@ export interface DamageRollButtonProps {
   /** Dados extras de crítico verdadeiro */
   criticalDamage?: DiceRoll;
   /** Callback quando rolar (opcional) */
-  onRoll?: (result: RollResult, damageType: DamageType) => void;
+  onRoll?: (result: DamageDiceRollResult, damageType: DamageType) => void;
   /** Tamanho do botão */
   size?: 'small' | 'medium' | 'large';
   /** Cor do botão */
@@ -103,7 +103,7 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
 }) => {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const [result, setResult] = useState<RollResult | null>(null);
+  const [result, setResult] = useState<DamageDiceRollResult | null>(null);
   const [forceCritical, setForceCritical] = useState(isCriticalProp);
   const [forceTrueCritical, setForceTrueCritical] = useState(false);
 
