@@ -3,6 +3,7 @@
  *
  * Exibe o histórico de rolagens da sessão com possibilidade de
  * visualizar detalhes, limpar histórico e filtrar resultados.
+ * Suporta os novos tipos de rolagem: Pool (sucessos) e Dano (soma).
  */
 
 'use client';
@@ -23,12 +24,18 @@ import {
   Collapse,
   useTheme,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
-import { globalDiceHistory } from '@/utils/diceRoller';
-import type { DiceRollResult } from '@/utils/diceRoller';
+import StarIcon from '@mui/icons-material/Star';
+import FlashOnIcon from '@mui/icons-material/FlashOn';
+import {
+  globalDiceHistory,
+  isDicePoolResult,
+  isDamageDiceRollResult,
+  isCustomDiceResult,
+  type HistoryEntry,
+} from '@/utils/diceRoller';
 import { DiceRollResult as DiceRollResultComponent } from './DiceRollResult';
 
 export interface DiceRollHistoryProps {
@@ -49,7 +56,7 @@ export function DiceRollHistory({
   onClear,
 }: DiceRollHistoryProps) {
   const theme = useTheme();
-  const [history, setHistory] = useState<DiceRollResult[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   /**
@@ -99,7 +106,7 @@ export function DiceRollHistory({
   /**
    * Formata timestamp para exibição
    */
-  const formatTimestamp = (timestamp: Date) => {
+  const formatTimestamp = (timestamp: Date): string => {
     return new Date(timestamp).toLocaleTimeString('pt-BR', {
       hour: '2-digit',
       minute: '2-digit',
@@ -110,14 +117,103 @@ export function DiceRollHistory({
   /**
    * Gera resumo compacto da rolagem
    */
-  const getRollSummary = (result: DiceRollResult) => {
-    const parts = [result.formula];
-
-    if (result.context) {
-      parts.push(`(${result.context})`);
+  const getRollSummary = (result: HistoryEntry): string => {
+    if (isDicePoolResult(result)) {
+      const parts = [result.formula];
+      if (result.context) {
+        parts.push(`(${result.context})`);
+      }
+      return parts.join(' ');
     }
 
-    return parts.join(' ');
+    if (isDamageDiceRollResult(result)) {
+      const parts = [result.formula];
+      if (result.context) {
+        parts.push(`(${result.context})`);
+      }
+      return parts.join(' ');
+    }
+
+    if (isCustomDiceResult(result)) {
+      const parts = [result.formula];
+      if (result.context) {
+        parts.push(`(${result.context})`);
+      }
+      return parts.join(' ');
+    }
+
+    return 'Rolagem';
+  };
+
+  /**
+   * Obtém o valor principal do resultado para exibir no chip
+   */
+  const getResultValue = (result: HistoryEntry): string => {
+    if (isDicePoolResult(result)) {
+      return `${result.netSuccesses}✶`;
+    }
+
+    if (isDamageDiceRollResult(result)) {
+      return `${result.finalResult}`;
+    }
+
+    if (isCustomDiceResult(result)) {
+      return `${result.total}`;
+    }
+
+    return '?';
+  };
+
+  /**
+   * Obtém a cor do chip baseado no tipo de resultado
+   */
+  const getResultChipColor = (
+    result: HistoryEntry
+  ): 'success' | 'error' | 'primary' | 'default' => {
+    if (isDicePoolResult(result)) {
+      if (result.netSuccesses === 0) {
+        return 'error';
+      }
+      if (result.netSuccesses >= 3) {
+        return 'success';
+      }
+      return 'primary';
+    }
+
+    if (isDamageDiceRollResult(result)) {
+      // Dano crítico é especial
+      if (result.isCritical) {
+        return 'success';
+      }
+      return 'error';
+    }
+
+    return 'default';
+  };
+
+  /**
+   * Obtém o ícone baseado no tipo de resultado
+   */
+  const getResultIcon = (result: HistoryEntry): React.ReactNode => {
+    if (isDicePoolResult(result)) {
+      return <StarIcon fontSize="small" />;
+    }
+
+    if (isDamageDiceRollResult(result)) {
+      return <FlashOnIcon fontSize="small" />;
+    }
+
+    return null;
+  };
+
+  /**
+   * Verifica se a rolagem foi uma penalidade (2d pegar menor)
+   */
+  const isPenaltyRollCheck = (result: HistoryEntry): boolean => {
+    if (isDicePoolResult(result)) {
+      return result.isPenaltyRoll || false;
+    }
+    return false;
   };
 
   if (history.length === 0) {
@@ -174,6 +270,7 @@ export function DiceRollHistory({
       >
         {history.map((result, index) => {
           const isExpanded = expandedIndex === index;
+          const isPenalty = isPenaltyRollCheck(result);
 
           return (
             <React.Fragment key={index}>
@@ -196,10 +293,10 @@ export function DiceRollHistory({
                 <ListItemButton
                   onClick={() => expandable && handleToggleExpand(index)}
                   sx={{
-                    borderLeft: result.isCritical
+                    borderLeft: isPenalty
                       ? `4px solid ${theme.palette.warning.main}`
-                      : result.isDisaster
-                        ? `4px solid ${theme.palette.error.main}`
+                      : isDamageDiceRollResult(result) && result.isCritical
+                        ? `4px solid ${theme.palette.success.main}`
                         : 'none',
                   }}
                 >
@@ -219,17 +316,20 @@ export function DiceRollHistory({
                           {getRollSummary(result)}
                         </Typography>
                         <Chip
-                          label={result.finalResult}
+                          icon={getResultIcon(result) as React.ReactElement}
+                          label={getResultValue(result)}
                           size="small"
-                          color={
-                            result.isCritical
-                              ? 'warning'
-                              : result.isDisaster
-                                ? 'error'
-                                : 'default'
-                          }
+                          color={getResultChipColor(result)}
                           sx={{ fontWeight: 'bold' }}
                         />
+                        {isPenalty && (
+                          <Chip
+                            label="Penalidade"
+                            size="small"
+                            color="warning"
+                            variant="outlined"
+                          />
+                        )}
                       </Stack>
                     }
                     secondary={
@@ -250,7 +350,7 @@ export function DiceRollHistory({
                     <DiceRollResultComponent
                       result={result}
                       animate={false}
-                      showBreakdown={true}
+                      showBreakdown
                     />
                   </Box>
                 </Collapse>
