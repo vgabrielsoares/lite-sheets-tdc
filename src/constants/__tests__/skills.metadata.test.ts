@@ -7,8 +7,8 @@ import { SKILL_METADATA, COMBAT_SKILLS } from '../skills';
 
 describe('Metadados de Habilidades - Validação contra Regras Básicas', () => {
   describe('Habilidades de Combate', () => {
-    it('deve ter exatamente 10 habilidades de combate', () => {
-      expect(COMBAT_SKILLS).toHaveLength(10);
+    it('deve ter exatamente 11 habilidades de combate', () => {
+      expect(COMBAT_SKILLS).toHaveLength(11);
     });
 
     it('deve marcar Acerto como habilidade de combate', () => {
@@ -51,7 +51,7 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
       expect(SKILL_METADATA.vigor.isCombatSkill).toBe(true);
     });
 
-    it('deve incluir todas as 10 habilidades corretas no array COMBAT_SKILLS', () => {
+    it('deve incluir todas as 11 habilidades corretas no array COMBAT_SKILLS', () => {
       const expectedCombatSkills = [
         'acerto',
         'arcano',
@@ -61,6 +61,7 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
         'natureza',
         'reflexo',
         'religiao',
+        'sintonia',
         'tenacidade',
         'vigor',
       ];
@@ -207,16 +208,16 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
       expect(SKILL_METADATA.determinacao.keyAttribute).toBe('mente');
     });
 
-    it('Luta deve usar Força', () => {
-      expect(SKILL_METADATA.luta.keyAttribute).toBe('forca');
+    it('Luta deve usar Corpo', () => {
+      expect(SKILL_METADATA.luta.keyAttribute).toBe('corpo');
     });
 
-    it('Natureza deve usar Presença', () => {
-      expect(SKILL_METADATA.natureza.keyAttribute).toBe('presenca');
+    it('Natureza deve usar Instinto', () => {
+      expect(SKILL_METADATA.natureza.keyAttribute).toBe('instinto');
     });
 
-    it('Religião deve usar Presença', () => {
-      expect(SKILL_METADATA.religiao.keyAttribute).toBe('presenca');
+    it('Religião deve usar Influência', () => {
+      expect(SKILL_METADATA.religiao.keyAttribute).toBe('influencia');
     });
 
     it('Ofício deve usar Especial', () => {

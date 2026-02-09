@@ -25,7 +25,7 @@ describe('SpellDashboard - Refatorado', () => {
 
   beforeEach(() => {
     mockCharacter = createDefaultCharacter({ name: 'Test Character' });
-    mockCharacter.attributes.presenca = 2;
+    mockCharacter.attributes.essencia = 2;
     mockCharacter.level = 1;
 
     // Configurar combat data
@@ -79,10 +79,10 @@ describe('SpellDashboard - Refatorado', () => {
   });
 
   describe('PP por Rodada', () => {
-    it('deve calcular dinamicamente baseado em nivel + presenca + modificadores', () => {
-      // Configurar personagem: nível 5, presença 2, modificador +1
+    it('deve calcular dinamicamente baseado em nivel + essencia + modificadores', () => {
+      // Configurar personagem: nível 5, essência 2, modificador +1
       mockCharacter.level = 5;
-      mockCharacter.attributes.presenca = 2;
+      mockCharacter.attributes.essencia = 2;
       mockCharacter.combat.ppLimit.modifiers = [
         { name: 'Outros', value: 1, type: 'bonus' as const },
       ];
@@ -93,9 +93,9 @@ describe('SpellDashboard - Refatorado', () => {
     });
 
     it('deve calcular corretamente sem modificadores', () => {
-      // Configurar personagem: nível 3, presença 2, sem modificadores
+      // Configurar personagem: nível 3, essência 2, sem modificadores
       mockCharacter.level = 3;
-      mockCharacter.attributes.presenca = 2;
+      mockCharacter.attributes.essencia = 2;
       mockCharacter.combat.ppLimit.modifiers = [];
       renderComponent();
 
@@ -164,7 +164,7 @@ describe('SpellDashboard - Refatorado', () => {
         {
           id: 'test-1',
           skill: 'arcano',
-          attribute: 'presenca',
+          attribute: 'essencia',
           dcBonus: 0,
           attackBonus: 0,
         },

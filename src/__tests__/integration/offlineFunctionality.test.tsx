@@ -386,7 +386,7 @@ describe('Funcionalidade Offline (Integração)', () => {
               },
               attributes: {
                 ...character.attributes,
-                forca: 5,
+                corpo: 5,
                 agilidade: 4,
               },
             },
@@ -400,7 +400,7 @@ describe('Funcionalidade Offline (Integração)', () => {
         expect(saved?.level).toBe(10);
         expect(saved?.experience.current).toBe(5000);
         expect(saved?.combat.hp.current).toBe(50);
-        expect(saved?.attributes.forca).toBe(5);
+        expect(saved?.attributes.corpo).toBe(5);
       });
     });
   });

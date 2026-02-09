@@ -183,11 +183,11 @@ describe('useCharacterCreation', () => {
 
       // Verificar atributos
       expect(character.attributes.agilidade).toBe(1);
-      expect(character.attributes.constituicao).toBe(1);
-      expect(character.attributes.forca).toBe(1);
+      expect(character.attributes.corpo).toBe(1);
       expect(character.attributes.influencia).toBe(1);
       expect(character.attributes.mente).toBe(1);
-      expect(character.attributes.presenca).toBe(1);
+      expect(character.attributes.essencia).toBe(1);
+      expect(character.attributes.instinto).toBe(1);
 
       // Verificar idiomas (comum - lowercase como definido em LANGUAGE_LIST)
       expect(character.languages).toContain('comum');
@@ -217,7 +217,7 @@ describe('useCharacterCreation', () => {
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith(
-          expect.stringMatching(/^\/characters\/.+$/)
+          expect.stringMatching(/^\/characters\?id=.+$/)
         );
       });
     });

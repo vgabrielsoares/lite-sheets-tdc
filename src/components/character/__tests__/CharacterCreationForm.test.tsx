@@ -175,7 +175,7 @@ describe('CharacterCreationForm', () => {
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith(
-          expect.stringMatching(/^\/characters\/.+$/)
+          expect.stringMatching(/^\/characters\?id=.+$/)
         );
       });
     });

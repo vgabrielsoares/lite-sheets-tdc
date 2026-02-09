@@ -18,11 +18,11 @@ import { SKILL_LIST } from '@/constants';
 // Mock dos dados
 const mockAttributes: Attributes = {
   agilidade: 2,
-  constituicao: 3,
-  forca: 1,
+  corpo: 3,
   influencia: 2,
   mente: 2,
-  presenca: 1,
+  essencia: 1,
+  instinto: 1,
 };
 
 // Criar skills completo com todas as 33 habilidades

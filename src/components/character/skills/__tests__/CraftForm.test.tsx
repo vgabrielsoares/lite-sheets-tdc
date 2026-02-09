@@ -19,11 +19,11 @@ import type { Craft, AttributeName } from '@/types';
 // Mock de atributos para testes
 const mockAttributes: Record<AttributeName, number> = {
   agilidade: 2,
-  constituicao: 3,
-  forca: 1,
+  corpo: 3,
   influencia: 2,
   mente: 4,
-  presenca: 3,
+  essencia: 3,
+  instinto: 1,
 };
 
 // Mock de ofício para edição
@@ -31,7 +31,7 @@ const mockCraft: Craft = {
   id: 'craft-123',
   name: 'Carpintaria',
   level: 3,
-  attributeKey: 'forca',
+  attributeKey: 'corpo',
   diceModifier: 1,
   numericModifier: 2,
   description: 'Trabalho em madeira',

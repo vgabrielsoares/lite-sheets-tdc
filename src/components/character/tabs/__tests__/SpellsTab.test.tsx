@@ -60,11 +60,11 @@ describe('SpellsTab', () => {
       level: 5,
       attributes: {
         agilidade: 2,
-        constituicao: 2,
-        forca: 1,
+        corpo: 2,
         influencia: 3,
         mente: 4,
-        presenca: 5,
+        essencia: 5,
+        instinto: 1,
       },
       combat: {
         ...base.combat,
@@ -87,7 +87,7 @@ describe('SpellsTab', () => {
           {
             id: 'ability-1',
             skill: 'arcano',
-            attribute: 'presenca',
+            attribute: 'essencia',
             dcBonus: 0,
             attackBonus: 0,
           },
@@ -213,8 +213,15 @@ describe('SpellsTab', () => {
     expect(mockOnUpdate).not.toHaveBeenCalled();
   });
 
-  it('should edit an existing spell', async () => {
-    render(<SpellsTab character={mockCharacter} onUpdate={mockOnUpdate} />);
+  it('should call onOpenSpell when clicking a spell card', async () => {
+    const mockOnOpenSpell = jest.fn();
+    render(
+      <SpellsTab
+        character={mockCharacter}
+        onUpdate={mockOnUpdate}
+        onOpenSpell={mockOnOpenSpell}
+      />
+    );
 
     // Expande o acordeão
     const thirdCircleAccordion = screen.getByText('3º Círculo');
@@ -225,26 +232,20 @@ describe('SpellsTab', () => {
       expect(screen.getByText('Bola de Fogo')).toBeInTheDocument();
     });
 
-    // Clica no card do feitiço para abrir a sidebar (clica no título)
+    // Clica no card do feitiço
     const spellTitle = screen.getByText('Bola de Fogo');
     fireEvent.click(spellTitle);
 
-    // Aguarda a sidebar abrir
+    // Verifica que onOpenSpell foi chamado com o feitiço correto
     await waitFor(() => {
-      expect(screen.getByRole('complementary')).toBeInTheDocument();
+      expect(mockOnOpenSpell).toHaveBeenCalledWith(
+        expect.objectContaining({
+          spellId: '1',
+          name: 'Bola de Fogo',
+          circle: 3,
+        })
+      );
     });
-
-    // Edita o nome
-    const nameInput = screen.getByLabelText(/nome do feitiço/i);
-    fireEvent.change(nameInput, { target: { value: 'Bola de Fogo Maior' } });
-
-    // Aguarda o salvamento automático (debounced save)
-    await waitFor(
-      () => {
-        expect(mockOnUpdate).toHaveBeenCalled();
-      },
-      { timeout: 2000 } // Aguarda até 2 segundos para o debounce (1s) + processamento
-    );
   });
 
   it('should delete a spell', async () => {

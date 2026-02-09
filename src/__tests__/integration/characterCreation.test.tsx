@@ -89,7 +89,7 @@ describe('Fluxo de Criação de Personagem (Integração)', () => {
     // Assert - Verificar que foi chamado com URL correta
     const callArgs = mockPush.mock.calls[0][0];
     // Fixed regex to allow 'test-uuid' from jest mock
-    expect(callArgs).toMatch(/^\/characters\/[\w-]+$/);
+    expect(callArgs).toMatch(/^\/characters\?id=[\w-]+$/);
 
     // Assert - Verificar persistência no IndexedDB
     const characters = await db.characters.toArray();
@@ -107,11 +107,11 @@ describe('Fluxo de Criação de Personagem (Integração)', () => {
 
     // Assert - Atributos em 1 (padrão)
     expect(savedCharacter.attributes.agilidade).toBe(1);
-    expect(savedCharacter.attributes.constituicao).toBe(1);
-    expect(savedCharacter.attributes.forca).toBe(1);
+    expect(savedCharacter.attributes.corpo).toBe(1);
     expect(savedCharacter.attributes.influencia).toBe(1);
     expect(savedCharacter.attributes.mente).toBe(1);
-    expect(savedCharacter.attributes.presenca).toBe(1);
+    expect(savedCharacter.attributes.essencia).toBe(1);
+    expect(savedCharacter.attributes.instinto).toBe(1);
 
     // Assert - Idioma Comum presente
     expect(savedCharacter.languages).toContain('comum');

@@ -122,7 +122,7 @@ describe('SensesDisplay', () => {
 
   describe('Perception Calculations', () => {
     it('should show roll formula for perception uses', () => {
-      // Default character has Presença 1, so base calculation is:
+      // Default character has Instinto 1, so base calculation is:
       // Attribute 1 × Leigo 0 = 0 modifier, 1d20+0
       renderWithTheme(<SensesDisplay character={mockCharacter} />);
 
@@ -132,16 +132,16 @@ describe('SensesDisplay', () => {
     });
 
     it('should reflect higher Presença in roll formula', () => {
-      mockCharacter.attributes.presenca = 3;
+      mockCharacter.attributes.instinto = 3;
 
       renderWithTheme(<SensesDisplay character={mockCharacter} />);
 
-      // With Presença 3, should show 3d20 in formula
+      // With Instinto 3, should show 3d20 in formula
       expect(screen.getAllByText(/3d20/).length).toBeGreaterThan(0);
     });
 
     it('should add keen sense bonus to total modifier', () => {
-      mockCharacter.attributes.presenca = 2;
+      mockCharacter.attributes.instinto = 2;
       mockCharacter.skills.percepcao = {
         ...mockCharacter.skills.percepcao,
         proficiencyLevel: 'adepto', // x1 multiplier
@@ -154,7 +154,7 @@ describe('SensesDisplay', () => {
 
       renderWithTheme(<SensesDisplay character={mockCharacter} />);
 
-      // With Presença 2, Adepto (x1), base = 2
+      // With Instinto 2, Adepto (x1), base = 2
       // Plus keen sense +5 for Observar = 2+5 = 7
       // Formula for Observar should show 2d20+7
       expect(screen.getByText('2d20+7')).toBeInTheDocument();
