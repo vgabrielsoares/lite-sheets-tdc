@@ -184,7 +184,7 @@ describe('AttributeSidebar', () => {
       ).toBeInTheDocument();
     });
 
-    it('should show initiative impact for Agilidade attribute', () => {
+    it('should show reflexo impact for Agilidade attribute', () => {
       render(
         <AttributeSidebar
           open={true}
@@ -195,7 +195,8 @@ describe('AttributeSidebar', () => {
         />
       );
 
-      expect(screen.getByText('Iniciativa em Combate')).toBeInTheDocument();
+      // v0.0.2: Iniciativa was removed; Agilidade now shows Reflexo impact
+      expect(screen.getByText('Reflexo')).toBeInTheDocument();
     });
 
     it('should show GA and dying state for Corpo', () => {

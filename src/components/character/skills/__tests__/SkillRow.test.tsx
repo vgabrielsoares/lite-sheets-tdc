@@ -99,9 +99,8 @@ describe('SkillRow', () => {
       />
     );
 
-    // Agilidade 2, Versado (x2) = +4, verificado na fórmula: 2d20+4
-    const formulas = screen.getAllByText(/\+4/);
-    expect(formulas.length).toBeGreaterThan(0);
+    // v0.0.2: Agilidade 2, Versado (d10) = pool 2d10
+    expect(screen.getByText('2d10')).toBeInTheDocument();
   });
 
   it('deve exibir a fórmula de rolagem corretamente', () => {
@@ -115,9 +114,8 @@ describe('SkillRow', () => {
       />
     );
 
-    // Agilidade 2, modificador +4 = 2d20+4
-    const formulas = screen.getAllByText('2d20+4');
-    expect(formulas.length).toBeGreaterThan(0);
+    // v0.0.2: Agilidade 2, Versado (d10) = pool 2d10
+    expect(screen.getByText('2d10')).toBeInTheDocument();
   });
 
   it('deve chamar onClick quando a linha é clicada', () => {
@@ -198,9 +196,8 @@ describe('SkillRow', () => {
       />
     );
 
-    // Corpo 3, Adepto (x1) = 3, + bônus assinatura 5 (não-combate) = +8, fórmula: 3d20+8
-    const formulas = screen.getAllByText(/\+8/);
-    expect(formulas.length).toBeGreaterThan(0);
+    // v0.0.2: Corpo 3, Adepto (d8), + bônus assinatura +1d (level 5) = pool 4d8
+    expect(screen.getByText('4d8')).toBeInTheDocument();
   });
 
   it('deve aplicar penalidade de carga quando sobrecarregado', () => {
@@ -214,9 +211,8 @@ describe('SkillRow', () => {
       />
     );
 
-    // Agilidade 2, Versado (x2) = 4, - penalidade carga 5 = -1, fórmula: 2d20-1
-    const formulas = screen.getAllByText(/2d20-1/);
-    expect(formulas.length).toBeGreaterThan(0);
+    // v0.0.2: Agilidade 2, Versado (d10), overloaded -2d = 0d → penalty roll 2d10 (menor)
+    expect(screen.getByText(/2d10.*menor/i)).toBeInTheDocument();
   });
 
   it('deve destacar visualmente quando atributo foi customizado', () => {

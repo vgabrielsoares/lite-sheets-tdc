@@ -122,29 +122,28 @@ describe('SensesDisplay', () => {
 
   describe('Perception Calculations', () => {
     it('should show roll formula for perception uses', () => {
-      // Default character has Instinto 1, so base calculation is:
-      // Attribute 1 × Leigo 0 = 0 modifier, 1d20+0
+      // Default character has Instinto 1, Leigo in Percepção → 1d6
       renderWithTheme(<SensesDisplay character={mockCharacter} />);
 
-      // Should have formulas displayed
-      const formulas = screen.getAllByText(/\d+d20/);
+      // Should have pool formulas displayed (e.g. 1d6)
+      const formulas = screen.getAllByText(/\d+d6/);
       expect(formulas.length).toBeGreaterThan(0);
     });
 
-    it('should reflect higher Presença in roll formula', () => {
+    it('should reflect higher Instinto in roll formula', () => {
       mockCharacter.attributes.instinto = 3;
 
       renderWithTheme(<SensesDisplay character={mockCharacter} />);
 
-      // With Instinto 3, should show 3d20 in formula
-      expect(screen.getAllByText(/3d20/).length).toBeGreaterThan(0);
+      // With Instinto 3, Leigo (d6) → pool formula 3d6
+      expect(screen.getAllByText(/3d6/).length).toBeGreaterThan(0);
     });
 
-    it('should add keen sense bonus to total modifier', () => {
+    it('should add keen sense bonus to total dice pool', () => {
       mockCharacter.attributes.instinto = 2;
       mockCharacter.skills.percepcao = {
         ...mockCharacter.skills.percepcao,
-        proficiencyLevel: 'adepto', // x1 multiplier
+        proficiencyLevel: 'adepto', // die size d8
       };
       mockCharacter.senses = {
         vision: 'normal',
@@ -154,10 +153,9 @@ describe('SensesDisplay', () => {
 
       renderWithTheme(<SensesDisplay character={mockCharacter} />);
 
-      // With Instinto 2, Adepto (x1), base = 2
-      // Plus keen sense +5 for Observar = 2+5 = 7
-      // Formula for Observar should show 2d20+7
-      expect(screen.getByText('2d20+7')).toBeInTheDocument();
+      // With Instinto 2, Adepto (d8), base pool = 2d8
+      // Plus keen sense +5d for Observar = (2+5)d8 = 7d8
+      expect(screen.getByText('7d8')).toBeInTheDocument();
     });
   });
 
