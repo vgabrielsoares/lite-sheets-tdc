@@ -236,16 +236,16 @@ describe('restCalculations', () => {
       expect(result.error).toBe('Nível deve ser maior que 0');
     });
 
-    it('deve rejeitar constituição negativa', () => {
+    it('deve rejeitar corpo negativo', () => {
       const result = validateRestInputs(1, -1, 3);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('Constituição não pode ser negativa');
+      expect(result.error).toBe('Corpo não pode ser negativo');
     });
 
-    it('deve rejeitar presença negativa', () => {
+    it('deve rejeitar essência negativa', () => {
       const result = validateRestInputs(1, 2, -1);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('Presença não pode ser negativa');
+      expect(result.error).toBe('Essência não pode ser negativa');
     });
 
     it('deve aceitar atributos zero', () => {

@@ -33,8 +33,8 @@ describe('originUtils', () => {
         name: 'Soldado',
         description: 'Um veterano de guerra',
         attributeModifiers: [
-          { attribute: 'forca', value: 1 },
-          { attribute: 'constituicao', value: 1 },
+          { attribute: 'corpo', value: 1 },
+          { attribute: 'agilidade', value: 1 },
           { attribute: 'mente', value: -1 },
         ],
         skillProficiencies: ['acerto', 'atletismo'],
@@ -69,7 +69,7 @@ describe('originUtils', () => {
         name: 'Teste',
         description: '',
         attributeModifiers: [
-          { attribute: 'forca', value: 1 },
+          { attribute: 'corpo', value: 1 },
           { attribute: 'agilidade', value: 1 },
           { attribute: 'mente', value: -1 },
         ],
@@ -112,7 +112,7 @@ describe('originUtils', () => {
       const origin: Origin = {
         name: 'Soldado',
         description: 'Descrição',
-        attributeModifiers: [{ attribute: 'forca', value: 1 }],
+        attributeModifiers: [{ attribute: 'corpo', value: 1 }],
         skillProficiencies: ['acerto'],
       };
 
@@ -137,7 +137,7 @@ describe('originUtils', () => {
         name: 'Teste',
         description: '',
         attributeModifiers: [
-          { attribute: 'forca', value: 2 },
+          { attribute: 'corpo', value: 2 },
           { attribute: 'agilidade', value: 1 },
         ],
         skillProficiencies: ['historia'],
@@ -145,7 +145,7 @@ describe('originUtils', () => {
 
       const summary = getAttributeModifiersSummary(origin);
 
-      expect(summary).toContain('+2 FOR');
+      expect(summary).toContain('+2 COR');
       expect(summary).toContain('+1 AGI');
     });
 
@@ -153,13 +153,13 @@ describe('originUtils', () => {
       const origin: Origin = {
         name: 'Teste',
         description: '',
-        attributeModifiers: [{ attribute: 'forca', value: -1 }],
+        attributeModifiers: [{ attribute: 'corpo', value: -1 }],
         skillProficiencies: [],
       };
 
       const summary = getAttributeModifiersSummary(origin);
 
-      expect(summary).toContain('-1 FOR');
+      expect(summary).toContain('-1 COR');
     });
 
     it('deve retornar mensagem padrão sem modificadores', () => {
@@ -180,18 +180,18 @@ describe('originUtils', () => {
     it('deve aplicar modificadores corretamente', () => {
       const baseAttributes = {
         agilidade: 2,
-        constituicao: 2,
-        forca: 2,
+        corpo: 2,
         influencia: 2,
         mente: 2,
-        presenca: 2,
+        essencia: 2,
+        instinto: 1,
       };
 
       const origin: Origin = {
         name: 'Teste',
         description: '',
         attributeModifiers: [
-          { attribute: 'forca', value: 1 },
+          { attribute: 'corpo', value: 1 },
           { attribute: 'mente', value: -1 },
         ],
         skillProficiencies: [],
@@ -199,7 +199,7 @@ describe('originUtils', () => {
 
       const modified = applyOriginAttributeModifiers(baseAttributes, origin);
 
-      expect(modified.forca).toBe(3); // 2 + 1
+      expect(modified.corpo).toBe(3); // 2 + 1
       expect(modified.mente).toBe(1); // 2 - 1
       expect(modified.agilidade).toBe(2); // Inalterado
     });
@@ -207,49 +207,49 @@ describe('originUtils', () => {
     it('deve preservar atributos não modificados', () => {
       const baseAttributes = {
         agilidade: 3,
-        constituicao: 3,
-        forca: 3,
+        corpo: 3,
         influencia: 3,
         mente: 3,
-        presenca: 3,
+        essencia: 3,
+        instinto: 1,
       };
 
       const origin: Origin = {
         name: 'Teste',
         description: '',
-        attributeModifiers: [{ attribute: 'forca', value: 1 }],
+        attributeModifiers: [{ attribute: 'corpo', value: 1 }],
         skillProficiencies: [],
       };
 
       const modified = applyOriginAttributeModifiers(baseAttributes, origin);
 
       expect(modified.agilidade).toBe(3);
-      expect(modified.constituicao).toBe(3);
       expect(modified.influencia).toBe(3);
       expect(modified.mente).toBe(3);
-      expect(modified.presenca).toBe(3);
+      expect(modified.essencia).toBe(3);
+      expect(modified.instinto).toBe(1);
     });
 
     it('deve lidar com atributo base zero', () => {
       const baseAttributes = {
         agilidade: 0,
-        constituicao: 0,
-        forca: 0,
+        corpo: 0,
         influencia: 0,
         mente: 0,
-        presenca: 0,
+        essencia: 0,
+        instinto: 1,
       };
 
       const origin: Origin = {
         name: 'Teste',
         description: '',
-        attributeModifiers: [{ attribute: 'forca', value: 2 }],
+        attributeModifiers: [{ attribute: 'corpo', value: 2 }],
         skillProficiencies: [],
       };
 
       const modified = applyOriginAttributeModifiers(baseAttributes, origin);
 
-      expect(modified.forca).toBe(2); // 0 + 2
+      expect(modified.corpo).toBe(2); // 0 + 2
     });
   });
 
@@ -277,26 +277,26 @@ describe('originUtils', () => {
     it('deve lidar com múltiplos modificadores no mesmo atributo', () => {
       const baseAttributes = {
         agilidade: 2,
-        constituicao: 2,
-        forca: 2,
+        corpo: 2,
         influencia: 2,
         mente: 2,
-        presenca: 2,
+        essencia: 2,
+        instinto: 1,
       };
 
       const origin: Origin = {
         name: 'Teste',
         description: '',
         attributeModifiers: [
-          { attribute: 'forca', value: 1 },
-          { attribute: 'forca', value: 1 }, // Aplicado duas vezes
+          { attribute: 'corpo', value: 1 },
+          { attribute: 'corpo', value: 1 }, // Aplicado duas vezes
         ],
         skillProficiencies: [],
       };
 
       const modified = applyOriginAttributeModifiers(baseAttributes, origin);
 
-      expect(modified.forca).toBe(4); // 2 + 1 + 1
+      expect(modified.corpo).toBe(4); // 2 + 1 + 1
     });
 
     it('resumo deve lidar com todos os atributos', () => {
@@ -305,11 +305,11 @@ describe('originUtils', () => {
         description: '',
         attributeModifiers: [
           { attribute: 'agilidade', value: 1 },
-          { attribute: 'constituicao', value: 1 },
-          { attribute: 'forca', value: 1 },
+          { attribute: 'corpo', value: 1 },
+          { attribute: 'instinto', value: 1 },
           { attribute: 'influencia', value: -1 },
           { attribute: 'mente', value: -1 },
-          { attribute: 'presenca', value: -1 },
+          { attribute: 'essencia', value: -1 },
         ],
         skillProficiencies: [],
       };
@@ -317,11 +317,11 @@ describe('originUtils', () => {
       const summary = getAttributeModifiersSummary(origin);
 
       expect(summary).toContain('AGI');
-      expect(summary).toContain('CON');
-      expect(summary).toContain('FOR');
+      expect(summary).toContain('COR');
+      expect(summary).toContain('INS');
       expect(summary).toContain('INF');
       expect(summary).toContain('MEN');
-      expect(summary).toContain('PRE');
+      expect(summary).toContain('ESS');
     });
   });
 });

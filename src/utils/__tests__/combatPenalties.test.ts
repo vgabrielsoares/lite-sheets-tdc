@@ -43,6 +43,7 @@ describe('combatPenalties', () => {
       expect(penalties.defensePenalty).toBe(0);
       expect(penalties.savingThrowPenalties.determinacao).toBe(0);
       expect(penalties.savingThrowPenalties.reflexo).toBe(0);
+      expect(penalties.savingThrowPenalties.sintonia).toBe(0);
       expect(penalties.savingThrowPenalties.tenacidade).toBe(0);
       expect(penalties.savingThrowPenalties.vigor).toBe(0);
     });
@@ -116,6 +117,7 @@ describe('combatPenalties', () => {
     const savingThrowTypes: SavingThrowType[] = [
       'determinacao',
       'reflexo',
+      'sintonia',
       'tenacidade',
       'vigor',
     ];
@@ -159,6 +161,7 @@ describe('combatPenalties', () => {
       expect(updated.defensePenalty).toBe(0);
       expect(updated.savingThrowPenalties.determinacao).toBe(0);
       expect(updated.savingThrowPenalties.reflexo).toBe(0);
+      expect(updated.savingThrowPenalties.sintonia).toBe(0);
       expect(updated.savingThrowPenalties.tenacidade).toBe(0);
       expect(updated.savingThrowPenalties.vigor).toBe(0);
     });
@@ -194,6 +197,7 @@ describe('combatPenalties', () => {
         savingThrowPenalties: {
           determinacao: 0,
           reflexo: 0,
+          sintonia: 0,
           tenacidade: 0,
           vigor: 0,
         },
@@ -207,6 +211,7 @@ describe('combatPenalties', () => {
         savingThrowPenalties: {
           determinacao: 0,
           reflexo: -1,
+          sintonia: 0,
           tenacidade: 0,
           vigor: 0,
         },
@@ -219,6 +224,7 @@ describe('combatPenalties', () => {
     it('deve ter labels para todos os tipos de resistência', () => {
       expect(SAVING_THROW_LABELS.determinacao).toBe('Determinação');
       expect(SAVING_THROW_LABELS.reflexo).toBe('Reflexo');
+      expect(SAVING_THROW_LABELS.sintonia).toBe('Sintonia');
       expect(SAVING_THROW_LABELS.tenacidade).toBe('Tenacidade');
       expect(SAVING_THROW_LABELS.vigor).toBe('Vigor');
     });
@@ -226,6 +232,7 @@ describe('combatPenalties', () => {
     it('deve ter cores para todos os tipos de resistência', () => {
       expect(SAVING_THROW_COLORS.determinacao).toBeDefined();
       expect(SAVING_THROW_COLORS.reflexo).toBeDefined();
+      expect(SAVING_THROW_COLORS.sintonia).toBeDefined();
       expect(SAVING_THROW_COLORS.tenacidade).toBeDefined();
       expect(SAVING_THROW_COLORS.vigor).toBeDefined();
     });

@@ -77,11 +77,11 @@ describe('isValidLevel1AttributeValue', () => {
 describe('isValidAttributeName', () => {
   it('should accept valid attribute names', () => {
     expect(isValidAttributeName('agilidade')).toBe(true);
-    expect(isValidAttributeName('constituicao')).toBe(true);
-    expect(isValidAttributeName('forca')).toBe(true);
+    expect(isValidAttributeName('corpo')).toBe(true);
     expect(isValidAttributeName('influencia')).toBe(true);
     expect(isValidAttributeName('mente')).toBe(true);
-    expect(isValidAttributeName('presenca')).toBe(true);
+    expect(isValidAttributeName('essencia')).toBe(true);
+    expect(isValidAttributeName('instinto')).toBe(true);
   });
 
   it('should reject invalid attribute names', () => {

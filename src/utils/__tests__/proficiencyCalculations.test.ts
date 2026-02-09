@@ -179,6 +179,11 @@ const createMockSkills = (
       name: 'sorte' as const,
       proficiencyLevel: 'leigo' as const,
     },
+    sintonia: {
+      ...defaultSkill,
+      name: 'sintonia' as const,
+      proficiencyLevel: 'leigo' as const,
+    },
     tenacidade: {
       ...defaultSkill,
       name: 'tenacidade' as const,
@@ -421,7 +426,7 @@ describe('proficiencyCalculations', () => {
       });
       const counts = countProficienciesByLevel(skills);
 
-      expect(counts.leigo).toBe(29); // 33 - 4
+      expect(counts.leigo).toBe(30); // 34 - 4
       expect(counts.adepto).toBe(2);
       expect(counts.versado).toBe(1);
       expect(counts.mestre).toBe(1);
@@ -431,7 +436,7 @@ describe('proficiencyCalculations', () => {
       const skills = createMockSkills({});
       const counts = countProficienciesByLevel(skills);
 
-      expect(counts.leigo).toBe(33);
+      expect(counts.leigo).toBe(34);
       expect(counts.adepto).toBe(0);
       expect(counts.versado).toBe(0);
       expect(counts.mestre).toBe(0);

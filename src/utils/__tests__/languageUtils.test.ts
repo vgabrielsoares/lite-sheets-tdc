@@ -107,7 +107,7 @@ describe('languageUtils', () => {
         ancestryTraits: [],
       };
 
-      expect(getMaxAllowedLanguages(character)).toBe(3); // 2 de Mente + 1 de linhagem
+      expect(getMaxAllowedLanguages(character)).toBe(2); // Mente-based limit only, lineage is bonus
     });
   });
 
@@ -347,7 +347,7 @@ describe('languageUtils', () => {
       const summary = getLanguageSummary(character);
 
       expect(summary.fromLineage).toBe(2);
-      expect(summary.maxAllowed).toBe(4); // 2 de Mente + 2 de linhagem
+      expect(summary.maxAllowed).toBe(2); // Mente-based limit only, lineage is bonus
     });
 
     it('deve calcular restantes corretamente', () => {
