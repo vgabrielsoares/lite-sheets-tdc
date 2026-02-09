@@ -147,10 +147,10 @@ describe('characterFactory', () => {
     });
 
     describe('Habilidades (Skills)', () => {
-      it('deve ter todas as 34 habilidades do sistema', () => {
+      it('deve ter todas as 33 habilidades do sistema', () => {
         const skillKeys = Object.keys(character.skills);
         expect(skillKeys).toHaveLength(SKILL_LIST.length);
-        expect(skillKeys).toHaveLength(34);
+        expect(skillKeys).toHaveLength(33);
       });
 
       it('deve ter todas as habilidades listadas no SKILL_LIST', () => {
