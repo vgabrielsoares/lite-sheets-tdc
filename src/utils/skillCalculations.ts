@@ -2,17 +2,20 @@
  * Skill Calculations - Funções para cálculos relacionados a habilidades
  *
  * Este arquivo implementa todos os cálculos necessários para o sistema de habilidades
- * do Tabuleiro do Caos RPG, incluindo:
- * - Modificador total de habilidade
- * - Fórmula de rolagem
- * - Penalidade de carga
- * - Bônus de Habilidade de Assinatura
+ * do Tabuleiro do Caos RPG (v0.0.2), incluindo:
+ * - Pool de dados (quantidade de dados + tamanho do dado)
+ * - Fórmula de rolagem (ex: "3d8", "2d6 (menor)")
+ * - Penalidade de carga (-Xd em habilidades com propriedade Carga)
+ * - Bônus de Habilidade de Assinatura (+Xd)
  *
- * Regras:
- * - Sempre arredondar para BAIXO
- * - Atributo 0: rola 2d20 e escolhe o MENOR resultado
- * - Fórmula: Atributo × Proficiência + Modificadores
- * - Carga: -5 quando Sobrecarregado (apenas habilidades com propriedade Carga)
+ * Regras (v0.0.2):
+ * - Proficiência determina o tamanho do dado: Leigo=d6, Adepto=d8, Versado=d10, Mestre=d12
+ * - Atributo determina a quantidade base de dados na pool
+ * - Todos os modificadores são em dados (+Xd / -Xd)
+ * - Sem modificadores numéricos em testes de habilidade
+ * - Resultado ≥ 6 = sucesso (✶), resultado = 1 cancela 1 sucesso
+ * - Máximo 8 dados por teste
+ * - Quando pool ≤ 0: rola 2d e usa o menor
  */
 
 import type {
@@ -20,22 +23,160 @@ import type {
   ProficiencyLevel,
   AttributeName,
   Attributes,
-  SkillModifierCalculation,
-  SkillRollFormula,
+  SkillPoolCalculation,
+  SkillPoolFormula,
+  DieSize,
   Modifier,
+  ArmorType,
+  InventoryItem,
 } from '@/types';
 import {
   SKILL_METADATA,
-  SKILL_PROFICIENCY_LEVELS,
-  CARGA_PENALTY_VALUE,
-  COMBAT_SKILLS,
+  getSkillDieSize,
+  OVERLOAD_DICE_PENALTY,
+  MEDIUM_ARMOR_DICE_PENALTY,
+  HEAVY_ARMOR_DICE_PENALTY,
+  PROFICIENCY_DICE_PENALTY,
+  INSTRUMENT_DICE_PENALTY,
 } from '@/constants';
 import { calculateSignatureAbilityBonus } from './calculations';
+import { MAX_SKILL_DICE } from './diceRoller';
 
 /**
- * Calcula o modificador total de uma habilidade
+ * Contexto de penalidades do personagem para cálculo de habilidades
  *
- * Fórmula: (Atributo × Multiplicador de Proficiência) + Bônus de Assinatura + Outros Modificadores
+ * Agrupa todas as informações necessárias para calcular penalidades,
+ * evitando múltiplos parâmetros booleanos na assinatura das funções.
+ */
+export interface SkillPenaltyContext {
+  /** Se o personagem está sobrecarregado (excedeu limite de espaço) */
+  isOverloaded: boolean;
+  /** Tipo de armadura equipada, ou null se sem armadura / armadura leve */
+  equippedArmorType: ArmorType | null;
+  /** Se o personagem possui o instrumento necessário para a habilidade */
+  hasRequiredInstrument: boolean;
+}
+
+/** Contexto padrão sem penalidades */
+const DEFAULT_PENALTY_CONTEXT: SkillPenaltyContext = {
+  isOverloaded: false,
+  equippedArmorType: null,
+  hasRequiredInstrument: true,
+};
+
+/**
+ * Calcula a penalidade de carga por armadura em dados
+ *
+ * @param armorType - Tipo de armadura equipada
+ * @returns Penalidade em dados (0, -1 ou -2)
+ */
+function getArmorDicePenalty(armorType: ArmorType | null): number {
+  if (!armorType) return 0;
+  switch (armorType) {
+    case 'media':
+      return MEDIUM_ARMOR_DICE_PENALTY;
+    case 'pesada':
+      return HEAVY_ARMOR_DICE_PENALTY;
+    case 'leve':
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Calcula todas as penalidades de dados aplicáveis a uma habilidade (v0.0.2)
+ *
+ * Penalidades:
+ * - Carga (sobrepeso): -2d se sobrecarregado E habilidade tem propriedade Carga
+ * - Armadura: -1d (média) ou -2d (pesada) se habilidade tem propriedade Carga
+ * - Proficiência: -2d se Leigo E habilidade requer proficiência
+ * - Instrumento: -2d se habilidade requer instrumento E personagem não possui
+ * Penalidades de carga e armadura são cumulativas entre si.
+ * Penalidade de proficiência é cumulativa com instrumento.
+ *
+ * @param skillName - Nome da habilidade
+ * @param proficiencyLevel - Nível de proficiência do personagem
+ * @param context - Contexto de penalidades (sobrecarga, armadura, instrumento)
+ * @returns Objeto com cada penalidade detalhada
+ */
+export function calculateSkillPenalties(
+  skillName: SkillName,
+  proficiencyLevel: ProficiencyLevel,
+  context: Partial<SkillPenaltyContext> = {}
+): {
+  loadDicePenalty: number;
+  armorDicePenalty: number;
+  proficiencyDicePenalty: number;
+  instrumentDicePenalty: number;
+  totalPenalty: number;
+} {
+  const ctx = { ...DEFAULT_PENALTY_CONTEXT, ...context };
+  const metadata = SKILL_METADATA[skillName];
+
+  // 1. Penalidade de carga por sobrepeso (-2d)
+  const loadDicePenalty =
+    ctx.isOverloaded && metadata.hasCargaPenalty ? OVERLOAD_DICE_PENALTY : 0;
+
+  // 2. Penalidade de armadura (-1d média, -2d pesada) — só em habilidades com Carga
+  const armorDicePenalty = metadata.hasCargaPenalty
+    ? getArmorDicePenalty(ctx.equippedArmorType)
+    : 0;
+
+  // 3. Penalidade de proficiência (-2d se Leigo em habilidade que requer proficiência)
+  const proficiencyDicePenalty =
+    metadata.requiresProficiency && proficiencyLevel === 'leigo'
+      ? PROFICIENCY_DICE_PENALTY
+      : 0;
+
+  // 4. Penalidade de instrumento (-2d se falta instrumento necessário)
+  const instrumentDicePenalty =
+    metadata.requiresInstrument && !ctx.hasRequiredInstrument
+      ? INSTRUMENT_DICE_PENALTY
+      : 0;
+
+  return {
+    loadDicePenalty,
+    armorDicePenalty,
+    proficiencyDicePenalty,
+    instrumentDicePenalty,
+    totalPenalty:
+      loadDicePenalty +
+      armorDicePenalty +
+      proficiencyDicePenalty +
+      instrumentDicePenalty,
+  };
+}
+
+/**
+ * Gera a string de fórmula de uma pool de dados
+ *
+ * @param diceCount - Quantidade de dados a rolar
+ * @param dieSize - Tamanho do dado
+ * @param isPenaltyRoll - Se é rolagem de penalidade (2d, menor)
+ * @returns String formatada (ex: "3d8", "2d6 (menor)")
+ */
+function formatPoolFormula(
+  diceCount: number,
+  dieSize: DieSize,
+  isPenaltyRoll: boolean
+): string {
+  if (isPenaltyRoll) {
+    return `2${dieSize} (menor)`;
+  }
+  return `${diceCount}${dieSize}`;
+}
+
+/**
+ * Calcula a pool de dados de uma habilidade (sistema v0.0.2)
+ *
+ * No sistema de pool:
+ * - Atributo determina a quantidade base de dados
+ * - Proficiência determina o tamanho do dado (d6/d8/d10/d12)
+ * - Assinatura adiciona +Xd dados extras
+ * - Penalidades de carga, armadura, proficiência e instrumento (-Xd)
+ * - Outros modificadores são sempre +Xd / -Xd
+ * - Máximo 8 dados por teste
+ * - Se total ≤ 0: rola 2d e usa o menor
  *
  * @param skillName - Nome da habilidade
  * @param keyAttribute - Atributo-chave atual (pode ser customizado)
@@ -44,17 +185,18 @@ import { calculateSignatureAbilityBonus } from './calculations';
  * @param isSignature - Se é a Habilidade de Assinatura do personagem
  * @param characterLevel - Nível do personagem (para cálculo de bônus de assinatura)
  * @param otherModifiers - Array de modificadores adicionais (default: [])
- * @param isOverloaded - Se o personagem está Sobrecarregado (default: false)
- * @returns Objeto com detalhamento completo do cálculo
+ * @param penaltyContext - Contexto de penalidades (sobrecarga, armadura, instrumento)
+ * @returns Objeto com detalhamento completo do cálculo da pool
  *
  * @example
- * // Acrobacia (Agilidade 2, Versado, sem ser assinatura, nível 1, sem sobrecarga)
- * calculateSkillTotalModifier('acrobacia', 'agilidade', 2, 'versado', false, 1, [], false);
- * // { attributeValue: 2, proficiencyMultiplier: 2, baseModifier: 4, signatureBonus: 0, otherModifiers: 0, totalModifier: 4 }
+ * // Acrobacia (Agilidade 3, Versado, sem penalidades)
+ * calculateSkillTotalModifier('acrobacia', 'agilidade', 3, 'versado', false, 1);
+ * // { attributeValue: 3, dieSize: 'd10', signatureDiceBonus: 0, ... totalDice: 3 }
  *
- * // Atletismo (Corpo 3, Adepto, assinatura, nível 5, sobrecarregado)
- * calculateSkillTotalModifier('atletismo', 'corpo', 3, 'adepto', true, 5, [], true);
- * // { attributeValue: 3, proficiencyMultiplier: 1, baseModifier: 3, signatureBonus: 5, otherModifiers: -5, totalModifier: 3 }
+ * // Atletismo (Corpo 2, Adepto, assinatura nível 3, sobrecarregado + armadura pesada)
+ * calculateSkillTotalModifier('atletismo', 'corpo', 2, 'adepto', true, 3, [],
+ *   { isOverloaded: true, equippedArmorType: 'pesada' });
+ * // { attributeValue: 2, loadDicePenalty: -2, armorDicePenalty: -2, signatureDiceBonus: 1, totalDice: -1 }
  */
 export function calculateSkillTotalModifier(
   skillName: SkillName,
@@ -64,133 +206,107 @@ export function calculateSkillTotalModifier(
   isSignature: boolean,
   characterLevel: number,
   otherModifiers: Modifier[] = [],
-  isOverloaded: boolean = false
-): SkillModifierCalculation {
-  // 1. Modificador base: Atributo × Proficiência
-  const proficiencyMultiplier = SKILL_PROFICIENCY_LEVELS[proficiencyLevel];
-  const baseModifier = attributeValue * proficiencyMultiplier;
+  penaltyContext: Partial<SkillPenaltyContext> | boolean = {}
+): SkillPoolCalculation {
+  // Compatibilidade: se recebeu boolean (antigo isOverloaded), converter para contexto
+  const ctx: Partial<SkillPenaltyContext> =
+    typeof penaltyContext === 'boolean'
+      ? { isOverloaded: penaltyContext }
+      : penaltyContext;
 
-  // 2. Bônus de Habilidade de Assinatura
-  let signatureBonus = 0;
+  // 1. Tamanho do dado determinado pelo grau de proficiência
+  const dieSize = getSkillDieSize(proficiencyLevel);
+
+  // 2. Bônus de Habilidade de Assinatura (+Xd) — v0.0.2: sem distinção combate/não-combate
+  let signatureDiceBonus = 0;
   if (isSignature) {
-    const isCombatSkill = COMBAT_SKILLS.includes(skillName);
-    signatureBonus = calculateSignatureAbilityBonus(
-      characterLevel,
-      isCombatSkill
-    );
+    signatureDiceBonus = calculateSignatureAbilityBonus(characterLevel);
   }
 
-  // 3. Outros modificadores (somar todos os valores)
-  let otherModifiersTotal = otherModifiers.reduce(
-    (sum, mod) => sum + (mod.value || 0),
-    0
-  );
-
-  // 4. Penalidade de Carga (-5 se Sobrecarregado E habilidade tem propriedade Carga)
-  const metadata = SKILL_METADATA[skillName];
-  if (isOverloaded && metadata.hasCargaPenalty) {
-    otherModifiersTotal += CARGA_PENALTY_VALUE;
-  }
-
-  // 5. Modificador Total
-  const totalModifier = baseModifier + signatureBonus + otherModifiersTotal;
-
-  return {
-    attributeValue,
-    proficiencyMultiplier,
-    baseModifier,
-    signatureBonus,
-    otherModifiers: otherModifiersTotal,
-    totalModifier,
-  };
-}
-
-/**
- * Calcula a fórmula de rolagem de uma habilidade
- *
- * Regras:
- * - Quantidade de d20 = Valor do atributo
- * - Atributo 0: Rola 2d20 e escolhe o MENOR resultado (desvantagem)
- * - Atributo ≥ 1: Rola Xd20 e escolhe o MAIOR resultado (vantagem natural)
- * - Modificadores de dados podem alterar a quantidade de dados (+/- d20)
- *
- * @param attributeValue - Valor do atributo-chave
- * @param totalModifier - Modificador total calculado
- * @param diceModifiers - Modificadores que alteram quantidade de dados (ex: +1d20, -2d20)
- * @returns Objeto com fórmula de rolagem completa
- *
- * @example
- * // Atributo 2, modificador +4, sem modificadores de dados
- * calculateSkillRollFormula(2, 4, []);
- * // { diceCount: 2, takeLowest: false, modifier: 4, formula: '2d20+4' }
- *
- * // Atributo 0, modificador +2 (desvantagem)
- * calculateSkillRollFormula(0, 2, []);
- * // { diceCount: 2, takeLowest: true, modifier: 2, formula: '2d20 (menor)+2' }
- *
- * // Atributo 3, modificador -1, com +1d20
- * calculateSkillRollFormula(3, -1, [{ type: 'dice', value: 1 }]);
- * // { diceCount: 4, takeLowest: false, modifier: -1, formula: '4d20-1' }
- *
- * // Atributo 2, modificador +5, com -3d20 (desvantagem)
- * calculateSkillRollFormula(2, 5, [{ type: 'dice', value: -3 }]);
- * // { diceCount: 5, takeLowest: true, modifier: 5, formula: '5d20 (menor)+5' }
- */
-export function calculateSkillRollFormula(
-  attributeValue: number,
-  totalModifier: number,
-  diceModifiers: Modifier[] = []
-): SkillRollFormula {
-  // 1. Aplicar modificadores de dados ao atributo
-  const diceModifierTotal = diceModifiers
+  // 3. Outros modificadores de dados (+Xd / -Xd)
+  const otherDiceModifiers = otherModifiers
     .filter((mod) => mod.affectsDice === true)
     .reduce((sum, mod) => sum + (mod.value || 0), 0);
 
-  // 2. Calcular quantidade de dados "real" (atributo + modificadores)
-  const realDiceCount = attributeValue + diceModifierTotal;
+  // 4. Calcular todas as penalidades usando função centralizada
+  const penalties = calculateSkillPenalties(skillName, proficiencyLevel, ctx);
 
-  // 3. Determinar quantidade final e se pega o menor
-  let finalDiceCount: number;
-  let takeLowest: boolean;
+  // 5. Total de modificadores de dados
+  const totalDiceModifier =
+    signatureDiceBonus + otherDiceModifiers + penalties.totalPenalty;
 
-  if (realDiceCount < 1) {
-    // Quando resultado real é < 1:
-    // 0 → 2d20 vermelho, -1 → 3d20 vermelho, -2 → 4d20 vermelho
-    finalDiceCount = 2 - realDiceCount; // 0→2, -1→3, -2→4
-    takeLowest = true;
-  } else {
-    // Resultado real >= 1: rolagem normal
-    finalDiceCount = realDiceCount;
-    takeLowest = false;
-  }
+  // 6. Total de dados na pool
+  const totalDice = attributeValue + totalDiceModifier;
 
-  // 4. Gerar string da fórmula com prefixo "-" quando takeLowest
-  let formula = '';
-
-  // Adicionar prefixo "-" para rolagens que pegam o menor resultado
-  if (takeLowest) {
-    formula = '-';
-  }
-
-  formula += `${finalDiceCount}d20`;
-
-  // Adicionar modificador
-  if (totalModifier > 0) {
-    formula += `+${totalModifier}`;
-  } else if (totalModifier < 0) {
-    formula += `${totalModifier}`; // já tem o sinal negativo
-  }
+  // 7. Penalidade extrema: se total ≤ 0, rola 2d e usa o menor
+  const isPenaltyRoll = totalDice <= 0;
 
   return {
-    diceCount: finalDiceCount,
-    takeLowest,
-    modifier: totalModifier,
-    formula,
+    attributeValue,
+    proficiencyLevel,
+    dieSize,
+    signatureDiceBonus,
+    otherDiceModifiers,
+    loadDicePenalty: penalties.loadDicePenalty,
+    armorDicePenalty: penalties.armorDicePenalty,
+    proficiencyDicePenalty: penalties.proficiencyDicePenalty,
+    instrumentDicePenalty: penalties.instrumentDicePenalty,
+    totalDiceModifier,
+    totalDice,
+    isPenaltyRoll,
   };
 }
 
 /**
- * Calcula modificador e rolagem completos de uma habilidade
+ * Calcula a fórmula de rolagem de pool de dados de uma habilidade (sistema v0.0.2)
+ *
+ * Regras:
+ * - Quantidade de dados = valor do atributo + modificadores de dados
+ * - Tamanho do dado determinado pelo grau de proficiência
+ * - Se total ≤ 0: rola 2d e usa o menor (penalidade extrema)
+ * - Máximo de 8 dados por teste
+ *
+ * @param totalDice - Total de dados calculado (attributeValue + modifiers)
+ * @param dieSize - Tamanho do dado (determinado pelo grau)
+ * @returns Objeto com fórmula de rolagem completa
+ *
+ * @example
+ * calculateSkillRollFormula(3, 'd8');
+ * // { diceCount: 3, dieSize: 'd8', isPenaltyRoll: false, formula: '3d8' }
+ *
+ * calculateSkillRollFormula(0, 'd6');
+ * // { diceCount: 2, dieSize: 'd6', isPenaltyRoll: true, formula: '2d6 (menor)' }
+ *
+ * calculateSkillRollFormula(-1, 'd10');
+ * // { diceCount: 2, dieSize: 'd10', isPenaltyRoll: true, formula: '2d10 (menor)' }
+ */
+export function calculateSkillRollFormula(
+  totalDice: number,
+  dieSize: DieSize
+): SkillPoolFormula {
+  // Penalidade extrema: se total ≤ 0, rola 2d e usa o menor
+  if (totalDice <= 0) {
+    return {
+      diceCount: 2,
+      dieSize,
+      isPenaltyRoll: true,
+      formula: formatPoolFormula(2, dieSize, true),
+    };
+  }
+
+  // Aplicar limite máximo de dados
+  const cappedDice = Math.min(totalDice, MAX_SKILL_DICE);
+
+  return {
+    diceCount: cappedDice,
+    dieSize,
+    isPenaltyRoll: false,
+    formula: formatPoolFormula(cappedDice, dieSize, false),
+  };
+}
+
+/**
+ * Calcula pool de dados e fórmula completos de uma habilidade (sistema v0.0.2)
  * Combina calculateSkillTotalModifier e calculateSkillRollFormula
  *
  * @param skillName - Nome da habilidade
@@ -199,16 +315,16 @@ export function calculateSkillRollFormula(
  * @param proficiencyLevel - Nível de proficiência
  * @param isSignature - Se é Habilidade de Assinatura
  * @param characterLevel - Nível do personagem
- * @param modifiers - Array de modificadores (bônus/penalidades, modificadores de dados)
- * @param isOverloaded - Se personagem está Sobrecarregado
+ * @param modifiers - Array de modificadores (+Xd / -Xd)
+ * @param penaltyContext - Contexto de penalidades (sobrecarga, armadura, instrumento)
  * @returns Objeto com cálculo completo e fórmula de rolagem
  *
  * @example
- * const attributes = { agilidade: 2, corpo: 3, influencia: 2, mente: 2, essencia: 1, instinto: 1 };
- * calculateSkillRoll('acrobacia', 'agilidade', attributes, 'versado', false, 1, [], false);
+ * const attributes = { agilidade: 3, corpo: 2, influencia: 2, mente: 2, essencia: 1, instinto: 1 };
+ * calculateSkillRoll('acrobacia', 'agilidade', attributes, 'versado', false, 1);
  * // {
- * //   calculation: { attributeValue: 2, proficiencyMultiplier: 2, baseModifier: 4, signatureBonus: 0, otherModifiers: 0, totalModifier: 4 },
- * //   rollFormula: { diceCount: 2, takeLowest: false, modifier: 4, formula: '2d20+4' }
+ * //   calculation: { attributeValue: 3, dieSize: 'd10', totalDice: 3, ... },
+ * //   rollFormula: { diceCount: 3, dieSize: 'd10', formula: '3d10' }
  * // }
  */
 export function calculateSkillRoll(
@@ -219,21 +335,17 @@ export function calculateSkillRoll(
   isSignature: boolean,
   characterLevel: number,
   modifiers: Modifier[] = [],
-  isOverloaded: boolean = false
+  penaltyContext: Partial<SkillPenaltyContext> | boolean = {}
 ): {
-  calculation: SkillModifierCalculation;
-  rollFormula: SkillRollFormula;
+  calculation: SkillPoolCalculation;
+  rollFormula: SkillPoolFormula;
 } {
   // Para habilidades especiais sem atributo definido (como "oficio" sem craft selecionado),
   // usar 0 como valor padrão
   const attributeValue =
     keyAttribute === 'especial' ? 0 : attributes[keyAttribute];
 
-  // Separar modificadores de valor e de dados
-  const valueModifiers = modifiers.filter((mod) => !mod.affectsDice);
-  const diceModifiers = modifiers.filter((mod) => mod.affectsDice === true);
-
-  // Calcular modificador total
+  // Calcular pool de dados
   const calculation = calculateSkillTotalModifier(
     skillName,
     keyAttribute,
@@ -241,15 +353,14 @@ export function calculateSkillRoll(
     proficiencyLevel,
     isSignature,
     characterLevel,
-    valueModifiers,
-    isOverloaded
+    modifiers,
+    penaltyContext
   );
 
   // Calcular fórmula de rolagem
   const rollFormula = calculateSkillRollFormula(
-    attributeValue,
-    calculation.totalModifier,
-    diceModifiers
+    calculation.totalDice,
+    calculation.dieSize
   );
 
   return {
@@ -302,7 +413,6 @@ export function requiresProficiency(skillName: SkillName): boolean {
 
 /**
  * Verifica se uma habilidade é de combate
- * Habilidades de combate têm bônus de Assinatura reduzido (Nível ÷ 3)
  *
  * @param skillName - Nome da habilidade
  * @returns true se é habilidade de combate
@@ -316,11 +426,11 @@ export function isCombatSkill(skillName: SkillName): boolean {
 }
 
 /**
- * Calcula o modificador total para um uso customizado de habilidade
+ * Calcula a pool de dados para um uso customizado de habilidade (sistema v0.0.2)
  *
  * Usa as mesmas regras que calculateSkillTotalModifier, mas com:
  * - Atributo-chave do uso customizado
- * - Bônus específico do uso
+ * - Bônus específico do uso em dados (+Xd)
  * - Mesma proficiência da habilidade base
  * - Mesma lógica de assinatura e penalidades
  *
@@ -328,27 +438,8 @@ export function isCombatSkill(skillName: SkillName): boolean {
  * @param baseSkill - Habilidade base (para proficiência e assinatura)
  * @param attributes - Atributos do personagem
  * @param characterLevel - Nível do personagem (para bônus de assinatura)
- * @param isOverloaded - Se personagem está sobrecarregado
- * @returns Modificador total do uso customizado
- *
- * @example
- * const skillUse: SkillUse = {
- *   id: '1',
- *   name: 'Acrobacia em Combate',
- *   skillName: 'acrobacia',
- *   keyAttribute: 'corpo',
- *   bonus: 2,
- * };
- * const skill: Skill = {
- *   name: 'acrobacia',
- *   keyAttribute: 'agilidade',
- *   proficiencyLevel: 'versado',
- *   isSignature: false,
- *   modifiers: [],
- * };
- * const attributes: Attributes = { agilidade: 3, corpo: 2, ... };
- * calculateSkillUseModifier(skillUse, skill, attributes, 5, false);
- * // Returns: (2 * 2) + 2 = 6 (Força 2 × Versado + bônus +2)
+ * @param penaltyContext - Contexto de penalidades (sobrecarga, armadura, instrumento)
+ * @returns Total de modificadores de dados do uso customizado
  */
 export function calculateSkillUseModifier(
   skillUse: {
@@ -364,9 +455,13 @@ export function calculateSkillUseModifier(
   },
   attributes: Attributes,
   characterLevel: number,
-  isOverloaded: boolean
+  penaltyContext: Partial<SkillPenaltyContext> | boolean = {}
 ): number {
-  const metadata = SKILL_METADATA[skillUse.skillName];
+  // Compatibilidade: se recebeu boolean (antigo isOverloaded), converter para contexto
+  const ctx: Partial<SkillPenaltyContext> =
+    typeof penaltyContext === 'boolean'
+      ? { isOverloaded: penaltyContext }
+      : penaltyContext;
 
   // Valor do atributo customizado (0 para 'especial')
   const attributeValue =
@@ -374,58 +469,52 @@ export function calculateSkillUseModifier(
       ? 0
       : attributes[skillUse.keyAttribute];
 
-  // Usa a proficiência da habilidade base
-  const proficiencyMultiplier =
-    SKILL_PROFICIENCY_LEVELS[baseSkill.proficiencyLevel];
-
-  // Modificador base
-  const baseModifier = attributeValue * proficiencyMultiplier;
-
-  // Bônus de assinatura (usa regras da habilidade base)
-  let signatureBonus = 0;
+  // Bônus de assinatura em dados (+Xd)
+  let signatureDiceBonus = 0;
   if (baseSkill.isSignature) {
-    const isCombat = metadata.isCombatSkill === true;
-    signatureBonus = isCombat
-      ? Math.max(1, Math.floor(characterLevel / 3))
-      : characterLevel;
+    signatureDiceBonus = calculateSignatureAbilityBonus(characterLevel);
   }
 
-  // Combinar modificadores: habilidade base + uso específico
+  // Combinar modificadores de dados: habilidade base + uso específico
   const allModifiers = [
     ...(baseSkill.modifiers || []),
     ...(skillUse.modifiers || []),
   ];
 
-  // Somar apenas modificadores que não afetam dados (modificadores numéricos)
-  const numericModifiers = allModifiers
-    .filter((mod) => !mod.affectsDice)
+  // Somar modificadores de dados (+Xd/-Xd)
+  const diceModifiers = allModifiers
+    .filter((mod) => mod.affectsDice === true)
     .reduce((sum, mod) => sum + mod.value, 0);
 
-  // Bônus específico do uso
+  // Bônus específico do uso em dados (+Xd)
   const useBonus = skillUse.bonus;
 
-  // Penalidade de carga
-  const loadPenalty =
-    isOverloaded && metadata.hasCargaPenalty === true ? CARGA_PENALTY_VALUE : 0;
+  // Calcular penalidades usando função centralizada
+  const penalties = calculateSkillPenalties(
+    skillUse.skillName,
+    baseSkill.proficiencyLevel,
+    ctx
+  );
 
+  // Total de dados = atributo + assinatura + modificadores + bônus de uso + penalidades
   return (
-    baseModifier + signatureBonus + numericModifiers + useBonus + loadPenalty
+    attributeValue +
+    signatureDiceBonus +
+    diceModifiers +
+    useBonus +
+    penalties.totalPenalty
   );
 }
 
 /**
- * Calcula a fórmula de rolagem para um uso customizado de habilidade
+ * Calcula a fórmula de rolagem para um uso customizado de habilidade (sistema v0.0.2)
  *
  * @param skillUse - Uso customizado da habilidade
  * @param baseSkill - Habilidade base (para proficiência e assinatura)
  * @param attributes - Atributos do personagem
  * @param characterLevel - Nível do personagem (para bônus de assinatura)
- * @param isOverloaded - Se personagem está sobrecarregado
- * @returns Fórmula de rolagem formatada (ex: "2d20+6")
- *
- * @example
- * calculateSkillUseRollFormula(skillUse, skill, attributes, 5, false);
- * // Returns: "2d20+6" (Força 2 = 2d20, modificador total +6)
+ * @param penaltyContext - Contexto de penalidades (sobrecarga, armadura, instrumento)
+ * @returns Fórmula de rolagem formatada (ex: "3d8", "2d6 (menor)")
  */
 export function calculateSkillUseRollFormula(
   skillUse: {
@@ -441,61 +530,64 @@ export function calculateSkillUseRollFormula(
   },
   attributes: Attributes,
   characterLevel: number,
-  isOverloaded: boolean
+  penaltyContext: Partial<SkillPenaltyContext> | boolean = {}
 ): string {
-  const modifier = calculateSkillUseModifier(
+  const totalDice = calculateSkillUseModifier(
     skillUse,
     baseSkill,
     attributes,
     characterLevel,
-    isOverloaded
+    penaltyContext
   );
 
-  const attributeValue =
-    skillUse.keyAttribute === 'especial'
-      ? 0
-      : attributes[skillUse.keyAttribute];
+  const dieSize = getSkillDieSize(baseSkill.proficiencyLevel);
 
-  // Combinar modificadores de dados: habilidade base + uso específico
-  const allModifiers = [
-    ...(baseSkill.modifiers || []),
-    ...(skillUse.modifiers || []),
-  ];
-
-  // Somar modificadores que afetam dados
-  const diceModifiers = allModifiers
-    .filter((mod) => mod.affectsDice === true)
-    .reduce((sum, mod) => sum + mod.value, 0);
-
-  // Quantidade de dados = atributo + modificadores de dados
-  const baseDiceCount = attributeValue;
-  const realDiceCount = baseDiceCount + diceModifiers;
-
-  // Determinar se pega o menor (quando real < 1)
-  let finalDiceCount: number;
-  let takeLowest = false;
-
-  if (realDiceCount < 1) {
-    // 0→2d20, -1→3d20, -2→4d20, etc.
-    finalDiceCount = 2 - realDiceCount;
-    takeLowest = true;
-  } else {
-    finalDiceCount = realDiceCount;
+  // Penalidade extrema: se total ≤ 0, rola 2d e usa o menor
+  if (totalDice <= 0) {
+    return formatPoolFormula(2, dieSize, true);
   }
 
-  // Formatar fórmula com prefixo "-" quando takeLowest
-  const sign = modifier >= 0 ? '+' : '';
-  let formula = '';
+  const cappedDice = Math.min(totalDice, MAX_SKILL_DICE);
+  return formatPoolFormula(cappedDice, dieSize, false);
+}
 
-  if (takeLowest) {
-    formula = '-';
+/**
+ * Detecta o tipo de armadura mais pesada equipada no inventário
+ *
+ * Percorre os itens do inventário procurando armaduras equipadas.
+ * Se múltiplas estão equipadas, retorna a mais pesada (pesada > media > leve).
+ * Itens com category === 'armadura' e equipped === true são considerados.
+ * O armorType é detectado via customProperties.armorType ou pelo nome do item.
+ *
+ * @param items - Lista de itens do inventário
+ * @returns Tipo da armadura mais pesada equipada, ou null se sem armadura
+ */
+export function getEquippedArmorType(items: InventoryItem[]): ArmorType | null {
+  const armorPriority: Record<ArmorType, number> = {
+    leve: 0,
+    media: 1,
+    pesada: 2,
+  };
+
+  let heaviestArmor: ArmorType | null = null;
+
+  for (const item of items) {
+    if (item.category !== 'armadura' || !item.equipped) continue;
+
+    // Tentar obter armorType de customProperties (onde Armor extends InventoryItem armazena)
+    const armorType =
+      (item.customProperties?.armorType as ArmorType) ||
+      (item as unknown as { armorType?: ArmorType }).armorType;
+
+    if (armorType && armorType in armorPriority) {
+      if (
+        heaviestArmor === null ||
+        armorPriority[armorType] > armorPriority[heaviestArmor]
+      ) {
+        heaviestArmor = armorType;
+      }
+    }
   }
 
-  formula += `${finalDiceCount}d20`;
-
-  if (modifier !== 0) {
-    formula += `${sign}${modifier}`;
-  }
-
-  return formula;
+  return heaviestArmor;
 }

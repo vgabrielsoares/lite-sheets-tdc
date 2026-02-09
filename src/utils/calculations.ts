@@ -139,30 +139,32 @@ export function calculatePPPerRound(
 }
 
 /**
- * Calculates the Signature Ability bonus based on character level
- * For combat skills: Level ÷ 3 (minimum 1, round down)
- * For non-combat skills: Level
+ * Calculates the Signature Ability dice bonus based on character level (v0.0.2)
+ *
+ * Formula: Math.min(3, Math.ceil(level / 5))
+ * - Level 1-5: +1d
+ * - Level 6-10: +2d
+ * - Level 11-15: +3d
+ *
+ * No combat/non-combat distinction in v0.0.2.
  *
  * @param characterLevel - The character's current level
- * @param isCombatSkill - Whether the skill is a combat skill
- * @returns The bonus to add to the skill modifier
+ * @param _isCombatSkill - @deprecated Ignored in v0.0.2 (kept for backward compat)
+ * @returns The number of bonus dice (+Xd) to add to the skill pool
  *
  * @example
- * calculateSignatureAbilityBonus(1, false); // 1
- * calculateSignatureAbilityBonus(5, false); // 5
- * calculateSignatureAbilityBonus(1, true); // 1 (1 ÷ 3 = 0.33, min 1)
- * calculateSignatureAbilityBonus(3, true); // 1 (3 ÷ 3 = 1)
- * calculateSignatureAbilityBonus(9, true); // 3 (9 ÷ 3 = 3)
+ * calculateSignatureAbilityBonus(1); // 1 (+1d)
+ * calculateSignatureAbilityBonus(5); // 1 (+1d)
+ * calculateSignatureAbilityBonus(6); // 2 (+2d)
+ * calculateSignatureAbilityBonus(10); // 2 (+2d)
+ * calculateSignatureAbilityBonus(11); // 3 (+3d)
+ * calculateSignatureAbilityBonus(15); // 3 (+3d)
  */
 export function calculateSignatureAbilityBonus(
   characterLevel: number,
-  isCombatSkill: boolean
+  _isCombatSkill?: boolean
 ): number {
-  if (isCombatSkill) {
-    const bonus = roundDown(characterLevel / 3);
-    return Math.max(bonus, 1); // minimum 1
-  }
-  return characterLevel;
+  return Math.min(3, Math.ceil(characterLevel / 5));
 }
 
 /**

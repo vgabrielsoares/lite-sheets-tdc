@@ -143,11 +143,14 @@ export {
   calculateSkillTotalModifier,
   calculateSkillRollFormula,
   calculateSkillRoll,
+  calculateSkillPenalties,
+  getEquippedArmorType,
   hasLoadPenalty,
   requiresInstrument,
   requiresProficiency,
   isCombatSkill,
 } from './skillCalculations';
+export type { SkillPenaltyContext } from './skillCalculations';
 
 // Proficiency calculation utilities
 export {

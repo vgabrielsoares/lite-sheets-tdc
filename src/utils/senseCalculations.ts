@@ -6,8 +6,10 @@
  * - Observar (associado a sentido aguçado de visão)
  * - Ouvir (associado a sentido aguçado de audição)
  *
- * Os bônus de sentido aguçado da linhagem são somados automaticamente
- * aos modificadores desses usos específicos da Percepção.
+ * Sistema de pool de dados v0.0.2:
+ * - Rola-se Xd(tamanho) onde X = atributo + modificadores de dados
+ * - Resultados ≥ 6 = sucessos (✶), resultados = 1 cancelam 1 sucesso
+ * - Os bônus de sentido aguçado adicionam dados à pool
  */
 
 import type {
@@ -17,8 +19,10 @@ import type {
   Skill,
   Attributes,
   Modifier,
+  DieSize,
 } from '@/types';
 import { calculateSkillTotalModifier } from './skillCalculations';
+import { MAX_SKILL_DICE } from './diceRoller';
 
 /**
  * Mapeamento de usos de Percepção para tipos de sentido aguçado
@@ -39,26 +43,24 @@ export const SENSE_TO_PERCEPTION_USE: Record<SenseType, string> = {
 } as const;
 
 /**
- * Resultado do cálculo de um sentido específico
+ * Resultado do cálculo de um sentido específico (pool de dados v0.0.2)
  */
 export interface SenseCalculationResult {
   /** Nome do uso de Percepção (Farejar, Observar, Ouvir) */
   useName: string;
   /** Tipo de sentido associado */
   senseType: SenseType;
-  /** Modificador base da habilidade Percepção */
-  baseModifier: number;
-  /** Bônus de sentido aguçado da linhagem */
-  keenSenseBonus: number;
-  /** Outros modificadores específicos do uso */
-  otherModifiers: number;
-  /** Modificador total final */
-  totalModifier: number;
-  /** Quantidade de dados para rolagem */
-  diceCount: number;
-  /** Se pega o menor resultado (atributo 0) */
-  takeLowest: boolean;
-  /** Fórmula de rolagem formatada */
+  /** Dados base da pool (do cálculo de Percepção) */
+  baseDice: number;
+  /** Bônus de dados de sentido aguçado da linhagem (+Xd) */
+  keenSenseDiceBonus: number;
+  /** Total de dados na pool */
+  totalDice: number;
+  /** Tamanho do dado (d6/d8/d10/d12) baseado na proficiência */
+  dieSize: DieSize;
+  /** Se rola 2d e pega o menor (pool efetiva ≤ 0) */
+  isPenaltyRoll: boolean;
+  /** Fórmula de rolagem formatada (ex: "3d8", "2d6 (menor)") */
   formula: string;
 }
 
@@ -80,9 +82,10 @@ export function getKeenSenseBonus(
 }
 
 /**
- * Calcula o modificador total para um uso de sentido específico
+ * Calcula a pool de dados para um uso de sentido específico (v0.0.2)
  *
- * Fórmula: Modificador de Percepção + Bônus de Sentido Aguçado + Outros Modificadores
+ * Pool = atributo + modificadores de dados + sentido aguçado (+Xd)
+ * Tamanho do dado = proficiência em Percepção (d6/d8/d10/d12)
  *
  * @param useName - Nome do uso (Farejar, Observar, Ouvir)
  * @param perceptionSkill - Dados da habilidade Percepção
@@ -102,31 +105,22 @@ export function calculateSenseModifier(
 ): SenseCalculationResult {
   const senseType = PERCEPTION_USE_TO_SENSE[useName];
 
-  // 1. Calcular modificador base da Percepção
+  // 1. Obter atributo efetivo (pode ter override para este uso)
   const keyAttribute = perceptionSkill.keyAttribute;
-  const attributeValue = attributes[keyAttribute];
-
-  // Verificar se há override de atributo para este uso específico
   const overrideAttribute =
     perceptionSkill.defaultUseAttributeOverrides?.[useName];
   const effectiveAttribute = overrideAttribute || keyAttribute;
   const effectiveAttributeValue = attributes[effectiveAttribute];
 
-  // Verificar se há modificadores específicos para este uso
+  // 2. Combinar modificadores da habilidade base + específicos do uso
   const useModifiers =
     perceptionSkill.defaultUseModifierOverrides?.[useName] || [];
+  const allModifiers: Modifier[] = [
+    ...perceptionSkill.modifiers,
+    ...useModifiers,
+  ];
 
-  // Combinar com modificadores da habilidade base
-  const allSkillModifiers = [...perceptionSkill.modifiers, ...useModifiers];
-
-  // IMPORTANTE: Separar modificadores numéricos e de dados
-  // Modificadores de dados (affectsDice: true) afetam apenas a quantidade de d20
-  // Modificadores numéricos afetam o bônus adicionado ao resultado
-  const valueModifiers = allSkillModifiers.filter((mod) => !mod.affectsDice);
-  const diceModifiers = allSkillModifiers.filter(
-    (mod) => mod.affectsDice === true
-  );
-
+  // 3. Calcular pool base via sistema de pool v0.0.2
   const baseCalc = calculateSkillTotalModifier(
     'percepcao',
     effectiveAttribute,
@@ -134,54 +128,43 @@ export function calculateSenseModifier(
     perceptionSkill.proficiencyLevel,
     perceptionSkill.isSignature,
     characterLevel,
-    valueModifiers, // Apenas modificadores numéricos
+    allModifiers,
     isOverloaded
   );
 
-  // 2. Obter bônus de sentido aguçado
-  const keenSenseBonus = getKeenSenseBonus(keenSenses, senseType);
+  // 4. Obter bônus de sentido aguçado (+Xd extra)
+  const keenSenseDiceBonus = getKeenSenseBonus(keenSenses, senseType);
 
-  // 3. Calcular modificador total (numérico apenas)
-  const totalModifier = baseCalc.totalModifier + keenSenseBonus;
+  // 5. Calcular pool final
+  const dieSize = baseCalc.dieSize;
+  const baseDice = baseCalc.totalDice;
+  const effectiveTotalDice = baseDice + keenSenseDiceBonus;
 
-  // 4. Calcular quantidade de dados
-  // Modificadores de dados afetam a quantidade de d20
-  const diceModifiersTotal = diceModifiers.reduce(
-    (sum, mod) => sum + (mod.value || 0),
-    0
-  );
-
-  const realDiceCount = effectiveAttributeValue + diceModifiersTotal;
-
-  let finalDiceCount: number;
-  let takeLowest: boolean;
-
-  if (realDiceCount < 1) {
-    finalDiceCount = 2 - realDiceCount;
-    takeLowest = true;
-  } else {
-    finalDiceCount = realDiceCount;
-    takeLowest = false;
+  // 6. Se pool ≤ 0, rola 2d e pega o menor
+  if (effectiveTotalDice <= 0) {
+    return {
+      useName,
+      senseType,
+      baseDice,
+      keenSenseDiceBonus,
+      totalDice: 2,
+      dieSize,
+      isPenaltyRoll: true,
+      formula: `2${dieSize} (menor)`,
+    };
   }
 
-  // 5. Gerar fórmula
-  let formula = `${finalDiceCount}d20`;
-  if (totalModifier > 0) {
-    formula += `+${totalModifier}`;
-  } else if (totalModifier < 0) {
-    formula += `${totalModifier}`;
-  }
+  const totalDice = Math.min(effectiveTotalDice, MAX_SKILL_DICE);
 
   return {
     useName,
     senseType,
-    baseModifier: baseCalc.totalModifier,
-    keenSenseBonus,
-    otherModifiers: 0,
-    totalModifier,
-    diceCount: finalDiceCount,
-    takeLowest,
-    formula,
+    baseDice,
+    keenSenseDiceBonus,
+    totalDice,
+    dieSize,
+    isPenaltyRoll: false,
+    formula: `${totalDice}${dieSize}`,
   };
 }
 
