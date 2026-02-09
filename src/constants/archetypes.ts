@@ -55,7 +55,7 @@ export const ARCHETYPE_DESCRIPTIONS: Record<ArchetypeName, string> = {
 
 /**
  * PV por nível ganho para cada arquétipo
- * Fórmula: Base + Constituição
+ * Fórmula: Base + Corpo
  */
 export const ARCHETYPE_HP_PER_LEVEL: Record<ArchetypeName, number> = {
   combatente: 5,
@@ -68,7 +68,7 @@ export const ARCHETYPE_HP_PER_LEVEL: Record<ArchetypeName, number> = {
 
 /**
  * PP por nível ganho para cada arquétipo
- * Fórmula: Base + Presença
+ * Fórmula: Base + Essência
  * Nota: Valores baseados no contexto do sistema (não especificados nas regras básicas)
  */
 export const ARCHETYPE_PP_PER_LEVEL: Record<ArchetypeName, number> = {
@@ -85,11 +85,11 @@ export const ARCHETYPE_PP_PER_LEVEL: Record<ArchetypeName, number> = {
  */
 type AttributeKey =
   | 'agilidade'
-  | 'constituicao'
-  | 'forca'
+  | 'corpo'
   | 'influencia'
   | 'mente'
-  | 'presenca';
+  | 'essencia'
+  | 'instinto';
 
 /**
  * Atributos relevantes por arquétipo
@@ -100,11 +100,11 @@ export const ARCHETYPE_RELEVANT_ATTRIBUTES: Record<
   AttributeKey[]
 > = {
   academico: ['mente'],
-  acolito: ['presenca', 'influencia'],
-  combatente: ['agilidade', 'forca', 'constituicao'], // Agilidade OU Força, + Constituição
-  feiticeiro: ['mente', 'presenca'],
+  acolito: ['essencia', 'influencia'],
+  combatente: ['agilidade', 'corpo'], // Agilidade OU Corpo
+  feiticeiro: ['mente', 'essencia'],
   ladino: ['agilidade'],
-  natural: ['presenca'],
+  natural: ['instinto'],
 };
 
 /**
@@ -112,11 +112,11 @@ export const ARCHETYPE_RELEVANT_ATTRIBUTES: Record<
  */
 export const ARCHETYPE_ATTRIBUTE_DESCRIPTION: Record<ArchetypeName, string> = {
   academico: 'Mente',
-  acolito: 'Presença e Influência',
-  combatente: 'Agilidade ou Força, Constituição',
-  feiticeiro: 'Mente e Presença',
+  acolito: 'Essência e Influência',
+  combatente: 'Agilidade ou Corpo',
+  feiticeiro: 'Mente e Essência',
   ladino: 'Agilidade',
-  natural: 'Presença',
+  natural: 'Instinto',
 };
 
 /**
@@ -126,11 +126,11 @@ export const ARCHETYPE_ATTRIBUTE_DESCRIPTION: Record<ArchetypeName, string> = {
 export const ARCHETYPE_PRIMARY_ATTRIBUTE: Record<ArchetypeName, AttributeKey> =
   {
     academico: 'mente',
-    acolito: 'presenca',
-    combatente: 'constituicao',
-    feiticeiro: 'presenca',
+    acolito: 'essencia',
+    combatente: 'corpo',
+    feiticeiro: 'essencia',
     ladino: 'agilidade',
-    natural: 'presenca',
+    natural: 'instinto',
   };
 
 /**

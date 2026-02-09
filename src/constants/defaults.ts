@@ -121,14 +121,14 @@ export const DEFAULT_SIZE = 'medio' as const;
 
 /**
  * Rodadas máximas no estado Morrendo no nível 1
- * Fórmula: 2 + Constituição + outros modificadores
+ * Fórmula: 2 + Corpo + outros modificadores
  */
 export const DEFAULT_DYING_ROUNDS_BASE = 2;
 
 /**
  * Limite de PP por rodada no nível 1
- * Fórmula: Nível + Presença + outros modificadores
- * No nível 1: 1 + Presença
+ * Fórmula: Nível + Essência + outros modificadores
+ * No nível 1: 1 + Essência
  */
 export const DEFAULT_PP_PER_ROUND_BASE = 1;
 
@@ -168,35 +168,35 @@ export const calculateDefense = (
 
 /**
  * Cálculo de rodadas máximas no estado Morrendo
- * Fórmula: 2 + Constituição + outros modificadores
+ * Fórmula: 2 + Corpo + outros modificadores
  */
 export const calculateDyingRounds = (
-  constituicaoValue: number,
+  corpoValue: number,
   otherModifiers: number = 0
 ): number => {
-  return DEFAULT_DYING_ROUNDS_BASE + constituicaoValue + otherModifiers;
+  return DEFAULT_DYING_ROUNDS_BASE + corpoValue + otherModifiers;
 };
 
 /**
  * Cálculo de limite de PP por rodada
- * Fórmula: Nível + Presença + outros modificadores
+ * Fórmula: Nível + Essência + outros modificadores
  */
 export const calculatePPPerRound = (
   characterLevel: number,
-  presencaValue: number,
+  essenciaValue: number,
   otherModifiers: number = 0
 ): number => {
-  return characterLevel + presencaValue + otherModifiers;
+  return characterLevel + essenciaValue + otherModifiers;
 };
 
 /**
  * Recuperação de PV durante descanso (ação Dormir)
- * Fórmula: Nível × Constituição + outros modificadores
+ * Fórmula: Nível × Corpo + outros modificadores
  */
 export const calculateRestHPRecovery = (
   characterLevel: number,
-  constituicaoValue: number,
+  corpoValue: number,
   otherModifiers: number = 0
 ): number => {
-  return characterLevel * constituicaoValue + otherModifiers;
+  return characterLevel * corpoValue + otherModifiers;
 };

@@ -201,6 +201,11 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
 
   sorte: [{ name: 'Apostar' }],
 
+  sintonia: [
+    { name: 'Resistir' },
+    { name: 'Dissipar Efeito Mágico', requiredProficiency: 'adepto' },
+  ],
+
   tenacidade: [
     { name: 'Resistir' },
     { name: 'Resilir Condições', requiredProficiency: 'adepto' },
