@@ -16,7 +16,8 @@
 
 import type { Character } from '@/types/character';
 import type { Attributes, AttributeName } from '@/types/attributes';
-import type { Skills } from '@/types/skills';
+import type { Skills, Skill, SkillName } from '@/types/skills';
+import { SKILL_LIST, SKILL_KEY_ATTRIBUTES } from '@/types/skills';
 
 /** Versão atual do schema */
 export const CURRENT_SCHEMA_VERSION = 2;
@@ -95,15 +96,31 @@ function clampAttribute(value: number): number {
 }
 
 /**
- * Migra habilidades que referenciam atributos antigos
+ * Migra habilidades que referenciam atributos antigos e adiciona novas skills
+ *
+ * Garante que todas as skills da SKILL_LIST estejam presentes.
+ * Novas skills (sintonia, tenacidade) são adicionadas como 'leigo'.
  */
 function migrateSkills(
   skills: Record<string, unknown>
 ): Record<string, unknown> {
-  if (!skills || typeof skills !== 'object') return skills;
+  if (!skills || typeof skills !== 'object') skills = {};
 
   const migrated: Record<string, unknown> = {};
 
+  // Primeiro, garantir que todas as skills da lista existam (padrão: leigo)
+  SKILL_LIST.forEach((skillName: SkillName) => {
+    const keyAttribute = SKILL_KEY_ATTRIBUTES[skillName];
+    migrated[skillName] = {
+      name: skillName,
+      keyAttribute: keyAttribute === 'especial' ? 'mente' : keyAttribute,
+      proficiencyLevel: 'leigo',
+      isSignature: false,
+      modifiers: [],
+    };
+  });
+
+  // Depois, sobrescrever com skills existentes (migradas)
   for (const [skillName, skill] of Object.entries(skills)) {
     if (skill && typeof skill === 'object') {
       const s = skill as Record<string, unknown>;
@@ -124,8 +141,6 @@ function migrateSkills(
             }))
           : s.customUses,
       };
-    } else {
-      migrated[skillName] = skill;
     }
   }
 

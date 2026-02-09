@@ -860,12 +860,11 @@ export function SkillUsageSidebar({
                 {/* Botão de Rolagem (mais à direita) */}
                 <SkillRollButton
                   skillLabel={`${SKILL_LABELS[skill.name]}: ${use.name}`}
-                  diceCount={finalDiceCount}
-                  modifier={modifier}
-                  formula={rollFormula}
-                  takeLowest={takeLowest}
+                  attributeValue={attributeValue}
+                  proficiencyLevel={skill.proficiencyLevel}
+                  diceModifier={diceModifiers}
                   size="small"
-                  tooltipText={`Rolar ${use.name}: ${rollFormula}`}
+                  tooltipText={`Rolar ${use.name}`}
                 />
               </Box>
             </>
@@ -1155,12 +1154,11 @@ export function SkillUsageSidebar({
                 {/* Botão de Rolagem (mais à direita) */}
                 <SkillRollButton
                   skillLabel={`${SKILL_LABELS[skill.name]}: ${defaultUse.name}`}
-                  diceCount={finalDiceCount}
-                  modifier={modifier}
-                  formula={rollFormula}
-                  takeLowest={takeLowest}
+                  attributeValue={attributeValue}
+                  proficiencyLevel={skill.proficiencyLevel}
+                  diceModifier={diceModifiers}
                   size="small"
-                  tooltipText={`Rolar ${defaultUse.name}: ${rollFormula}`}
+                  tooltipText={`Rolar ${defaultUse.name}`}
                 />
               </Box>
             </>
@@ -1836,12 +1834,11 @@ export function SkillUsageSidebar({
                             </Box>
                             <SkillRollButton
                               skillLabel={`${SKILL_LABELS[skill.name]}: ${craft.name}`}
-                              diceCount={diceCount}
-                              modifier={totalModifier}
-                              formula={formula}
-                              takeLowest={takeLowest}
+                              attributeValue={attributeValue}
+                              proficiencyLevel={skill.proficiencyLevel}
+                              diceModifier={craft.diceModifier || 0}
                               size="small"
-                              tooltipText={`Rolar ${craft.name}: ${formula}`}
+                              tooltipText={`Rolar ${craft.name}`}
                             />
                           </Box>
                         </Stack>

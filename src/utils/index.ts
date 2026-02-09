@@ -20,14 +20,34 @@ export {
 
 // Dice rolling utilities
 export {
-  rollD20,
+  // Pool-based skill testing (new)
+  rollDicePool,
+  rollWithPenalty,
+  rollSkillTest,
+  rollCustomDice,
+  // Damage rolling (preserved)
   rollDamage,
   rollDamageWithCritical,
-  rollSkillTest,
+  // History
   DiceRollHistory,
   globalDiceHistory,
-  type DiceRollResult,
+  // Type guards
+  isDicePoolResult,
+  isDamageDiceRollResult,
+  isCustomDiceResult,
+  // Constants
+  MAX_SKILL_DICE,
+  SUCCESS_THRESHOLD,
+  CANCELLATION_VALUE,
+  // Types
+  type DamageDiceRollResult,
+  type CustomDiceResult,
+  type HistoryEntry,
+  // Legacy (deprecated - to be removed in Phase 3)
+  rollD20,
+  legacyRollToHistoryEntry,
   type RollType,
+  type DiceRollResult,
 } from './diceRoller';
 
 // Calculation utilities

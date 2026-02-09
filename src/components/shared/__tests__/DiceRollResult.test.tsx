@@ -1,370 +1,398 @@
 /**
- * Testes para DiceRollResult component
+ * Testes para DiceRollResult (v0.0.2)
+ *
+ * Testa o componente de exibição de resultado de rolagem com os novos tipos:
+ * - DicePoolResult (rolagens de skill com sucessos)
+ * - DamageDiceRollResult (rolagens de dano)
+ * - CustomDiceResult (rolagens customizadas)
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { render, screen, within } from '@testing-library/react';
+import { ThemeProvider } from '@mui/material/styles';
 import { DiceRollResult } from '../DiceRollResult';
-import type { DiceRollResult as DiceRollResultType } from '@/utils/diceRoller';
+import { lightTheme } from '@/theme';
+import type {
+  DamageDiceRollResult,
+  CustomDiceResult,
+} from '@/utils/diceRoller';
+import type { DicePoolResult } from '@/types';
+
+// ============================================================================
+// Test Wrapper
+// ============================================================================
+
+const renderWithTheme = (ui: React.ReactElement) => {
+  return render(<ThemeProvider theme={lightTheme}>{ui}</ThemeProvider>);
+};
+
+// ============================================================================
+// Mock Data Factories
+// ============================================================================
+
+const createMockDicePoolResult = (
+  overrides: Partial<DicePoolResult> = {}
+): DicePoolResult => ({
+  formula: '3d6',
+  dice: [
+    { value: 6, dieSize: 'd6', isSuccess: true, isCancellation: false },
+    { value: 4, dieSize: 'd6', isSuccess: false, isCancellation: false },
+    { value: 1, dieSize: 'd6', isSuccess: false, isCancellation: true },
+  ],
+  rolls: [6, 4, 1],
+  dieSize: 'd6',
+  diceCount: 3,
+  successes: 1,
+  cancellations: 1,
+  netSuccesses: 0,
+  timestamp: new Date(),
+  isPenaltyRoll: false,
+  diceModifier: 0,
+  ...overrides,
+});
+
+const createMockDamageDiceRollResult = (
+  overrides: Partial<DamageDiceRollResult> = {}
+): DamageDiceRollResult => ({
+  formula: '2d6+3',
+  rolls: [4, 5],
+  diceType: 6,
+  diceCount: 2,
+  modifier: 3,
+  baseResult: 9,
+  finalResult: 12,
+  timestamp: new Date(),
+  isDamageRoll: true,
+  isCritical: false,
+  ...overrides,
+});
+
+const createMockCustomDiceResult = (
+  overrides: Partial<CustomDiceResult> = {}
+): CustomDiceResult => ({
+  formula: '1d20+5',
+  rolls: [15],
+  diceType: 20,
+  diceCount: 1,
+  modifier: 5,
+  total: 20,
+  summed: true,
+  timestamp: new Date(),
+  ...overrides,
+});
+
+// ============================================================================
+// Test Suites
+// ============================================================================
 
 describe('DiceRollResult', () => {
-  const mockBaseResult: DiceRollResultType = {
-    formula: '2d20+5',
-    rolls: [12, 15],
-    diceType: 20,
-    diceCount: 2,
-    modifier: 5,
-    baseResult: 15,
-    finalResult: 20,
-    timestamp: new Date('2024-12-08T10:30:00'),
-    rollType: 'normal',
-  };
-
-  describe('Renderização Básica', () => {
-    it('deve renderizar resultado corretamente', () => {
-      render(<DiceRollResult result={mockBaseResult} />);
-
-      expect(screen.getByText('2d20+5')).toBeInTheDocument();
-      expect(screen.getByLabelText('Resultado final: 20')).toBeInTheDocument();
-      expect(screen.getByText('Resultado Final')).toBeInTheDocument();
-    });
-
-    it('deve exibir fórmula da rolagem', () => {
-      render(<DiceRollResult result={mockBaseResult} />);
+  describe('Pool Result Display', () => {
+    it('deve renderizar fórmula da pool', () => {
+      const result = createMockDicePoolResult({ formula: '4d8' });
+      renderWithTheme(<DiceRollResult result={result} />);
 
       expect(screen.getByText('Fórmula:')).toBeInTheDocument();
-      expect(screen.getByText('2d20+5')).toBeInTheDocument();
+      expect(screen.getByText('4d8')).toBeInTheDocument();
     });
 
-    it('deve exibir resultado final destacado', () => {
-      render(<DiceRollResult result={mockBaseResult} />);
+    it('deve exibir número de sucessos líquidos', () => {
+      const result = createMockDicePoolResult({
+        netSuccesses: 3,
+        successes: 4,
+        cancellations: 1,
+      });
+      renderWithTheme(<DiceRollResult result={result} />);
 
-      const finalResult = screen.getByLabelText('Resultado final: 20');
-      expect(finalResult).toHaveTextContent('20');
+      expect(screen.getByLabelText(/3 sucessos/i)).toBeInTheDocument();
     });
-  });
 
-  describe('Breakdown Detalhado', () => {
-    it('deve exibir breakdown quando showBreakdown é true', () => {
-      render(<DiceRollResult result={mockBaseResult} showBreakdown={true} />);
+    it('deve exibir 0 sucessos para falha', () => {
+      const result = createMockDicePoolResult({
+        netSuccesses: 0,
+        successes: 1,
+        cancellations: 1,
+      });
+      renderWithTheme(<DiceRollResult result={result} />);
 
-      expect(screen.getByText(/dados rolados/i)).toBeInTheDocument();
-      expect(screen.getByText(/cálculo/i)).toBeInTheDocument();
+      // Should show "0✶ FALHA" chip
+      expect(screen.getByText('0✶ FALHA')).toBeInTheDocument();
+    });
+
+    it('deve exibir dados individuais no breakdown', () => {
+      const result = createMockDicePoolResult();
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      // Should show dice values: 6, 4, 1
+      expect(screen.getByText('6')).toBeInTheDocument();
+      expect(screen.getByText('4')).toBeInTheDocument();
+      expect(screen.getByText('1')).toBeInTheDocument();
+    });
+
+    it('deve exibir contagem de sucessos e cancelamentos', () => {
+      const result = createMockDicePoolResult({
+        successes: 2,
+        cancellations: 1,
+        netSuccesses: 1,
+      });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      expect(screen.getByText('Contagem:')).toBeInTheDocument();
+      // Should show "2✶ - 1 cancelado = 1✶"
+      expect(screen.getByText(/2✶/)).toBeInTheDocument();
+      expect(screen.getByText(/1 cancelado/)).toBeInTheDocument();
     });
 
     it('não deve exibir breakdown quando showBreakdown é false', () => {
-      render(<DiceRollResult result={mockBaseResult} showBreakdown={false} />);
+      const result = createMockDicePoolResult();
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={false} />);
 
-      expect(screen.queryByText(/dados rolados/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/cálculo/i)).not.toBeInTheDocument();
+      expect(screen.queryByText('Contagem:')).not.toBeInTheDocument();
     });
 
-    it('deve exibir todos os dados rolados', () => {
-      render(<DiceRollResult result={mockBaseResult} showBreakdown={true} />);
+    it('deve exibir tag de penalidade quando isPenaltyRoll é true', () => {
+      const result = createMockDicePoolResult({ isPenaltyRoll: true });
+      renderWithTheme(<DiceRollResult result={result} />);
 
-      // Verifica se os valores 12 e 15 estão presentes
-      const chips = screen.getAllByText(/12|15/);
-      expect(chips.length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText(/2d \(menor\)/i)).toBeInTheDocument();
     });
 
-    it('deve destacar o dado escolhido', () => {
-      render(<DiceRollResult result={mockBaseResult} showBreakdown={true} />);
-
-      // O dado de valor 15 deve estar destacado (foi o maior escolhido)
-      const chips = screen.getAllByText('15');
-      expect(chips.length).toBeGreaterThan(0);
-    });
-
-    it('deve exibir cálculo correto', () => {
-      render(<DiceRollResult result={mockBaseResult} showBreakdown={true} />);
-
-      // Verificar que os componentes de cálculo estão presentes
-      expect(screen.getByText('Cálculo:')).toBeInTheDocument();
-      const fifteens = screen.getAllByText(/15/);
-      expect(fifteens.length).toBeGreaterThan(0); // Valor base aparece em múltiplos lugares
-      const plusSigns = screen.getAllByText(/\+/);
-      expect(plusSigns.length).toBeGreaterThan(0); // Sinal de adição
-      expect(screen.getByText(/modificador/)).toBeInTheDocument(); // Modificador label
-    });
-
-    it('deve exibir timestamp formatado', () => {
-      render(<DiceRollResult result={mockBaseResult} showBreakdown={true} />);
-
-      expect(screen.getByText(/rolado em:/i)).toBeInTheDocument();
-    });
-  });
-
-  describe('Críticos e Falhas', () => {
-    it('deve exibir TRIUNFO quando há 20 natural', () => {
-      const triumphResult: DiceRollResultType = {
-        ...mockBaseResult,
-        rolls: [20],
-        diceCount: 1,
-        baseResult: 20,
-        finalResult: 25,
-        rollType: 'normal',
-        isCritical: true,
-      };
-
-      render(<DiceRollResult result={triumphResult} />);
-
-      expect(screen.getByText(/TRIUNFO!/i)).toBeInTheDocument();
-    });
-
-    it('deve exibir DESASTRE quando há 1 natural', () => {
-      const disasterResult: DiceRollResultType = {
-        ...mockBaseResult,
-        rolls: [1],
-        diceCount: 1,
-        baseResult: 1,
-        finalResult: 6,
-        rollType: 'normal',
-        isCriticalFailure: true,
-        isDisaster: true,
-      };
-
-      render(<DiceRollResult result={disasterResult} />);
-
-      expect(screen.getByText(/DESASTRE!/i)).toBeInTheDocument();
-    });
-
-    it('deve destacar dado 20 em dourado', () => {
-      const criticalResult: DiceRollResultType = {
-        ...mockBaseResult,
-        rolls: [20, 15],
-        baseResult: 20,
-        finalResult: 25,
-        isCritical: true,
-      };
-
-      render(<DiceRollResult result={criticalResult} showBreakdown={true} />);
-
-      // Verifica que existem chips com valor 20 (pode haver mais de um)
-      const chips = screen.getAllByText('20');
-      expect(chips.length).toBeGreaterThan(0);
-    });
-
-    it('deve destacar dado 1 em vermelho', () => {
-      const failureResult: DiceRollResultType = {
-        ...mockBaseResult,
-        rolls: [1, 5],
-        baseResult: 1,
-        finalResult: 6,
-        isCriticalFailure: true,
-      };
-
-      render(<DiceRollResult result={failureResult} showBreakdown={true} />);
-
-      // Verifica que existe um chip com valor 1
-      const oneChips = screen.getAllByText('1');
-      expect(oneChips.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('Tipos de Rolagem', () => {
-    it('deve exibir tag de vantagem quando rollType é advantage', () => {
-      const advantageResult: DiceRollResultType = {
-        ...mockBaseResult,
-        rollType: 'advantage',
-      };
-
-      render(<DiceRollResult result={advantageResult} showBreakdown={true} />);
-
-      expect(screen.getByText(/com vantagem/i)).toBeInTheDocument();
-    });
-
-    it('deve exibir tag de desvantagem quando rollType é disadvantage', () => {
-      const disadvantageResult: DiceRollResultType = {
-        ...mockBaseResult,
-        rollType: 'disadvantage',
-      };
-
-      render(
-        <DiceRollResult result={disadvantageResult} showBreakdown={true} />
-      );
-
-      expect(screen.getByText(/com desvantagem/i)).toBeInTheDocument();
-    });
-
-    it('não deve exibir tag quando rollType é normal', () => {
-      render(<DiceRollResult result={mockBaseResult} showBreakdown={true} />);
-
-      expect(screen.queryByText(/com vantagem/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/com desvantagem/i)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Contexto', () => {
     it('deve exibir contexto quando fornecido', () => {
-      const resultWithContext: DiceRollResultType = {
-        ...mockBaseResult,
+      const result = createMockDicePoolResult({
         context: 'Teste de Acrobacia',
-      };
-
-      render(
-        <DiceRollResult result={resultWithContext} showBreakdown={true} />
-      );
+      });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
 
       expect(screen.getByText('Contexto:')).toBeInTheDocument();
       expect(screen.getByText('Teste de Acrobacia')).toBeInTheDocument();
     });
 
-    it('não deve exibir contexto quando não fornecido', () => {
-      render(<DiceRollResult result={mockBaseResult} showBreakdown={true} />);
+    it('deve exibir timestamp formatado', () => {
+      const mockDate = new Date('2024-01-15T14:30:45');
+      const result = createMockDicePoolResult({ timestamp: mockDate });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      expect(screen.getByText(/14:30:45/)).toBeInTheDocument();
+    });
+
+    it('deve exibir modificador de dados quando presente', () => {
+      const result = createMockDicePoolResult({ diceModifier: 2 });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      expect(screen.getByText('+2d')).toBeInTheDocument();
+    });
+
+    it('deve exibir modificador negativo de dados', () => {
+      const result = createMockDicePoolResult({ diceModifier: -1 });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      expect(screen.getByText('-1d')).toBeInTheDocument();
+    });
+
+    it('deve usar cor de erro para 0 sucessos', () => {
+      const result = createMockDicePoolResult({ netSuccesses: 0 });
+      renderWithTheme(<DiceRollResult result={result} />);
+
+      const chip = screen.getByText('0✶ FALHA');
+      expect(chip.closest('.MuiChip-root')).toHaveClass('MuiChip-colorError');
+    });
+
+    it('deve comparar com requiredSuccesses quando fornecido', () => {
+      const result = createMockDicePoolResult({
+        netSuccesses: 2,
+        successes: 2,
+        cancellations: 0,
+      });
+      renderWithTheme(<DiceRollResult result={result} requiredSuccesses={3} />);
+
+      // 2 is less than required 3, but should still show success count
+      expect(screen.getByLabelText(/2 sucessos/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Damage Result Display', () => {
+    it('deve renderizar fórmula de dano', () => {
+      const result = createMockDamageDiceRollResult({ formula: '3d8+2' });
+      renderWithTheme(<DiceRollResult result={result} />);
+
+      expect(screen.getByText('Dano:')).toBeInTheDocument();
+      expect(screen.getByText('3d8+2')).toBeInTheDocument();
+    });
+
+    it('deve exibir resultado final de dano', () => {
+      const result = createMockDamageDiceRollResult({ finalResult: 18 });
+      renderWithTheme(<DiceRollResult result={result} />);
+
+      expect(screen.getByLabelText(/dano: 18/i)).toBeInTheDocument();
+    });
+
+    it('deve exibir tag de crítico quando isCritical é true', () => {
+      const result = createMockDamageDiceRollResult({ isCritical: true });
+      renderWithTheme(<DiceRollResult result={result} />);
+
+      expect(screen.getByText('CRÍTICO!')).toBeInTheDocument();
+    });
+
+    it('deve exibir dados de dano no breakdown', () => {
+      const result = createMockDamageDiceRollResult({ rolls: [4, 5, 6] });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      expect(screen.getByText('4')).toBeInTheDocument();
+      expect(screen.getByText('5')).toBeInTheDocument();
+      expect(screen.getByText('6')).toBeInTheDocument();
+    });
+
+    it('deve exibir cálculo de dano no breakdown', () => {
+      const result = createMockDamageDiceRollResult({
+        baseResult: 9,
+        modifier: 3,
+        finalResult: 12,
+      });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      expect(screen.getByText('Cálculo:')).toBeInTheDocument();
+      // Text is split by elements, check individual parts
+      expect(screen.getByText('9')).toBeInTheDocument();
+    });
+
+    it('deve exibir contexto de dano quando fornecido', () => {
+      const result = createMockDamageDiceRollResult({
+        context: 'Espada Longa',
+      });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      expect(screen.getByText('Espada Longa')).toBeInTheDocument();
+    });
+
+    it('não deve exibir breakdown quando showBreakdown é false', () => {
+      const result = createMockDamageDiceRollResult();
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={false} />);
+
+      expect(screen.queryByText('Cálculo:')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Custom Result Display', () => {
+    it('deve renderizar fórmula customizada', () => {
+      const result = createMockCustomDiceResult({ formula: '2d10+5' });
+      renderWithTheme(<DiceRollResult result={result} />);
+
+      expect(screen.getByText('Fórmula:')).toBeInTheDocument();
+      expect(screen.getByText('2d10+5')).toBeInTheDocument();
+    });
+
+    it('deve exibir total da rolagem customizada', () => {
+      const result = createMockCustomDiceResult({ total: 25 });
+      renderWithTheme(<DiceRollResult result={result} />);
+
+      expect(screen.getByText('25')).toBeInTheDocument();
+    });
+
+    it('deve exibir dados no breakdown', () => {
+      const result = createMockCustomDiceResult({ rolls: [8, 7] });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      expect(screen.getByText('8')).toBeInTheDocument();
+      expect(screen.getByText('7')).toBeInTheDocument();
+    });
+
+    it('deve exibir contexto quando fornecido', () => {
+      const result = createMockCustomDiceResult({ context: 'Rolagem Livre' });
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={true} />);
+
+      expect(screen.getByText('Rolagem Livre')).toBeInTheDocument();
+    });
+
+    it('não deve exibir breakdown quando showBreakdown é false', () => {
+      const result = createMockCustomDiceResult();
+      renderWithTheme(<DiceRollResult result={result} showBreakdown={false} />);
 
       expect(screen.queryByText('Contexto:')).not.toBeInTheDocument();
     });
   });
 
-  describe('Modificadores', () => {
-    it('deve exibir modificador positivo corretamente', () => {
-      const resultWithPositiveMod: DiceRollResultType = {
-        ...mockBaseResult,
-        modifier: 5,
-        finalResult: 20,
-      };
-
-      render(
-        <DiceRollResult result={resultWithPositiveMod} showBreakdown={true} />
-      );
-
-      expect(screen.getByText(/\+5 \(modificador\)/i)).toBeInTheDocument();
-    });
-
-    it('deve exibir modificador negativo corretamente', () => {
-      const resultWithNegativeMod: DiceRollResultType = {
-        ...mockBaseResult,
-        modifier: -3,
-        baseResult: 15,
-        finalResult: 12,
-      };
-
-      render(
-        <DiceRollResult result={resultWithNegativeMod} showBreakdown={true} />
-      );
-
-      expect(screen.getByText(/-3 \(modificador\)/i)).toBeInTheDocument();
-    });
-
-    it('deve exibir modificador zero corretamente', () => {
-      const resultWithZeroMod: DiceRollResultType = {
-        ...mockBaseResult,
-        modifier: 0,
-        baseResult: 15,
-        finalResult: 15,
-      };
-
-      render(
-        <DiceRollResult result={resultWithZeroMod} showBreakdown={true} />
-      );
-
-      // Não deve exibir modificador quando é 0
-      expect(screen.queryByText(/modificador/i)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Rolagem de Dano', () => {
-    it('deve exibir rolagem de dano com d6', () => {
-      const damageResult: DiceRollResultType = {
-        formula: '2d6+3',
-        rolls: [4, 5],
-        diceType: 6,
-        diceCount: 2,
-        modifier: 3,
-        baseResult: 9,
-        finalResult: 12,
-        timestamp: new Date(),
-        rollType: 'normal',
-      };
-
-      render(<DiceRollResult result={damageResult} />);
-
-      expect(screen.getByText('2d6+3')).toBeInTheDocument();
-      expect(screen.getByLabelText('Resultado final: 12')).toBeInTheDocument();
-    });
-
-    it('deve exibir todos os dados de dano rolados', () => {
-      const damageResult: DiceRollResultType = {
-        formula: '3d8+2',
-        rolls: [3, 7, 5],
-        diceType: 8,
-        diceCount: 3,
-        modifier: 2,
-        baseResult: 15,
-        finalResult: 17,
-        timestamp: new Date(),
-        rollType: 'normal',
-      };
-
-      render(<DiceRollResult result={damageResult} showBreakdown={true} />);
-
-      expect(screen.getByText('3')).toBeInTheDocument();
-      expect(screen.getByText('7')).toBeInTheDocument();
-      expect(screen.getByText('5')).toBeInTheDocument();
-    });
-  });
-
   describe('Animações', () => {
-    it('deve aplicar animação quando animate é true', () => {
-      const { container } = render(
-        <DiceRollResult result={mockBaseResult} animate={true} />
+    it('deve aplicar animação quando animate é true (pool)', () => {
+      const result = createMockDicePoolResult();
+      const { container } = renderWithTheme(
+        <DiceRollResult result={result} animate={true} />
       );
 
-      const paper = container.querySelector('[class*="MuiPaper"]');
-      // Verifica que a animação foi aplicada (MUI aplica via className)
-      expect(paper).toBeInTheDocument();
+      const paper = container.querySelector('.MuiPaper-root');
+      // Animation should NOT be 'none'
+      expect(paper?.getAttribute('style')).not.toContain('animation: none');
     });
 
-    it('não deve aplicar animação quando animate é false', () => {
-      const { container } = render(
-        <DiceRollResult result={mockBaseResult} animate={false} />
+    it('deve não aplicar animação quando animate é false (pool)', () => {
+      const result = createMockDicePoolResult();
+      const { container } = renderWithTheme(
+        <DiceRollResult result={result} animate={false} />
       );
 
-      const paper = container.querySelector('[class*="MuiPaper"]');
-      expect(paper).toBeInTheDocument();
+      const paper = container.querySelector('.MuiPaper-root');
+      expect(paper).toHaveStyle({ animation: 'none' });
+    });
+
+    it('deve aplicar animação para dano', () => {
+      const result = createMockDamageDiceRollResult();
+      const { container } = renderWithTheme(
+        <DiceRollResult result={result} animate={true} />
+      );
+
+      const paper = container.querySelector('.MuiPaper-root');
+      expect(paper?.getAttribute('style')).not.toContain('animation: none');
+    });
+
+    it('deve aplicar animação para custom', () => {
+      const result = createMockCustomDiceResult();
+      const { container } = renderWithTheme(
+        <DiceRollResult result={result} animate={true} />
+      );
+
+      const paper = container.querySelector('.MuiPaper-root');
+      expect(paper?.getAttribute('style')).not.toContain('animation: none');
     });
   });
 
-  describe('Atributo 0', () => {
-    it('deve exibir corretamente rolagem com atributo 0', () => {
-      const zeroAttrResult: DiceRollResultType = {
-        formula: '0d20+2 (2d20, menor)',
-        rolls: [8, 15],
-        diceType: 20,
-        diceCount: 0,
-        modifier: 2,
-        baseResult: 8,
-        finalResult: 10,
+  describe('Fallback para tipo desconhecido', () => {
+    it('deve exibir mensagem de erro para tipo desconhecido', () => {
+      // Creating an invalid result that doesn't match any type guard
+      const invalidResult = {
+        formula: 'invalid',
         timestamp: new Date(),
-        rollType: 'disadvantage',
-      };
+      } as any;
 
-      render(<DiceRollResult result={zeroAttrResult} />);
+      renderWithTheme(<DiceRollResult result={invalidResult} />);
 
-      expect(screen.getByText('0d20+2 (2d20, menor)')).toBeInTheDocument();
-      expect(screen.getByLabelText('Resultado final: 10')).toBeInTheDocument();
+      expect(
+        screen.getByText('Tipo de resultado desconhecido')
+      ).toBeInTheDocument();
     });
   });
 
-  describe('Dados Negativos', () => {
-    it('deve exibir corretamente rolagem com dados negativos', () => {
-      const negativeResult: DiceRollResultType = {
-        formula: '-2d20+3 (4d20, menor)',
-        rolls: [5, 12, 18, 7],
-        diceType: 20,
-        diceCount: -2,
-        modifier: 3,
-        baseResult: 5,
-        finalResult: 8,
-        timestamp: new Date(),
-        rollType: 'disadvantage',
-      };
+  describe('Múltiplos Sucessos', () => {
+    it('deve destacar múltiplos sucessos com borda verde', () => {
+      const result = createMockDicePoolResult({
+        netSuccesses: 4,
+        successes: 4,
+        cancellations: 0,
+      });
+      const { container } = renderWithTheme(<DiceRollResult result={result} />);
 
-      render(<DiceRollResult result={negativeResult} />);
+      const paper = container.querySelector('.MuiPaper-root');
+      // Should have higher elevation for multiple successes
+      expect(paper).toHaveClass('MuiPaper-elevation8');
+    });
 
-      expect(screen.getByText('-2d20+3 (4d20, menor)')).toBeInTheDocument();
-      expect(screen.getByLabelText('Resultado final: 8')).toBeInTheDocument();
+    it('deve ter elevação normal para poucos sucessos', () => {
+      const result = createMockDicePoolResult({
+        netSuccesses: 1,
+        successes: 1,
+        cancellations: 0,
+      });
+      const { container } = renderWithTheme(<DiceRollResult result={result} />);
+
+      const paper = container.querySelector('.MuiPaper-root');
+      expect(paper).toHaveClass('MuiPaper-elevation2');
     });
   });
 });
