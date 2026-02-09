@@ -73,6 +73,8 @@ export type {
   Skill,
   Skills,
   SkillUse,
+  SkillPoolCalculation,
+  SkillPoolFormula,
   SkillModifierCalculation,
   SkillRollFormula,
   DefaultUseAttributeOverrides,
