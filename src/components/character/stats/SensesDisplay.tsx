@@ -63,20 +63,17 @@ interface SenseCardProps {
 const SenseCard: React.FC<SenseCardProps> = ({ sense, keenSenseBonus }) => {
   const tooltipLines = [
     `${sense.useName} (Percepção):`,
-    `• Modificador base: ${sense.baseModifier >= 0 ? '+' : ''}${sense.baseModifier}`,
+    `• Dados base: ${sense.baseDice}${sense.dieSize}`,
   ];
 
   if (keenSenseBonus > 0) {
-    tooltipLines.push(`• Sentido Aguçado: +${keenSenseBonus}`);
+    tooltipLines.push(`• Sentido Aguçado: +${keenSenseBonus}d`);
   }
 
   tooltipLines.push('━━━━━━━━━━━━━━━━━');
-  tooltipLines.push(
-    `Total: ${sense.totalModifier >= 0 ? '+' : ''}${sense.totalModifier}`
-  );
   tooltipLines.push(`Rolagem: ${sense.formula}`);
 
-  if (sense.takeLowest) {
+  if (sense.isPenaltyRoll) {
     tooltipLines.push('⚠️ Escolhe o menor resultado');
   }
 
@@ -128,7 +125,7 @@ const SenseCard: React.FC<SenseCardProps> = ({ sense, keenSenseBonus }) => {
           variant="body1"
           sx={{
             fontWeight: 'bold',
-            color: sense.takeLowest ? 'error.main' : 'text.primary',
+            color: sense.isPenaltyRoll ? 'error.main' : 'text.primary',
           }}
         >
           {sense.formula}
