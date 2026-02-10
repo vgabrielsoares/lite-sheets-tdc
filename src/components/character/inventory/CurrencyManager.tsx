@@ -396,7 +396,7 @@ export function CurrencyManager({
             denomination={currency.physical}
             onChange={handlePhysicalChange}
             disabled={disabled}
-            tooltip="Moedas que você carrega fisicamente. Contam para o peso."
+            tooltip="Moedas que você carrega fisicamente. Contam para o espaço."
           />
 
           {/* Moedas no Banco */}
@@ -410,7 +410,7 @@ export function CurrencyManager({
             denomination={currency.bank}
             onChange={handleBankChange}
             disabled={disabled}
-            tooltip="Moedas guardadas no banco. Não contam para o peso."
+            tooltip="Moedas guardadas no banco. Não contam para o espaço."
           />
         </Box>
 
@@ -431,10 +431,10 @@ export function CurrencyManager({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <ScaleIcon sx={{ fontSize: 18, color: 'info.main' }} />
                 <Typography variant="body2" color="text.secondary">
-                  Peso em Moedas
+                  Espaço em Moedas
                 </Typography>
                 <Tooltip
-                  title={`${COINS_PER_WEIGHT_UNIT} moedas físicas = 1 de peso`}
+                  title={`${COINS_PER_WEIGHT_UNIT} moedas físicas = 1 de espaço`}
                   placement="top"
                 >
                   <InfoOutlinedIcon
@@ -453,7 +453,7 @@ export function CurrencyManager({
                   variant="outlined"
                 />
                 <Typography variant="body1" fontWeight={600} color="info.main">
-                  {coinWeight.weight} peso
+                  {coinWeight.weight} espaço
                 </Typography>
               </Box>
             </Box>
