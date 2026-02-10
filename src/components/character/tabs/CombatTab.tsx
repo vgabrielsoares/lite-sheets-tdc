@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Box, Typography, Stack, Divider } from '@mui/material';
+import { Box, Typography, Stack, Divider, Alert, Chip } from '@mui/material';
 import type { Character, Resistances, SkillName } from '@/types';
 import type {
   Attack,
@@ -16,6 +16,7 @@ import {
   ActionEconomy,
   AttacksDisplay,
   CombatActionsReference,
+  CombatConditions,
   DefenseTest,
   DyingRounds,
   PPLimit,
@@ -24,6 +25,16 @@ import {
   VulnerabilityDie,
 } from '../combat';
 import { createDefaultCombatPenalties } from '@/utils/combatPenalties';
+import {
+  calculateConditionDicePenalties,
+  hasActivePenalties,
+  formatPenaltySummary,
+  type DicePenaltyMap,
+} from '@/utils/conditionEffects';
+import {
+  shouldConditionBeActive,
+  type ConditionId,
+} from '@/constants/conditions';
 
 export interface CombatTabProps {
   /** Dados do personagem */
@@ -92,6 +103,34 @@ export const CombatTab = React.memo(function CombatTab({
     // Fallback para o campo signatureSkill do personagem
     return character.signatureSkill;
   }, [character.skills, character.signatureSkill]);
+
+  /**
+   * Calcula penalidades de dados das condições ativas (manuais + automáticas)
+   */
+  const conditionDicePenalties = useMemo((): DicePenaltyMap => {
+    const AUTO_IDS: ConditionId[] = ['avariado', 'machucado', 'esgotado'];
+    const state = {
+      gaCurrent: character.combat.guard.current,
+      gaMax: character.combat.guard.max,
+      pvCurrent: character.combat.vitality.current,
+      pvMax: character.combat.vitality.max,
+      ppCurrent: character.combat.pp.current,
+    };
+    const activeAutoIds = AUTO_IDS.filter((id) =>
+      shouldConditionBeActive(id, state)
+    );
+    return calculateConditionDicePenalties(
+      character.combat.conditions,
+      activeAutoIds
+    );
+  }, [
+    character.combat.conditions,
+    character.combat.guard.current,
+    character.combat.guard.max,
+    character.combat.vitality.current,
+    character.combat.vitality.max,
+    character.combat.pp.current,
+  ]);
 
   /**
    * Handler para atualizar estado morrendo
@@ -255,6 +294,7 @@ export const CombatTab = React.memo(function CombatTab({
             skills={character.skills}
             characterLevel={character.level}
             signatureSkill={currentSignatureSkill}
+            conditionPenalties={conditionDicePenalties}
           />
         </Box>
 
@@ -270,6 +310,7 @@ export const CombatTab = React.memo(function CombatTab({
             penalties={
               character.combat.penalties ?? createDefaultCombatPenalties()
             }
+            conditionPenalties={conditionDicePenalties}
           />
         </Box>
 
@@ -331,7 +372,49 @@ export const CombatTab = React.memo(function CombatTab({
               onChange={handlePPLimitChange}
               onOpenDetails={onOpenPPLimit}
             />
+
+            {/* Condições Ativas */}
+            <CombatConditions
+              conditions={character.combat.conditions}
+              onChange={(conditions) =>
+                onUpdate({
+                  combat: {
+                    ...character.combat,
+                    conditions,
+                  },
+                })
+              }
+              gaCurrent={character.combat.guard.current}
+              gaMax={character.combat.guard.max}
+              pvCurrent={character.combat.vitality.current}
+              pvMax={character.combat.vitality.max}
+              ppCurrent={character.combat.pp.current}
+            />
           </Box>
+
+          {/* Resumo de penalidades de condições */}
+          {hasActivePenalties(conditionDicePenalties) && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              <Typography
+                variant="subtitle2"
+                fontWeight="bold"
+                sx={{ mb: 0.5 }}
+              >
+                Penalidades de condições ativas:
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {formatPenaltySummary(conditionDicePenalties).map((text) => (
+                  <Chip
+                    key={text}
+                    label={text}
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                  />
+                ))}
+              </Stack>
+            </Alert>
+          )}
         </Box>
 
         <Divider />
