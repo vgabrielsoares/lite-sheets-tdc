@@ -27,6 +27,14 @@ import {
   calculateCarryCapacity,
   getEquippedArmorType,
 } from '@/utils';
+import {
+  calculateConditionDicePenalties,
+  type DicePenaltyMap,
+} from '@/utils/conditionEffects';
+import {
+  shouldConditionBeActive,
+  type ConditionId,
+} from '@/constants/conditions';
 import { getSizeModifiers } from '@/constants/lineage';
 
 export interface MainTabProps {
@@ -196,6 +204,32 @@ export const MainTab = React.memo(function MainTab({
   // Obter modificadores de tamanho
   const sizeModifiers = getSizeModifiers(character.size);
 
+  // Calcular penalidades de dados das condições ativas (manuais + automáticas)
+  const conditionDicePenalties = useMemo((): DicePenaltyMap => {
+    const AUTO_IDS: ConditionId[] = ['avariado', 'machucado', 'esgotado'];
+    const state = {
+      gaCurrent: character.combat.guard.current,
+      gaMax: character.combat.guard.max,
+      pvCurrent: character.combat.vitality.current,
+      pvMax: character.combat.vitality.max,
+      ppCurrent: character.combat.pp.current,
+    };
+    const activeAutoIds = AUTO_IDS.filter((id) =>
+      shouldConditionBeActive(id, state)
+    );
+    return calculateConditionDicePenalties(
+      character.combat.conditions,
+      activeAutoIds
+    );
+  }, [
+    character.combat.conditions,
+    character.combat.guard.current,
+    character.combat.guard.max,
+    character.combat.vitality.current,
+    character.combat.vitality.max,
+    character.combat.pp.current,
+  ]);
+
   return (
     <Box>
       <Stack spacing={3}>
@@ -279,6 +313,7 @@ export const MainTab = React.memo(function MainTab({
           <AttributesDisplay
             attributes={character.attributes}
             onAttributeClick={onOpenAttribute}
+            conditionPenalties={conditionDicePenalties}
           />
         </Box>
 
@@ -324,6 +359,7 @@ export const MainTab = React.memo(function MainTab({
                 onSkillProficiencyBonusSlotsChange={(bonusSlots) =>
                   onUpdate({ skillProficiencyBonusSlots: bonusSlots })
                 }
+                conditionPenalties={conditionDicePenalties}
               />
             )}
         </Box>

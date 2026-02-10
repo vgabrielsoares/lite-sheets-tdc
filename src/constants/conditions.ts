@@ -114,12 +114,15 @@ export const CONDITIONS: readonly ConditionInfo[] = [
   {
     id: 'abatido',
     label: 'Abatido',
-    description:
-      'A criatura está desanimada e com moral baixo, afetando seu desempenho geral.',
+    description: 'A criatura sofre -1d em todos os testes.',
     icon: 'MoodBad',
     color: '#5D4037',
     type: 'negativa',
     category: 'corporal',
+    dicePenalty: {
+      targets: ['todos'],
+      modifier: -1,
+    },
   },
   {
     id: 'agarrado',
@@ -352,11 +355,15 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'amedrontado',
     label: 'Amedrontado',
     description:
-      'A criatura não pode se aproximar voluntariamente da fonte do medo. Pode sofrer penalidades em testes.',
+      'A criatura sofre -1d em testes de habilidade e não pode se aproximar da fonte do medo voluntariamente. Enquanto a fonte do medo estiver visível, ataques sofrem -2d.',
     icon: 'SentimentVeryDissatisfied',
     color: '#7B1FA2',
     type: 'negativa',
     category: 'mental',
+    dicePenalty: {
+      targets: ['todos'],
+      modifier: -1,
+    },
   },
   {
     id: 'enfeiticado',
@@ -437,11 +444,15 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'cego',
     label: 'Cego',
     description:
-      'A criatura não pode ver. Falha automaticamente em testes que requerem visão.',
+      'A criatura sofre -1d em testes de Reflexo e -1d em habilidades com Agilidade ou Corpo. Deslocamento reduzido pela metade. Falha em testes de Percepção com visão.',
     icon: 'VisibilityOff',
     color: '#37474F',
     type: 'negativa',
     category: 'sensorial',
+    dicePenalty: {
+      targets: ['agilidade', 'corpo'],
+      modifier: -1,
+    },
   },
   {
     id: 'desequilibrado',

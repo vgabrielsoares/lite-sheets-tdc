@@ -113,8 +113,8 @@ describe('conditionEffects', () => {
     });
 
     it('should handle conditions without dicePenalty gracefully', () => {
-      // Amedrontado has no dicePenalty
-      const conditions = [makeCondition('amedrontado')];
+      // Caído has no dicePenalty
+      const conditions = [makeCondition('caido')];
       const result = calculateConditionDicePenalties(conditions, []);
       expect(result).toEqual({});
     });
