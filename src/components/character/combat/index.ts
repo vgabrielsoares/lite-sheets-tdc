@@ -17,8 +17,13 @@ export type { AttackRollButtonProps } from './AttackRollButton';
 export { DamageRollButton } from './DamageRollButton';
 export type { DamageRollButtonProps } from './DamageRollButton';
 
+export { DefenseTest } from './DefenseTest';
+export type { DefenseTestProps } from './DefenseTest';
+
 export { CombinedAttackButton } from './CombinedAttackButton';
 export type { CombinedAttackButtonProps } from './CombinedAttackButton';
+
+export { CombatActionsReference } from './CombatActionsReference';
 
 export { AttacksDisplay } from './AttacksDisplay';
 export type { AttacksDisplayProps } from './AttacksDisplay';
@@ -37,3 +42,6 @@ export type { ResistancesDisplayProps } from './ResistancesDisplay';
 
 export { SavingThrows } from './SavingThrows';
 export type { SavingThrowsProps } from './SavingThrows';
+
+export { VulnerabilityDie } from './VulnerabilityDie';
+export type { VulnerabilityDieProps } from './VulnerabilityDie';

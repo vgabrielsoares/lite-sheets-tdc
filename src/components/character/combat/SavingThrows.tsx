@@ -102,7 +102,7 @@ const SAVING_THROWS: SavingThrowInfo[] = [
     icon: <AutoFixHighIcon />,
     color: '#2196F3', // azul
     description:
-      'A Sintonia é testada contra efeitos mágicos e espirituais que afetam a conexão do personagem com o sobrenatural.',
+      'A Sintonia é testada contra efeitos que interferem na energia do personagem, evitando corrupções e distorções da alma.',
   },
   {
     type: 'tenacidade',
@@ -139,15 +139,16 @@ const PROFICIENCY_LABELS: Record<ProficiencyLevel, string> = {
 };
 
 /**
- * Componente que exibe os 4 testes de resistência do personagem
+ * Componente que exibe os 5 testes de resistência do personagem
  *
  * Os testes de resistência são:
- * - Determinação (Presença) - Resistência mental
- * - Reflexo (Agilidade) - Reação a perigos
- * - Tenacidade (Força) - Resistência física
- * - Vigor (Constituição) - Resistência a doenças/venenos
+ * - Determinação (Mente) - Resistência mental, força de vontade
+ * - Reflexo (Agilidade) - Velocidade, equilíbrio ágil, reação
+ * - Sintonia (Essência) - Interferência energética, corrupção
+ * - Tenacidade (Corpo) - Força muscular, equilíbrio, resistência
+ * - Vigor (Corpo) - Saúde, integridade física
  *
- * Cada teste usa o sistema de habilidades existente para calcular o modificador.
+ * Cada teste usa o sistema de pool de dados v0.0.2.
  *
  * @example
  * ```tsx
@@ -258,7 +259,11 @@ export function SavingThrows({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
+            gridTemplateColumns: {
+              xs: '1fr 1fr',
+              sm: 'repeat(3, 1fr)',
+              md: 'repeat(5, 1fr)',
+            },
             gap: 2,
           }}
         >
