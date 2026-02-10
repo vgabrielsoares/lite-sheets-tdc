@@ -87,6 +87,16 @@ interface ResourceBlockProps {
   healDisabled?: boolean;
   healMinValue?: number;
   statusChip?: React.ReactNode;
+  /** Optional secondary heal action (e.g., redirect GA recovery to PV healing) */
+  onSecondaryHeal?: (amount: number) => void;
+  /** Label for secondary heal button, or function that receives typed amount */
+  secondaryHealLabel?: string | ((amount: number) => string);
+  /** Tooltip for secondary heal button */
+  secondaryHealTooltip?: string;
+  /** Minimum value for the secondary heal to be available */
+  secondaryHealMinValue?: number;
+  /** Whether the secondary heal option is visible */
+  secondaryHealVisible?: boolean;
 }
 
 const ResourceBlock = React.memo(function ResourceBlock({
@@ -105,6 +115,11 @@ const ResourceBlock = React.memo(function ResourceBlock({
   healDisabled = false,
   healMinValue = 1,
   statusChip,
+  onSecondaryHeal,
+  secondaryHealLabel,
+  secondaryHealTooltip,
+  secondaryHealMinValue = 1,
+  secondaryHealVisible = false,
 }: ResourceBlockProps) {
   const [damageValue, setDamageValue] = useState('');
   const [healValue, setHealValue] = useState('');
@@ -138,6 +153,20 @@ const ResourceBlock = React.memo(function ResourceBlock({
     },
     [handleHeal]
   );
+
+  const handleSecondaryHeal = useCallback(() => {
+    if (!onSecondaryHeal) return;
+    const amount = parseInt(healValue, 10);
+    if (!isNaN(amount) && amount >= secondaryHealMinValue) {
+      onSecondaryHeal(amount);
+      setHealValue('');
+    }
+  }, [healValue, secondaryHealMinValue, onSecondaryHeal]);
+
+  const parsedHealValue = parseInt(healValue, 10);
+  const showSecondaryHeal = onSecondaryHeal && secondaryHealVisible;
+  const isSecondaryHealDisabled =
+    isNaN(parsedHealValue) || parsedHealValue < secondaryHealMinValue;
 
   const displayMax = effectiveMax ?? max;
   const percent =
@@ -246,7 +275,7 @@ const ResourceBlock = React.memo(function ResourceBlock({
         </Box>
 
         {/* Sofrer / Recuperar controls */}
-        <Stack spacing={1}>
+        <Stack spacing={1} onClick={(e) => e.stopPropagation()}>
           {/* Sofrer (damage) */}
           <Stack direction="row" spacing={1} alignItems="center">
             <TextField
@@ -310,6 +339,35 @@ const ResourceBlock = React.memo(function ResourceBlock({
               </span>
             </Tooltip>
           </Stack>
+
+          {/* Secondary heal option (e.g., redirect GA recovery to PV) */}
+          {showSecondaryHeal && (
+            <Tooltip title={secondaryHealTooltip ?? ''} arrow>
+              <span>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="warning"
+                  onClick={handleSecondaryHeal}
+                  disabled={isSecondaryHealDisabled}
+                  sx={{ textTransform: 'none', width: '100%' }}
+                  aria-label={
+                    typeof secondaryHealLabel === 'function'
+                      ? secondaryHealLabel(
+                          isNaN(parsedHealValue) ? 0 : parsedHealValue
+                        )
+                      : secondaryHealLabel
+                  }
+                >
+                  {typeof secondaryHealLabel === 'function'
+                    ? secondaryHealLabel(
+                        isNaN(parsedHealValue) ? 0 : parsedHealValue
+                      )
+                    : secondaryHealLabel}
+                </Button>
+              </span>
+            </Tooltip>
+          )}
         </Stack>
       </CardContent>
     </Card>
@@ -506,6 +564,14 @@ export const GuardVitalityDisplay = React.memo(function GuardVitalityDisplay({
           onDamage={handleDamage}
           onHeal={handleHealGA}
           healDisabled={guard.current >= effectiveGAMax}
+          onSecondaryHeal={handleHealPV}
+          secondaryHealLabel={(amount) => {
+            const pvGain = Math.floor(amount / PV_RECOVERY_COST);
+            return `Curar PV (+${pvGain} PV)`;
+          }}
+          secondaryHealTooltip={`Cada ${PV_RECOVERY_COST} pontos de recuperação restaura 1 PV`}
+          secondaryHealMinValue={PV_RECOVERY_COST}
+          secondaryHealVisible={!pvIsFull}
         />
 
         {/* Vitalidade (PV) */}
