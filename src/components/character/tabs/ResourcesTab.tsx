@@ -119,10 +119,11 @@ export const ResourcesTab = React.memo(function ResourcesTab({
 
   const handleApplyRecovery = useCallback(
     (pvRecovery: number, ppRecovery: number) => {
-      const newCurrentPV = Math.min(
-        character.combat.hp.current + pvRecovery,
-        character.combat.hp.max
-      );
+      // v0.0.2: Recuperação aplica a GA (Guarda), não mais HP
+      const guard = character.combat.guard;
+      const newGuardCurrent = guard
+        ? Math.min(guard.current + pvRecovery, guard.max)
+        : 0;
       const newCurrentPP = Math.min(
         character.combat.pp.current + ppRecovery,
         character.combat.pp.max
@@ -131,10 +132,12 @@ export const ResourcesTab = React.memo(function ResourcesTab({
       onUpdate({
         combat: {
           ...character.combat,
-          hp: {
-            ...character.combat.hp,
-            current: newCurrentPV,
-          },
+          ...(guard && {
+            guard: {
+              ...guard,
+              current: newGuardCurrent,
+            },
+          }),
           pp: {
             ...character.combat.pp,
             current: newCurrentPP,

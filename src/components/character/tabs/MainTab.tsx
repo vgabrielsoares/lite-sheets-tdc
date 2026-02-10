@@ -13,9 +13,9 @@ import type {
 } from '@/types';
 import {
   BasicStats,
-  CompactHealthPoints,
+  CompactGuardVitality,
   CompactPowerPoints,
-  DefenseDisplay,
+  CompactDefenseTest,
   MovementDisplay,
   SensesDisplay,
 } from '../stats';
@@ -56,7 +56,7 @@ export interface MainTabProps {
   onOpenSize?: () => void;
 
   /**
-   * Callback para abrir detalhes de PV
+   * Callback para abrir detalhes de GA/PV
    */
   onOpenHP?: () => void;
 
@@ -65,7 +65,7 @@ export interface MainTabProps {
    */
   onOpenPP?: () => void;
   /**
-   * Callback para abrir detalhes de Defesa
+   * @deprecated Defesa é teste ativo em v0.0.2 — use a aba de Combate
    */
   onOpenDefense?: () => void;
   /**
@@ -164,7 +164,6 @@ export const MainTab = React.memo(function MainTab({
   onOpenSize,
   onOpenHP,
   onOpenPP,
-  onOpenDefense,
   onOpenMovement,
   onOpenSenses,
   onOpenAttribute,
@@ -194,9 +193,8 @@ export const MainTab = React.memo(function MainTab({
     [character.inventory.items]
   );
 
-  // Obter modificador de defesa pelo tamanho
+  // Obter modificadores de tamanho
   const sizeModifiers = getSizeModifiers(character.size);
-  const sizeDefenseBonus = sizeModifiers.defense;
 
   return (
     <Box>
@@ -212,7 +210,7 @@ export const MainTab = React.memo(function MainTab({
           />
         </Box>
 
-        {/* PV e PP lado a lado */}
+        {/* GA/PV e PP lado a lado */}
         <Box
           id="section-hp-pp"
           sx={{
@@ -221,17 +219,10 @@ export const MainTab = React.memo(function MainTab({
             gap: 2,
           }}
         >
-          {/* Pontos de Vida (Compacto) */}
-          <CompactHealthPoints
-            hp={character.combat.hp}
-            onChange={(hp) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  hp,
-                },
-              })
-            }
+          {/* Guarda + Vitalidade (Compacto) */}
+          <CompactGuardVitality
+            guard={character.combat.guard ?? { current: 0, max: 0 }}
+            vitality={character.combat.vitality ?? { current: 0, max: 0 }}
             onOpenDetails={onOpenHP}
           />
 
@@ -259,15 +250,16 @@ export const MainTab = React.memo(function MainTab({
             gap: 2,
           }}
         >
-          {/* Defesa */}
-          <DefenseDisplay
-            agilidade={character.attributes.agilidade}
-            sizeBonus={sizeDefenseBonus}
-            armorBonus={character.combat.defense.armorBonus}
-            shieldBonus={character.combat.defense.shieldBonus}
-            maxAgilityBonus={character.combat.defense.maxAgilityBonus}
-            otherBonuses={character.combat.defense.otherBonuses}
-            onOpenDetails={onOpenDefense}
+          {/* Teste de Defesa Ativo */}
+          <CompactDefenseTest
+            attributes={character.attributes}
+            skills={character.skills}
+            characterLevel={character.level}
+            signatureSkill={
+              Object.entries(character.skills).find(
+                ([, s]) => s.isSignature
+              )?.[0] as import('@/types').SkillName | undefined
+            }
           />
 
           {/* Deslocamento */}

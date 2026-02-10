@@ -9,23 +9,21 @@ import type {
   PPLimit as PPLimitType,
   ActionEconomy as ActionEconomyType,
   CombatPenalties,
+  VulnerabilityDie as VulnerabilityDieType,
 } from '@/types/combat';
-import { CompactHealthPoints, CompactPowerPoints } from '../stats';
+import { CompactPowerPoints, GuardVitalityDisplay } from '../stats';
 import {
   ActionEconomy,
   AttacksDisplay,
+  CombatActionsReference,
+  DefenseTest,
   DyingRounds,
-  MissPenalties,
   PPLimit,
   ResistancesDisplay,
   SavingThrows,
+  VulnerabilityDie,
 } from '../combat';
-import { getSizeModifiers } from '@/constants/lineage';
-import { calculateDefense } from '@/utils/calculations';
-import {
-  createDefaultCombatPenalties,
-  type CombatPenaltiesState,
-} from '@/utils/combatPenalties';
+import { createDefaultCombatPenalties } from '@/utils/combatPenalties';
 
 export interface CombatTabProps {
   /** Dados do personagem */
@@ -36,7 +34,7 @@ export interface CombatTabProps {
   onOpenHP?: () => void;
   /** Callback para abrir detalhes de PP */
   onOpenPP?: () => void;
-  /** Callback para abrir detalhes de Defesa */
+  /** @deprecated v0.0.2: Defesa agora é teste ativo, não tem sidebar */
   onOpenDefense?: () => void;
   /** Callback para abrir detalhes do Limite de PP */
   onOpenPPLimit?: () => void;
@@ -79,10 +77,6 @@ export const CombatTab = React.memo(function CombatTab({
   onOpenDefense,
   onOpenPPLimit,
 }: CombatTabProps) {
-  // Obter modificador de defesa pelo tamanho
-  const sizeModifiers = getSizeModifiers(character.size);
-  const sizeDefenseBonus = sizeModifiers.defense;
-
   /**
    * Encontra qual habilidade é atualmente a assinatura
    * Verifica tanto o campo signatureSkill quanto o flag isSignature nas skills
@@ -112,7 +106,8 @@ export const CombatTab = React.memo(function CombatTab({
           ? dyingState.currentRounds >= dyingState.maxRounds
             ? 'morto'
             : 'morrendo'
-          : character.combat.hp.current > 0
+          : character.combat.guard.current > 0 ||
+              character.combat.vitality.current > 0
             ? 'normal'
             : 'inconsciente',
       },
@@ -167,49 +162,6 @@ export const CombatTab = React.memo(function CombatTab({
     });
   };
 
-  /**
-   * Handler para atualizar penalidades de combate
-   */
-  const handlePenaltiesChange = (penalties: CombatPenaltiesState) => {
-    onUpdate({
-      combat: {
-        ...character.combat,
-        penalties,
-      },
-    });
-  };
-
-  /**
-   * Calcula a defesa base (sem penalidades de erro)
-   * Soma todos os bônus: tamanho, armadura, escudo, outros
-   * Aplica o limite de agilidade da armadura se houver
-   */
-  const baseDefense = useMemo(() => {
-    const agilidade = character.attributes.agilidade;
-    const maxAgilityBonus = character.combat.defense.maxAgilityBonus;
-
-    // Aplica o limite de agilidade da armadura se houver
-    const effectiveAgilityBonus =
-      maxAgilityBonus !== undefined
-        ? Math.min(agilidade, maxAgilityBonus)
-        : agilidade;
-
-    const otherBonusesTotal = character.combat.defense.otherBonuses.reduce(
-      (sum, mod) => sum + mod.value,
-      0
-    );
-    const totalBonuses =
-      sizeDefenseBonus +
-      character.combat.defense.armorBonus +
-      character.combat.defense.shieldBonus +
-      otherBonusesTotal;
-    return calculateDefense(effectiveAgilityBonus, totalBonuses);
-  }, [
-    character.attributes.agilidade,
-    sizeDefenseBonus,
-    character.combat.defense,
-  ]);
-
   return (
     <Box>
       {/* Header da seção */}
@@ -233,35 +185,31 @@ export const CombatTab = React.memo(function CombatTab({
           >
             Recursos Vitais
           </Typography>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 2,
-            }}
-          >
-            {/* Pontos de Vida */}
-            <CompactHealthPoints
-              hp={character.combat.hp}
-              onChange={(hp) =>
-                onUpdate({
-                  combat: {
-                    ...character.combat,
-                    hp,
-                    // Atualizar estado baseado em HP
-                    state:
-                      hp.current <= 0
-                        ? character.combat.dyingState.isDying
-                          ? 'morrendo'
-                          : 'inconsciente'
-                        : 'normal',
-                  },
-                })
-              }
-              onOpenDetails={onOpenHP}
-            />
 
-            {/* Pontos de Poder */}
+          {/* Guarda (GA) e Vitalidade (PV) */}
+          <GuardVitalityDisplay
+            guard={character.combat.guard}
+            vitality={character.combat.vitality}
+            onChange={(guard, vitality) =>
+              onUpdate({
+                combat: {
+                  ...character.combat,
+                  guard,
+                  vitality,
+                  state:
+                    vitality.current <= 0
+                      ? 'morrendo'
+                      : guard.current <= 0
+                        ? 'inconsciente'
+                        : 'normal',
+                },
+              })
+            }
+            onOpenDetails={onOpenHP}
+          />
+
+          {/* Pontos de Poder */}
+          <Box sx={{ mt: 2 }}>
             <CompactPowerPoints
               pp={character.combat.pp}
               onChange={(pp) =>
@@ -293,19 +241,20 @@ export const CombatTab = React.memo(function CombatTab({
             actionEconomy={character.combat.actionEconomy}
             onChange={handleActionEconomyChange}
           />
+          <Box sx={{ mt: 2 }}>
+            <CombatActionsReference />
+          </Box>
         </Box>
 
         <Divider />
 
-        {/* Seção 3: Defesa (com penalidades de erro - Issue 5.6) */}
+        {/* Seção 3: Teste de Defesa Ativo (v0.0.2 — substitui defesa fixa) */}
         <Box id="section-defense">
-          <MissPenalties
-            penalties={
-              character.combat.penalties ?? createDefaultCombatPenalties()
-            }
-            baseDefense={baseDefense}
-            onChange={handlePenaltiesChange}
-            onOpenDetails={onOpenDefense}
+          <DefenseTest
+            attributes={character.attributes}
+            skills={character.skills}
+            characterLevel={character.level}
+            signatureSkill={currentSignatureSkill}
           />
         </Box>
 
@@ -354,6 +303,19 @@ export const CombatTab = React.memo(function CombatTab({
               gap: 2,
             }}
           >
+            {/* Dado de Vulnerabilidade */}
+            <VulnerabilityDie
+              vulnerabilityDie={character.combat.vulnerabilityDie}
+              onChange={(vulnerabilityDie) =>
+                onUpdate({
+                  combat: {
+                    ...character.combat,
+                    vulnerabilityDie,
+                  },
+                })
+              }
+            />
+
             {/* Rodadas Morrendo */}
             <DyingRounds
               dyingState={character.combat.dyingState}
