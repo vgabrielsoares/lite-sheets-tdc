@@ -103,8 +103,8 @@ export default function DefenseSidebar({
   const [armors, setArmors] = React.useState<RegisteredArmor[]>(() =>
     loadArmors(
       character.id,
-      character.combat.defense.armorBonus,
-      character.combat.defense.maxAgilityBonus
+      character.combat.defense?.armorBonus ?? 0,
+      character.combat.defense?.maxAgilityBonus
     )
   );
 
@@ -118,8 +118,8 @@ export default function DefenseSidebar({
     if (open && !wasOpenRef.current) {
       const loadedArmors = loadArmors(
         character.id,
-        character.combat.defense.armorBonus,
-        character.combat.defense.maxAgilityBonus
+        character.combat.defense?.armorBonus ?? 0,
+        character.combat.defense?.maxAgilityBonus
       );
       setArmors(loadedArmors);
       hasSyncedRef.current = true;
@@ -129,8 +129,8 @@ export default function DefenseSidebar({
   }, [
     open,
     character.id,
-    character.combat.defense.armorBonus,
-    character.combat.defense.maxAgilityBonus,
+    character.combat.defense?.armorBonus,
+    character.combat.defense?.maxAgilityBonus,
   ]);
 
   // Persiste armaduras quando mudam
@@ -139,11 +139,11 @@ export default function DefenseSidebar({
   }, [armors, character.id]);
 
   const [shieldBonus, setShieldBonus] = React.useState<number>(
-    character.combat.defense.shieldBonus || 0
+    character.combat.defense?.shieldBonus || 0
   );
 
   const [otherBonuses, setOtherBonuses] = React.useState<Modifier[]>(
-    character.combat.defense.otherBonuses || []
+    character.combat.defense?.otherBonuses || []
   );
 
   // Estado para nova armadura
@@ -201,7 +201,8 @@ export default function DefenseSidebar({
       combat: {
         ...character.combat,
         defense: {
-          ...character.combat.defense,
+          base: 15,
+          ...(character.combat.defense ?? {}),
           armorBonus: active?.armorBonus || 0,
           maxAgilityBonus: active?.maxAgilityBonus ?? undefined,
           shieldBonus: debouncedDefenseState.shieldBonus,
