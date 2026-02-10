@@ -178,9 +178,10 @@ describe('AttributeSidebar', () => {
         />
       );
 
-      expect(screen.getByText('Defesa')).toBeInTheDocument();
+      // v0.0.2: Defense is now an active test, not a fixed value
+      expect(screen.getByText('Teste de Defesa')).toBeInTheDocument();
       expect(
-        screen.getByText(/Sua Agilidade contribui diretamente para sua Defesa/)
+        screen.getByText(/defesa é um teste ativo usando Reflexo/)
       ).toBeInTheDocument();
     });
 

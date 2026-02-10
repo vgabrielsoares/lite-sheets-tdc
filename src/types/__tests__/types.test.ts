@@ -188,8 +188,8 @@ describe('Type System', () => {
     });
 
     it('should have correct level 1 combat defaults', () => {
-      expect(DEFAULT_LEVEL_1_CHARACTER.combat?.hp.max).toBe(15);
-      expect(DEFAULT_LEVEL_1_CHARACTER.combat?.hp.current).toBe(15);
+      expect(DEFAULT_LEVEL_1_CHARACTER.combat?.guard.max).toBe(15);
+      expect(DEFAULT_LEVEL_1_CHARACTER.combat?.guard.current).toBe(15);
       expect(DEFAULT_LEVEL_1_CHARACTER.combat?.pp.max).toBe(2);
       expect(DEFAULT_LEVEL_1_CHARACTER.combat?.pp.current).toBe(2);
     });

@@ -57,6 +57,15 @@ function formatModifier(value: number | string): string {
 }
 
 /**
+ * Formata modificadores de dados (v0.0.2: +Xd/-Xd)
+ * Usado para habilidades, manobras de combate e rastreio
+ */
+function formatDiceModifier(value: number): string {
+  if (value === 0) return '0d';
+  return value > 0 ? `+${value}d` : `${value}d`;
+}
+
+/**
  * Formata alcance em metros
  */
 function formatReach(reach: number): string {
@@ -74,12 +83,11 @@ function formatSquares(squares: number): string {
 }
 
 /**
- * Formata multiplicador de peso
+ * Formata modificador aditivo de espaço de carga
  */
-function formatCarryingCapacity(multiplier: number): string {
-  if (multiplier === 1) return '×1 (normal)';
-  if (multiplier < 1) return `×${multiplier} (reduzido)`;
-  return `×${multiplier} (aumentado)`;
+function formatCarryingCapacity(value: number): string {
+  if (value === 0) return '0 (normal)';
+  return value > 0 ? `+${value} espaços` : `${value} espaços`;
 }
 
 /**
@@ -88,12 +96,12 @@ function formatCarryingCapacity(multiplier: number): string {
  * Exibe todos os modificadores aplicados pelo tamanho da criatura:
  * - Alcance
  * - Modificador de dano corpo-a-corpo
- * - Modificador de defesa
+ * - Modificador de Guarda (GA)
  * - Quadrados ocupados
- * - Modificador de peso carregável
- * - Modificador de manobras de combate
- * - Modificador de ND de rastreio
- * - Modificadores de habilidades (Acrobacia, Atletismo, Furtividade, Reflexos, Tenacidade)
+ * - Modificador de Espaço Carregável
+ * - Modificador de manobras de combate (em dados)
+ * - Modificador de ND de rastreio (em dados)
+ * - Modificadores de habilidades em dados (Acrobacia, Atletismo, Furtividade, Reflexo, Tenacidade)
  *
  * Também exibe uma tabela de referência com todos os tamanhos para comparação.
  *
@@ -195,14 +203,14 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                     alignItems: 'center',
                   }}
                 >
-                  <Typography variant="body2">Defesa</Typography>
+                  <Typography variant="body2">Guarda (GA)</Typography>
                   <Chip
-                    label={formatModifier(modifiers.defense)}
+                    label={formatModifier(modifiers.guard)}
                     size="small"
                     color={
-                      modifiers.defense > 0
+                      modifiers.guard > 0
                         ? 'success'
-                        : modifiers.defense < 0
+                        : modifiers.guard < 0
                           ? 'error'
                           : 'default'
                     }
@@ -217,7 +225,7 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                 >
                   <Typography variant="body2">Manobras de Combate</Typography>
                   <Chip
-                    label={formatModifier(modifiers.combatManeuvers)}
+                    label={formatDiceModifier(modifiers.combatManeuvers)}
                     size="small"
                     color={
                       modifiers.combatManeuvers > 0
@@ -258,14 +266,14 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                     alignItems: 'center',
                   }}
                 >
-                  <Typography variant="body2">Peso Carregável</Typography>
+                  <Typography variant="body2">Espaço Carregável</Typography>
                   <Chip
                     label={formatCarryingCapacity(modifiers.carryingCapacity)}
                     size="small"
                     color={
-                      modifiers.carryingCapacity > 1
+                      modifiers.carryingCapacity > 0
                         ? 'success'
-                        : modifiers.carryingCapacity < 1
+                        : modifiers.carryingCapacity < 0
                           ? 'error'
                           : 'default'
                     }
@@ -287,9 +295,9 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                     alignItems: 'center',
                   }}
                 >
-                  <Typography variant="body2">ND de Rastreio</Typography>
+                  <Typography variant="body2">Mod. de Rastreio</Typography>
                   <Chip
-                    label={formatModifier(modifiers.trackingDC)}
+                    label={formatDiceModifier(modifiers.trackingDC)}
                     size="small"
                     color={
                       modifiers.trackingDC > 0
@@ -306,7 +314,7 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
             {/* Modificadores de Habilidades */}
             <Box>
               <Typography variant="subtitle2" color="primary" gutterBottom>
-                Modificadores de Habilidades
+                Modificadores de Habilidades (em dados)
               </Typography>
               <Stack spacing={1}>
                 <Box
@@ -318,7 +326,9 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                 >
                   <Typography variant="body2">Acrobacia</Typography>
                   <Chip
-                    label={formatModifier(modifiers.skillModifiers.acrobacia)}
+                    label={formatDiceModifier(
+                      modifiers.skillModifiers.acrobacia
+                    )}
                     size="small"
                     color={
                       modifiers.skillModifiers.acrobacia > 0
@@ -338,7 +348,9 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                 >
                   <Typography variant="body2">Atletismo</Typography>
                   <Chip
-                    label={formatModifier(modifiers.skillModifiers.atletismo)}
+                    label={formatDiceModifier(
+                      modifiers.skillModifiers.atletismo
+                    )}
                     size="small"
                     color={
                       modifiers.skillModifiers.atletismo > 0
@@ -358,7 +370,9 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                 >
                   <Typography variant="body2">Furtividade</Typography>
                   <Chip
-                    label={formatModifier(modifiers.skillModifiers.furtividade)}
+                    label={formatDiceModifier(
+                      modifiers.skillModifiers.furtividade
+                    )}
                     size="small"
                     color={
                       modifiers.skillModifiers.furtividade > 0
@@ -378,7 +392,7 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                 >
                   <Typography variant="body2">Reflexo</Typography>
                   <Chip
-                    label={formatModifier(modifiers.skillModifiers.reflexo)}
+                    label={formatDiceModifier(modifiers.skillModifiers.reflexo)}
                     size="small"
                     color={
                       modifiers.skillModifiers.reflexo > 0
@@ -398,7 +412,9 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                 >
                   <Typography variant="body2">Tenacidade</Typography>
                   <Chip
-                    label={formatModifier(modifiers.skillModifiers.tenacidade)}
+                    label={formatDiceModifier(
+                      modifiers.skillModifiers.tenacidade
+                    )}
                     size="small"
                     color={
                       modifiers.skillModifiers.tenacidade > 0
@@ -439,7 +455,7 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                     <strong>Dano</strong>
                   </TableCell>
                   <TableCell align="center">
-                    <strong>Defesa</strong>
+                    <strong>Guarda</strong>
                   </TableCell>
                   <TableCell align="center">
                     <strong>Carga</strong>
@@ -506,19 +522,21 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                         <Typography
                           variant="body2"
                           color={
-                            sizeModifiers.defense > 0
+                            sizeModifiers.guard > 0
                               ? 'success.main'
-                              : sizeModifiers.defense < 0
+                              : sizeModifiers.guard < 0
                                 ? 'error.main'
                                 : 'text.primary'
                           }
                         >
-                          {formatModifier(sizeModifiers.defense)}
+                          {formatModifier(sizeModifiers.guard)}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
                         <Typography variant="body2">
-                          ×{sizeModifiers.carryingCapacity}
+                          {formatCarryingCapacity(
+                            sizeModifiers.carryingCapacity
+                          )}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
@@ -532,7 +550,7 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                                 : 'text.primary'
                           }
                         >
-                          {formatModifier(sizeModifiers.combatManeuvers)}
+                          {formatDiceModifier(sizeModifiers.combatManeuvers)}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -558,20 +576,23 @@ export function SizeSidebar({ open, onClose, currentSize }: SizeSidebarProps) {
                   ataques corpo-a-corpo
                 </li>
                 <li>
-                  <strong>Defesa:</strong> Modificador aplicado à sua Defesa
-                  total
+                  <strong>Guarda:</strong> Modificador aplicado ao seu GA máximo
                 </li>
                 <li>
-                  <strong>Carga:</strong> Multiplicador da sua capacidade de
-                  carga base
+                  <strong>Espaço:</strong> Modificador aditivo na capacidade de
+                  carga base (5 + Corpo × 5)
                 </li>
                 <li>
-                  <strong>Manobras:</strong> Modificador em testes de manobras
-                  de combate
+                  <strong>Manobras:</strong> Modificador em dados nos testes de
+                  manobras de combate
                 </li>
                 <li>
-                  <strong>ND de Rastreio:</strong> Modificador na dificuldade de
-                  rastrear você
+                  <strong>Mod. de Rastreio:</strong> Modificador em dados na
+                  dificuldade de rastrear você
+                </li>
+                <li>
+                  <strong>Habilidades:</strong> Modificadores em dados (+Xd/-Xd)
+                  aplicados aos testes de habilidade relevantes
                 </li>
               </ul>
             </Typography>

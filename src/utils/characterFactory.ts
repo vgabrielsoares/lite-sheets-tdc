@@ -19,7 +19,12 @@ import type {
   HealthPoints,
   PowerPoints,
   Attack,
+  GuardPoints,
+  VitalityPoints,
+  VulnerabilityDie,
 } from '@/types/combat';
+import { DEFAULT_GA_LEVEL_1 } from '@/types/combat';
+import { calculateVitality } from '@/utils/calculations';
 import type {
   Inventory,
   InventoryItem,
@@ -76,7 +81,41 @@ function createDefaultSkills(): Skills {
 }
 
 /**
- * Cria pontos de vida padrão de nível 1
+ * Cria Guarda (GA) padrão de nível 1
+ * Base: 15 GA máximo e atual
+ */
+function createDefaultGuard(): GuardPoints {
+  return {
+    current: DEFAULT_GA_LEVEL_1,
+    max: DEFAULT_GA_LEVEL_1,
+  };
+}
+
+/**
+ * Cria Vitalidade (PV) padrão de nível 1
+ * Base: floor(GA_max / 3) = 5
+ */
+function createDefaultVitality(): VitalityPoints {
+  const pvMax = calculateVitality(DEFAULT_GA_LEVEL_1);
+  return {
+    current: pvMax,
+    max: pvMax,
+  };
+}
+
+/**
+ * Cria dado de vulnerabilidade padrão (inativo, começa em d20)
+ */
+function createDefaultVulnerabilityDie(): VulnerabilityDie {
+  return {
+    currentDie: 'd20',
+    isActive: false,
+  };
+}
+
+/**
+ * @deprecated Substituído por createDefaultGuard + createDefaultVitality em v0.0.2
+ * Cria pontos de vida padrão de nível 1 (legado)
  * Base: 15 PV máximo e atual, 0 temporário
  */
 function createDefaultHP(): HealthPoints {
@@ -108,8 +147,8 @@ export const UNARMED_ATTACK_NAME = 'Ataque Desarmado';
  * Cria o ataque desarmado padrão
  * Todos os personagens têm esse ataque por padrão
  * - Usa Corpo e o uso "Atacar"
- * - Crítico: 20/+1
  * - Dano: 1d2 + Corpo
+ * - Custo: 1 ação (▶)
  * - Não pode ser deletado
  * - Nome não pode ser alterado
  */
@@ -120,25 +159,18 @@ function createUnarmedAttack(): Attack {
     attackSkill: 'luta',
     attackSkillUseId: 'atacar',
     attackAttribute: 'corpo',
-    attackBonus: 0,
+    attackDiceModifier: 0,
     damageRoll: {
       quantity: 1,
       type: 'd2',
       modifier: 0,
     },
     damageType: 'impacto',
-    criticalRange: 20,
-    criticalDamage: {
-      quantity: 1,
-      type: 'd2',
-      modifier: 0,
-    },
     range: 'Adjacente/Toque (1m)',
     description:
       'Um ataque corpo a corpo desarmado usando punhos, chutes ou outras partes do corpo.',
     ppCost: 0,
-    actionType: 'maior',
-    numberOfAttacks: 1,
+    actionCost: 1, // ▶ (1 ação)
     addAttributeToDamage: true,
     doubleAttributeDamage: false,
     isDefaultAttack: true,
@@ -147,10 +179,18 @@ function createUnarmedAttack(): Attack {
 
 /**
  * Cria dados de combate padrão de nível 1
+ *
+ * Mudanças v0.0.2:
+ * - HP → GA (Guarda) + PV (Vitalidade)
+ * - Defesa fixa → removida (teste ativo)
+ * - Ação Maior/Menor → Turno Rápido/Lento
+ * - Dado de vulnerabilidade adicionado
+ * - Iniciativa removida (turno é voluntário)
  */
 function createDefaultCombat(): CombatData {
   return {
-    hp: createDefaultHP(),
+    guard: createDefaultGuard(),
+    vitality: createDefaultVitality(),
     pp: createDefaultPP(),
     state: 'normal',
     dyingState: {
@@ -158,20 +198,12 @@ function createDefaultCombat(): CombatData {
       currentRounds: 0,
       maxRounds: 3, // 2 + Corpo (1)
     },
+    vulnerabilityDie: createDefaultVulnerabilityDie(),
     actionEconomy: {
-      majorAction: true,
-      minorAction1: true,
-      minorAction2: true,
-      reaction: true,
-      defensiveReaction: true,
+      turnType: 'rapido',
+      actions: [true, true], // ▶▶ (2 ações para turno rápido)
+      reaction: true, // ↩ (1 reação por rodada)
       extraActions: [],
-    },
-    defense: {
-      base: 15,
-      armorBonus: 0,
-      shieldBonus: 0,
-      otherBonuses: [],
-      total: 16, // 15 + Agilidade (1)
     },
     ppLimit: {
       base: 2, // Nível (1) + Essência (1)
@@ -183,22 +215,27 @@ function createDefaultCombat(): CombatData {
       {
         type: 'determinacao',
         skill: 'determinacao',
-        modifier: 0,
+        diceModifier: 0,
       },
       {
         type: 'reflexo',
         skill: 'reflexo',
-        modifier: 0,
+        diceModifier: 0,
+      },
+      {
+        type: 'sintonia',
+        skill: 'sintonia',
+        diceModifier: 0,
       },
       {
         type: 'tenacidade',
         skill: 'tenacidade',
-        modifier: 0,
+        diceModifier: 0,
       },
       {
         type: 'vigor',
         skill: 'vigor',
-        modifier: 0,
+        diceModifier: 0,
       },
     ],
     resistances: {
@@ -209,9 +246,6 @@ function createDefaultCombat(): CombatData {
       conditionImmunities: [],
     },
     conditions: [],
-    initiative: {
-      modifier: 0,
-    },
     penalties: {
       defensePenalty: 0,
       savingThrowPenalties: {

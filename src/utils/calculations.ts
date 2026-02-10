@@ -5,9 +5,18 @@
  * - Always round DOWN for fractional results
  * - Attributes range from 0 to 5 by default (can exceed in special cases, max 6)
  * - Attribute value 0: Roll 2d6 and take LOWEST result
+ *
+ * v0.0.2: GA (Guarda) + PV (Vitalidade) replace old HP system.
+ * Defense is now an active test, not a fixed value.
  */
 
 import type { ProficiencyLevel } from '@/types';
+import type {
+  GuardPoints,
+  VitalityPoints,
+  VulnerabilityDieSize,
+} from '@/types/combat';
+import { VULNERABILITY_DIE_STEPS, PV_RECOVERY_COST } from '@/types/combat';
 import { SKILL_PROFICIENCY_LEVELS } from '@/constants';
 
 /**
@@ -28,23 +37,241 @@ export function roundDown(value: number): number {
 }
 
 /**
- * Calculates the Defense value for a character
+ * @deprecated Defesa fixa não existe mais em v0.0.2. Defesa agora é teste ativo (Reflexo ou Vigor).
+ * Mantido para compatibilidade.
+ *
+ * Calculates the Defense value for a character (LEGACY)
  * Formula: 15 + Agilidade + outros bônus
- *
- * @param agilidade - The Agilidade (Agility) attribute value
- * @param otherBonuses - Additional bonuses from equipment, spells, etc. (default: 0)
- * @returns The total Defense value
- *
- * @example
- * calculateDefense(2); // 17 (15 + 2)
- * calculateDefense(3, 2); // 20 (15 + 3 + 2)
- * calculateDefense(0); // 15 (15 + 0)
  */
 export function calculateDefense(
   agilidade: number,
   otherBonuses: number = 0
 ): number {
   return 15 + agilidade + otherBonuses;
+}
+
+// ─── GA (Guarda) & PV (Vitalidade) ─────────────────────────
+
+/**
+ * Calculates maximum Vitality Points (PV) from maximum Guard Points (GA)
+ * Formula: floor(GA_max / 3)
+ *
+ * @param gaMax - Maximum Guard Points
+ * @returns Maximum Vitality Points
+ *
+ * @example
+ * calculateVitality(15); // 5 (floor(15/3))
+ * calculateVitality(20); // 6 (floor(20/3))
+ * calculateVitality(16); // 5 (floor(16/3))
+ */
+export function calculateVitality(gaMax: number): number {
+  return roundDown(gaMax / 3);
+}
+
+/**
+ * Applies damage to the Guard/Vitality system.
+ * Damage hits GA first; overflow goes to PV.
+ *
+ * @param guard - Current guard state
+ * @param vitality - Current vitality state
+ * @param damage - Amount of raw damage (positive number)
+ * @returns Updated guard and vitality states
+ *
+ * @example
+ * // Damage absorbed by GA only
+ * applyDamageToGuardVitality({current: 10, max: 15}, {current: 5, max: 5}, 5);
+ * // → guard.current = 5, vitality.current = 5
+ *
+ * // Damage overflows from GA to PV
+ * applyDamageToGuardVitality({current: 3, max: 15}, {current: 5, max: 5}, 7);
+ * // → guard.current = 0, vitality.current = 1
+ */
+export function applyDamageToGuardVitality(
+  guard: GuardPoints,
+  vitality: VitalityPoints,
+  damage: number
+): { guard: GuardPoints; vitality: VitalityPoints } {
+  if (damage <= 0) return { guard, vitality };
+
+  let remaining = damage;
+  let newTemporary = guard.temporary ?? 0;
+  let newGuardCurrent = guard.current;
+  let newVitalityCurrent = vitality.current;
+
+  // Damage hits temporary GA first
+  if (newTemporary > 0) {
+    const tempDamage = Math.min(newTemporary, remaining);
+    newTemporary -= tempDamage;
+    remaining -= tempDamage;
+  }
+
+  // Then hits regular GA
+  if (remaining > 0 && newGuardCurrent > 0) {
+    const guardDamage = Math.min(newGuardCurrent, remaining);
+    newGuardCurrent -= guardDamage;
+    remaining -= guardDamage;
+  }
+
+  // Overflow goes to PV
+  if (remaining > 0) {
+    newVitalityCurrent = Math.max(0, newVitalityCurrent - remaining);
+  }
+
+  return {
+    guard: { ...guard, current: newGuardCurrent, temporary: newTemporary },
+    vitality: { ...vitality, current: newVitalityCurrent },
+  };
+}
+
+/**
+ * Applies healing to Guard Points (GA).
+ * Cannot exceed max.
+ *
+ * @param guard - Current guard state
+ * @param amount - Amount to heal (positive number)
+ * @returns Updated guard state
+ */
+export function healGuard(guard: GuardPoints, amount: number): GuardPoints {
+  if (amount <= 0) return guard;
+  return {
+    ...guard,
+    current: Math.min(guard.current + amount, guard.max),
+  };
+}
+
+/**
+ * Applies healing to Vitality Points (PV).
+ * PV recovery costs 5 recovery points per 1 PV.
+ * Option should only be available when PV < PV_max AND recovery ≥ 5.
+ *
+ * @param vitality - Current vitality state
+ * @param recoveryPoints - Total recovery points available
+ * @returns Updated vitality state and remaining recovery points
+ */
+export function healVitality(
+  vitality: VitalityPoints,
+  recoveryPoints: number
+): { vitality: VitalityPoints; remainingRecovery: number } {
+  if (recoveryPoints < PV_RECOVERY_COST || vitality.current >= vitality.max) {
+    return { vitality, remainingRecovery: recoveryPoints };
+  }
+
+  const pvCanHeal = vitality.max - vitality.current;
+  const pvFromRecovery = roundDown(recoveryPoints / PV_RECOVERY_COST);
+  const pvHealed = Math.min(pvCanHeal, pvFromRecovery);
+  const recoverySpent = pvHealed * PV_RECOVERY_COST;
+
+  return {
+    vitality: {
+      ...vitality,
+      current: vitality.current + pvHealed,
+    },
+    remainingRecovery: recoveryPoints - recoverySpent,
+  };
+}
+
+/**
+ * Determines the effective GA max when PV is critically low.
+ * Rule: When PV = 0, GA max is halved.
+ *
+ * @param gaMax - Normal maximum GA
+ * @param pvCurrent - Current PV
+ * @returns Effective GA max
+ */
+export function getEffectiveGAMax(gaMax: number, pvCurrent: number): number {
+  if (pvCurrent <= 0) {
+    return roundDown(gaMax / 2);
+  }
+  return gaMax;
+}
+
+/**
+ * Adjusts current GA when PV crosses the 0 threshold.
+ * Rule: When PV reaches 0, GA current is clamped to half of GA max.
+ * When PV recovers from 0, GA current is restored to at least half of GA max.
+ *
+ * @param guardCurrent - Current GA value
+ * @param gaMax - Maximum GA value (including modifiers)
+ * @param pvWasZero - Whether PV was at 0 before
+ * @param pvIsZero - Whether PV is at 0 now
+ * @returns Adjusted GA current value
+ */
+export function adjustGAOnPVCrossing(
+  guardCurrent: number,
+  gaMax: number,
+  pvWasZero: boolean,
+  pvIsZero: boolean
+): number {
+  const halfMax = roundDown(gaMax / 2);
+
+  // PV chegou a 0: limitar GA à metade
+  if (!pvWasZero && pvIsZero) {
+    return Math.min(guardCurrent, halfMax);
+  }
+
+  // PV saiu de 0: restaurar GA para pelo menos metade
+  if (pvWasZero && !pvIsZero) {
+    return Math.max(guardCurrent, halfMax);
+  }
+
+  // Sem mudança de estado
+  return guardCurrent;
+}
+
+/**
+ * Determines the combat state based on GA and PV values.
+ *
+ * @param gaCurrent - Current GA
+ * @param gaMax - Maximum GA
+ * @param pvCurrent - Current PV
+ * @param pvMax - Maximum PV
+ * @returns The current combat state
+ */
+export function determineCombatState(
+  gaCurrent: number,
+  gaMax: number,
+  pvCurrent: number,
+  pvMax: number
+): 'normal' | 'ferimento-direto' | 'ferimento-critico' {
+  if (pvCurrent <= 0) return 'ferimento-critico';
+  if (pvCurrent < pvMax) return 'ferimento-direto';
+  return 'normal';
+}
+
+// ─── Dado de Vulnerabilidade ────────────────────────────────
+
+/**
+ * Steps down the vulnerability die by one level.
+ * d20 → d12 → d10 → d8 → d6 → d4
+ * If already at d4, stays at d4.
+ *
+ * @param currentDie - Current vulnerability die size
+ * @returns Next smaller die size
+ *
+ * @example
+ * stepDownVulnerabilityDie('d20'); // 'd12'
+ * stepDownVulnerabilityDie('d4');  // 'd4' (cannot go lower)
+ */
+export function stepDownVulnerabilityDie(
+  currentDie: VulnerabilityDieSize
+): VulnerabilityDieSize {
+  const currentIndex = VULNERABILITY_DIE_STEPS.indexOf(currentDie);
+  if (
+    currentIndex === -1 ||
+    currentIndex >= VULNERABILITY_DIE_STEPS.length - 1
+  ) {
+    return 'd4'; // Already at minimum or invalid
+  }
+  return VULNERABILITY_DIE_STEPS[currentIndex + 1];
+}
+
+/**
+ * Resets the vulnerability die to d20 (start of combat or after Ferimento Crítico).
+ *
+ * @returns The default (largest) vulnerability die
+ */
+export function resetVulnerabilityDie(): VulnerabilityDieSize {
+  return 'd20';
 }
 
 /**
@@ -139,7 +366,7 @@ export function calculatePPPerRound(
 }
 
 /**
- * Calculates the Signature Ability dice bonus based on character level (v0.0.2)
+ * Calculates the Signature Ability dice bonus based on character level
  *
  * Formula: Math.min(3, Math.ceil(level / 5))
  * - Level 1-5: +1d
@@ -201,26 +428,34 @@ export function calculateTotalSkillModifier(
 }
 
 /**
- * Calculates HP recovery from a Descanso (Rest) using the Dormir (Sleep) action
+ * Calculates GA recovery from a Descanso (Rest) using the Dormir (Sleep) action
  * Formula: Nível do Personagem × Corpo + outros modificadores
+ *
+ * In v0.0.2, this restores Guard Points (GA), not HP.
  *
  * @param characterLevel - The character's current level
  * @param corpo - The Corpo (Body) attribute value
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
- * @returns The amount of HP recovered
+ * @returns The amount of GA recovered
  *
  * @example
- * calculateRestHPRecovery(1, 2); // 2 (1 × 2)
- * calculateRestHPRecovery(5, 3); // 15 (5 × 3)
- * calculateRestHPRecovery(3, 2, 5); // 11 (3 × 2 + 5)
+ * calculateRestGARecovery(1, 2); // 2 (1 × 2)
+ * calculateRestGARecovery(5, 3); // 15 (5 × 3)
+ * calculateRestGARecovery(3, 2, 5); // 11 (3 × 2 + 5)
  */
-export function calculateRestHPRecovery(
+export function calculateRestGARecovery(
   characterLevel: number,
   corpo: number,
   otherBonuses: number = 0
 ): number {
   return characterLevel * corpo + otherBonuses;
 }
+
+/**
+ * @deprecated Substituído por calculateRestGARecovery em v0.0.2.
+ * Mantido para compatibilidade.
+ */
+export const calculateRestHPRecovery = calculateRestGARecovery;
 
 /**
  * Calculates the number of additional languages known based on Mente attribute
@@ -377,6 +612,9 @@ export function getEncumbranceState(
 /**
  * Applies damage to Health Points prioritizing temporary HP first.
  * When adding (healing), only current HP increases; temporary does not auto-recover.
+ *
+ * @deprecated Use applyDamageToGuardVitality + healGuard for v0.0.2.
+ * Kept for backward compatibility with any remaining HP-based code.
  *
  * @param hp - Current HP object { max, current, temporary }
  * @param delta - Negative for damage, positive for healing

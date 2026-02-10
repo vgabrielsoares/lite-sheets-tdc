@@ -21,7 +21,7 @@ import {
   MyLocation as RangedIcon,
   AutoAwesome as MagicIcon,
 } from '@mui/icons-material';
-import type { Attack, AttackType, ActionType } from '@/types/combat';
+import type { Attack, AttackType } from '@/types/combat';
 import type { DamageType } from '@/types/common';
 import type { Character } from '@/types';
 import { AttackRollButton } from './AttackRollButton';
@@ -49,15 +49,21 @@ const ATTACK_TYPE_LABELS: Record<AttackType, string> = {
   magico: 'Mágico',
 };
 
-/** Labels para tipos de ação */
-const ACTION_TYPE_LABELS: Record<ActionType, string> = {
-  maior: 'Ação Maior',
-  menor: 'Ação Menor',
-  '2-menores': '2 Ações Menores',
-  livre: 'Ação Livre',
-  reacao: 'Reação',
-  'reacao-defensiva': 'Reação Defensiva',
-};
+/** Labels para custo de ação (v0.0.2: actionCost numérico) */
+function getActionCostLabel(cost: number): string {
+  switch (cost) {
+    case 0:
+      return '∆ Livre / ↩ Reação';
+    case 1:
+      return '▶ Ação';
+    case 2:
+      return '▶▶ Ação Dupla';
+    case 3:
+      return '▶▶▶ Ação Tripla';
+    default:
+      return `▶×${cost}`;
+  }
+}
 
 /** Labels amigáveis para tipos de dano */
 const DAMAGE_TYPE_LABELS: Record<DamageType, string> = {
@@ -135,7 +141,7 @@ export function AttackRow({
     character,
     attack.attackSkill,
     attack.attackSkillUseId,
-    attack.attackBonus,
+    attack.attackBonus ?? 0,
     attack.attackAttribute,
     attack.attackDiceModifier || 0
   );
@@ -264,7 +270,7 @@ export function AttackRow({
         {/* Botão de rolagem de ataque */}
         <AttackRollButton
           attackName={attack.name}
-          attackBonus={attack.attackBonus}
+          attackBonus={attack.attackBonus ?? 0}
           character={character}
           attackSkill={attack.attackSkill}
           attackSkillUseId={attack.attackSkillUseId}
@@ -298,7 +304,7 @@ export function AttackRow({
         {/* Botão de rolagem combinada (ataque + dano) */}
         <CombinedAttackButton
           attackName={attack.name}
-          attackBonus={attack.attackBonus}
+          attackBonus={attack.attackBonus ?? 0}
           damageRoll={damageRollWithAttribute}
           damageType={attack.damageType}
           criticalRange={attack.criticalRange ?? 20}
@@ -340,7 +346,7 @@ export function AttackRow({
                 sx={{ bgcolor: alpha(typeColor, 0.15), color: typeColor }}
               />
               <Chip
-                label={ACTION_TYPE_LABELS[attack.actionType]}
+                label={getActionCostLabel(attack.actionCost)}
                 size="small"
                 variant="outlined"
               />
@@ -372,7 +378,7 @@ export function AttackRow({
                   </Typography>
                   <AttackRollButton
                     attackName={attack.name}
-                    attackBonus={attack.attackBonus}
+                    attackBonus={attack.attackBonus ?? 0}
                     character={character}
                     attackSkill={attack.attackSkill}
                     attackSkillUseId={attack.attackSkillUseId}
@@ -434,7 +440,7 @@ export function AttackRow({
               <Stack direction="row" spacing={1} justifyContent="center">
                 <CombinedAttackButton
                   attackName={attack.name}
-                  attackBonus={attack.attackBonus}
+                  attackBonus={attack.attackBonus ?? 0}
                   damageRoll={damageRollWithAttribute}
                   damageType={attack.damageType}
                   criticalRange={attack.criticalRange ?? 20}

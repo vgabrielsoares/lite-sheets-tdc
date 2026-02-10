@@ -50,6 +50,8 @@ import type {
   SkillPoolFormula,
   ArmorType,
 } from '@/types';
+import type { DicePenaltyMap } from '@/utils/conditionEffects';
+import { getDicePenaltyForAttribute } from '@/utils/conditionEffects';
 import {
   SKILL_LABELS,
   SKILL_METADATA,
@@ -99,6 +101,8 @@ export interface SkillRowProps {
   ) => void;
   /** Modificador de tamanho para esta habilidade específica (acrobacia, atletismo, furtividade, reflexos, tenacidade) */
   sizeSkillModifier?: number;
+  /** Penalidades de dados de condições ativas */
+  conditionPenalties?: DicePenaltyMap;
 }
 
 /**
@@ -120,6 +124,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
     onLuckLevelChange,
     onLuckModifiersChange,
     sizeSkillModifier,
+    conditionPenalties,
   }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -227,18 +232,32 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
     } else {
       // Cálculo normal para habilidades padrão
       // Incluir modificador de tamanho como modificador de dados se existir
-      const effectiveModifiers: Modifier[] =
-        sizeSkillModifier && sizeSkillModifier !== 0
-          ? [
-              ...skill.modifiers,
-              {
-                name: 'Tamanho',
-                value: sizeSkillModifier,
-                type: sizeSkillModifier > 0 ? 'bonus' : 'penalidade',
-                affectsDice: true,
-              },
-            ]
-          : skill.modifiers;
+      const effectiveModifiers: Modifier[] = [...skill.modifiers];
+
+      if (sizeSkillModifier && sizeSkillModifier !== 0) {
+        effectiveModifiers.push({
+          name: 'Tamanho',
+          value: sizeSkillModifier,
+          type: sizeSkillModifier > 0 ? 'bonus' : 'penalidade',
+          affectsDice: true,
+        });
+      }
+
+      // Incluir penalidade de condições se existir
+      if (conditionPenalties) {
+        const penalty = getDicePenaltyForAttribute(
+          conditionPenalties,
+          skill.keyAttribute
+        );
+        if (penalty !== 0) {
+          effectiveModifiers.push({
+            name: 'Condições',
+            value: penalty,
+            type: 'penalidade',
+            affectsDice: true,
+          });
+        }
+      }
 
       const result = calculateSkillRoll(
         skill.name,

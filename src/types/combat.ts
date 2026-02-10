@@ -2,24 +2,65 @@
  * Combat - Tipos relacionados a combate
  *
  * Este arquivo contém os tipos e interfaces relacionados ao sistema de combate,
- * incluindo ataques, defesa e economia de ações.
+ * incluindo Guarda/Vitalidade, dado de vulnerabilidade, economia de ações e ataques.
+ *
+ * Mudanças:
+ * - HP único → Guarda (GA) + Vitalidade (PV) separados
+ * - Defesa fixa → Teste de defesa ativo (removida interface Defense)
+ * - Ação Maior/Menor → Turno Rápido (▶▶) ou Lento (▶▶▶)
+ * - Dado de Vulnerabilidade (d20 → d4)
  */
 
 import type { DiceRoll, DamageType, Resource, Modifier } from './common';
 import type { SkillName } from './skills';
 import type { AttributeName } from './attributes';
 
+// ─── Guarda & Vitalidade ────────────────────────────────────
+
 /**
- * Pontos de Vida (PV)
+ * Pontos de Guarda (GA) — primeira camada de proteção
+ *
+ * GA mede a capacidade de se defender e evitar ataques.
+ * Receber dano na GA não significa ser ferido, mas ter as defesas desgastadas.
+ * Base: 15 no nível 1 + bônus de arquétipo por nível.
+ * Ícone: Escudo (ShieldIcon)
  */
-export interface HealthPoints extends Resource {
+export interface GuardPoints {
+  /** GA atual */
+  current: number;
+  /** GA máximo (calculado: 15 + bônus de arquétipo por nível + modificadores) */
+  max: number;
+  /** GA temporária (absorvida primeiro; não conta para cálculo de PV) */
+  temporary?: number;
+  /** Modificadores adicionais ao GA máximo (habilidades especiais, itens, etc.) */
+  maxModifiers?: Modifier[];
+}
+
+/**
+ * Pontos de Vitalidade (PV) — saúde real do personagem
+ *
+ * PV = floor(GA_max / 3).
+ * Quando PV = 0, o personagem sofre Ferimento Crítico.
+ * Quando PV ≤ 1, GA máxima é reduzida à metade.
+ * Ícone: Coração (FavoriteIcon)
+ */
+export interface VitalityPoints {
   /** PV atual */
   current: number;
-  /** PV máximo (calculado: 15 + arquétipos + modificadores) */
+  /** PV máximo (calculado: floor(GA_max / 3)) */
   max: number;
-  /** PV temporário */
-  temporary: number;
   /** Modificadores adicionais ao PV máximo (habilidades especiais, itens, etc.) */
+  maxModifiers?: Modifier[];
+}
+
+/**
+ * @deprecated Substituído por GuardPoints + VitalityPoints em.
+ * Mantido para compatibilidade com dados salvos e migração.
+ */
+export interface HealthPoints extends Resource {
+  current: number;
+  max: number;
+  temporary: number;
   maxModifiers?: Modifier[];
 }
 
@@ -37,11 +78,15 @@ export interface PowerPoints extends Resource {
   maxModifiers?: Modifier[];
 }
 
+// ─── Estado de Combate ───────────────────────────────────────────────
+
 /**
  * Estado do personagem em combate
  */
 export type CombatState =
   | 'normal'
+  | 'ferimento-direto' // PV < PV_max mas PV > 0
+  | 'ferimento-critico' // PV = 0
   | 'morrendo'
   | 'morto'
   | 'inconsciente'
@@ -61,29 +106,67 @@ export interface DyingState {
   otherModifiers?: number;
 }
 
+// ─── Dado de Vulnerabilidade ────────────────────────────────
+
+/**
+ * Tamanhos possíveis do dado de vulnerabilidade
+ * Sequência: d20 → d12 → d10 → d8 → d6 → d4
+ */
+export type VulnerabilityDieSize = 'd20' | 'd12' | 'd10' | 'd8' | 'd6' | 'd4';
+
+/**
+ * Escala de dados de vulnerabilidade (do maior ao menor)
+ */
+export const VULNERABILITY_DIE_STEPS: readonly VulnerabilityDieSize[] = [
+  'd20',
+  'd12',
+  'd10',
+  'd8',
+  'd6',
+  'd4',
+] as const;
+
+/**
+ * Estado do dado de vulnerabilidade de uma criatura
+ *
+ * Toda criatura começa com d20. A cada Ataque Crítico recebido:
+ * - Rola o dado de vulnerabilidade
+ * - Resultado = 1: Ferimento Crítico (PV → 0)
+ * - Resultado ≥ 2: Dado diminui um passo (d20 → d12 → ... → d4)
+ * Reseta para d20 ao fim do combate ou ao sofrer Ferimento Crítico.
+ */
+export interface VulnerabilityDie {
+  /** Tamanho atual do dado de vulnerabilidade */
+  currentDie: VulnerabilityDieSize;
+  /** Se o dado está ativo (em combate) */
+  isActive: boolean;
+}
+
+// ─── Economia de Ações ─────────────────────────────────────
+
+/**
+ * Tipo de turno escolhido em combate
+ *
+ * - Rápido: 2 ações (▶▶) — age primeiro
+ * - Lento: 3 ações (▶▶▶) — age depois de inimigos rápidos
+ */
+export type TurnType = 'rapido' | 'lento';
+
 /**
  * Economia de ações em combate
  *
  * O sistema Tabuleiro do Caos usa:
- * - 1 Ação Maior por turno
- * - 2 Ações Menores por turno
- * - 1 Reação por rodada
- * - 1 Reação Defensiva por rodada
- * - Ações Livres ilimitadas
- *
- * Habilidades especiais podem conceder ações extras
+ * - Turno Rápido (▶▶) ou Turno Lento (▶▶▶)
+ * - 1 Reação (↩) por rodada
+ * - Ações Livres (∆) ilimitadas
  */
 export interface ActionEconomy {
-  /** Ação Maior disponível (1 por turno) */
-  majorAction: boolean;
-  /** Primeira Ação Menor disponível (2 por turno) */
-  minorAction1: boolean;
-  /** Segunda Ação Menor disponível (2 por turno) */
-  minorAction2: boolean;
-  /** Reação disponível (1 por rodada) */
+  /** Tipo de turno escolhido (Rápido ou Lento) */
+  turnType: TurnType;
+  /** Ações (▶) disponíveis — array de booleanos (2 para rápido, 3 para lento) */
+  actions: boolean[];
+  /** Reação (↩) disponível (1 por rodada) */
   reaction: boolean;
-  /** Reação Defensiva disponível (1 por rodada) */
-  defensiveReaction: boolean;
   /** Ações extras concedidas por habilidades especiais */
   extraActions?: ExtraAction[];
 }
@@ -95,7 +178,7 @@ export interface ExtraAction {
   /** ID único da ação extra */
   id: string;
   /** Tipo da ação extra */
-  type: 'maior' | 'menor' | 'reacao' | 'reacao-defensiva';
+  type: 'acao' | 'reacao';
   /** Se a ação está disponível */
   available: boolean;
   /** Fonte da ação extra (nome da habilidade) */
@@ -104,32 +187,31 @@ export interface ExtraAction {
 
 /**
  * Tipos de ação em combate
+ *
+ * Ações são medidas em ▶ (1, 2 ou 3), ↩ (reação) ou ∆ (ação livre)
  */
 export type ActionType =
-  | 'maior'
-  | 'menor'
-  | '2-menores'
-  | 'livre'
-  | 'reacao'
-  | 'reacao-defensiva';
+  | 'acao' // ▶
+  | 'acao-dupla' // ▶▶
+  | 'acao-tripla' // ▶▶▶
+  | 'reacao' // ↩
+  | 'livre'; // ∆
 
 /**
- * Defesa do personagem
+ * @deprecated Defesa fixa não existe mais em.
+ * Defesa agora é um teste ativo com Reflexo ou Vigor.
+ * Mantido para compatibilidade com dados salvos.
  */
 export interface Defense {
-  /** Valor base da defesa (15 + Agilidade) */
   base: number;
-  /** Bônus de armadura */
   armorBonus: number;
-  /** Bônus de escudo */
   shieldBonus: number;
-  /** Limite máximo de bônus de Agilidade permitido pela armadura (undefined = sem limite) */
   maxAgilityBonus?: number;
-  /** Outros bônus */
   otherBonuses: Modifier[];
-  /** Defesa total */
   total: number;
 }
+
+// ─── Ataques ─────────────────────────────────────────────────────────
 
 /**
  * Tipo de ataque
@@ -138,62 +220,74 @@ export type AttackType = 'corpo-a-corpo' | 'distancia' | 'magico';
 
 /**
  * Informações de um ataque
+ *
+ * No, ataques usam pool de dados com contagem de ✶.
+ * O resultado é número de sucessos. Dano continua como soma de dados.
  */
 export interface Attack {
   /** Nome do ataque */
   name: string;
   /** Tipo de ataque */
   type: AttackType;
-  /** Habilidade usada para acertar */
+  /** Habilidade usada para acertar (Luta para CaC, Acerto para distância) */
   attackSkill: SkillName;
-  /** ID do uso de habilidade específico (opcional - se não especificado, usa a habilidade padrão) */
+  /** ID do uso de habilidade específico (opcional) */
   attackSkillUseId?: string;
-  /** Atributo alternativo para o ataque (opcional - sobrescreve o atributo da habilidade/uso) */
+  /** Atributo alternativo para o ataque (opcional) */
   attackAttribute?: AttributeName;
-  /** Modificador de dados adicional (ex: +1 = +1d20, -1 = -1d20) */
+  /** Modificador de dados adicional (+Xd / -Xd) */
   attackDiceModifier?: number;
-  /** Bônus de ataque adicional (modificador numérico) */
-  attackBonus: number;
-  /** Rolagem de dano */
+  /** Rolagem de dano (soma de dados — separado do sistema de ✶) */
   damageRoll: DiceRoll;
   /** Tipo de dano */
   damageType: DamageType;
-  /** Margem de crítico (ex: 20, 19, 18) */
-  criticalRange: number;
-  /** Dano crítico adicional (ex: { quantity: 1, type: 'd8' }) */
-  criticalDamage: DiceRoll;
   /** Alcance do ataque */
   range?: string;
   /** Descrição do ataque */
   description?: string;
   /** Custo em PP (se aplicável) */
   ppCost?: number;
-  /** Tipo de ação necessária */
-  actionType: ActionType;
-  /** Número de ataques (padrão: 1) */
-  numberOfAttacks?: number;
+  /** Custo em ações (▶) */
+  actionCost: number;
   /** Se adiciona o modificador de atributo ao dano (padrão: true) */
   addAttributeToDamage?: boolean;
-  /** Se adiciona o dobro do atributo ao dano (padrão: false, só funciona se addAttributeToDamage for true) */
+  /** Se adiciona o dobro do atributo ao dano (padrão: false) */
   doubleAttributeDamage?: boolean;
   /** Se é um ataque padrão do sistema (como Ataque Desarmado) - não pode ser deletado */
   isDefaultAttack?: boolean;
+
+  // ─── Campos deprecados (mantidos para compatibilidade) ────────────
+  /** @deprecated Não existe mais defesa fixa para "acertar". Manter para migração. */
+  attackBonus?: number;
+  /** @deprecated Removido em. Manter para migração. */
+  criticalRange?: number;
+  /** @deprecated Removido em. Manter para migração. */
+  criticalDamage?: DiceRoll;
+  /** @deprecated Usar actionCost. Manter para migração. */
+  actionType?: string;
+  /** @deprecated Removido em. */
+  numberOfAttacks?: number;
 }
 
 /**
  * Resultado de um ataque
+ * No novo sistema, resultado é número de ✶ (sucessos)
  */
 export interface AttackResult {
-  /** Se o ataque acertou */
-  hit: boolean;
-  /** Rolagem de ataque */
-  attackRoll: number;
-  /** Defesa do alvo */
-  targetDefense: number;
-  /** Dano causado (0 se errou) */
+  /** Número de ✶ (sucessos líquidos) */
+  successes: number;
+  /** Dano causado (rola dados de dano separadamente) */
   damage: number;
-  /** Se foi acerto crítico */
+  /** Se foi acerto crítico (baseado em mecânica de vulnerabilidade, não mais margem) */
   critical: boolean;
+
+  // Campos deprecados mantidos para compatibilidade
+  /** @deprecated Usar successes */
+  hit?: boolean;
+  /** @deprecated Não existe mais */
+  attackRoll?: number;
+  /** @deprecated Não existe mais defesa fixa */
+  targetDefense?: number;
 }
 
 /**
@@ -208,8 +302,18 @@ export interface PPLimit {
   total: number;
 }
 
+// ─── Testes de Resistência ───────────────────────────────────────────
+
 /**
  * Tipos de teste de resistência
+ *
+ * | Habilidade    | Atributo  | Uso                                     |
+ * |---------------|-----------|-----------------------------------------|
+ * | Determinação  | Mente     | Efeitos mentais, força de vontade       |
+ * | Reflexo       | Agilidade | Velocidade, equilíbrio ágil, reação     |
+ * | Sintonia      | Essência  | Interferência energética, corrupção     |
+ * | Tenacidade    | Corpo     | Força muscular, equilíbrio, resistência |
+ * | Vigor         | Corpo     | Saúde, integridade física               |
  */
 export type SavingThrowType =
   | 'determinacao' // Mente
@@ -219,6 +323,28 @@ export type SavingThrowType =
   | 'vigor'; // Corpo
 
 /**
+ * Mapeamento de testes de resistência para seus atributos base
+ */
+export const SAVING_THROW_ATTRIBUTES: Record<SavingThrowType, AttributeName> = {
+  determinacao: 'mente',
+  reflexo: 'agilidade',
+  sintonia: 'essencia',
+  tenacidade: 'corpo',
+  vigor: 'corpo',
+} as const;
+
+/**
+ * Mapeamento de testes de resistência para nomes de habilidades
+ */
+export const SAVING_THROW_SKILLS: Record<SavingThrowType, SkillName> = {
+  determinacao: 'determinacao',
+  reflexo: 'reflexo',
+  sintonia: 'sintonia',
+  tenacidade: 'tenacidade',
+  vigor: 'vigor',
+} as const;
+
+/**
  * Informações de teste de resistência
  */
 export interface SavingThrow {
@@ -226,9 +352,14 @@ export interface SavingThrow {
   type: SavingThrowType;
   /** Habilidade associada */
   skill: SkillName;
-  /** Modificador total */
-  modifier: number;
+  /** Modificador de dados adicional (+Xd / -Xd) */
+  diceModifier: number;
+
+  /** @deprecated Usar diceModifier em */
+  modifier?: number;
 }
+
+// ─── Resistências e Condições ────────────────────────────────────────
 
 /**
  * Resistências do personagem
@@ -260,6 +391,15 @@ export interface DamageReductionEntry {
 }
 
 /**
+ * Categoria de condições
+ */
+export type ConditionCategory =
+  | 'corporal'
+  | 'mental'
+  | 'sensorial'
+  | 'espiritual';
+
+/**
  * Condição aplicada ao personagem
  */
 export interface Condition {
@@ -267,6 +407,8 @@ export interface Condition {
   name: string;
   /** Descrição dos efeitos */
   description: string;
+  /** Categoria da condição */
+  category?: ConditionCategory;
   /** Duração em rodadas (null para permanente) */
   duration: number | null;
   /** Modificadores aplicados pela condição */
@@ -275,9 +417,11 @@ export interface Condition {
   source?: string;
 }
 
+// ─── Compatibilidade ─────────────────────────────────────────────────
+
 /**
- * @deprecated Iniciativa não existe mais como habilidade em v0.0.2.
- * Em v0.0.2, a ordem de turno é voluntária (Turno Rápido ou Turno Lento).
+ * @deprecated Iniciativa não existe mais como habilidade em.
+ * Em, a ordem de turno é voluntária (Turno Rápido ou Turno Lento).
  * Mantido para compatibilidade com dados salvos.
  */
 export interface Initiative {
@@ -289,31 +433,35 @@ export interface Initiative {
 
 /**
  * Estado das penalidades de combate
- * Rastreia penalidades por erros de ataques e sucessos em testes de resistência
+ * Rastreia penalidades em testes de resistência
  */
 export interface CombatPenalties {
-  /** Penalidade atual na defesa (valor negativo, ex: -2) */
+  /** @deprecated Defesa fixa não existe mais em */
   defensePenalty: number;
-  /** Penalidades nos testes de resistência (-1d20 por sucesso, rastreado por tipo) */
+  /** Penalidades nos testes de resistência (-Xd por sucesso, rastreado por tipo) */
   savingThrowPenalties: Record<SavingThrowType, number>;
 }
+
+// ─── CombatData Principal ────────────────────────────────────────────
 
 /**
  * Dados completos de combate do personagem
  */
 export interface CombatData {
-  /** Pontos de Vida */
-  hp: HealthPoints;
+  /** Pontos de Guarda (GA) — proteção */
+  guard: GuardPoints;
+  /** Pontos de Vitalidade (PV) — saúde real */
+  vitality: VitalityPoints;
   /** Pontos de Poder */
   pp: PowerPoints;
   /** Estado atual */
   state: CombatState;
   /** Informações do estado morrendo */
   dyingState: DyingState;
+  /** Dado de vulnerabilidade */
+  vulnerabilityDie: VulnerabilityDie;
   /** Economia de ações */
   actionEconomy: ActionEconomy;
-  /** Defesa */
-  defense: Defense;
   /** Limite de PP por rodada */
   ppLimit: PPLimit;
   /** Ataques disponíveis */
@@ -324,24 +472,46 @@ export interface CombatData {
   resistances: Resistances;
   /** Condições ativas */
   conditions: Condition[];
-  /** Iniciativa */
-  initiative: Initiative;
   /** Penalidades de combate */
   penalties: CombatPenalties;
+
+  // ─── Campos deprecados (mantidos para compatibilidade/migração) ───
+  /** @deprecated Substituído por guard + vitality em */
+  hp?: HealthPoints;
+  /** @deprecated Defesa agora é teste ativo em */
+  defense?: Defense;
+  /** @deprecated Iniciativa não existe mais em */
+  initiative?: Initiative;
 }
 
+// ─── Constantes ──────────────────────────────────────────────────────
+
 /**
- * Valores padrão de PV e PP no nível 1
+ * Guarda (GA) base no nível 1
  */
-export const DEFAULT_HP_LEVEL_1 = 15;
+export const DEFAULT_GA_LEVEL_1 = 15;
+
+/**
+ * Pontos de Poder (PP) base no nível 1
+ */
 export const DEFAULT_PP_LEVEL_1 = 2;
 
 /**
- * Valor base de defesa
+ * @deprecated Defesa não existe mais como valor fixo em. Usar teste de defesa ativo.
  */
 export const BASE_DEFENSE = 15;
+
+/**
+ * @deprecated Substituído por DEFAULT_GA_LEVEL_1
+ */
+export const DEFAULT_HP_LEVEL_1 = 15;
 
 /**
  * Rodadas base no estado morrendo
  */
 export const BASE_DYING_ROUNDS = 2;
+
+/**
+ * Custo em pontos de recuperação para restaurar 1 PV
+ */
+export const PV_RECOVERY_COST = 5;

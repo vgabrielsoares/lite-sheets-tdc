@@ -98,9 +98,8 @@ describe('Fluxo de Criação de Personagem (Integração)', () => {
     const savedCharacter = characters[0];
     expect(savedCharacter.name).toBe(characterName);
     expect(savedCharacter.level).toBe(1);
-    expect(savedCharacter.combat.hp.max).toBe(15);
-    expect(savedCharacter.combat.hp.current).toBe(15);
-    expect(savedCharacter.combat.hp.temporary).toBe(0);
+    expect(savedCharacter.combat.guard.max).toBe(15);
+    expect(savedCharacter.combat.guard.current).toBe(15);
     expect(savedCharacter.combat.pp.max).toBe(2);
     expect(savedCharacter.combat.pp.current).toBe(2);
     expect(savedCharacter.combat.pp.temporary).toBe(0);

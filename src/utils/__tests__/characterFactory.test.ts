@@ -118,17 +118,17 @@ describe('characterFactory', () => {
       });
     });
 
-    describe('Pontos de Vida (PV)', () => {
-      it('deve ter 15 PV máximo', () => {
-        expect(character.combat.hp.max).toBe(15);
+    describe('Guarda (GA) e Vitalidade (PV)', () => {
+      it('deve ter 15 GA máximo', () => {
+        expect(character.combat.guard.max).toBe(15);
       });
 
-      it('deve ter 15 PV atual (cheio)', () => {
-        expect(character.combat.hp.current).toBe(15);
+      it('deve ter 15 GA atual (cheio)', () => {
+        expect(character.combat.guard.current).toBe(15);
       });
 
-      it('deve ter 0 PV temporário', () => {
-        expect(character.combat.hp.temporary).toBe(0);
+      it('deve ter 5 PV (Vitalidade) máximo', () => {
+        expect(character.combat.vitality.max).toBe(5);
       });
     });
 
@@ -297,32 +297,23 @@ describe('characterFactory', () => {
         expect(character.combat.dyingState.maxRounds).toBe(3);
       });
 
-      it('deve ter todas as ações disponíveis', () => {
-        expect(character.combat.actionEconomy.majorAction).toBe(true);
-        expect(character.combat.actionEconomy.minorAction1).toBe(true);
-        expect(character.combat.actionEconomy.minorAction2).toBe(true);
+      it('deve ter todas as ações disponíveis (turno rápido)', () => {
+        expect(character.combat.actionEconomy.turnType).toBe('rapido');
+        expect(character.combat.actionEconomy.actions).toEqual([true, true]);
         expect(character.combat.actionEconomy.reaction).toBe(true);
-        expect(character.combat.actionEconomy.defensiveReaction).toBe(true);
         expect(character.combat.actionEconomy.extraActions).toEqual([]);
-      });
-
-      it('deve ter defesa base de 15', () => {
-        expect(character.combat.defense.base).toBe(15);
-      });
-
-      it('deve ter defesa total de 16 (15 + Agilidade(1))', () => {
-        expect(character.combat.defense.total).toBe(16);
       });
 
       it('deve ter limite de PP por rodada = 2 (Nível(1) + Essência(1))', () => {
         expect(character.combat.ppLimit.total).toBe(2);
       });
 
-      it('deve ter os 4 testes de resistência', () => {
-        expect(character.combat.savingThrows).toHaveLength(4);
+      it('deve ter os 5 testes de resistência', () => {
+        expect(character.combat.savingThrows).toHaveLength(5);
         const types = character.combat.savingThrows.map((st) => st.type);
         expect(types).toContain('determinacao');
         expect(types).toContain('reflexo');
+        expect(types).toContain('sintonia');
         expect(types).toContain('tenacidade');
         expect(types).toContain('vigor');
       });
@@ -535,8 +526,8 @@ describe('characterFactory', () => {
     });
 
     describe('Valores Padrão Conforme Regras do RPG', () => {
-      it('deve seguir regra: PV base = 15', () => {
-        expect(character.combat.hp.max).toBe(15);
+      it('deve seguir regra: GA base = 15', () => {
+        expect(character.combat.guard.max).toBe(15);
       });
 
       it('deve seguir regra: PP base = 2', () => {
@@ -572,9 +563,9 @@ describe('characterFactory', () => {
         expect(hasGold).toBe(true);
       });
 
-      it('deve seguir regra: Defesa = 15 + Agilidade', () => {
-        const expectedDefense = 15 + character.attributes.agilidade;
-        expect(character.combat.defense.total).toBe(expectedDefense);
+      it('deve seguir regra: PV = floor(GA_max / 3)', () => {
+        const expectedPV = Math.floor(character.combat.guard.max / 3);
+        expect(character.combat.vitality.max).toBe(expectedPV);
       });
 
       it('deve seguir regra: Capacidade de carga = 5 + (Corpo * 5)', () => {

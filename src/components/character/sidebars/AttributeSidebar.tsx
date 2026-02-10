@@ -555,11 +555,10 @@ function getAttributeImpacts(
       break;
 
     case 'agilidade':
-      // Defesa
-      const defenseTotal = character.combat.defense.total;
+      // Defesa (v0.0.2: teste ativo, não valor fixo)
       impacts.push({
-        title: 'Defesa',
-        description: `Sua Agilidade contribui diretamente para sua Defesa. Defesa atual: ${defenseTotal} (15 base + ${attributeValue} Agilidade + outros bônus).`,
+        title: 'Teste de Defesa',
+        description: `Em v0.0.2, a defesa é um teste ativo usando Reflexo (Agilidade). Sua Agilidade ${attributeValue} contribui para os dados rolados no teste de defesa.`,
         icon: <ShieldIcon color="warning" />,
         color: 'warning.main',
       });

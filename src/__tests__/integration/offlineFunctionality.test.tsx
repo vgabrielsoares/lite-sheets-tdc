@@ -371,11 +371,10 @@ describe('Funcionalidade Offline (Integração)', () => {
               },
               combat: {
                 ...character.combat,
-                hp: {
-                  ...character.combat.hp,
+                guard: {
+                  ...character.combat.guard,
                   current: 50,
                   max: 60,
-                  temporary: 5,
                 },
                 pp: {
                   ...character.combat.pp,
@@ -399,7 +398,7 @@ describe('Funcionalidade Offline (Integração)', () => {
         const saved = await db.characters.get(createdChar!.id);
         expect(saved?.level).toBe(10);
         expect(saved?.experience.current).toBe(5000);
-        expect(saved?.combat.hp.current).toBe(50);
+        expect(saved?.combat.guard.current).toBe(50);
         expect(saved?.attributes.corpo).toBe(5);
       });
     });

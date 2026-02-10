@@ -47,6 +47,74 @@ export function needsMigration(character: unknown): boolean {
 }
 
 /**
+ * Garante que os campos de combate v0.0.2 existam no personagem.
+ * Chamar APÓS a migração principal, como safety net para personagens
+ * que ficaram em estado intermediário durante o desenvolvimento.
+ *
+ * Campos garantidos:
+ * - combat.guard (GA)
+ * - combat.vitality (PV)
+ * - combat.vulnerabilityDie
+ * - combat.actionEconomy
+ */
+export function ensureCombatFields(character: Character): Character {
+  const combat = character.combat;
+  if (!combat) return character;
+
+  let updated = false;
+  const patched = { ...combat };
+
+  // Garantir guard (GA)
+  if (!patched.guard || typeof patched.guard !== 'object') {
+    const gaMax = (patched.hp as { max?: number } | undefined)?.max ?? 15;
+    const gaCurrent =
+      (patched.hp as { current?: number } | undefined)?.current ?? gaMax;
+    patched.guard = { current: Math.min(gaCurrent, gaMax), max: gaMax };
+    updated = true;
+  }
+
+  // Garantir vitality (PV)
+  if (!patched.vitality || typeof patched.vitality !== 'object') {
+    const pvMax = Math.floor(patched.guard.max / 3);
+    patched.vitality = { current: pvMax, max: pvMax };
+    updated = true;
+  }
+
+  // Garantir vulnerabilityDie
+  if (!patched.vulnerabilityDie) {
+    patched.vulnerabilityDie = { currentDie: 'd20', isActive: false };
+    updated = true;
+  }
+
+  // Garantir actionEconomy (completo, com actions array válido)
+  if (!patched.actionEconomy || !Array.isArray(patched.actionEconomy.actions)) {
+    const existing = patched.actionEconomy ?? {};
+    const turnType =
+      'turnType' in existing &&
+      (existing.turnType === 'rapido' || existing.turnType === 'lento')
+        ? existing.turnType
+        : 'rapido';
+    const actionCount = turnType === 'lento' ? 3 : 2;
+    patched.actionEconomy = {
+      turnType,
+      actions: Array.from({ length: actionCount }, () => true),
+      reaction:
+        'reaction' in existing && typeof existing.reaction === 'boolean'
+          ? existing.reaction
+          : true,
+      extraActions:
+        'extraActions' in existing && Array.isArray(existing.extraActions)
+          ? existing.extraActions
+          : [],
+    };
+    updated = true;
+  }
+
+  if (!updated) return character;
+  return { ...character, combat: patched as typeof combat };
+}
+
+/**
  * Migra o nome de um atributo antigo para o novo
  */
 export function migrateAttributeName(oldName: string): AttributeName {
@@ -216,33 +284,119 @@ function migrateLineage(lineage: unknown): unknown {
 }
 
 /**
- * Migra dados de combate - adiciona sintonia aos savingThrows se ausente
+ * Migra dados de combate para v0.0.2
+ *
+ * Mudanças:
+ * - HP → GA (Guarda) + PV (Vitalidade)
+ * - Defesa fixa → removida (teste ativo)
+ * - Economia de ações: Maior/Menor → Turno Rápido/Lento
+ * - Dado de vulnerabilidade adicionado
+ * - Iniciativa removida (turno voluntário)
+ * - Sintonia adicionada aos saving throws
+ * - Ataques: criticalRange/criticalDamage/attackBonus → actionCost/attackDiceModifier
  */
 function migrateCombat(combat: unknown): unknown {
   if (!combat || typeof combat !== 'object') return combat;
 
   const c = combat as Record<string, unknown>;
-  const penalties = c.penalties as Record<string, unknown> | undefined;
+  const migrated: Record<string, unknown> = { ...c };
 
+  // Migrate HP → GA + PV
+  if (c.hp && typeof c.hp === 'object' && !c.guard) {
+    const hp = c.hp as { current?: number; max?: number; temporary?: number };
+    const gaMax = hp.max ?? 15;
+    const gaCurrent = Math.min(hp.current ?? gaMax, gaMax);
+    const pvMax = Math.floor(gaMax / 3);
+
+    migrated.guard = { current: gaCurrent, max: gaMax };
+    migrated.vitality = { current: pvMax, max: pvMax };
+  }
+
+  // Migrate action economy
+  if (c.actionEconomy && typeof c.actionEconomy === 'object') {
+    const ae = c.actionEconomy as Record<string, unknown>;
+    if ('majorAction' in ae) {
+      migrated.actionEconomy = {
+        turnType: 'rapido',
+        actions: [true, true],
+        reaction: true,
+        extraActions: Array.isArray(ae.extraActions) ? ae.extraActions : [],
+      };
+    }
+  }
+
+  // Add vulnerability die if missing
+  if (!c.vulnerabilityDie) {
+    migrated.vulnerabilityDie = {
+      currentDie: 'd20',
+      isActive: false,
+    };
+  }
+
+  // Migrate saving throws (add sintonia if missing, update modifier → diceModifier)
+  if (Array.isArray(c.savingThrows)) {
+    const sts = c.savingThrows as Record<string, unknown>[];
+    const hasSintonia = sts.some((st) => st.type === 'sintonia');
+    const migratedSTs = sts.map((st) => {
+      const result: Record<string, unknown> = { ...st };
+      if ('modifier' in result && !('diceModifier' in result)) {
+        result.diceModifier = result.modifier ?? 0;
+        delete result.modifier;
+      }
+      return result;
+    });
+    if (!hasSintonia) {
+      migratedSTs.push({
+        type: 'sintonia',
+        skill: 'sintonia',
+        diceModifier: 0,
+      });
+    }
+    migrated.savingThrows = migratedSTs;
+  }
+
+  // Migrate attacks (old fields → new fields)
+  if (Array.isArray(c.attacks)) {
+    migrated.attacks = (c.attacks as Record<string, unknown>[]).map(
+      (attack) => {
+        const a: Record<string, unknown> = { ...attack };
+        if ('actionType' in a && !('actionCost' in a)) {
+          const actionTypeMap: Record<string, number> = {
+            maior: 1,
+            menor: 1,
+            '2-menores': 2,
+            livre: 0,
+            reacao: 0,
+            'reacao-defensiva': 0,
+          };
+          a.actionCost = actionTypeMap[a.actionType as string] ?? 1;
+        }
+        if ('attackBonus' in a && !('attackDiceModifier' in a)) {
+          a.attackDiceModifier = 0;
+        }
+        return a;
+      }
+    );
+  }
+
+  // Migrate penalties (add sintonia if missing)
+  const penalties = c.penalties as Record<string, unknown> | undefined;
   if (penalties && typeof penalties === 'object') {
     const savingThrowPenalties = penalties.savingThrowPenalties as
       | Record<string, number>
       | undefined;
     if (savingThrowPenalties && !('sintonia' in savingThrowPenalties)) {
-      return {
-        ...c,
-        penalties: {
-          ...penalties,
-          savingThrowPenalties: {
-            ...savingThrowPenalties,
-            sintonia: 0,
-          },
+      migrated.penalties = {
+        ...penalties,
+        savingThrowPenalties: {
+          ...savingThrowPenalties,
+          sintonia: 0,
         },
       };
     }
   }
 
-  return combat;
+  return migrated;
 }
 
 /**

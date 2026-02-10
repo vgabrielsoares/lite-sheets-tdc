@@ -95,7 +95,12 @@ import {
   PERCEPTION_USE_TO_SENSE,
 } from '@/utils/senseCalculations';
 import { calculateSignatureAbilityBonus } from '@/utils';
-import { getSkillDieSize } from '@/constants/skills';
+import {
+  getSkillDieSize,
+  SKILL_METADATA,
+  PROFICIENCY_DICE_PENALTY,
+} from '@/constants/skills';
+import WarningIcon from '@mui/icons-material/Warning';
 
 /** Labels descritivos para custos de ação */
 const ACTION_COST_LABELS: Record<string, string> = {
@@ -644,9 +649,16 @@ export function SkillUsageSidebar({
 
     const allModifiers = [...(skill.modifiers || []), ...(use.modifiers || [])];
 
-    const diceModifiers = allModifiers
+    const baseDiceModifiers = allModifiers
       .filter((mod) => mod.affectsDice === true)
       .reduce((sum, mod) => sum + mod.value, 0);
+
+    // Penalidade de proficiência (-2d se Leigo em habilidade que requer Adepto+)
+    const metadata = SKILL_METADATA[skill.name];
+    const hasProficiencyPenalty =
+      metadata?.requiresProficiency && skill.proficiencyLevel === 'leigo';
+    const profPenalty = hasProficiencyPenalty ? PROFICIENCY_DICE_PENALTY : 0;
+    const diceModifiers = baseDiceModifiers + profPenalty;
 
     // Para atributo 0, rollD20 espera 0 e trata internamente como 2d20 (pega menor)
     // Para outros atributos, passa o valor direto
@@ -878,6 +890,13 @@ export function SkillUsageSidebar({
                   diceModifier={diceModifiers}
                   size="small"
                   tooltipText={`Rolar ${use.name}`}
+                  penaltyWarnings={
+                    hasProficiencyPenalty
+                      ? [
+                          `Penalidade de Proficiência: ${PROFICIENCY_DICE_PENALTY}d (Leigo em habilidade que requer Adepto+)`,
+                        ]
+                      : []
+                  }
                 />
               </Box>
             </>
@@ -949,9 +968,19 @@ export function SkillUsageSidebar({
     // Combinar modificadores: habilidade base + uso específico (effectiveModifiers)
     const allModifiers = [...(skill.modifiers || []), ...effectiveModifiers];
 
-    const diceModifiers = allModifiers
+    const baseDiceModifiers = allModifiers
       .filter((mod) => mod.affectsDice === true)
       .reduce((sum, mod) => sum + mod.value, 0);
+
+    // Penalidade de proficiência (-2d se Leigo em habilidade que requer Adepto+)
+    const defaultUseMetadata = SKILL_METADATA[skill.name];
+    const defaultUseHasProfPenalty =
+      defaultUseMetadata?.requiresProficiency &&
+      skill.proficiencyLevel === 'leigo';
+    const defaultUseProfPenalty = defaultUseHasProfPenalty
+      ? PROFICIENCY_DICE_PENALTY
+      : 0;
+    const diceModifiers = baseDiceModifiers + defaultUseProfPenalty;
 
     // Para atributo 0, rollD20 espera 0 e trata internamente como 2d20 (pega menor)
     // Para outros atributos, passa o valor direto
@@ -1247,6 +1276,13 @@ export function SkillUsageSidebar({
                   diceModifier={diceModifiers}
                   size="small"
                   tooltipText={`Rolar ${defaultUse.name}`}
+                  penaltyWarnings={
+                    defaultUseHasProfPenalty
+                      ? [
+                          `Penalidade de Proficiência: ${PROFICIENCY_DICE_PENALTY}d (Leigo em habilidade que requer Adepto+)`,
+                        ]
+                      : []
+                  }
                 />
               </Box>
             </>
@@ -1643,6 +1679,22 @@ export function SkillUsageSidebar({
                   </Select>
                 </FormControl>
               </Stack>
+
+              {/* Aviso de penalidade de proficiência */}
+              {SKILL_METADATA[skill.name]?.requiresProficiency &&
+                skill.proficiencyLevel === 'leigo' && (
+                  <Alert
+                    severity="warning"
+                    icon={<WarningIcon fontSize="small" />}
+                    sx={{ mt: 1.5 }}
+                  >
+                    <Typography variant="caption">
+                      Esta habilidade requer proficiência (Adepto+). Como Leigo,
+                      todas as rolagens sofrem penalidade de{' '}
+                      <strong>{PROFICIENCY_DICE_PENALTY}d</strong>.
+                    </Typography>
+                  </Alert>
+                )}
             </>
           )}
         </Box>
@@ -2012,9 +2064,25 @@ export function SkillUsageSidebar({
                               skillLabel={`${SKILL_LABELS[skill.name]}: ${craft.name}`}
                               attributeValue={attributeValue}
                               proficiencyLevel={skill.proficiencyLevel}
-                              diceModifier={craft.diceModifier || 0}
+                              diceModifier={
+                                (craft.diceModifier || 0) +
+                                (SKILL_METADATA[skill.name]
+                                  ?.requiresProficiency &&
+                                skill.proficiencyLevel === 'leigo'
+                                  ? PROFICIENCY_DICE_PENALTY
+                                  : 0)
+                              }
                               size="small"
                               tooltipText={`Rolar ${craft.name}`}
+                              penaltyWarnings={
+                                SKILL_METADATA[skill.name]
+                                  ?.requiresProficiency &&
+                                skill.proficiencyLevel === 'leigo'
+                                  ? [
+                                      `Penalidade de Proficiência: ${PROFICIENCY_DICE_PENALTY}d (Leigo em habilidade que requer Adepto+)`,
+                                    ]
+                                  : []
+                              }
                             />
                           </Box>
                         </Stack>

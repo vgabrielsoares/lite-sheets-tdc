@@ -60,7 +60,7 @@ import type {
   Note,
 } from '@/types';
 import type { InventoryItem } from '@/types/inventory';
-import type { HealthPoints, PowerPoints } from '@/types/combat';
+import type { PowerPoints } from '@/types/combat';
 import type { KnownSpell } from '@/types/spells';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
@@ -96,9 +96,10 @@ import {
   SizeSidebar,
   AttributeSidebar,
 } from './sidebars';
-import { HPDetailSidebar } from './sidebars/HPDetailSidebar';
+import { GuardVitalitySidebar } from './sidebars/GuardVitalitySidebar';
 import { PPDetailSidebar } from './sidebars/PPDetailSidebar';
-import DefenseSidebar from './sidebars/DefenseSidebar';
+// @deprecated DefenseSidebar — v0.0.2 usa DefenseTest (teste ativo) no CombatTab
+// import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 import { ItemDetailsSidebar } from './inventory/ItemDetailsSidebar';
@@ -440,13 +441,6 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
    */
   const handleOpenSizeSidebar = () => {
     setActiveSidebar('size');
-  };
-
-  /**
-   * Abre a sidebar de defesa
-   */
-  const handleOpenDefenseSidebar = () => {
-    setActiveSidebar('defense');
   };
 
   /**
@@ -1013,7 +1007,6 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenSize: handleOpenSizeSidebar,
       onOpenHP: handleOpenHPSidebar,
       onOpenPP: handleOpenPPSidebar,
-      onOpenDefense: handleOpenDefenseSidebar,
       onOpenMovement: handleOpenMovementSidebar,
       onOpenAttribute: handleOpenAttributeSidebar,
       onOpenSkill: handleOpenSkillSidebar,
@@ -1243,22 +1236,18 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             />
           )}
 
-          {/* Sidebar de PV */}
+          {/* Sidebar de GA/PV */}
           {activeSidebar === 'hp' && (
-            <HPDetailSidebar
+            <GuardVitalitySidebar
               open={activeSidebar === 'hp'}
-              hp={character.combat.hp}
-              onChange={(hp: HealthPoints) =>
+              guard={character.combat.guard ?? { current: 0, max: 0 }}
+              vitality={character.combat.vitality ?? { current: 0, max: 0 }}
+              onChange={(guard, vitality) =>
                 onUpdate({
-                  combat: { ...character.combat, hp },
+                  combat: { ...character.combat, guard, vitality },
                 })
               }
               onClose={handleCloseSidebar}
-              archetypeBreakdown={calculateArchetypeHPBreakdown(
-                character.archetypes ?? [],
-                character.attributes.corpo
-              )}
-              baseHP={15}
             />
           )}
 
@@ -1281,15 +1270,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             />
           )}
 
-          {/* Sidebar de Defesa */}
-          {activeSidebar === 'defense' && (
-            <DefenseSidebar
-              open={activeSidebar === 'defense'}
-              character={character}
-              onUpdate={(updated) => onUpdate(updated)}
-              onClose={handleCloseSidebar}
-            />
-          )}
+          {/* Sidebar de Defesa — v0.0.2: defesa é teste ativo em CombatTab */}
 
           {/* Sidebar de Deslocamento */}
           {activeSidebar === 'movement' && (
@@ -1447,24 +1428,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         />
       )}
 
-      {/* Sidebar de PV em modo mobile (overlay) */}
-      {isMobile && activeSidebar === 'hp' && (
-        <HPDetailSidebar
-          open={activeSidebar === 'hp'}
-          hp={character.combat.hp}
-          onChange={(hp: HealthPoints) =>
-            onUpdate({
-              combat: { ...character.combat, hp },
-            })
-          }
-          onClose={handleCloseSidebar}
-          archetypeBreakdown={calculateArchetypeHPBreakdown(
-            character.archetypes ?? [],
-            character.attributes.corpo
-          )}
-          baseHP={15}
-        />
-      )}
+      {/* Sidebar de GA/PV em modo mobile — v0.0.2: redireciona para aba de combate */}
+      {/* A interação de Sofrer/Recuperar está no CombatTab via GuardVitalityDisplay */}
 
       {/* Sidebar de PP em modo mobile (overlay) */}
       {isMobile && activeSidebar === 'pp' && (
@@ -1485,15 +1450,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         />
       )}
 
-      {/* Sidebar de Defesa em modo mobile (overlay) */}
-      {isMobile && activeSidebar === 'defense' && (
-        <DefenseSidebar
-          open={activeSidebar === 'defense'}
-          character={character}
-          onUpdate={(updated) => onUpdate(updated)}
-          onClose={handleCloseSidebar}
-        />
-      )}
+      {/* Sidebar de Defesa em modo mobile — v0.0.2: defesa é teste ativo em CombatTab */}
 
       {/* Sidebar de Deslocamento em modo mobile (overlay) */}
       {isMobile && activeSidebar === 'movement' && (

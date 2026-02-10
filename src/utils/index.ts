@@ -218,6 +218,15 @@ export {
 } from './combatPenalties';
 export type { CombatPenaltiesState } from './combatPenalties';
 
+// Condition effects utilities
+export {
+  calculateConditionDicePenalties,
+  getDicePenaltyForAttribute,
+  hasActivePenalties,
+  formatPenaltySummary,
+} from './conditionEffects';
+export type { DicePenaltyMap } from './conditionEffects';
+
 // Currency calculation utilities
 export {
   convertToCopper,

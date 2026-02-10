@@ -113,6 +113,8 @@ export interface SkillsDisplayProps {
   skillProficiencyBonusSlots?: number;
   /** Callback quando bônus de slots é alterado */
   onSkillProficiencyBonusSlotsChange?: (bonusSlots: number) => void;
+  /** Penalidades de dados de condições ativas */
+  conditionPenalties?: import('@/utils/conditionEffects').DicePenaltyMap;
 }
 
 /**
@@ -139,6 +141,7 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
     sizeSkillModifiers,
     skillProficiencyBonusSlots = 0,
     onSkillProficiencyBonusSlotsChange,
+    conditionPenalties,
   }) => {
     // Estados locais
     const [searchQuery, setSearchQuery] = useState('');
@@ -567,6 +570,7 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
                       skillName as keyof typeof sizeSkillModifiers
                     ]
                   }
+                  conditionPenalties={conditionPenalties}
                 />
               );
             })}

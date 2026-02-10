@@ -350,8 +350,8 @@ describe('Fluxo de Edição de Atributos e Sincronização Redux-IndexedDB', () 
             updates: {
               combat: {
                 ...testCharacter.combat,
-                hp: {
-                  ...testCharacter.combat.hp,
+                guard: {
+                  ...testCharacter.combat.guard,
                   max: 20,
                 },
               },
@@ -364,7 +364,7 @@ describe('Fluxo de Edição de Atributos e Sincronização Redux-IndexedDB', () 
       await waitFor(
         async () => {
           const saved = await db.characters.get(testCharacter.id);
-          expect(saved?.combat.hp.max).toBe(20);
+          expect(saved?.combat.guard.max).toBe(20);
         },
         { timeout: 2000 }
       );

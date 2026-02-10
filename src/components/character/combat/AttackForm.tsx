@@ -28,7 +28,7 @@ import {
   Save as SaveIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import type { Attack, AttackType, ActionType } from '@/types/combat';
+import type { Attack, AttackType } from '@/types/combat';
 import type { SkillName } from '@/types/skills';
 import type { DamageType, DiceType } from '@/types/common';
 import type { AttributeName, Character } from '@/types';
@@ -61,14 +61,12 @@ const ATTACK_TYPES: { value: AttackType; label: string }[] = [
   { value: 'magico', label: 'Mágico' },
 ];
 
-/** Tipos de ação disponíveis */
-const ACTION_TYPES: { value: ActionType; label: string }[] = [
-  { value: 'maior', label: 'Ação Maior' },
-  { value: 'menor', label: 'Ação Menor' },
-  { value: '2-menores', label: '2 Ações Menores' },
-  { value: 'livre', label: 'Ação Livre' },
-  { value: 'reacao', label: 'Reação' },
-  { value: 'reacao-defensiva', label: 'Reação Defensiva' },
+/** Opções de custo de ação (v0.0.2: actionCost em número de ▶) */
+const ACTION_COST_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: '▶ Ação (1)' },
+  { value: 2, label: '▶▶ Ação Dupla (2)' },
+  { value: 3, label: '▶▶▶ Ação Tripla (3)' },
+  { value: 0, label: '∆ Ação Livre / ↩ Reação (0)' },
 ];
 
 /** Tipos de dano disponíveis */
@@ -137,24 +135,17 @@ const DEFAULT_ATTACK: Attack = {
   name: '',
   type: 'corpo-a-corpo',
   attackSkill: 'acerto',
-  attackBonus: 0,
+  attackDiceModifier: 0,
   damageRoll: {
     quantity: 1,
     type: 'd6',
     modifier: 0,
   },
   damageType: 'fisico',
-  criticalRange: 20,
-  criticalDamage: {
-    quantity: 1,
-    type: 'd6',
-    modifier: 0,
-  },
   range: 'Adjacente',
   description: '',
   ppCost: 0,
-  actionType: 'maior',
-  numberOfAttacks: 1,
+  actionCost: 1,
   addAttributeToDamage: true,
   doubleAttributeDamage: false,
   isDefaultAttack: false,
@@ -252,7 +243,7 @@ export function AttackForm({
       character,
       attack.attackSkill,
       attack.attackSkillUseId,
-      attack.attackBonus,
+      attack.attackBonus ?? 0,
       attack.attackAttribute,
       attack.attackDiceModifier || 0
     );
@@ -272,12 +263,8 @@ export function AttackForm({
         // Garantir que campos novos existam (migração de ataques antigos)
         const attackWithDefaults: Attack = {
           ...editingAttack,
-          criticalRange: editingAttack.criticalRange ?? 20,
-          criticalDamage: editingAttack.criticalDamage ?? {
-            quantity: 1,
-            type: 'd6',
-            modifier: 0,
-          },
+          actionCost: editingAttack.actionCost ?? 1,
+          attackDiceModifier: editingAttack.attackDiceModifier ?? 0,
         };
         setAttack(attackWithDefaults);
         // Verificar se o alcance é customizado
@@ -329,7 +316,9 @@ export function AttackForm({
       setAttack((prev) => ({
         ...prev,
         criticalDamage: {
-          ...prev.criticalDamage,
+          quantity: prev.criticalDamage?.quantity ?? 0,
+          type: prev.criticalDamage?.type ?? 'd6',
+          modifier: prev.criticalDamage?.modifier ?? 0,
           [field]: value,
         },
       }));
@@ -431,18 +420,18 @@ export function AttackForm({
             </FormControl>
 
             <FormControl fullWidth>
-              <InputLabel id="action-type-label">Tipo de Ação</InputLabel>
+              <InputLabel id="action-cost-label">Custo de Ação</InputLabel>
               <Select
-                labelId="action-type-label"
-                value={attack.actionType}
-                label="Tipo de Ação"
+                labelId="action-cost-label"
+                value={attack.actionCost}
+                label="Custo de Ação"
                 onChange={(e) =>
-                  updateField('actionType', e.target.value as ActionType)
+                  updateField('actionCost', Number(e.target.value))
                 }
               >
-                {ACTION_TYPES.map((type) => (
-                  <MenuItem key={type.value} value={type.value}>
-                    {type.label}
+                {ACTION_COST_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
                   </MenuItem>
                 ))}
               </Select>
@@ -512,14 +501,14 @@ export function AttackForm({
             <TextField
               label="Bônus Adicional"
               type="number"
-              value={attack.attackBonus}
+              value={attack.attackBonus ?? 0}
               onChange={(e) =>
                 updateField('attackBonus', parseInt(e.target.value) || 0)
               }
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    {attack.attackBonus >= 0 ? '+' : ''}
+                    {(attack.attackBonus ?? 0) >= 0 ? '+' : ''}
                   </InputAdornment>
                 ),
               }}
@@ -657,98 +646,90 @@ export function AttackForm({
             </Typography>
           </Alert>
 
-          <Divider>
-            <Typography variant="caption" color="text.secondary">
-              Crítico
-            </Typography>
-          </Divider>
+          {/* Seção de crítico deprecada em v0.0.2 — mostrar apenas se ataque legado tiver dados */}
+          {(attack.criticalRange != null || attack.criticalDamage != null) && (
+            <>
+              <Divider>
+                <Typography variant="caption" color="text.secondary">
+                  Crítico (legado)
+                </Typography>
+              </Divider>
 
-          {/* Margem de Crítico e Dano Crítico */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 3fr' },
-              gap: 2,
-            }}
-          >
-            <TextField
-              label="Margem de Crítico"
-              type="number"
-              value={attack.criticalRange}
-              onChange={(e) =>
-                updateField(
-                  'criticalRange',
-                  Math.min(20, Math.max(1, parseInt(e.target.value) || 20))
-                )
-              }
-              inputProps={{ min: 1, max: 20 }}
-              fullWidth
-              helperText="Ex: 20, 19, 18"
-            />
+              <Alert severity="warning" sx={{ mb: 1 }}>
+                <Typography variant="caption">
+                  Em v0.0.2, críticos são determinados pelo Dado de
+                  Vulnerabilidade. Estes campos são mantidos apenas para
+                  compatibilidade.
+                </Typography>
+              </Alert>
 
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 2,
-              }}
-            >
-              <TextField
-                label="Quantidade"
-                type="number"
-                value={attack.criticalDamage.quantity}
-                onChange={(e) =>
-                  updateCriticalDamage(
-                    'quantity',
-                    Math.max(0, parseInt(e.target.value) || 0)
-                  )
-                }
-                inputProps={{ min: 0 }}
-                fullWidth
-                helperText="Dados extras (Crítico Verdadeiro)"
-              />
-
-              <FormControl fullWidth>
-                <InputLabel id="critical-dice-type-label">
-                  Tipo de Dado
-                </InputLabel>
-                <Select
-                  labelId="critical-dice-type-label"
-                  value={attack.criticalDamage.type}
-                  label="Tipo de Dado"
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 3fr' },
+                  gap: 2,
+                }}
+              >
+                <TextField
+                  label="Margem de Crítico"
+                  type="number"
+                  value={attack.criticalRange ?? 20}
                   onChange={(e) =>
-                    updateCriticalDamage('type', e.target.value as DiceType)
+                    updateField(
+                      'criticalRange',
+                      Math.min(20, Math.max(1, parseInt(e.target.value) || 20))
+                    )
                   }
-                >
-                  {DICE_TYPES.map((dice) => (
-                    <MenuItem key={dice} value={dice}>
-                      {dice}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-          </Box>
+                  inputProps={{ min: 1, max: 20 }}
+                  fullWidth
+                  helperText="Ex: 20, 19, 18"
+                />
 
-          <Stack spacing={0.5}>
-            <Typography variant="caption" color="text.secondary">
-              Formato de crítico: {attack.criticalRange}/+
-              {attack.criticalDamage.quantity}
-              {attack.criticalDamage.type}
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontStyle: 'italic' }}
-            >
-              • Crítico: natural ≥ margem → dano base MAXIMIZADO + modificador
-              <br />
-              • Crítico Verdadeiro: crítico + margem ≥5 → base maximizado +
-              dados extras ROLADOS (sem mod extra)
-              <br />• Raspão: resultado = Defesa → dados ÷ 2 (sem modificador,
-              mín 1)
-            </Typography>
-          </Stack>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 2,
+                  }}
+                >
+                  <TextField
+                    label="Quantidade"
+                    type="number"
+                    value={attack.criticalDamage?.quantity ?? 0}
+                    onChange={(e) =>
+                      updateCriticalDamage(
+                        'quantity',
+                        Math.max(0, parseInt(e.target.value) || 0)
+                      )
+                    }
+                    inputProps={{ min: 0 }}
+                    fullWidth
+                    helperText="Dados extras (Crítico Verdadeiro)"
+                  />
+
+                  <FormControl fullWidth>
+                    <InputLabel id="critical-dice-type-label">
+                      Tipo de Dado
+                    </InputLabel>
+                    <Select
+                      labelId="critical-dice-type-label"
+                      value={attack.criticalDamage?.type ?? 'd6'}
+                      label="Tipo de Dado"
+                      onChange={(e) =>
+                        updateCriticalDamage('type', e.target.value as DiceType)
+                      }
+                    >
+                      {DICE_TYPES.map((dice) => (
+                        <MenuItem key={dice} value={dice}>
+                          {dice}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              </Box>
+            </>
+          )}
 
           <Divider>
             <Typography variant="caption" color="text.secondary">
@@ -833,7 +814,7 @@ export function AttackForm({
             </Select>
           </FormControl>
 
-          {/* Número de ataques */}
+          {/* Número de ataques (legado/opcional) */}
           <TextField
             label="Número de Ataques"
             type="number"
@@ -846,7 +827,7 @@ export function AttackForm({
             }
             inputProps={{ min: 1 }}
             fullWidth
-            helperText="Quantidade de ataques realizados com esta ação"
+            helperText="Quantidade de ataques realizados com esta ação (opcional)"
           />
 
           {/* Switch: Adicionar modificador de atributo ao dano */}
