@@ -346,8 +346,8 @@ describe('Fluxo de Exportação e Importação (Integração)', () => {
         skillProficiencies: [],
         attributeModifiers: [],
       };
-      testCharacter.combat.hp.current = 50;
-      testCharacter.combat.hp.max = 60;
+      testCharacter.combat.guard.current = 50;
+      testCharacter.combat.guard.max = 60;
       testCharacter.combat.pp.current = 5;
       testCharacter.combat.pp.max = 10;
 
@@ -376,11 +376,11 @@ describe('Fluxo de Exportação e Importação (Integração)', () => {
         );
         expect(importedCharacter.origin?.name).toBe(testCharacter.origin?.name);
         expect(importedCharacter.level).toBe(testCharacter.level);
-        expect(importedCharacter.combat.hp.current).toBe(
-          testCharacter.combat.hp.current
+        expect(importedCharacter.combat.guard.current).toBe(
+          testCharacter.combat.guard.current
         );
-        expect(importedCharacter.combat.hp.max).toBe(
-          testCharacter.combat.hp.max
+        expect(importedCharacter.combat.guard.max).toBe(
+          testCharacter.combat.guard.max
         );
         expect(importedCharacter.combat.pp.current).toBe(
           testCharacter.combat.pp.current

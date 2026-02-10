@@ -82,8 +82,8 @@ describe('Persistência em IndexedDB (Integração)', () => {
       // lineage e origin devem ser objetos complexos, não strings - omitindo para este teste
       character.attributes.corpo = 4;
       character.attributes.agilidade = 3;
-      character.combat.hp.current = 45;
-      character.combat.hp.max = 50;
+      character.combat.guard.current = 45;
+      character.combat.guard.max = 50;
       character.skills.atletismo.proficiencyLevel = 'versado';
       character.languages = ['comum', 'elfico', 'anao'];
       character.inventory.items.push({
@@ -112,7 +112,7 @@ describe('Persistência em IndexedDB (Integração)', () => {
           agilidade: 3,
         }),
         combat: expect.objectContaining({
-          hp: expect.objectContaining({
+          guard: expect.objectContaining({
             current: 45,
             max: 50,
           }),
@@ -279,7 +279,7 @@ describe('Persistência em IndexedDB (Integração)', () => {
       expect(updated?.attributes.mente).toBe(1); // Não alterado
     });
 
-    it('deve atualizar PV e PP', async () => {
+    it('deve atualizar GA, PV e PP', async () => {
       // Arrange
       const character = createDefaultCharacter({ name: 'Test' });
       await db.characters.add(character);
@@ -288,17 +288,21 @@ describe('Persistência em IndexedDB (Integração)', () => {
       await db.characters.update(character.id, {
         combat: {
           ...character.combat,
-          hp: { current: 10, max: 20, temporary: 5 },
+          guard: { current: 10, max: 20 },
+          vitality: { current: 3, max: 7 },
           pp: { current: 3, max: 8, temporary: 2 },
         },
       });
 
       // Assert
       const updated = await db.characters.get(character.id);
-      expect(updated?.combat.hp).toMatchObject({
+      expect(updated?.combat.guard).toMatchObject({
         current: 10,
         max: 20,
-        temporary: 5,
+      });
+      expect(updated?.combat.vitality).toMatchObject({
+        current: 3,
+        max: 7,
       });
       expect(updated?.combat.pp).toMatchObject({
         current: 3,
