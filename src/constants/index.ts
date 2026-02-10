@@ -55,3 +55,9 @@ export * from './creatureSizes';
 
 // Ações de Combate
 export * from './combatActions';
+
+// Recursos (Dados de Recurso)
+export * from './resources';
+
+// Inventário (Categorias de Itens)
+export * from './inventory';
