@@ -134,6 +134,9 @@ export {
 
 // Inventory
 export type {
+  DurabilityState,
+  ItemDurability,
+  DurabilityTestResult,
   ItemCategory,
   InventoryItem,
   WeaponProficiencyCategory,
@@ -189,6 +192,27 @@ export { DEFAULT_CURRENCY, EMPTY_DENOMINATION } from './currency';
 // Re-export Currency and TotalWealth from currency.ts (canonical source)
 // Note: These are also defined in inventory.ts for backward compatibility
 export type { Currency as CurrencyData } from './currency';
+
+// Resources
+export type {
+  ResourceDieState,
+  ResourceDie,
+  ResourceDieRollResult,
+} from './resources';
+
+export {
+  RESOURCE_DIE_SCALE,
+  RESOURCE_DIE_SIDES,
+  getResourceDieIndex,
+  stepDownResourceDie,
+  stepUpResourceDie,
+  processResourceUse,
+} from './resources';
+
+// Special Abilities
+export type { SpecialAbilitySource, SpecialAbility } from './specialAbilities';
+
+export { SPECIAL_ABILITY_SOURCE_LABELS } from './specialAbilities';
 
 // Character
 export type {

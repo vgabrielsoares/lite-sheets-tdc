@@ -21,6 +21,8 @@ import type { Skills, SkillName } from './skills';
 import type { CombatData } from './combat';
 import type { Inventory } from './inventory';
 import type { SpellcastingData } from './spells';
+import type { ResourceDie } from './resources';
+import type { SpecialAbility } from './specialAbilities';
 
 /**
  * Arquétipos disponíveis no sistema
@@ -449,6 +451,14 @@ export interface Character extends BaseEntity {
   /** Ofícios */
   crafts: Craft[];
 
+  // Recursos (Dados de Recurso)
+  /** Dados de recurso rastreados (água, comida, tochas, etc.) */
+  resources: ResourceDie[];
+
+  // Habilidades Especiais
+  /** Habilidades especiais de todas as fontes */
+  specialAbilities: SpecialAbility[];
+
   // Inventário
   /** Inventário completo */
   inventory: Inventory;
@@ -526,7 +536,7 @@ export const DEFAULT_LEVEL_1_CHARACTER: Partial<Character> = {
       {
         id: 'default-backpack',
         name: 'Mochila',
-        category: 'diversos',
+        category: 'miscelanea',
         quantity: 1,
         weight: 0,
         value: 0,
@@ -535,7 +545,7 @@ export const DEFAULT_LEVEL_1_CHARACTER: Partial<Character> = {
       {
         id: 'default-bank-card',
         name: 'Cartão do Banco',
-        category: 'diversos',
+        category: 'miscelanea',
         quantity: 1,
         weight: 0,
         value: 0,
