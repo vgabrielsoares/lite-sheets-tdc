@@ -148,20 +148,75 @@ export function isValidSkillName(name: string): name is SkillName {
 }
 
 /**
+ * Validates if Guard Points (GA) values are valid
+ * Current GA cannot exceed max GA.
+ *
+ * @param current - Current GA
+ * @param max - Maximum GA
+ * @returns True if valid, false otherwise
+ *
+ * @example
+ * isValidGA(10, 15); // true
+ * isValidGA(15, 15); // true
+ * isValidGA(20, 15); // false (current > max)
+ * isValidGA(-5, 15); // true (can be 0 or below in extreme cases)
+ * isValidGA(10, 0); // false (max must be at least 1)
+ */
+export function isValidGA(current: number, max: number): boolean {
+  if (!Number.isInteger(current) || !Number.isInteger(max)) {
+    return false;
+  }
+  if (max < 1) {
+    return false;
+  }
+  if (current > max) {
+    return false;
+  }
+  if (current < 0) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Validates if Vitality Points (PV) values are valid
+ * Current PV cannot exceed max PV. PV = floor(GA_max / 3).
+ *
+ * @param current - Current PV
+ * @param max - Maximum PV
+ * @returns True if valid, false otherwise
+ *
+ * @example
+ * isValidPV(3, 5); // true
+ * isValidPV(0, 5); // true (Ferimento Crítico)
+ * isValidPV(6, 5); // false (current > max)
+ */
+export function isValidPV(current: number, max: number): boolean {
+  if (!Number.isInteger(current) || !Number.isInteger(max)) {
+    return false;
+  }
+  if (max < 1) {
+    return false;
+  }
+  if (current > max) {
+    return false;
+  }
+  if (current < 0) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Validates if HP (Health Points) values are valid
+ * @deprecated Use isValidGA + isValidPV in v0.0.2. Kept for backward compatibility.
+ *
  * Current HP cannot exceed max HP, temporary HP is separate
  *
  * @param current - Current HP
  * @param max - Maximum HP
  * @param temporary - Temporary HP (default: 0)
  * @returns True if valid, false otherwise
- *
- * @example
- * isValidHP(10, 15); // true
- * isValidHP(15, 15); // true
- * isValidHP(20, 15); // false (current > max)
- * isValidHP(-5, 15); // true (can be negative when dying)
- * isValidHP(10, 15, 5); // true
  */
 export function isValidHP(
   current: number,
@@ -249,17 +304,14 @@ export function isValidXP(xp: number): boolean {
 
 /**
  * Validates if a defense value is reasonable
+ * @deprecated Defesa fixa não existe mais em v0.0.2. Defesa agora é teste ativo.
+ * Mantido para compatibilidade.
+ *
  * Minimum defense is 15 (base), typically shouldn't exceed 30 at normal levels
  *
  * @param defense - The defense value to validate
  * @param allowHighValues - Whether to allow very high values (epic levels) (default: true)
  * @returns True if valid, false otherwise
- *
- * @example
- * isValidDefense(15); // true
- * isValidDefense(20); // true
- * isValidDefense(10); // false (below minimum)
- * isValidDefense(35); // true (if allowHighValues)
  */
 export function isValidDefense(
   defense: number,
