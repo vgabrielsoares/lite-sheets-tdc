@@ -49,3 +49,9 @@ export * from './conditions';
 
 // Moedas
 export * from './currency';
+
+// Tamanhos de Criatura
+export * from './creatureSizes';
+
+// Ações de Combate
+export * from './combatActions';
