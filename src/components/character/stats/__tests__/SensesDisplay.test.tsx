@@ -98,8 +98,8 @@ describe('SensesDisplay', () => {
 
       renderWithTheme(<SensesDisplay character={mockCharacter} />);
 
-      // The +5 chip should appear near Observar (which uses visao)
-      const bonusChips = screen.getAllByText('+5');
+      // The +5d chip should appear near Observar (which uses visao)
+      const bonusChips = screen.getAllByText('+5d');
       expect(bonusChips.length).toBeGreaterThan(0);
     });
 
@@ -115,8 +115,8 @@ describe('SensesDisplay', () => {
 
       renderWithTheme(<SensesDisplay character={mockCharacter} />);
 
-      expect(screen.getByText('+5')).toBeInTheDocument();
-      expect(screen.getByText('+3')).toBeInTheDocument();
+      expect(screen.getByText('+5d')).toBeInTheDocument();
+      expect(screen.getByText('+3d')).toBeInTheDocument();
     });
   });
 

@@ -14,7 +14,7 @@ import type { InventoryItem } from '@/types/inventory';
 const createItem = (overrides: Partial<InventoryItem> = {}): InventoryItem => ({
   id: 'test-item-1',
   name: 'Test Item',
-  category: 'diversos',
+  category: 'miscelanea',
   quantity: 1,
   weight: 2,
   value: 10,
@@ -211,7 +211,7 @@ describe('AddItemDialog', () => {
         expect.objectContaining({
           name: 'Poção de Cura',
           quantity: 5,
-          category: 'diversos',
+          category: 'miscelanea',
         })
       );
     });
@@ -325,12 +325,12 @@ describe('AddItemDialog', () => {
       // Verificar que todas as opções estão disponíveis
       const options = screen.getAllByRole('option');
       expect(options.length).toBeGreaterThanOrEqual(4);
-      expect(screen.getByRole('option', { name: 'Arma' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Armas' })).toBeInTheDocument();
       expect(
-        screen.getByRole('option', { name: 'Ferramenta' })
+        screen.getByRole('option', { name: 'Ferramentas' })
       ).toBeInTheDocument();
       expect(
-        screen.getByRole('option', { name: 'Consumível' })
+        screen.getByRole('option', { name: 'Comida e Bebida' })
       ).toBeInTheDocument();
     });
   });

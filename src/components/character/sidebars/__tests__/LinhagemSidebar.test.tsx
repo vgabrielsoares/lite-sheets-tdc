@@ -345,7 +345,7 @@ describe('LinhagemSidebar', () => {
             keenSenses: expect.arrayContaining([
               expect.objectContaining({
                 type: 'visao',
-                bonus: 5,
+                bonus: 1,
               }),
             ]),
           })
@@ -359,7 +359,7 @@ describe('LinhagemSidebar', () => {
       const lineage: Lineage = {
         ...defaultLineage,
         name: 'Elfo', // Nome válido para passar validação
-        keenSenses: [{ type: 'visao', bonus: 5, description: '' }],
+        keenSenses: [{ type: 'visao', bonus: 1, description: '' }],
       };
 
       render(
@@ -397,7 +397,7 @@ describe('LinhagemSidebar', () => {
         ...defaultLineage,
         name: 'Elfo', // Nome válido para passar validação
         keenSenses: [
-          { type: 'visao', bonus: 5, description: '' },
+          { type: 'visao', bonus: 1, description: '' },
           { type: 'olfato', bonus: 7, description: '' },
         ],
       };

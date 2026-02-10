@@ -438,7 +438,7 @@ describe('Fluxo de Exportação e Importação (Integração)', () => {
       testCharacter.inventory.items.push({
         id: 'sword-1',
         name: 'Andúril',
-        category: 'arma',
+        category: 'armas',
         quantity: 1,
         weight: 3,
         value: 0,
