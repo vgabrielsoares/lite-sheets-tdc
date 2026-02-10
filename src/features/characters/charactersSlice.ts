@@ -11,6 +11,7 @@ import { characterService } from '@/services/characterService';
 import {
   needsMigration,
   migrateCharacterV1toV2,
+  ensureCombatFields,
 } from '@/utils/characterMigration';
 
 /**
@@ -72,6 +73,8 @@ export const loadCharacters = createAsyncThunk(
           migratedNames.push(c.name);
           await characterService.update(c.id, c);
         }
+        // Garantir campos de combate v0.0.2 (safety net)
+        c = ensureCombatFields(c);
         return characterService.ensureUnarmedAttack(c);
       })
     );
@@ -96,6 +99,8 @@ export const loadCharacterById = createAsyncThunk(
       c = migrateCharacterV1toV2(c);
       await characterService.update(c.id, c);
     }
+    // Garantir campos de combate v0.0.2 (safety net)
+    c = ensureCombatFields(c);
     return characterService.ensureUnarmedAttack(c);
   }
 );

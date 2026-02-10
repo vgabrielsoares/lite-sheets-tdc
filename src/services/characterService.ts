@@ -686,6 +686,7 @@ export const characterService = {
       description:
         'Um ataque corpo a corpo desarmado usando punhos, chutes ou outras partes do corpo.',
       ppCost: 0,
+      actionCost: 2,
       actionType: 'maior' as const,
       numberOfAttacks: 1,
       addAttributeToDamage: true,
