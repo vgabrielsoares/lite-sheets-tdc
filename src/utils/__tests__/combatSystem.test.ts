@@ -13,6 +13,7 @@ import {
   healVitality,
   getEffectiveGAMax,
   determineCombatState,
+  adjustGAOnPVCrossing,
   stepDownVulnerabilityDie,
   resetVulnerabilityDie,
   calculateRestGARecovery,
@@ -170,17 +171,20 @@ describe('Sistema de Guarda (GA) e Vitalidade (PV)', () => {
   });
 
   describe('getEffectiveGAMax', () => {
-    it('reduz GA_max quando PV está danificado', () => {
-      // PV < PV_max indica ferimentos sérios
-      const effective = getEffectiveGAMax(15, 3);
-      // Implementação exata depende da fórmula; verifica que retorna um número válido
-      expect(typeof effective).toBe('number');
-      expect(effective).toBeGreaterThanOrEqual(0);
+    it('retorna GA_max completo quando PV > 0', () => {
+      expect(getEffectiveGAMax(15, 1)).toBe(15);
+      expect(getEffectiveGAMax(15, 3)).toBe(15);
+      expect(getEffectiveGAMax(15, 5)).toBe(15);
     });
 
-    it('retorna GA_max quando PV está cheio', () => {
-      const effective = getEffectiveGAMax(15, 5);
-      expect(effective).toBe(15);
+    it('reduz GA_max à metade quando PV = 0', () => {
+      expect(getEffectiveGAMax(15, 0)).toBe(7); // roundDown(15/2) = 7
+      expect(getEffectiveGAMax(20, 0)).toBe(10);
+    });
+
+    it('reduz GA_max à metade quando PV < 0', () => {
+      expect(getEffectiveGAMax(15, -1)).toBe(7);
+      expect(getEffectiveGAMax(15, -5)).toBe(7);
     });
   });
 
@@ -199,6 +203,55 @@ describe('Sistema de Guarda (GA) e Vitalidade (PV)', () => {
 
     it('retorna "ferimento-critico" quando PV = 0', () => {
       expect(determineCombatState(0, 15, 0, 5)).toBe('ferimento-critico');
+    });
+  });
+
+  describe('adjustGAOnPVCrossing', () => {
+    describe('quando PV chega a 0 (pvWasZero=false, pvIsZero=true)', () => {
+      it('reduz GA atual à metade se estiver acima', () => {
+        expect(adjustGAOnPVCrossing(15, 20, false, true)).toBe(10); // halfMax = 10
+        expect(adjustGAOnPVCrossing(12, 20, false, true)).toBe(10);
+      });
+
+      it('mantém GA atual se já estiver na metade ou abaixo', () => {
+        expect(adjustGAOnPVCrossing(10, 20, false, true)).toBe(10);
+        expect(adjustGAOnPVCrossing(8, 20, false, true)).toBe(8);
+        expect(adjustGAOnPVCrossing(5, 20, false, true)).toBe(5);
+      });
+    });
+
+    describe('quando PV sai de 0 (pvWasZero=true, pvIsZero=false)', () => {
+      it('restaura GA atual para pelo menos a metade se estiver abaixo', () => {
+        expect(adjustGAOnPVCrossing(5, 20, true, false)).toBe(10); // halfMax = 10
+        expect(adjustGAOnPVCrossing(0, 20, true, false)).toBe(10);
+        expect(adjustGAOnPVCrossing(8, 20, true, false)).toBe(10);
+      });
+
+      it('mantém GA atual se já estiver na metade ou acima', () => {
+        expect(adjustGAOnPVCrossing(10, 20, true, false)).toBe(10);
+        expect(adjustGAOnPVCrossing(15, 20, true, false)).toBe(15);
+        expect(adjustGAOnPVCrossing(20, 20, true, false)).toBe(20);
+      });
+    });
+
+    describe('quando não há mudança de estado (ambos false ou ambos true)', () => {
+      it('mantém GA atual inalterado quando ambos false', () => {
+        expect(adjustGAOnPVCrossing(15, 20, false, false)).toBe(15);
+        expect(adjustGAOnPVCrossing(5, 20, false, false)).toBe(5);
+      });
+
+      it('mantém GA atual inalterado quando ambos true', () => {
+        expect(adjustGAOnPVCrossing(8, 20, true, true)).toBe(8);
+        expect(adjustGAOnPVCrossing(3, 20, true, true)).toBe(3);
+      });
+    });
+
+    describe('arredondamento', () => {
+      it('usa roundDown para calcular metade', () => {
+        // 15 / 2 = 7.5 → roundDown = 7
+        expect(adjustGAOnPVCrossing(10, 15, false, true)).toBe(7);
+        expect(adjustGAOnPVCrossing(5, 15, true, false)).toBe(7);
+      });
     });
   });
 });

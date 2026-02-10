@@ -70,7 +70,7 @@ describe('CombatTab', () => {
       );
 
       // PP label should be present
-      expect(screen.getByText('PP')).toBeInTheDocument();
+      expect(screen.getByText('Pontos de Poder (PP)')).toBeInTheDocument();
     });
 
     it('should render dying rounds component', () => {
@@ -146,9 +146,11 @@ describe('CombatTab', () => {
         <CombatTab character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      // Click the spend PP button (-1)
-      const spendButtons = screen.getAllByLabelText('Gastar 1 PP');
-      fireEvent.click(spendButtons[0]);
+      // Enter spend amount and click Gastar
+      const spendInput = screen.getByLabelText('Quantidade para gastar PP');
+      fireEvent.change(spendInput, { target: { value: '1' } });
+      const spendButton = screen.getByRole('button', { name: 'Gastar' });
+      fireEvent.click(spendButton);
 
       expect(mockOnUpdate).toHaveBeenCalled();
       const updateCall = mockOnUpdate.mock.calls[0][0];
@@ -220,8 +222,8 @@ describe('CombatTab', () => {
       );
 
       // Find the PP card and click it
-      const ppLabel = screen.getByText('PP');
-      fireEvent.click(ppLabel.closest('[role="button"]') as HTMLElement);
+      const ppLabel = screen.getByText('Pontos de Poder (PP)');
+      fireEvent.click(ppLabel.closest('[class*="MuiCard"]') as HTMLElement);
 
       expect(mockOnOpenPP).toHaveBeenCalled();
     });
