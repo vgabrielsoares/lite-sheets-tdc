@@ -499,10 +499,13 @@ export const DEFAULT_LEVEL_1_CHARACTER: Partial<Character> = {
     instinto: 1,
   },
   combat: {
-    hp: {
+    guard: {
       current: 15,
       max: 15,
-      temporary: 0,
+    },
+    vitality: {
+      current: 5,
+      max: 5,
     },
     pp: {
       current: 2,

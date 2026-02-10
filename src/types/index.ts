@@ -92,11 +92,17 @@ export {
 
 // Combat
 export type {
+  GuardPoints,
+  VitalityPoints,
   HealthPoints,
   PowerPoints,
   CombatState,
   DyingState,
+  VulnerabilityDieSize,
+  VulnerabilityDie,
+  TurnType,
   ActionEconomy,
+  ExtraAction,
   ActionType,
   Defense,
   AttackType,
@@ -107,16 +113,23 @@ export type {
   SavingThrow,
   Resistances,
   DamageReductionEntry,
+  ConditionCategory,
   Condition,
   Initiative,
+  CombatPenalties,
   CombatData,
 } from './combat';
 
 export {
+  VULNERABILITY_DIE_STEPS,
+  SAVING_THROW_ATTRIBUTES,
+  SAVING_THROW_SKILLS,
+  DEFAULT_GA_LEVEL_1,
   DEFAULT_HP_LEVEL_1,
   DEFAULT_PP_LEVEL_1,
   BASE_DEFENSE,
   BASE_DYING_ROUNDS,
+  PV_RECOVERY_COST,
 } from './combat';
 
 // Inventory
