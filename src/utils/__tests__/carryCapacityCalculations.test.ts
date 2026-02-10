@@ -55,7 +55,7 @@ const createItem = (
 ): InventoryItem => ({
   id: crypto.randomUUID(),
   name: 'Test Item',
-  category: 'diversos',
+  category: 'miscelanea',
   quantity,
   weight,
   value: 0,
@@ -165,36 +165,39 @@ describe('carryCapacityCalculations', () => {
   });
 
   describe('calculatePushCapacity', () => {
-    it('deve retornar o dobro da capacidade máxima', () => {
-      expect(calculatePushCapacity(20)).toBe(40);
+    it('deve retornar 10 × Corpo (v0.0.2)', () => {
+      // corpo=2: 10 × 2 = 20
+      expect(calculatePushCapacity(2)).toBe(20);
     });
 
-    it('deve funcionar com capacidade 0', () => {
-      expect(calculatePushCapacity(0)).toBe(0);
+    it('deve ter mínimo de 5 quando Corpo = 0', () => {
+      expect(calculatePushCapacity(0)).toBe(5);
     });
 
-    it('deve arredondar para baixo', () => {
-      expect(calculatePushCapacity(15)).toBe(30);
+    it('deve calcular corretamente com Corpo alto', () => {
+      // corpo=5: 10 × 5 = 50
+      expect(calculatePushCapacity(5)).toBe(50);
     });
   });
 
   describe('calculateLiftCapacity', () => {
-    it('deve retornar metade da capacidade máxima', () => {
-      expect(calculateLiftCapacity(20)).toBe(10);
+    it('deve retornar 5 × Corpo (v0.0.2)', () => {
+      // corpo=2: 5 × 2 = 10
+      expect(calculateLiftCapacity(2)).toBe(10);
     });
 
-    it('deve funcionar com capacidade 0', () => {
-      expect(calculateLiftCapacity(0)).toBe(0);
+    it('deve ter mínimo de 2 quando Corpo = 0', () => {
+      expect(calculateLiftCapacity(0)).toBe(2);
     });
 
-    it('deve arredondar para baixo (regra do sistema)', () => {
-      // 15 / 2 = 7.5 → 7
-      expect(calculateLiftCapacity(15)).toBe(7);
+    it('deve calcular corretamente com Corpo alto', () => {
+      // corpo=5: 5 × 5 = 25
+      expect(calculateLiftCapacity(5)).toBe(25);
     });
 
-    it('deve arredondar para baixo com números ímpares', () => {
-      // 9 / 2 = 4.5 → 4
-      expect(calculateLiftCapacity(9)).toBe(4);
+    it('deve calcular corretamente com Corpo = 1', () => {
+      // corpo=1: 5 × 1 = 5
+      expect(calculateLiftCapacity(1)).toBe(5);
     });
   });
 
@@ -317,8 +320,8 @@ describe('carryCapacityCalculations', () => {
       expect(result.sizeModifier).toBe(0);
       expect(result.otherModifiers).toBe(0);
       expect(result.total).toBe(20);
-      expect(result.pushCapacity).toBe(40);
-      expect(result.liftCapacity).toBe(10);
+      expect(result.pushCapacity).toBe(30); // 10 × 3 (v0.0.2)
+      expect(result.liftCapacity).toBe(15); // 5 × 3 (v0.0.2)
     });
 
     it('deve aplicar modificador de tamanho grande', () => {
@@ -327,8 +330,8 @@ describe('carryCapacityCalculations', () => {
       expect(result.base).toBe(15);
       expect(result.sizeModifier).toBe(2);
       expect(result.total).toBe(17);
-      expect(result.pushCapacity).toBe(34);
-      expect(result.liftCapacity).toBe(8);
+      expect(result.pushCapacity).toBe(20); // 10 × 2 (v0.0.2)
+      expect(result.liftCapacity).toBe(10); // 5 × 2 (v0.0.2)
     });
 
     it('deve aplicar outros modificadores', () => {
@@ -353,8 +356,8 @@ describe('carryCapacityCalculations', () => {
       expect(result.total).toBe(20);
       expect(result.currentWeight).toBe(6); // 5 + 1
       expect(result.encumbranceState).toBe('normal');
-      expect(result.pushLimit).toBe(40);
-      expect(result.liftLimit).toBe(10);
+      expect(result.pushLimit).toBe(30); // 10 × 3 (v0.0.2)
+      expect(result.liftLimit).toBe(15); // 5 × 3 (v0.0.2)
     });
 
     it('deve detectar estado sobrecarregado', () => {

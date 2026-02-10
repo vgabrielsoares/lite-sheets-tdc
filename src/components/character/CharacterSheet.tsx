@@ -35,6 +35,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 // Ícones para TOC - Resources
 import HotelIcon from '@mui/icons-material/Hotel';
+import CasinoIcon from '@mui/icons-material/Casino';
 // Ícones para TOC - Inventory
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -77,6 +78,11 @@ const ArchetypesTab = lazy(() =>
 );
 const ResourcesTab = lazy(() =>
   import('./tabs/ResourcesTab').then((m) => ({ default: m.ResourcesTab }))
+);
+const SpecialAbilitiesTab = lazy(() =>
+  import('./tabs/SpecialAbilitiesTab').then((m) => ({
+    default: m.SpecialAbilitiesTab,
+  }))
 );
 const InventoryTab = lazy(() =>
   import('./tabs/InventoryTab').then((m) => ({ default: m.InventoryTab }))
@@ -323,6 +329,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       ],
       resources: [
         {
+          id: 'section-resource-dice',
+          label: 'Dados de Recurso',
+          icon: <CasinoIcon fontSize="small" />,
+        },
+        {
           id: 'section-proficiencies',
           label: 'Proficiências',
           icon: <BuildIcon fontSize="small" />,
@@ -341,6 +352,13 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           id: 'section-rest',
           label: 'Descanso',
           icon: <HotelIcon fontSize="small" />,
+        },
+      ],
+      specials: [
+        {
+          id: 'section-special-abilities',
+          label: 'Habilidades Especiais',
+          icon: <FlashOnIcon fontSize="small" />,
         },
       ],
       inventory: [
@@ -1032,6 +1050,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         return <ArchetypesTab {...tabProps} />;
       case 'resources':
         return <ResourcesTab {...tabProps} />;
+      case 'specials':
+        return <SpecialAbilitiesTab {...tabProps} />;
       case 'inventory':
         return <InventoryTab {...tabProps} />;
       case 'spells':

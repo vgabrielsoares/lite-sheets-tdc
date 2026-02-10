@@ -5,21 +5,79 @@
  * incluindo itens, equipamentos, armas, armaduras e moedas.
  */
 
-import type { UUID, DiceRoll, DamageType, CurrencyType } from './common';
+import type {
+  UUID,
+  DiceRoll,
+  DamageType,
+  CurrencyType,
+  DiceType,
+} from './common';
 import type { AttributeName } from './attributes';
 
 /**
- * Categoria de item
+ * Estado de durabilidade de um item
+ */
+export type DurabilityState = 'intacto' | 'danificado' | 'quebrado';
+
+/**
+ * Durabilidade de um item (sistema baseado em dado)
+ *
+ * Regras:
+ * - Cada item pode ter durabilidade representada por um dado (d2 a d100)
+ * - Ao testar durabilidade: rolar o dado
+ *   - Resultado = 1: item fica danificado/quebrado (dado desce um passo)
+ *   - Resultado ≥ 2: nada acontece
+ * - Quando o dado chega a d2 e falha, item está quebrado
+ */
+export interface ItemDurability {
+  /** Dado atual de durabilidade */
+  currentDie: DiceType;
+  /** Dado máximo de durabilidade (quando novo/reparado) */
+  maxDie: DiceType;
+  /** Estado atual do item */
+  state: DurabilityState;
+}
+
+/**
+ * Resultado de um teste de durabilidade
+ */
+export interface DurabilityTestResult {
+  /** Valor rolado no dado */
+  roll: number;
+  /** Se o item foi danificado (resultado = 1) */
+  damaged: boolean;
+  /** Dado antes do teste */
+  previousDie: DiceType;
+  /** Dado após o teste (pode ter descido um passo) */
+  newDie: DiceType;
+  /** Estado do item após o teste */
+  newState: DurabilityState;
+}
+
+/**
+ * Categoria de item (20 categorias v0.0.2)
  */
 export type ItemCategory =
-  | 'arma'
-  | 'armadura'
-  | 'escudo'
-  | 'ferramenta'
-  | 'consumivel'
-  | 'material'
-  | 'magico'
-  | 'diversos';
+  | 'aventura'
+  | 'comida-bebida'
+  | 'feiticaria'
+  | 'ferramentas'
+  | 'fontes-de-luz'
+  | 'herbalismo'
+  | 'instrumentos-musicais'
+  | 'municoes'
+  | 'produtos-alquimicos'
+  | 'recipientes'
+  | 'utilitarios'
+  | 'venenos'
+  | 'vestimentos'
+  | 'riquezas'
+  | 'armas'
+  | 'protecoes'
+  | 'veiculos-montaria'
+  | 'materiais'
+  | 'itens-magicos'
+  | 'miscelanea';
 
 /**
  * Item base do inventário
@@ -47,6 +105,8 @@ export interface InventoryItem {
   value: number;
   /** Se o item está equipado */
   equipped: boolean;
+  /** Durabilidade do item (opcional, baseada em dado) */
+  durability?: ItemDurability;
   /** Propriedades customizadas do item */
   customProperties?: Record<string, any>;
 }
@@ -75,7 +135,7 @@ export type WeaponProperty =
  * Arma
  */
 export interface Weapon extends InventoryItem {
-  category: 'arma';
+  category: 'armas';
   /** Categoria de proficiência */
   proficiencyCategory: WeaponProficiencyCategory;
   /** Tipo de ataque (corpo-a-corpo ou distância) */
@@ -104,7 +164,7 @@ export type ArmorType = 'leve' | 'media' | 'pesada';
  * Armadura
  */
 export interface Armor extends InventoryItem {
-  category: 'armadura';
+  category: 'protecoes';
   /** Tipo de armadura */
   armorType: ArmorType;
   /** Bônus de defesa fornecido */
@@ -124,7 +184,7 @@ export interface Armor extends InventoryItem {
  * Escudo
  */
 export interface Shield extends InventoryItem {
-  category: 'escudo';
+  category: 'protecoes';
   /** Bônus de defesa fornecido */
   defenseBonus: number;
   /** Bônus mágico (se aplicável) */
@@ -146,7 +206,7 @@ export type ToolType =
  * Ferramenta
  */
 export interface Tool extends InventoryItem {
-  category: 'ferramenta';
+  category: 'ferramentas';
   /** Tipo de ferramenta */
   toolType: ToolType;
   /** Se requer proficiência para uso */

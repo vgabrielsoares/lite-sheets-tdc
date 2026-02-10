@@ -110,7 +110,7 @@ const SenseCard: React.FC<SenseCardProps> = ({ sense, keenSenseBonus }) => {
           </Typography>
           {keenSenseBonus > 0 && (
             <Chip
-              label={`+${keenSenseBonus}`}
+              label={`+${keenSenseBonus}d`}
               size="small"
               color="success"
               sx={{

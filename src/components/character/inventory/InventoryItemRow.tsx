@@ -7,7 +7,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -17,12 +17,26 @@ import {
   Tooltip,
   alpha,
   useTheme,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import type { InventoryItem, ItemCategory } from '@/types/inventory';
+import CasinoIcon from '@mui/icons-material/Casino';
+import BuildIcon from '@mui/icons-material/Build';
+import type { InventoryItem } from '@/types/inventory';
+import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/constants/inventory';
+import {
+  rollDurabilityDie,
+  testDurability,
+  applyDurabilityTestResult,
+  repairItem,
+  getDurabilityColor,
+  getDurabilityLabel,
+  getDurabilityPercent,
+} from '@/utils/durabilityCalculations';
 
 // ============================================================================
 // Tipos e Interfaces
@@ -35,6 +49,8 @@ export interface InventoryItemRowProps {
   onEdit: (item: InventoryItem) => void;
   /** Callback para remover o item */
   onRemove: (itemId: string) => void;
+  /** Callback para atualizar o item (ex: após teste de durabilidade) */
+  onUpdate?: (item: InventoryItem) => void;
   /** Callback quando o item é clicado (para abrir detalhes) */
   onClick?: (item: InventoryItem) => void;
   /** Se as ações estão desabilitadas */
@@ -46,37 +62,6 @@ export interface InventoryItemRowProps {
 // ============================================================================
 // Constantes
 // ============================================================================
-
-/**
- * Labels para categorias de itens
- */
-const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  arma: 'Arma',
-  armadura: 'Armadura',
-  escudo: 'Escudo',
-  ferramenta: 'Ferramenta',
-  consumivel: 'Consumível',
-  material: 'Material',
-  magico: 'Mágico',
-  diversos: 'Diversos',
-};
-
-/**
- * Cores para categorias de itens
- */
-const CATEGORY_COLORS: Record<
-  ItemCategory,
-  'default' | 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info'
-> = {
-  arma: 'error',
-  armadura: 'primary',
-  escudo: 'primary',
-  ferramenta: 'info',
-  consumivel: 'success',
-  material: 'default',
-  magico: 'secondary',
-  diversos: 'default',
-};
 
 // ============================================================================
 // Funções Utilitárias
@@ -118,12 +103,81 @@ export function InventoryItemRow({
   item,
   onEdit,
   onRemove,
+  onUpdate,
   onClick,
   disabled = false,
   totalZeroWeightCount = 0,
 }: InventoryItemRowProps) {
   const theme = useTheme();
   const totalWeight = calculateTotalWeight(item);
+
+  // Estado do snackbar para resultado do teste de durabilidade
+  const [durabilityResult, setDurabilityResult] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'warning' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+
+  // Handler de teste de durabilidade
+  const handleDurabilityTest = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (
+        disabled ||
+        !item.durability ||
+        item.durability.state === 'quebrado' ||
+        !onUpdate
+      )
+        return;
+
+      const rollValue = rollDurabilityDie(item.durability.currentDie);
+      const result = testDurability(item.durability, rollValue);
+      const newDurability = applyDurabilityTestResult(item.durability, result);
+
+      onUpdate({ ...item, durability: newDurability });
+
+      if (result.damaged) {
+        if (result.newState === 'quebrado') {
+          setDurabilityResult({
+            open: true,
+            message: `${item.name}: rolou ${rollValue} no ${result.previousDie} — QUEBROU!`,
+            severity: 'error',
+          });
+        } else {
+          setDurabilityResult({
+            open: true,
+            message: `${item.name}: rolou ${rollValue} no ${result.previousDie} — Danificado! (${result.previousDie} → ${result.newDie})`,
+            severity: 'warning',
+          });
+        }
+      } else {
+        setDurabilityResult({
+          open: true,
+          message: `${item.name}: rolou ${rollValue} no ${result.previousDie} — Item resiste!`,
+          severity: 'success',
+        });
+      }
+    },
+    [item, disabled, onUpdate]
+  );
+
+  // Handler de reparo
+  const handleRepair = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (disabled || !item.durability || !onUpdate) return;
+
+      const repairedDurability = repairItem(item.durability);
+      onUpdate({ ...item, durability: repairedDurability });
+
+      setDurabilityResult({
+        open: true,
+        message: `${item.name} reparado! Durabilidade restaurada para ${repairedDurability.maxDie}.`,
+        severity: 'success',
+      });
+    },
+    [item, disabled, onUpdate]
+  );
 
   // Calcular peso efetivo para itens de peso 0
   // Se há 5 ou mais itens peso 0 no inventário, cada 5 conta como 1 de peso
@@ -250,10 +304,10 @@ export function InventoryItemRow({
       <Tooltip
         title={
           isWeightless(item.weight)
-            ? 'Item sem peso - não conta para capacidade de carga'
+            ? 'Item sem espaço - não conta para capacidade de carga'
             : item.weight === 0 && totalZeroWeightCount >= 5
-              ? `Peso unitário: 0 | Total: ${(effectiveWeight ?? 0).toFixed(1)}`
-              : `Peso unitário: ${formatWeight(item.weight)} | Total: ${formatWeight(totalWeight)}`
+              ? `Espaço unitário: 0 | Total: ${(effectiveWeight ?? 0).toFixed(1)}`
+              : `Espaço unitário: ${formatWeight(item.weight)} | Total: ${formatWeight(totalWeight)}`
         }
         arrow
       >
@@ -279,10 +333,90 @@ export function InventoryItemRow({
             </Typography>
           </Stack>
           <Typography variant="caption" color="text.secondary">
-            {isWeightless(item.weight) ? 'sem peso' : 'peso'}
+            {isWeightless(item.weight) ? 'sem espaço' : 'espaço'}
           </Typography>
         </Box>
       </Tooltip>
+
+      {/* Durabilidade */}
+      {item.durability && (
+        <Box sx={{ textAlign: 'center', minWidth: 80 }}>
+          <Tooltip
+            title={`Durabilidade: ${getDurabilityLabel(item.durability.state)} (${item.durability.currentDie}/${item.durability.maxDie})`}
+            arrow
+          >
+            <Stack alignItems="center" spacing={0.25}>
+              <Chip
+                label={
+                  item.durability.state === 'quebrado'
+                    ? '✗'
+                    : item.durability.currentDie
+                }
+                size="small"
+                color={getDurabilityColor(item.durability.state)}
+                variant={
+                  item.durability.state === 'intacto' ? 'outlined' : 'filled'
+                }
+                sx={{ height: 22, fontSize: '0.75rem', fontWeight: 600 }}
+              />
+              <Stack direction="row" spacing={0.25}>
+                <Tooltip title="Testar durabilidade" arrow>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={handleDurabilityTest}
+                      disabled={
+                        disabled ||
+                        item.durability.state === 'quebrado' ||
+                        !onUpdate
+                      }
+                      aria-label={`Testar durabilidade de ${item.name}`}
+                      sx={{
+                        p: 0.25,
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          color: 'warning.main',
+                          backgroundColor: alpha(
+                            theme.palette.warning.main,
+                            0.1
+                          ),
+                        },
+                      }}
+                    >
+                      <CasinoIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                {item.durability.state !== 'intacto' && (
+                  <Tooltip title="Reparar item" arrow>
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={handleRepair}
+                        disabled={disabled || !onUpdate}
+                        aria-label={`Reparar ${item.name}`}
+                        sx={{
+                          p: 0.25,
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            color: 'success.main',
+                            backgroundColor: alpha(
+                              theme.palette.success.main,
+                              0.1
+                            ),
+                          },
+                        }}
+                      >
+                        <BuildIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                )}
+              </Stack>
+            </Stack>
+          </Tooltip>
+        </Box>
+      )}
 
       {/* Ações */}
       <Stack direction="row" spacing={0.5}>
@@ -326,6 +460,27 @@ export function InventoryItemRow({
           </span>
         </Tooltip>
       </Stack>
+
+      {/* Snackbar de resultado de teste de durabilidade */}
+      <Snackbar
+        open={durabilityResult.open}
+        autoHideDuration={3000}
+        onClose={() =>
+          setDurabilityResult((prev) => ({ ...prev, open: false }))
+        }
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={durabilityResult.severity}
+          onClose={() =>
+            setDurabilityResult((prev) => ({ ...prev, open: false }))
+          }
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {durabilityResult.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

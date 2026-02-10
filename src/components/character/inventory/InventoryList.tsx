@@ -30,10 +30,12 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import type { InventoryItem } from '@/types/inventory';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import type { InventoryItem, ItemCategory } from '@/types/inventory';
 import { InventoryItemRow } from './InventoryItemRow';
 import { AddItemDialog } from './AddItemDialog';
 import { ConfirmDialog } from '@/components/shared';
+import { ITEM_CATEGORIES, CATEGORY_LABELS } from '@/constants/inventory';
 import {
   calculateItemsWeight,
   getEncumbranceState,
@@ -109,6 +111,26 @@ export function InventoryList({
 
   // Estado de expansão da lista
   const [expanded, setExpanded] = useState(true);
+
+  // Filtro por categoria
+  const [categoryFilter, setCategoryFilter] = useState<ItemCategory | 'all'>(
+    'all'
+  );
+
+  // Itens filtrados
+  const filteredItems = useMemo(
+    () =>
+      categoryFilter === 'all'
+        ? items
+        : items.filter((item) => item.category === categoryFilter),
+    [items, categoryFilter]
+  );
+
+  // Categorias presentes no inventário (para filtro dinâmico)
+  const presentCategories = useMemo(() => {
+    const cats = new Set(items.map((item) => item.category));
+    return ITEM_CATEGORIES.filter((c) => cats.has(c.value));
+  }, [items]);
 
   // Cálculos de peso (usa função correta que considera regra de peso 0)
   const itemsWeight = useMemo(() => calculateItemsWeight(items), [items]);
@@ -199,6 +221,17 @@ export function InventoryList({
     }
   }, [items, itemToRemove, onUpdate]);
 
+  // Atualizar um item individual (ex: após teste de durabilidade)
+  const handleUpdateSingleItem = useCallback(
+    (updatedItem: InventoryItem) => {
+      const updatedItems = items.map((item) =>
+        item.id === updatedItem.id ? updatedItem : item
+      );
+      onUpdate(updatedItems);
+    },
+    [items, onUpdate]
+  );
+
   // Cancelar remoção de item
   const handleCancelRemove = useCallback(() => {
     setItemToRemove(null);
@@ -244,23 +277,23 @@ export function InventoryList({
                       variant="subtitle2"
                       sx={{ mb: 1, fontWeight: 600 }}
                     >
-                      Sistema de Peso do Inventário
+                      Sistema de Espaço do Inventário
                     </Typography>
                     <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                      <strong>Itens sem peso:</strong> Não contam para o peso
-                      total (peso = null)
+                      <strong>Itens sem espaço:</strong> Não contam para o
+                      espaço total (espaço = null)
                     </Typography>
                     <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                      <strong>Itens com peso 0:</strong> A cada 5 unidades = 1
-                      de peso total
+                      <strong>Itens com espaço 0:</strong> A cada 5 unidades = 1
+                      de espaço total
                     </Typography>
                     <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                      <strong>Itens com peso normal:</strong> Peso unitário x
-                      quantidade
+                      <strong>Itens com espaço normal:</strong> Espaço unitário
+                      x quantidade
                     </Typography>
                     <Typography variant="body2" component="div">
-                      <strong>Itens com peso negativo:</strong> Reduzem o peso
-                      total do inventário
+                      <strong>Itens com espaço negativo:</strong> Reduzem o
+                      espaço total do inventário
                     </Typography>
                   </Box>
                 }
@@ -280,10 +313,10 @@ export function InventoryList({
 
             <Stack direction="row" alignItems="center" spacing={1}>
               {/* Peso dos itens */}
-              <Tooltip title="Peso total dos itens" arrow>
+              <Tooltip title="Espaço total dos itens" arrow>
                 <Chip
                   icon={<FitnessCenterIcon fontSize="small" />}
-                  label={`${itemsWeight} peso`}
+                  label={`${itemsWeight} espaço`}
                   size="small"
                   color={stateColor}
                   variant="filled"
@@ -316,8 +349,52 @@ export function InventoryList({
 
             <Divider sx={{ mb: 2 }} />
 
+            {/* Filtro por Categoria */}
+            {presentCategories.length > 1 && (
+              <Box sx={{ mb: 2 }}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={0.5}
+                  sx={{ mb: 1 }}
+                >
+                  <FilterListIcon fontSize="small" color="action" />
+                  <Typography variant="caption" color="text.secondary">
+                    Filtrar por categoria
+                  </Typography>
+                </Stack>
+                <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                  <Chip
+                    label="Todos"
+                    size="small"
+                    variant={categoryFilter === 'all' ? 'filled' : 'outlined'}
+                    color={categoryFilter === 'all' ? 'primary' : 'default'}
+                    onClick={() => setCategoryFilter('all')}
+                  />
+                  {presentCategories.map((cat) => (
+                    <Chip
+                      key={cat.value}
+                      label={cat.label}
+                      size="small"
+                      variant={
+                        categoryFilter === cat.value ? 'filled' : 'outlined'
+                      }
+                      color={
+                        categoryFilter === cat.value ? cat.color : 'default'
+                      }
+                      onClick={() =>
+                        setCategoryFilter(
+                          categoryFilter === cat.value ? 'all' : cat.value
+                        )
+                      }
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
             {/* Lista de itens */}
-            {items.length === 0 ? (
+            {filteredItems.length === 0 ? (
               <Box
                 sx={{
                   py: 4,
@@ -329,20 +406,25 @@ export function InventoryList({
                   sx={{ fontSize: 48, mb: 1, color: 'action.disabled' }}
                 />
                 <Typography variant="body2" color="text.secondary">
-                  Nenhum item no inventário
+                  {categoryFilter !== 'all'
+                    ? `Nenhum item na categoria "${CATEGORY_LABELS[categoryFilter]}"`
+                    : 'Nenhum item no inventário'}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Clique em &quot;Adicionar Item&quot; para começar
+                  {categoryFilter !== 'all'
+                    ? 'Limpe o filtro ou adicione um item nesta categoria'
+                    : 'Clique em "Adicionar Item" para começar'}
                 </Typography>
               </Box>
             ) : (
               <Stack spacing={1}>
-                {items.map((item) => (
+                {filteredItems.map((item) => (
                   <InventoryItemRow
                     key={item.id}
                     item={item}
                     onEdit={handleEditItem}
                     onRemove={handleRemoveItem}
+                    onUpdate={handleUpdateSingleItem}
                     onClick={onOpenItem}
                     disabled={disabled}
                     totalZeroWeightCount={totalZeroWeightCount}

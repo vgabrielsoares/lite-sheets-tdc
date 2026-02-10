@@ -572,7 +572,7 @@ export function getEquippedArmorType(items: InventoryItem[]): ArmorType | null {
   let heaviestArmor: ArmorType | null = null;
 
   for (const item of items) {
-    if (item.category !== 'armadura' || !item.equipped) continue;
+    if (item.category !== 'protecoes' || !item.equipped) continue;
 
     // Tentar obter armorType de customProperties (onde Armor extends InventoryItem armazena)
     const armorType =

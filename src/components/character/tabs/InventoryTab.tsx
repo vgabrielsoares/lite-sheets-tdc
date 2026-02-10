@@ -97,8 +97,14 @@ export const InventoryTab = React.memo(function InventoryTab({
     const corpo = character.attributes?.corpo ?? 1;
     const size = (character.size ?? 'medio') as CreatureSize;
     const sizeModifier = getSizeCarryModifier(size);
-    return calculateCarryCapacity(corpo, sizeModifier, 0);
-  }, [character.attributes?.corpo, character.size]);
+    const otherModifiers =
+      character.inventory?.carryingCapacity?.otherModifiers ?? 0;
+    return calculateCarryCapacity(corpo, sizeModifier, otherModifiers);
+  }, [
+    character.attributes?.corpo,
+    character.size,
+    character.inventory?.carryingCapacity?.otherModifiers,
+  ]);
 
   /**
    * Calcula o peso das moedas físicas

@@ -11,21 +11,34 @@ import {
   MenuItem,
   IconButton,
   Typography,
+  Tooltip,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import PersonIcon from '@mui/icons-material/Person';
+import ShieldIcon from '@mui/icons-material/Shield';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import BackpackIcon from '@mui/icons-material/Backpack';
+import FlashOnIcon from '@mui/icons-material/FlashOn';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import DescriptionIcon from '@mui/icons-material/Description';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 
 /**
  * Abas disponíveis na ficha de personagem
  */
 export const CHARACTER_TABS = [
-  { id: 'main', label: 'Principal' },
-  { id: 'combat', label: 'Combate' },
-  { id: 'archetypes', label: 'Arquétipos' },
-  { id: 'resources', label: 'Recursos' },
-  { id: 'inventory', label: 'Inventário' },
-  { id: 'spells', label: 'Feitiços' },
-  { id: 'description', label: 'Descrição' },
-  { id: 'notes', label: 'Anotações' },
+  { id: 'main', label: 'Principal', Icon: PersonIcon },
+  { id: 'combat', label: 'Combate', Icon: ShieldIcon },
+  { id: 'archetypes', label: 'Arquétipos', Icon: AutoAwesomeIcon },
+  { id: 'resources', label: 'Recursos', Icon: BackpackIcon },
+  { id: 'specials', label: 'Especiais', Icon: FlashOnIcon },
+  { id: 'inventory', label: 'Inventário', Icon: Inventory2Icon },
+  { id: 'spells', label: 'Feitiços', Icon: AutoFixHighIcon },
+  { id: 'description', label: 'Descrição', Icon: DescriptionIcon },
+  { id: 'notes', label: 'Anotações', Icon: EditNoteIcon },
 ] as const;
 
 export type CharacterTabId = (typeof CHARACTER_TABS)[number]['id'];
@@ -69,6 +82,7 @@ export interface TabNavigationProps {
 export function TabNavigation({ currentTab, onTabChange }: TabNavigationProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isCompact = useMediaQuery(theme.breakpoints.down('lg'));
 
   // Estado do menu mobile
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -87,12 +101,13 @@ export function TabNavigation({ currentTab, onTabChange }: TabNavigationProps) {
     handleMenuClose();
   };
 
-  // Encontra o label da aba atual
-  const currentTabLabel =
-    CHARACTER_TABS.find((tab) => tab.id === currentTab)?.label || 'Principal';
+  // Encontra a aba atual
+  const currentTabData = CHARACTER_TABS.find((tab) => tab.id === currentTab);
+  const currentTabLabel = currentTabData?.label || 'Principal';
+  const CurrentTabIcon = currentTabData?.Icon || PersonIcon;
 
   /**
-   * Renderização Mobile: Menu Dropdown
+   * Renderização Mobile: Menu Dropdown com ícones
    */
   if (isMobile) {
     return (
@@ -119,6 +134,7 @@ export function TabNavigation({ currentTab, onTabChange }: TabNavigationProps) {
             <MenuIcon />
           </IconButton>
 
+          <CurrentTabIcon fontSize="small" sx={{ color: 'primary.main' }} />
           <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
             {currentTabLabel}
           </Typography>
@@ -133,22 +149,31 @@ export function TabNavigation({ currentTab, onTabChange }: TabNavigationProps) {
             'aria-labelledby': 'tab-menu-button',
           }}
         >
-          {CHARACTER_TABS.map((tab) => (
-            <MenuItem
-              key={tab.id}
-              selected={tab.id === currentTab}
-              onClick={() => handleTabClick(tab.id)}
-            >
-              {tab.label}
-            </MenuItem>
-          ))}
+          {CHARACTER_TABS.map((tab) => {
+            const TabIcon = tab.Icon;
+            return (
+              <MenuItem
+                key={tab.id}
+                selected={tab.id === currentTab}
+                onClick={() => handleTabClick(tab.id)}
+              >
+                <ListItemIcon>
+                  <TabIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{tab.label}</ListItemText>
+              </MenuItem>
+            );
+          })}
         </Menu>
       </Box>
     );
   }
 
   /**
-   * Renderização Desktop: Tabs Horizontais
+   * Renderização Desktop: Tabs Horizontais com ícones
+   *
+   * - ≥ lg: ícone + nome
+   * - md a lg: apenas ícone com tooltip
    */
   return (
     <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -159,15 +184,33 @@ export function TabNavigation({ currentTab, onTabChange }: TabNavigationProps) {
         variant="scrollable"
         scrollButtons="auto"
       >
-        {CHARACTER_TABS.map((tab) => (
-          <Tab
-            key={tab.id}
-            label={tab.label}
-            value={tab.id}
-            id={`tab-${tab.id}`}
-            aria-controls={`tabpanel-${tab.id}`}
-          />
-        ))}
+        {CHARACTER_TABS.map((tab) => {
+          const TabIcon = tab.Icon;
+          const tabContent = (
+            <Tab
+              key={tab.id}
+              icon={<TabIcon fontSize="small" />}
+              iconPosition="start"
+              label={isCompact ? undefined : tab.label}
+              value={tab.id}
+              id={`tab-${tab.id}`}
+              aria-controls={`tabpanel-${tab.id}`}
+              aria-label={isCompact ? tab.label : undefined}
+              sx={{
+                minWidth: isCompact ? 48 : undefined,
+                minHeight: 48,
+              }}
+            />
+          );
+
+          return isCompact ? (
+            <Tooltip key={tab.id} title={tab.label} arrow>
+              {tabContent}
+            </Tooltip>
+          ) : (
+            tabContent
+          );
+        })}
       </Tabs>
     </Box>
   );

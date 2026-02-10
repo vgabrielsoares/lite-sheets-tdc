@@ -17,6 +17,7 @@ import {
   ProficienciesList,
   LanguagesList,
   RestCalculator,
+  ResourceTracker,
 } from '@/components/character/resources';
 import { ComplementaryTraits, CompleteTraits } from '../traits';
 import type {
@@ -26,6 +27,7 @@ import type {
   ComplementaryTrait,
   CompleteTrait,
 } from '@/types';
+import type { ResourceDie } from '@/types/resources';
 import { calculateTraitBalance } from '@/types/traits';
 
 export interface ResourcesTabProps {
@@ -67,6 +69,13 @@ export const ResourcesTab = React.memo(function ResourcesTab({
   const handleExtraLanguagesModifierUpdate = useCallback(
     (extraLanguagesModifier: number) => {
       onUpdate({ extraLanguagesModifier });
+    },
+    [onUpdate]
+  );
+
+  const handleResourcesUpdate = useCallback(
+    (resources: ResourceDie[]) => {
+      onUpdate({ resources });
     },
     [onUpdate]
   );
@@ -151,6 +160,16 @@ export const ResourcesTab = React.memo(function ResourcesTab({
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Stack spacing={4}>
+        {/* Dados de Recurso (Água, Comida, Tochas, etc.) */}
+        <Box id="section-resource-dice">
+          <ResourceTracker
+            resources={character.resources ?? []}
+            onUpdateResources={handleResourcesUpdate}
+          />
+        </Box>
+
+        <Divider />
+
         {/* Proficiências */}
         <Box id="section-proficiencies">
           <ProficienciesList

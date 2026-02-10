@@ -5,11 +5,13 @@
  * estados de encumbrance, capacidade de empurrar/levantar, e peso de moedas.
  *
  * Fórmula base: 5 + (Corpo × 5) + sizeModifier + otherModifiers
+ * Empurrar: 10 × Corpo (mínimo 5)
+ * Levantar: 5 × Corpo (mínimo 2)
  *
  * Estados de carga:
- * - Normal: peso ≤ capacidade máxima
- * - Sobrecarregado: peso > capacidade máxima E ≤ 2× capacidade máxima
- * - Imobilizado: peso > 2× capacidade máxima
+ * - Normal: espaço ≤ capacidade máxima
+ * - Sobrecarregado: espaço > capacidade máxima E ≤ 2× capacidade máxima
+ * - Imobilizado: espaço > 2× capacidade máxima
  */
 
 import type {
@@ -93,25 +95,25 @@ export function calculateCarryCapacity(
 /**
  * Calcula a capacidade de empurrar
  *
- * Regra: 2× a capacidade máxima
+ * Regra v0.0.2: 10 × Corpo (mínimo 5)
  *
- * @param maxCapacity - Capacidade de carga máxima
- * @returns Capacidade de empurrar
+ * @param corpo - Valor do atributo Corpo
+ * @returns Capacidade de empurrar em espaços
  */
-export function calculatePushCapacity(maxCapacity: number): number {
-  return Math.floor(maxCapacity * 2);
+export function calculatePushCapacity(corpo: number): number {
+  return Math.max(5, 10 * corpo);
 }
 
 /**
  * Calcula a capacidade de levantar
  *
- * Regra: 0.5× a capacidade máxima (arredondado para baixo)
+ * Regra v0.0.2: 5 × Corpo (mínimo 2)
  *
- * @param maxCapacity - Capacidade de carga máxima
- * @returns Capacidade de levantar
+ * @param corpo - Valor do atributo Corpo
+ * @returns Capacidade de levantar em espaços
  */
-export function calculateLiftCapacity(maxCapacity: number): number {
-  return Math.floor(maxCapacity * 0.5);
+export function calculateLiftCapacity(corpo: number): number {
+  return Math.max(2, 5 * corpo);
 }
 
 /**
@@ -275,8 +277,8 @@ export function calculateFullCarryCapacity(
     sizeModifier,
     otherModifiers,
     total,
-    pushCapacity: calculatePushCapacity(total),
-    liftCapacity: calculateLiftCapacity(total),
+    pushCapacity: calculatePushCapacity(corpo),
+    liftCapacity: calculateLiftCapacity(corpo),
   };
 }
 
@@ -310,8 +312,8 @@ export function generateCarryingCapacity(
     total,
     currentWeight,
     encumbranceState: getEncumbranceState(currentWeight, total),
-    pushLimit: calculatePushCapacity(total),
-    liftLimit: calculateLiftCapacity(total),
+    pushLimit: calculatePushCapacity(corpo),
+    liftLimit: calculateLiftCapacity(corpo),
   };
 }
 
@@ -320,7 +322,7 @@ export function generateCarryingCapacity(
  */
 export const ENCUMBRANCE_STATE_DESCRIPTIONS: Record<EncumbranceState, string> =
   {
-    normal: 'Peso normal - sem penalidades',
+    normal: 'Espaço normal - sem penalidades',
     sobrecarregado:
       'Sobrecarregado - deslocamento reduzido pela metade, desvantagem em testes físicos',
     imobilizado: 'Imobilizado - incapaz de se mover',

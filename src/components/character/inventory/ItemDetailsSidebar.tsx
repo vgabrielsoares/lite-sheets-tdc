@@ -1,8 +1,9 @@
 /**
  * ItemDetailsSidebar - Sidebar de Detalhes de Item
  *
- * Sidebar para visualizar e editar detalhes completos de um item do inventário.
- * Permite adicionar descrição extendida, propriedades mecânicas, notas e tags.
+ * Sidebar complementar para visualizar resumo do item e editar dados estendidos
+ * (tags e notas). Informações básicas são exibidas em modo leitura —
+ * para editá-las o jogador usa o dialog de edição na lista do inventário.
  */
 
 'use client';
@@ -15,24 +16,17 @@ import {
   Stack,
   Divider,
   Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Switch,
-  FormControlLabel,
   IconButton,
-  Tooltip,
   Alert,
-  SelectChangeEvent,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
 import InfoIcon from '@mui/icons-material/Info';
 import LabelIcon from '@mui/icons-material/Label';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 import { Sidebar } from '@/components/shared';
-import type { InventoryItem, ItemCategory } from '@/types/inventory';
+import type { InventoryItem } from '@/types/inventory';
+import { CATEGORY_LABELS } from '@/constants/inventory';
 import { useDebounce } from '@/hooks/useDebounce';
 
 // ============================================================================
@@ -50,20 +44,6 @@ export interface ItemDetailsSidebarProps {
   onUpdate: (item: InventoryItem) => void;
 }
 
-/**
- * Labels para categorias de itens
- */
-const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  arma: 'Arma',
-  armadura: 'Armadura',
-  escudo: 'Escudo',
-  ferramenta: 'Ferramenta',
-  consumivel: 'Consumível',
-  material: 'Material',
-  magico: 'Mágico',
-  diversos: 'Diversos',
-};
-
 // ============================================================================
 // Componente Principal
 // ============================================================================
@@ -71,23 +51,13 @@ const CATEGORY_LABELS: Record<ItemCategory, string> = {
 /**
  * Sidebar de Detalhes de Item
  *
- * Permite editar informações detalhadas de um item:
- * - Nome, descrição e categoria
- * - Quantidade e peso
- * - Valor e status de equipado
+ * Exibe resumo das informações básicas do item (somente leitura)
+ * e permite editar dados complementares:
  * - Tags personalizadas
- * - Propriedades mecânicas customizadas
  * - Notas e observações
  *
- * @example
- * ```tsx
- * <ItemDetailsSidebar
- *   open={sidebarOpen}
- *   onClose={() => setSidebarOpen(false)}
- *   item={selectedItem}
- *   onUpdate={(item) => updateItem(item)}
- * />
- * ```
+ * Para editar informações básicas (nome, categoria, quantidade, espaço, valor,
+ * equipado, durabilidade), utilize o dialog de edição na lista do inventário.
  */
 export function ItemDetailsSidebar({
   open,
@@ -124,17 +94,6 @@ export function ItemDetailsSidebar({
       }
     }
   }, [debouncedItem]);
-
-  /**
-   * Atualiza campo do item local
-   */
-  const updateField = <K extends keyof InventoryItem>(
-    field: K,
-    value: InventoryItem[K]
-  ) => {
-    if (!localItem) return;
-    setLocalItem({ ...localItem, [field]: value });
-  };
 
   /**
    * Atualiza propriedade customizada
@@ -203,97 +162,6 @@ export function ItemDetailsSidebar({
         placeholder="Adicione observações, história do item, ou detalhes adicionais..."
         helperText="Campo livre para anotações sobre o item"
       />
-    );
-  };
-
-  /**
-   * Renderiza propriedades mecânicas
-   */
-  const renderMechanicalProperties = () => {
-    if (!localItem) return null;
-
-    const mechanicalProps =
-      (localItem.customProperties?.mechanical as Record<string, string>) || {};
-
-    return (
-      <Box>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 2 }}
-        >
-          <Typography variant="subtitle2" color="text.secondary">
-            Propriedades Mecânicas
-          </Typography>
-          <Tooltip title="Adicionar propriedade mecânica">
-            <IconButton
-              size="small"
-              onClick={() => {
-                const key = prompt('Nome da propriedade:');
-                if (key) {
-                  const value = prompt('Valor da propriedade:');
-                  if (value !== null) {
-                    const mechanical = { ...mechanicalProps, [key]: value };
-                    updateCustomProperty('mechanical', mechanical);
-                  }
-                }
-              }}
-            >
-              <AddIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-
-        {Object.entries(mechanicalProps).length === 0 ? (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Nenhuma propriedade mecânica definida. Clique em + para adicionar.
-          </Alert>
-        ) : (
-          <Stack spacing={1}>
-            {Object.entries(mechanicalProps).map(([key, value]) => (
-              <Stack key={key} direction="row" spacing={1} alignItems="center">
-                <TextField
-                  label="Propriedade"
-                  value={key}
-                  onChange={(e) => {
-                    const mechanical = { ...mechanicalProps };
-                    delete mechanical[key];
-                    mechanical[e.target.value] = value;
-                    updateCustomProperty('mechanical', mechanical);
-                  }}
-                  size="small"
-                  sx={{ flex: 1 }}
-                />
-                <TextField
-                  label="Valor"
-                  value={value}
-                  onChange={(e) => {
-                    const mechanical = {
-                      ...mechanicalProps,
-                      [key]: e.target.value,
-                    };
-                    updateCustomProperty('mechanical', mechanical);
-                  }}
-                  size="small"
-                  sx={{ flex: 1 }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    const mechanical = { ...mechanicalProps };
-                    delete mechanical[key];
-                    updateCustomProperty('mechanical', mechanical);
-                  }}
-                  color="error"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            ))}
-          </Stack>
-        )}
-      </Box>
     );
   };
 
@@ -378,140 +246,114 @@ export function ItemDetailsSidebar({
   }
 
   return (
-    <Sidebar open={open} onClose={onClose} title="Detalhes do Item">
+    <Sidebar
+      open={open}
+      onClose={onClose}
+      title={localItem.name || 'Detalhes do Item'}
+    >
       <Stack spacing={3}>
-        {/* Informações Básicas */}
+        {/* Resumo do Item (somente leitura) */}
         <Box>
-          <Typography variant="h6" gutterBottom>
-            Informações Básicas
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            Informações do Item
           </Typography>
           <Divider sx={{ mb: 2 }} />
 
-          <Stack spacing={2}>
-            {/* Nome */}
-            <TextField
-              label="Nome do Item"
-              value={localItem.name}
-              onChange={(e) => updateField('name', e.target.value)}
-              fullWidth
-              required
-            />
-
+          <Stack spacing={1.5}>
             {/* Categoria */}
-            <FormControl fullWidth>
-              <InputLabel>Categoria</InputLabel>
-              <Select
-                value={localItem.category}
-                onChange={(e: SelectChangeEvent) =>
-                  updateField('category', e.target.value as ItemCategory)
+            <Stack direction="row" justifyContent="space-between">
+              <Typography variant="body2" color="text.secondary">
+                Categoria
+              </Typography>
+              <Chip
+                label={
+                  CATEGORY_LABELS[localItem.category] || localItem.category
                 }
-                label="Categoria"
-              >
-                {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                  <MenuItem key={value} value={value}>
-                    {label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                size="small"
+                variant="outlined"
+              />
+            </Stack>
 
-            {/* Descrição Curta */}
-            <TextField
-              label="Descrição Curta"
-              value={localItem.description || ''}
-              onChange={(e) => updateField('description', e.target.value)}
-              multiline
-              rows={2}
-              fullWidth
-              placeholder="Breve descrição do item..."
-              helperText="Aparece na lista de inventário"
-            />
+            {/* Descrição */}
+            {localItem.description && (
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Descrição
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                  {localItem.description}
+                </Typography>
+              </Box>
+            )}
 
-            {/* Equipado */}
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={localItem.equipped}
-                  onChange={(e) => updateField('equipped', e.target.checked)}
+            {/* Quantidade / Espaço / Valor */}
+            <Stack direction="row" spacing={2}>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Quantidade
+                </Typography>
+                <Typography variant="body1" fontWeight="medium">
+                  {localItem.quantity}
+                </Typography>
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Espaço
+                </Typography>
+                <Typography variant="body1" fontWeight="medium">
+                  {localItem.weight === null || localItem.weight === undefined
+                    ? '—'
+                    : localItem.weight}
+                </Typography>
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Valor
+                </Typography>
+                <Typography variant="body1" fontWeight="medium">
+                  {localItem.value > 0 ? `${localItem.value} PO$` : '—'}
+                </Typography>
+              </Box>
+            </Stack>
+
+            {/* Estado */}
+            <Stack direction="row" spacing={1}>
+              {localItem.equipped && (
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label="Equipado"
+                  size="small"
+                  color="primary"
+                  variant="outlined"
                 />
-              }
-              label="Item Equipado"
-            />
-          </Stack>
-        </Box>
-
-        {/* Quantidade e Peso */}
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            Quantidade e Peso
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-
-          <Stack spacing={2}>
-            {/* Quantidade */}
-            <TextField
-              label="Quantidade"
-              type="number"
-              value={localItem.quantity}
-              onChange={(e) =>
-                updateField(
-                  'quantity',
-                  Math.max(1, parseInt(e.target.value) || 1)
-                )
-              }
-              fullWidth
-              inputProps={{ min: 1, step: 1 }}
-            />
-
-            {/* Peso */}
-            <TextField
-              label="Peso Unitário"
-              type="number"
-              value={localItem.weight === null ? '' : localItem.weight}
-              onChange={(e) => {
-                const value = e.target.value;
-                updateField('weight', value === '' ? null : parseFloat(value));
-              }}
-              fullWidth
-              helperText="Deixe em branco para item sem peso. Peso 0: 5 itens = 1 peso total."
-              inputProps={{ step: 1 }}
-            />
-
-            {/* Valor */}
-            <TextField
-              label="Valor (em PO$)"
-              type="number"
-              value={localItem.value}
-              onChange={(e) =>
-                updateField(
-                  'value',
-                  Math.max(0, parseFloat(e.target.value) || 0)
-                )
-              }
-              fullWidth
-              inputProps={{ min: 0, step: 0.01 }}
-            />
+              )}
+              {localItem.durability && (
+                <Chip
+                  label={`Durabilidade: ${localItem.durability.currentDie}`}
+                  size="small"
+                  variant="outlined"
+                />
+              )}
+            </Stack>
           </Stack>
         </Box>
 
         {/* Tags */}
         {renderTags()}
 
-        {/* Propriedades Mecânicas */}
-        {renderMechanicalProperties()}
-
         {/* Notas */}
         <Box>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
             Notas e Observações
           </Typography>
           <Divider sx={{ mb: 2 }} />
           {renderNotes()}
         </Box>
 
-        {/* Info de auto-save */}
-        <Alert severity="info" icon={<InfoIcon />}>
-          Alterações são salvas automaticamente
+        {/* Info */}
+        <Alert severity="info" icon={<InfoIcon />} sx={{ fontSize: '0.8rem' }}>
+          Para editar informações básicas, use o botão de edição na lista de
+          itens. Tags e notas são salvas automaticamente.
         </Alert>
       </Stack>
     </Sidebar>

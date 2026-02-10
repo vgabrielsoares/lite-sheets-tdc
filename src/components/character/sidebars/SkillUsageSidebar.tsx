@@ -932,7 +932,7 @@ export function SkillUsageSidebar({
             name: 'Sentido Aguçado',
             value: keenSenseBonus,
             type: keenSenseBonus > 0 ? 'bonus' : 'penalidade',
-            affectsDice: false,
+            affectsDice: true,
           });
         }
       }

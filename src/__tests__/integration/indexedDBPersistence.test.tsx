@@ -91,7 +91,7 @@ describe('Persistência em IndexedDB (Integração)', () => {
         name: 'Espada Longa',
         quantity: 1,
         weight: 3,
-        category: 'arma',
+        category: 'armas',
         value: 15,
         equipped: false,
       });

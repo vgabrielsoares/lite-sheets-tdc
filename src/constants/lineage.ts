@@ -270,21 +270,21 @@ export const VISION_RANGES: Record<VisionType, number> = {
  */
 export const KEEN_SENSE_DESCRIPTIONS: Record<SenseType, string> = {
   visao:
-    'Visão aguçada concede vantagem em testes de Percepção que dependem da visão.',
+    'Visão aguçada concede dados extras em testes de Percepção que dependem da visão.',
   olfato:
-    'Olfato aguçado concede vantagem em testes de Percepção que dependem do olfato (Farejar).',
+    'Olfato aguçado concede dados extras em testes de Percepção que dependem do olfato (Farejar).',
   audicao:
-    'Audição aguçada concede vantagem em testes de Percepção que dependem da audição (Ouvir).',
+    'Audição aguçada concede dados extras em testes de Percepção que dependem da audição (Ouvir).',
 } as const;
 
 /**
- * Modificadores de percepção para sentidos aguçados
- * Aplicados aos usos específicos da habilidade Percepção
+ * Modificadores de dados para sentidos aguçados
+ * Aplicados como dados extras (+Xd) nos usos específicos da habilidade Percepção
  */
 export const KEEN_SENSE_MODIFIERS: Record<SenseType, number> = {
-  visao: 5, // +5 em testes de Observar
-  olfato: 5, // +5 em testes de Farejar
-  audicao: 5, // +5 em testes de Ouvir
+  visao: 1, // +1d em testes de Observar
+  olfato: 1, // +1d em testes de Farejar
+  audicao: 1, // +1d em testes de Ouvir
 } as const;
 
 /**

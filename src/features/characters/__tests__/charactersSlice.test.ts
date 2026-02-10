@@ -127,6 +127,8 @@ const mockCharacter: Character = {
     numericModifier: 0,
   },
   crafts: [],
+  resources: [],
+  specialAbilities: [],
   inventory: {
     items: [],
     carryingCapacity: {

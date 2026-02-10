@@ -486,6 +486,16 @@ export function migrateCharacterV1toV2(oldCharacter: any): any {
     migrated.spellcasting = migrateSpellcasting(oldCharacter.spellcasting);
   }
 
+  // Garante campo resources
+  if (!Array.isArray(migrated.resources)) {
+    migrated.resources = [];
+  }
+
+  // Garante campo specialAbilities
+  if (!Array.isArray(migrated.specialAbilities)) {
+    migrated.specialAbilities = [];
+  }
+
   return migrated;
 }
 
