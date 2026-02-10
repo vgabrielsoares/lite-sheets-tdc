@@ -54,13 +54,14 @@ describe('CombatTab', () => {
       );
     });
 
-    it('should render HP component with correct values', () => {
+    it('should render Guard/Vitality component with correct values', () => {
       renderWithTheme(
         <CombatTab character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      // Default character has 15 HP
-      expect(screen.getByText('15')).toBeInTheDocument();
+      // Default character has 15 GA and 5 PV
+      expect(screen.getByText('Guarda (GA)')).toBeInTheDocument();
+      expect(screen.getByText('Vitalidade (PV)')).toBeInTheDocument();
     });
 
     it('should render PP component', () => {
@@ -93,46 +94,49 @@ describe('CombatTab', () => {
       expect(screen.getByText('Essência +1')).toBeInTheDocument();
     });
 
-    it('should render defense component', () => {
+    it('should render defense test section', () => {
       renderWithTheme(
         <CombatTab character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      // Defesa aparece múltiplas vezes (na UI e nas penalidades)
-      expect(screen.getAllByText('Defesa').length).toBeGreaterThan(0);
+      // v0.0.2: Defesa é teste ativo, não valor fixo
+      expect(screen.getByText('Teste de Defesa')).toBeInTheDocument();
     });
   });
 
-  describe('HP Updates', () => {
-    it('should call onUpdate when HP is modified', () => {
+  describe('Guard/Vitality Updates', () => {
+    it('should call onUpdate when damage is applied to Guard', () => {
       renderWithTheme(
         <CombatTab character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      // Click the damage button (-1)
-      const damageButtons = screen.getAllByLabelText('Sofrer 1 de dano');
-      fireEvent.click(damageButtons[0]);
+      // Enter damage amount in Guard's input and click Sofrer
+      const damageInputs = screen.getAllByLabelText('Quantidade para Sofrer');
+      fireEvent.change(damageInputs[0], { target: { value: '1' } });
+      const sofrerButtons = screen.getAllByRole('button', { name: 'Sofrer' });
+      fireEvent.click(sofrerButtons[0]);
 
       expect(mockOnUpdate).toHaveBeenCalled();
       const updateCall = mockOnUpdate.mock.calls[0][0];
-      expect(updateCall.combat.hp.current).toBe(14); // 15 - 1
+      expect(updateCall.combat.guard.current).toBe(14); // 15 - 1
     });
 
-    it('should update combat state when HP reaches 0', () => {
-      mockCharacter.combat.hp.current = 1;
+    it('should update combat state when Guard reaches 0', () => {
+      mockCharacter.combat.guard.current = 1;
 
       renderWithTheme(
         <CombatTab character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      // Click the damage button (-1)
-      const damageButtons = screen.getAllByLabelText('Sofrer 1 de dano');
-      fireEvent.click(damageButtons[0]);
+      // Apply 1 damage to Guard
+      const damageInputs = screen.getAllByLabelText('Quantidade para Sofrer');
+      fireEvent.change(damageInputs[0], { target: { value: '1' } });
+      const sofrerButtons = screen.getAllByRole('button', { name: 'Sofrer' });
+      fireEvent.click(sofrerButtons[0]);
 
       expect(mockOnUpdate).toHaveBeenCalled();
       const updateCall = mockOnUpdate.mock.calls[0][0];
-      expect(updateCall.combat.hp.current).toBe(0);
-      expect(updateCall.combat.state).toBe('inconsciente');
+      expect(updateCall.combat.guard.current).toBe(0);
     });
   });
 
@@ -190,7 +194,7 @@ describe('CombatTab', () => {
   });
 
   describe('Sidebar Callbacks', () => {
-    it('should call onOpenHP when HP component is clicked', () => {
+    it('should call onOpenHP when Guard/Vitality component is clicked', () => {
       renderWithTheme(
         <CombatTab
           character={mockCharacter}
@@ -199,9 +203,9 @@ describe('CombatTab', () => {
         />
       );
 
-      // Find the HP card and click it
-      const pvLabel = screen.getByText('PV');
-      fireEvent.click(pvLabel.closest('[role="button"]') as HTMLElement);
+      // Find the Guard/Vitality area and click it
+      const guardLabel = screen.getByText('Guarda (GA)');
+      fireEvent.click(guardLabel.closest('[role="button"]') as HTMLElement);
 
       expect(mockOnOpenHP).toHaveBeenCalled();
     });
@@ -222,7 +226,7 @@ describe('CombatTab', () => {
       expect(mockOnOpenPP).toHaveBeenCalled();
     });
 
-    it('should call onOpenDefense when Defense component is clicked', () => {
+    it('should render defense test section (onOpenDefense is deprecated)', () => {
       renderWithTheme(
         <CombatTab
           character={mockCharacter}
@@ -231,21 +235,11 @@ describe('CombatTab', () => {
         />
       );
 
-      // Find the Defense header (h3 with "Defesa") which is clickable
-      const defenseLabels = screen.getAllByText('Defesa');
-      // The header that's clickable is inside the MissPenalties component
-      const clickableDefense = defenseLabels.find(
-        (el) =>
-          el.tagName.toLowerCase() === 'h3' || el.tagName.toLowerCase() === 'h6'
-      );
-
-      if (clickableDefense) {
-        fireEvent.click(clickableDefense);
-        expect(mockOnOpenDefense).toHaveBeenCalled();
-      } else {
-        // If no clickable header found, just verify the callback prop is passed
-        expect(mockOnOpenDefense).toBeDefined();
-      }
+      // v0.0.2: Defense is now an active test, onOpenDefense is deprecated
+      // Just verify the DefenseTest component renders
+      expect(screen.getByText('Teste de Defesa')).toBeInTheDocument();
+      // The prop is accepted but not used
+      expect(mockOnOpenDefense).toBeDefined();
     });
 
     it('should call onOpenPPLimit when PP Limit component is clicked', () => {
@@ -277,7 +271,7 @@ describe('CombatTab', () => {
       expect(screen.getByText('0 / 5')).toBeInTheDocument();
     });
 
-    it('should reflect correct PP limit based on level and Presença', () => {
+    it('should reflect correct PP limit based on level and Essência', () => {
       mockCharacter.level = 5;
       mockCharacter.attributes.essencia = 3;
 

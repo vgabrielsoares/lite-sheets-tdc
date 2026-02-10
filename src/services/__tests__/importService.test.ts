@@ -263,7 +263,7 @@ describe('importService', () => {
 
     it('deve rejeitar personagem com PV inválido', async () => {
       const mockChar = createMockCharacter();
-      mockChar.combat.hp.current = -10; // HP negativo
+      mockChar.combat.hp!.current = -10; // HP negativo
 
       const exportedData = {
         version: EXPORT_VERSION,

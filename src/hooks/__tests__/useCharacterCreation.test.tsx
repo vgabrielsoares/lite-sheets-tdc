@@ -176,8 +176,8 @@ describe('useCharacterCreation', () => {
 
       // Verificar valores padrão básicos
       expect(character.level).toBe(1);
-      expect(character.combat.hp.max).toBe(15);
-      expect(character.combat.hp.current).toBe(15);
+      expect(character.combat.guard.max).toBe(15);
+      expect(character.combat.guard.current).toBe(15);
       expect(character.combat.pp.max).toBe(2);
       expect(character.combat.pp.current).toBe(2);
 
