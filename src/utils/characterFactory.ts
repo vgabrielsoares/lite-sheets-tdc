@@ -42,6 +42,7 @@ import { ATTRIBUTE_DEFAULT } from '@/constants/attributes';
 import { SKILL_LIST } from '@/constants/skills';
 import { SKILL_KEY_ATTRIBUTES } from '@/types/skills';
 import { DEFAULT_WEAPON_PROFICIENCY } from '@/constants/proficiencies';
+import { createDefaultResources } from '@/constants/resources';
 
 /**
  * Cria atributos padrão de nível 1
@@ -286,7 +287,7 @@ function createDefaultInventory(): Inventory {
       id: uuidv4(),
       name: 'Mochila',
       description: 'Mochila padrão de aventureiro',
-      category: 'diversos',
+      category: 'miscelanea',
       quantity: 1,
       weight: null, // Mochila não tem peso
       value: 0,
@@ -296,7 +297,7 @@ function createDefaultInventory(): Inventory {
       id: uuidv4(),
       name: 'Cartão do Banco',
       description: 'Cartão para acesso à conta bancária',
-      category: 'diversos',
+      category: 'miscelanea',
       quantity: 1,
       weight: null, // Cartão não tem peso
       value: 0,
@@ -516,6 +517,12 @@ export function createDefaultCharacter(
       numericModifier: 0,
     },
     crafts: [],
+
+    // Recursos (Dados de Recurso)
+    resources: createDefaultResources(uuidv4),
+
+    // Habilidades Especiais
+    specialAbilities: [],
 
     // Inventário
     inventory: createDefaultInventory(),
