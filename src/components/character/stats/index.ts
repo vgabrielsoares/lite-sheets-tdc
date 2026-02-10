@@ -26,7 +26,16 @@ export type {
 
 export { DefenseDisplay } from './DefenseDisplay';
 
+export { GuardVitalityDisplay } from './GuardVitalityDisplay';
+export type { GuardVitalityDisplayProps } from './GuardVitalityDisplay';
+
+export { CompactGuardVitality } from './CompactGuardVitality';
+export type { CompactGuardVitalityProps } from './CompactGuardVitality';
+
 export { MovementDisplay } from './MovementDisplay';
+
+export { CompactDefenseTest } from './CompactDefenseTest';
+export type { CompactDefenseTestProps } from './CompactDefenseTest';
 
 export { SensesDisplay } from './SensesDisplay';
 export type { SensesDisplayProps } from './SensesDisplay';

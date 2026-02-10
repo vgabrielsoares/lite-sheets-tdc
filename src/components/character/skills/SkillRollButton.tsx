@@ -36,6 +36,7 @@ import CasinoIcon from '@mui/icons-material/Casino';
 import StarIcon from '@mui/icons-material/Star';
 import CancelIcon from '@mui/icons-material/Cancel';
 import HistoryIcon from '@mui/icons-material/History';
+import WarningIcon from '@mui/icons-material/Warning';
 import { rollSkillTest, globalDiceHistory } from '@/utils/diceRoller';
 import type { DicePoolResult } from '@/types';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
@@ -53,6 +54,8 @@ export interface SkillRollButtonProps {
   diceModifier?: number;
   /** Número de sucessos necessários (opcional, para feedback visual) */
   requiredSuccesses?: number;
+  /** Avisos de penalidade a serem exibidos no diálogo (ex: penalidade de proficiência) */
+  penaltyWarnings?: string[];
   /** Callback quando rolar (opcional) */
   onRoll?: (result: DicePoolResult) => void;
   /** Tamanho do botão */
@@ -77,6 +80,7 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
   proficiencyLevel,
   diceModifier = 0,
   requiredSuccesses,
+  penaltyWarnings = [],
   onRoll,
   size = 'small',
   color = 'primary',
@@ -270,6 +274,22 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
                 )}
               </Stack>
             </Box>
+
+            {/* Avisos de penalidade */}
+            {penaltyWarnings.length > 0 && (
+              <Box>
+                {penaltyWarnings.map((warning, index) => (
+                  <Alert
+                    key={index}
+                    severity="warning"
+                    icon={<WarningIcon fontSize="small" />}
+                    sx={{ mb: index < penaltyWarnings.length - 1 ? 1 : 0 }}
+                  >
+                    <Typography variant="caption">{warning}</Typography>
+                  </Alert>
+                ))}
+              </Box>
+            )}
 
             {/* Modificador de dados temporário */}
             <Box>
