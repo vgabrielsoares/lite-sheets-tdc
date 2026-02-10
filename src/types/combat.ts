@@ -30,6 +30,8 @@ export interface GuardPoints {
   current: number;
   /** GA máximo (calculado: 15 + bônus de arquétipo por nível + modificadores) */
   max: number;
+  /** GA temporária (absorvida primeiro; não conta para cálculo de PV) */
+  temporary?: number;
   /** Modificadores adicionais ao GA máximo (habilidades especiais, itens, etc.) */
   maxModifiers?: Modifier[];
 }

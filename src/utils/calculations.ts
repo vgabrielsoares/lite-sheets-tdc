@@ -94,11 +94,19 @@ export function applyDamageToGuardVitality(
   if (damage <= 0) return { guard, vitality };
 
   let remaining = damage;
+  let newTemporary = guard.temporary ?? 0;
   let newGuardCurrent = guard.current;
   let newVitalityCurrent = vitality.current;
 
-  // Damage hits GA first
-  if (newGuardCurrent > 0) {
+  // Damage hits temporary GA first
+  if (newTemporary > 0) {
+    const tempDamage = Math.min(newTemporary, remaining);
+    newTemporary -= tempDamage;
+    remaining -= tempDamage;
+  }
+
+  // Then hits regular GA
+  if (remaining > 0 && newGuardCurrent > 0) {
     const guardDamage = Math.min(newGuardCurrent, remaining);
     newGuardCurrent -= guardDamage;
     remaining -= guardDamage;
@@ -110,7 +118,7 @@ export function applyDamageToGuardVitality(
   }
 
   return {
-    guard: { ...guard, current: newGuardCurrent },
+    guard: { ...guard, current: newGuardCurrent, temporary: newTemporary },
     vitality: { ...vitality, current: newVitalityCurrent },
   };
 }
@@ -164,17 +172,50 @@ export function healVitality(
 
 /**
  * Determines the effective GA max when PV is critically low.
- * Rule: When PV ≤ 1, GA max is halved.
+ * Rule: When PV = 0, GA max is halved.
  *
  * @param gaMax - Normal maximum GA
  * @param pvCurrent - Current PV
  * @returns Effective GA max
  */
 export function getEffectiveGAMax(gaMax: number, pvCurrent: number): number {
-  if (pvCurrent <= 1) {
+  if (pvCurrent <= 0) {
     return roundDown(gaMax / 2);
   }
   return gaMax;
+}
+
+/**
+ * Adjusts current GA when PV crosses the 0 threshold.
+ * Rule: When PV reaches 0, GA current is clamped to half of GA max.
+ * When PV recovers from 0, GA current is restored to at least half of GA max.
+ *
+ * @param guardCurrent - Current GA value
+ * @param gaMax - Maximum GA value (including modifiers)
+ * @param pvWasZero - Whether PV was at 0 before
+ * @param pvIsZero - Whether PV is at 0 now
+ * @returns Adjusted GA current value
+ */
+export function adjustGAOnPVCrossing(
+  guardCurrent: number,
+  gaMax: number,
+  pvWasZero: boolean,
+  pvIsZero: boolean
+): number {
+  const halfMax = roundDown(gaMax / 2);
+
+  // PV chegou a 0: limitar GA à metade
+  if (!pvWasZero && pvIsZero) {
+    return Math.min(guardCurrent, halfMax);
+  }
+
+  // PV saiu de 0: restaurar GA para pelo menos metade
+  if (pvWasZero && !pvIsZero) {
+    return Math.max(guardCurrent, halfMax);
+  }
+
+  // Sem mudança de estado
+  return guardCurrent;
 }
 
 /**
