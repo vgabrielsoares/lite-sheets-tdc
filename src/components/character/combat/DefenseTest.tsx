@@ -31,6 +31,8 @@ import type { Skills, SkillName } from '@/types/skills';
 import type { DieSize, Modifier } from '@/types/common';
 import { getSkillDieSize } from '@/constants/skills';
 import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
+import type { DicePenaltyMap } from '@/utils/conditionEffects';
+import { getDicePenaltyForAttribute } from '@/utils/conditionEffects';
 
 export interface DefenseTestProps {
   /** Atributos do personagem */
@@ -41,6 +43,8 @@ export interface DefenseTestProps {
   characterLevel: number;
   /** Habilidade de assinatura */
   signatureSkill?: SkillName;
+  /** Penalidades de dados de condições ativas (opcional) */
+  conditionPenalties?: DicePenaltyMap;
 }
 
 /**
@@ -109,6 +113,7 @@ export const DefenseTest = React.memo(function DefenseTest({
   skills,
   characterLevel,
   signatureSkill,
+  conditionPenalties,
 }: DefenseTestProps) {
   /**
    * Calcula o pool de dados para um teste de defesa
@@ -141,7 +146,13 @@ export const DefenseTest = React.memo(function DefenseTest({
       .filter((m: Modifier) => m.affectsDice)
       .reduce((sum: number, m: Modifier) => sum + m.value, 0);
 
-    const baseDice = attributeValue + signatureBonus + diceModifiers;
+    // Aplica penalidades de condições ativas
+    const conditionPenalty = conditionPenalties
+      ? getDicePenaltyForAttribute(conditionPenalties, option.attribute)
+      : 0;
+
+    const baseDice =
+      attributeValue + signatureBonus + diceModifiers + conditionPenalty;
 
     // Se 0 ou menos dados, usa regra de penalidade: rola 2d e pega o menor
     if (baseDice <= 0) {
@@ -172,7 +183,7 @@ export const DefenseTest = React.memo(function DefenseTest({
         proficiency: skills[option.skill]?.proficiencyLevel ?? 'leigo',
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [attributes, skills, characterLevel, signatureSkill]
+    [attributes, skills, characterLevel, signatureSkill, conditionPenalties]
   );
 
   return (

@@ -28,6 +28,9 @@ export { CombatActionsReference } from './CombatActionsReference';
 export { AttacksDisplay } from './AttacksDisplay';
 export type { AttacksDisplayProps } from './AttacksDisplay';
 
+export { CombatConditions } from './CombatConditions';
+export type { CombatConditionsProps } from './CombatConditions';
+
 export { DyingRounds } from './DyingRounds';
 export type { DyingRoundsProps } from './DyingRounds';
 

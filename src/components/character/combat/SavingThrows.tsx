@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -9,6 +9,12 @@ import {
   Tooltip,
   Chip,
   Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
 } from '@mui/material';
 import {
   Psychology as MindIcon,
@@ -16,14 +22,20 @@ import {
   FitnessCenter as StrengthIcon,
   Favorite as VigorIcon,
   AutoFixHigh as AutoFixHighIcon,
+  Casino as CasinoIcon,
 } from '@mui/icons-material';
 import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName } from '@/types/skills';
 import type { ProficiencyLevel, Modifier, DieSize } from '@/types/common';
 import type { SavingThrowType, CombatPenalties } from '@/types/combat';
+import type { DicePoolResult } from '@/types';
 import { getSkillDieSize } from '@/constants/skills';
 import { ATTRIBUTE_LABELS } from '@/constants/attributes';
 import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
+import { rollSkillTest, globalDiceHistory } from '@/utils/diceRoller';
+import { DiceRollResult } from '@/components/shared/DiceRollResult';
+import type { DicePenaltyMap } from '@/utils/conditionEffects';
+import { getDicePenaltyForAttribute } from '@/utils/conditionEffects';
 
 export interface SavingThrowsProps {
   /** Atributos do personagem */
@@ -36,6 +48,8 @@ export interface SavingThrowsProps {
   signatureSkill?: SkillName;
   /** Penalidades de combate (opcional, para aplicar -Xd por sucesso) */
   penalties?: CombatPenalties;
+  /** Penalidades de dados de condições ativas (opcional) */
+  conditionPenalties?: DicePenaltyMap;
 }
 
 /**
@@ -166,7 +180,44 @@ export function SavingThrows({
   characterLevel,
   signatureSkill,
   penalties,
+  conditionPenalties,
 }: SavingThrowsProps) {
+  // Estado do diálogo de rolagem
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedThrow, setSelectedThrow] = useState<SavingThrowInfo | null>(
+    null
+  );
+  const [rollResult, setRollResult] = useState<DicePoolResult | null>(null);
+  const [tempDiceModifier, setTempDiceModifier] = useState(0);
+
+  /** Abre o diálogo de rolagem para um teste de resistência */
+  const handleCardClick = useCallback((info: SavingThrowInfo) => {
+    setSelectedThrow(info);
+    setRollResult(null);
+    setTempDiceModifier(0);
+    setDialogOpen(true);
+  }, []);
+
+  /** Fecha o diálogo */
+  const handleCloseDialog = useCallback(() => {
+    setDialogOpen(false);
+  }, []);
+
+  /** Executa a rolagem */
+  const handleRoll = useCallback(() => {
+    if (!selectedThrow) return;
+    const calc = calculateSavingThrow(selectedThrow);
+    const baseDice = calc.isPenaltyRoll ? 0 : calc.diceCount;
+    const result = rollSkillTest(
+      baseDice,
+      calc.dieSize,
+      tempDiceModifier,
+      `Teste de ${selectedThrow.label}`
+    );
+    globalDiceHistory.add(result);
+    setRollResult(result);
+  }, [selectedThrow, tempDiceModifier]);
+
   /**
    * Calcula o modificador total de um teste de resistência usando o uso específico
    * (ex: "Resistir" ou "Resistir Mentalmente")
@@ -214,7 +265,12 @@ export function SavingThrows({
 
     // Aplica penalidade de combate se existir (-Xd por sucesso do oponente)
     const combatPenalty = penalties?.savingThrowPenalties[info.type] ?? 0;
-    const effectiveTotalDice = calculation.totalDice + combatPenalty;
+    // Aplica penalidades de condições ativas (por atributo + 'todos')
+    const conditionPenalty = conditionPenalties
+      ? getDicePenaltyForAttribute(conditionPenalties, info.attribute)
+      : 0;
+    const effectiveTotalDice =
+      calculation.totalDice + combatPenalty + conditionPenalty;
 
     const dieSize = calculation.dieSize;
 
@@ -245,183 +301,283 @@ export function SavingThrows({
   };
 
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Typography
-          variant="h6"
-          component="h3"
-          gutterBottom
-          color="text.secondary"
-        >
-          Testes de Resistência
-        </Typography>
+    <>
+      <Card variant="outlined">
+        <CardContent>
+          <Typography
+            variant="h6"
+            component="h3"
+            gutterBottom
+            color="text.secondary"
+          >
+            Testes de Resistência
+          </Typography>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr 1fr',
-              sm: 'repeat(3, 1fr)',
-              md: 'repeat(5, 1fr)',
-            },
-            gap: 2,
-          }}
-        >
-          {SAVING_THROWS.map((info) => {
-            const skill = skills[info.skill];
-            const calc = calculateSavingThrow(info);
-            const proficiency = skill?.proficiencyLevel || 'leigo';
-            const attributeValue = attributes[info.attribute];
-            const isSignature = signatureSkill === info.skill;
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr 1fr',
+                sm: 'repeat(3, 1fr)',
+                md: 'repeat(5, 1fr)',
+              },
+              gap: 2,
+            }}
+          >
+            {SAVING_THROWS.map((info) => {
+              const skill = skills[info.skill];
+              const calc = calculateSavingThrow(info);
+              const proficiency = skill?.proficiencyLevel || 'leigo';
+              const isSignature = signatureSkill === info.skill;
 
-            return (
-              <Tooltip
-                key={info.type}
-                title={
-                  <Box>
-                    <Typography variant="body2" fontWeight="bold">
-                      {info.label}
-                    </Typography>
-                    <Typography variant="caption" display="block">
-                      {info.description}
-                    </Typography>
+              return (
+                <Tooltip
+                  key={info.type}
+                  title={`Clique para rolar ${info.label}`}
+                  arrow
+                  placement="top"
+                >
+                  <Card
+                    variant="outlined"
+                    onClick={() => handleCardClick(info)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleCardClick(info);
+                      }
+                    }}
+                    aria-label={`Rolar teste de ${info.label}: ${getRollDescription(calc)}`}
+                    sx={{
+                      textAlign: 'center',
+                      p: 1.5,
+                      cursor: 'pointer',
+                      borderColor: info.color,
+                      borderWidth: 2,
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 4px 12px ${info.color}40`,
+                      },
+                    }}
+                  >
+                    {/* Ícone */}
+                    <Box
+                      sx={{
+                        color: info.color,
+                        mb: 0.5,
+                        '& svg': { fontSize: '1.5rem' },
+                      }}
+                    >
+                      {info.icon}
+                    </Box>
+
+                    {/* Nome */}
                     <Typography
                       variant="caption"
-                      display="block"
-                      sx={{ mt: 1 }}
+                      component="div"
+                      fontWeight="medium"
+                      sx={{ mb: 0.5 }}
                     >
-                      Atributo: {ATTRIBUTE_LABELS[info.attribute]} (
-                      {attributeValue})
+                      {info.label}
                     </Typography>
-                    <Typography variant="caption" display="block">
-                      Proficiência: {PROFICIENCY_LABELS[proficiency]} (
-                      {getSkillDieSize(proficiency)})
+
+                    {/* Fórmula da pool de dados */}
+                    <Typography
+                      variant="h5"
+                      component="div"
+                      fontWeight="bold"
+                      sx={{ color: info.color }}
+                    >
+                      {calc.diceCount}
+                      {calc.dieSize}
                     </Typography>
-                    <Typography variant="caption" display="block">
-                      Uso: {info.resistUse}
-                    </Typography>
-                    <Typography variant="caption" display="block">
-                      Rolagem: {getRollDescription(calc)}
-                    </Typography>
-                    {isSignature && (
-                      <Typography
-                        variant="caption"
-                        display="block"
-                        color="warning.main"
-                      >
-                        ⭐ Habilidade de Assinatura
-                      </Typography>
-                    )}
-                  </Box>
-                }
-                arrow
-                placement="top"
-              >
-                <Card
-                  variant="outlined"
-                  sx={{
-                    textAlign: 'center',
-                    p: 1.5,
-                    cursor: 'help',
-                    borderColor: info.color,
-                    borderWidth: 2,
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: `0 4px 12px ${info.color}40`,
-                    },
-                  }}
-                >
-                  {/* Ícone */}
-                  <Box
-                    sx={{
-                      color: info.color,
-                      mb: 0.5,
-                      '& svg': { fontSize: '1.5rem' },
-                    }}
-                  >
-                    {info.icon}
-                  </Box>
 
-                  {/* Nome */}
-                  <Typography
-                    variant="caption"
-                    component="div"
-                    fontWeight="medium"
-                    sx={{ mb: 0.5 }}
-                  >
-                    {info.label}
-                  </Typography>
-
-                  {/* Fórmula da pool de dados */}
-                  <Typography
-                    variant="h5"
-                    component="div"
-                    fontWeight="bold"
-                    sx={{ color: info.color }}
-                  >
-                    {calc.diceCount}
-                    {calc.dieSize}
-                  </Typography>
-
-                  {/* Indicador de penalidade */}
-                  <Typography
-                    variant="caption"
-                    component="div"
-                    sx={{
-                      color: calc.isPenaltyRoll
-                        ? 'error.main'
-                        : 'text.secondary',
-                      fontWeight: calc.isPenaltyRoll ? 'bold' : 'normal',
-                    }}
-                  >
-                    {calc.isPenaltyRoll ? '(menor)' : getRollDescription(calc)}
-                  </Typography>
-
-                  {/* Badges */}
-                  <Stack
-                    direction="row"
-                    spacing={0.5}
-                    justifyContent="center"
-                    sx={{ mt: 0.5 }}
-                  >
-                    {/* Proficiência */}
-                    <Chip
-                      label={PROFICIENCY_LABELS[proficiency][0]}
-                      size="small"
+                    {/* Indicador de penalidade */}
+                    <Typography
+                      variant="caption"
+                      component="div"
                       sx={{
-                        height: 18,
-                        fontSize: '0.65rem',
-                        bgcolor:
-                          proficiency === 'leigo'
-                            ? 'action.disabledBackground'
-                            : 'primary.main',
-                        color:
-                          proficiency === 'leigo'
-                            ? 'text.disabled'
-                            : 'primary.contrastText',
+                        color: calc.isPenaltyRoll
+                          ? 'error.main'
+                          : 'text.secondary',
+                        fontWeight: calc.isPenaltyRoll ? 'bold' : 'normal',
                       }}
-                    />
-                    {/* Assinatura */}
-                    {isSignature && (
+                    >
+                      {calc.isPenaltyRoll
+                        ? '(menor)'
+                        : getRollDescription(calc)}
+                    </Typography>
+
+                    {/* Badges */}
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      justifyContent="center"
+                      sx={{ mt: 0.5 }}
+                    >
+                      {/* Proficiência */}
                       <Chip
-                        label="⭐"
+                        label={PROFICIENCY_LABELS[proficiency][0]}
                         size="small"
                         sx={{
                           height: 18,
                           fontSize: '0.65rem',
-                          bgcolor: 'warning.main',
-                          color: 'warning.contrastText',
+                          bgcolor:
+                            proficiency === 'leigo'
+                              ? 'action.disabledBackground'
+                              : 'primary.main',
+                          color:
+                            proficiency === 'leigo'
+                              ? 'text.disabled'
+                              : 'primary.contrastText',
                         }}
+                      />
+                      {/* Assinatura */}
+                      {isSignature && (
+                        <Chip
+                          label="⭐"
+                          size="small"
+                          sx={{
+                            height: 18,
+                            fontSize: '0.65rem',
+                            bgcolor: 'warning.main',
+                            color: 'warning.contrastText',
+                          }}
+                        />
+                      )}
+                    </Stack>
+                  </Card>
+                </Tooltip>
+              );
+            })}
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Diálogo de Rolagem de Teste de Resistência */}
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        {selectedThrow &&
+          (() => {
+            const calc = calculateSavingThrow(selectedThrow);
+            const skill = skills[selectedThrow.skill];
+            const proficiency = skill?.proficiencyLevel || 'leigo';
+            const attributeValue = attributes[selectedThrow.attribute];
+            const isSignature = signatureSkill === selectedThrow.skill;
+
+            return (
+              <>
+                <DialogTitle>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <CasinoIcon color="primary" />
+                    <Typography variant="h6">
+                      Teste de {selectedThrow.label}
+                    </Typography>
+                  </Stack>
+                </DialogTitle>
+                <DialogContent>
+                  <Stack spacing={2}>
+                    {/* Descrição */}
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedThrow.description}
+                    </Typography>
+
+                    {/* Configuração da rolagem */}
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      useFlexGap
+                    >
+                      <Chip
+                        label={`${ATTRIBUTE_LABELS[selectedThrow.attribute]}: ${attributeValue}`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                      <Chip
+                        label={`${PROFICIENCY_LABELS[proficiency]} (${getSkillDieSize(proficiency)})`}
+                        size="small"
+                        color="secondary"
+                        variant="outlined"
+                      />
+                      <Chip
+                        label={`Pool: ${calc.formula}`}
+                        size="small"
+                        color="info"
+                        variant="outlined"
+                      />
+                      {isSignature && (
+                        <Chip
+                          label="⭐ Assinatura"
+                          size="small"
+                          color="warning"
+                          variant="filled"
+                        />
+                      )}
+                      {calc.isPenaltyRoll && (
+                        <Chip
+                          label="Penalidade: menor resultado"
+                          size="small"
+                          color="error"
+                          variant="filled"
+                        />
+                      )}
+                    </Stack>
+
+                    {/* Modificador temporário */}
+                    <TextField
+                      label="Modificador temporário (±d)"
+                      type="number"
+                      size="small"
+                      value={tempDiceModifier}
+                      onChange={(e) =>
+                        setTempDiceModifier(parseInt(e.target.value, 10) || 0)
+                      }
+                      inputProps={{
+                        'aria-label': 'Modificador temporário de dados',
+                      }}
+                      helperText="Adicione ou remova dados temporariamente"
+                      fullWidth
+                    />
+
+                    {/* Botão de rolagem */}
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleRoll}
+                      startIcon={<CasinoIcon />}
+                      fullWidth
+                      size="large"
+                    >
+                      Rolar {calc.formula}
+                      {tempDiceModifier !== 0 &&
+                        ` (${tempDiceModifier > 0 ? '+' : ''}${tempDiceModifier}d)`}
+                    </Button>
+
+                    {/* Resultado */}
+                    {rollResult && (
+                      <DiceRollResult
+                        result={rollResult}
+                        animate
+                        showBreakdown
                       />
                     )}
                   </Stack>
-                </Card>
-              </Tooltip>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleCloseDialog}>Fechar</Button>
+                </DialogActions>
+              </>
             );
-          })}
-        </Box>
-      </CardContent>
-    </Card>
+          })()}
+      </Dialog>
+    </>
   );
 }
