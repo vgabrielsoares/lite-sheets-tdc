@@ -26,7 +26,6 @@ import {
   Button,
   TextField,
   Stack,
-  LinearProgress,
   Chip,
   Tooltip,
   useTheme,
@@ -42,6 +41,7 @@ import {
   healVitality,
   getEffectiveGAMax,
   determineCombatState,
+  adjustGAOnPVCrossing,
 } from '@/utils/calculations';
 
 export interface GuardVitalityDisplayProps {
@@ -76,6 +76,7 @@ interface ResourceBlockProps {
   label: string;
   current: number;
   max: number;
+  temporary?: number;
   effectiveMax?: number;
   progressColor: 'primary' | 'error';
   damageLabel: string;
@@ -93,6 +94,7 @@ const ResourceBlock = React.memo(function ResourceBlock({
   label,
   current,
   max,
+  temporary,
   effectiveMax,
   progressColor,
   damageLabel,
@@ -142,6 +144,11 @@ const ResourceBlock = React.memo(function ResourceBlock({
     displayMax > 0
       ? Math.min(100, Math.floor((current / displayMax) * 100))
       : 0;
+  const tempValue = temporary ?? 0;
+  const tempPercent =
+    tempValue > 0 && displayMax > 0
+      ? Math.min(100 - percent, Math.floor((tempValue / displayMax) * 100))
+      : 0;
 
   return (
     <Card variant="outlined">
@@ -173,6 +180,17 @@ const ResourceBlock = React.memo(function ResourceBlock({
             {' '}
             / {displayMax}
           </Typography>
+          {tempValue > 0 && (
+            <Typography
+              component="span"
+              variant="h6"
+              color="info.main"
+              sx={{ fontWeight: 'bold' }}
+            >
+              {' '}
+              (+{tempValue})
+            </Typography>
+          )}
           {effectiveMax && effectiveMax < max && (
             <Tooltip title={`GA máxima original: ${max} (reduzida por PV ≤ 1)`}>
               <Typography
@@ -188,12 +206,44 @@ const ResourceBlock = React.memo(function ResourceBlock({
         </Typography>
 
         {/* Progress bar */}
-        <LinearProgress
-          color={progressColor}
-          variant="determinate"
-          value={percent}
-          sx={{ height: 8, borderRadius: 999, mb: 1.5 }}
-        />
+        <Box
+          sx={{
+            position: 'relative',
+            height: 8,
+            borderRadius: 999,
+            bgcolor: 'action.disabledBackground',
+            mb: 1.5,
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              height: '100%',
+              width: `${percent}%`,
+              bgcolor: `${progressColor}.main`,
+              borderRadius: 999,
+              transition: 'width 0.3s ease-in-out',
+            }}
+          />
+          {tempPercent > 0 && (
+            <Box
+              sx={{
+                position: 'absolute',
+                left: `${percent}%`,
+                top: 0,
+                height: '100%',
+                width: `${tempPercent}%`,
+                bgcolor: 'info.main',
+                borderRadius: 999,
+                transition: 'width 0.3s ease-in-out',
+                opacity: 0.7,
+              }}
+            />
+          )}
+        </Box>
 
         {/* Sofrer / Recuperar controls */}
         <Stack spacing={1}>
@@ -276,15 +326,23 @@ export const GuardVitalityDisplay = React.memo(function GuardVitalityDisplay({
   onOpenDetails,
 }: GuardVitalityDisplayProps) {
   const theme = useTheme();
+
+  // Calcula GA máxima incluindo modificadores (habilidades, itens, etc.)
+  const gaMaxModifiersTotal = (guard.maxModifiers ?? []).reduce(
+    (sum, mod) => sum + mod.value,
+    0
+  );
+  const modifiedGAMax = guard.max + gaMaxModifiersTotal;
+
   const combatState = determineCombatState(
     guard.current,
-    guard.max,
+    modifiedGAMax,
     vitality.current,
     vitality.max
   );
   const stateInfo = COMBAT_STATE_LABELS[combatState];
-  const effectiveGAMax = getEffectiveGAMax(guard.max, vitality.current);
-  const isAvariado = guard.current <= guard.max / 2 && guard.current > 0;
+  const effectiveGAMax = getEffectiveGAMax(modifiedGAMax, vitality.current);
+  const isAvariado = guard.current <= modifiedGAMax / 2 && guard.current > 0;
 
   /**
    * Aplica dano — GA absorve primeiro, overflow vai para PV
@@ -302,10 +360,13 @@ export const GuardVitalityDisplay = React.memo(function GuardVitalityDisplay({
    */
   const handleHealGA = useCallback(
     (amount: number) => {
-      const newGuard = healGuard(guard, amount);
-      onChange(newGuard, vitality);
+      // Usa o effectiveGAMax como limite (considera redução quando PV ≤ 1)
+      const guardWithEffectiveMax = { ...guard, max: effectiveGAMax };
+      const newGuard = healGuard(guardWithEffectiveMax, amount);
+      // Restaura o max original (os modificadores estão em maxModifiers)
+      onChange({ ...newGuard, max: guard.max }, vitality);
     },
-    [guard, vitality, onChange]
+    [guard, vitality, onChange, effectiveGAMax]
   );
 
   /**
@@ -313,13 +374,29 @@ export const GuardVitalityDisplay = React.memo(function GuardVitalityDisplay({
    */
   const handleDamagePV = useCallback(
     (amount: number) => {
+      const pvWasZero = vitality.current <= 0;
       const newVitality: VitalityPoints = {
         ...vitality,
         current: Math.max(0, vitality.current - amount),
       };
-      onChange(guard, newVitality);
+      const pvIsZero = newVitality.current <= 0;
+
+      // Ajusta GA atual se PV cruzou o limite de 0
+      const adjustedGACurrent = adjustGAOnPVCrossing(
+        guard.current,
+        modifiedGAMax,
+        pvWasZero,
+        pvIsZero
+      );
+
+      const newGuard: GuardPoints = {
+        ...guard,
+        current: adjustedGACurrent,
+      };
+
+      onChange(newGuard, newVitality);
     },
-    [guard, vitality, onChange]
+    [guard, vitality, onChange, modifiedGAMax]
   );
 
   /**
@@ -327,10 +404,26 @@ export const GuardVitalityDisplay = React.memo(function GuardVitalityDisplay({
    */
   const handleHealPV = useCallback(
     (recoveryPoints: number) => {
+      const pvWasZero = vitality.current <= 0;
       const result = healVitality(vitality, recoveryPoints);
-      onChange(guard, result.vitality);
+      const pvIsZero = result.vitality.current <= 0;
+
+      // Ajusta GA atual se PV cruzou o limite de 0
+      const adjustedGACurrent = adjustGAOnPVCrossing(
+        guard.current,
+        modifiedGAMax,
+        pvWasZero,
+        pvIsZero
+      );
+
+      const newGuard: GuardPoints = {
+        ...guard,
+        current: adjustedGACurrent,
+      };
+
+      onChange(newGuard, result.vitality);
     },
-    [guard, vitality, onChange]
+    [guard, vitality, onChange, modifiedGAMax]
   );
 
   const pvIsFull = vitality.current >= vitality.max;
@@ -402,9 +495,10 @@ export const GuardVitalityDisplay = React.memo(function GuardVitalityDisplay({
           icon={<ShieldIcon color="primary" />}
           label="Guarda (GA)"
           current={guard.current}
-          max={guard.max}
+          max={modifiedGAMax}
+          temporary={guard.temporary}
           effectiveMax={
-            effectiveGAMax !== guard.max ? effectiveGAMax : undefined
+            effectiveGAMax !== modifiedGAMax ? effectiveGAMax : undefined
           }
           progressColor="primary"
           damageLabel="Sofrer"
@@ -438,7 +532,7 @@ export const GuardVitalityDisplay = React.memo(function GuardVitalityDisplay({
               />
             ) : combatState === 'ferimento-direto' ? (
               <Chip
-                label="Ferido"
+                label="Machucado"
                 color="warning"
                 size="small"
                 variant="outlined"

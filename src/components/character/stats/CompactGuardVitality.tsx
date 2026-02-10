@@ -16,7 +16,6 @@ import {
   CardContent,
   Box,
   Typography,
-  LinearProgress,
   Stack,
   Tooltip,
   useTheme,
@@ -46,7 +45,21 @@ export const CompactGuardVitality = React.memo(function CompactGuardVitality({
 }: CompactGuardVitalityProps) {
   const theme = useTheme();
 
-  const gaPercentage = guard.max > 0 ? (guard.current / guard.max) * 100 : 0;
+  // Calcula GA máxima incluindo modificadores
+  const gaMaxModifiersTotal = (guard.maxModifiers ?? []).reduce(
+    (sum, mod) => sum + mod.value,
+    0
+  );
+  const modifiedGAMax = guard.max + gaMaxModifiersTotal;
+  const gaTempValue = guard.temporary ?? 0;
+
+  // Percentuais para barras de progresso
+  const gaPercentage =
+    modifiedGAMax > 0 ? (guard.current / modifiedGAMax) * 100 : 0;
+  const gaTempPercentage =
+    gaTempValue > 0 && modifiedGAMax > 0
+      ? Math.min(100 - gaPercentage, (gaTempValue / modifiedGAMax) * 100)
+      : 0;
   const pvPercentage =
     vitality.max > 0 ? (vitality.current / vitality.max) * 100 : 0;
 
@@ -54,11 +67,11 @@ export const CompactGuardVitality = React.memo(function CompactGuardVitality({
     () =>
       determineCombatState(
         guard.current,
-        guard.max,
+        modifiedGAMax,
         vitality.current,
         vitality.max
       ),
-    [guard.current, guard.max, vitality.current, vitality.max]
+    [guard.current, modifiedGAMax, vitality.current, vitality.max]
   );
 
   const stateLabel = useMemo(() => {
@@ -148,22 +161,62 @@ export const CompactGuardVitality = React.memo(function CompactGuardVitality({
                 </Typography>
               </Stack>
               <Typography variant="body2" fontWeight="bold">
-                {guard.current}/{guard.max}
+                {guard.current}/{modifiedGAMax}
+                {gaTempValue > 0 && (
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="info.main"
+                    sx={{ ml: 0.5, fontWeight: 'bold' }}
+                  >
+                    (+{gaTempValue})
+                  </Typography>
+                )}
               </Typography>
             </Stack>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min(gaPercentage, 100)}
-              color="primary"
+            {/* Barra segmentada: GA principal + GA temporária */}
+            <Box
               sx={{
+                position: 'relative',
                 height: 6,
                 borderRadius: 3,
                 bgcolor:
                   theme.palette.mode === 'dark'
                     ? 'rgba(255,255,255,0.08)'
                     : 'rgba(0,0,0,0.08)',
+                overflow: 'hidden',
               }}
-            />
+            >
+              {/* GA principal */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  height: '100%',
+                  width: `${Math.min(gaPercentage, 100)}%`,
+                  bgcolor: 'primary.main',
+                  borderRadius: 3,
+                  transition: 'width 0.3s ease-in-out',
+                }}
+              />
+              {/* GA temporária */}
+              {gaTempPercentage > 0 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: `${Math.min(gaPercentage, 100)}%`,
+                    top: 0,
+                    height: '100%',
+                    width: `${gaTempPercentage}%`,
+                    bgcolor: 'info.main',
+                    borderRadius: 3,
+                    transition: 'width 0.3s ease-in-out',
+                    opacity: 0.7,
+                  }}
+                />
+              )}
+            </Box>
           </Box>
 
           {/* PV (Vitalidade) */}
@@ -187,19 +240,31 @@ export const CompactGuardVitality = React.memo(function CompactGuardVitality({
                 {vitality.current}/{vitality.max}
               </Typography>
             </Stack>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min(pvPercentage, 100)}
-              color="error"
+            <Box
               sx={{
+                position: 'relative',
                 height: 6,
                 borderRadius: 3,
                 bgcolor:
                   theme.palette.mode === 'dark'
                     ? 'rgba(255,255,255,0.08)'
                     : 'rgba(0,0,0,0.08)',
+                overflow: 'hidden',
               }}
-            />
+            >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  height: '100%',
+                  width: `${Math.min(pvPercentage, 100)}%`,
+                  bgcolor: 'error.main',
+                  borderRadius: 3,
+                  transition: 'width 0.3s ease-in-out',
+                }}
+              />
+            </Box>
           </Box>
         </Stack>
       </CardContent>

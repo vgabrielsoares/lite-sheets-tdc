@@ -17,6 +17,7 @@ import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName } from '@/types/skills';
 import type { DieSize, Modifier } from '@/types/common';
 import { getSkillDieSize } from '@/constants/skills';
+import { SkillRollButton } from '@/components/character/skills/SkillRollButton';
 
 export interface CompactDefenseTestProps {
   /** Atributos do personagem */
@@ -112,6 +113,9 @@ export const CompactDefenseTest = React.memo(function CompactDefenseTest({
           proficiency: PROFICIENCY_LABELS[profLevel] ?? profLevel,
         } as PoolInfo,
         isSignature,
+        attrValue,
+        profLevel,
+        totalDiceMod: signatureBonus + diceMods,
       };
     });
   }, [attributes, skills, characterLevel, signatureSkill]);
@@ -184,13 +188,23 @@ export const CompactDefenseTest = React.memo(function CompactDefenseTest({
                 </Tooltip>
               )}
             </Stack>
-            <Chip
-              label={opt.pool.formula}
-              size="small"
-              color={opt.pool.isPenalty ? 'warning' : 'success'}
-              variant="filled"
-              sx={{ fontWeight: 700, minWidth: 60 }}
-            />
+            <Stack direction="row" alignItems="center" spacing={0.5}>
+              <Chip
+                label={opt.pool.formula}
+                size="small"
+                color={opt.pool.isPenalty ? 'warning' : 'success'}
+                variant="filled"
+                sx={{ fontWeight: 700, minWidth: 60 }}
+              />
+              <SkillRollButton
+                skillLabel={`Defesa: ${opt.label}`}
+                attributeValue={opt.attrValue}
+                proficiencyLevel={opt.profLevel}
+                diceModifier={opt.totalDiceMod}
+                size="small"
+                tooltipText={`Rolar teste de defesa (${opt.label})`}
+              />
+            </Stack>
           </Box>
         ))}
       </Stack>
