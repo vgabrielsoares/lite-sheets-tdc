@@ -449,7 +449,7 @@ export function CharacterSheet({
    * Navega de volta para a lista de fichas
    */
   const handleBackToList = () => {
-    router.push('/');
+    router.push('/characters');
   };
 
   /**

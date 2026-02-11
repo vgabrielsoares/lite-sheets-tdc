@@ -42,7 +42,7 @@ export default function NewCharacterPage() {
   };
 
   const handleBack = () => {
-    router.push('/');
+    router.push('/characters');
   };
 
   return (

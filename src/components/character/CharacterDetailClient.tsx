@@ -82,7 +82,7 @@ export default function CharacterDetailClient({
       showError('Personagem não encontrado');
       // Redirecionar para a home após 1 segundo
       const timer = setTimeout(() => {
-        router.push('/');
+        router.push('/characters');
       }, 1500);
       return () => clearTimeout(timer);
     }
