@@ -1,7 +1,7 @@
 /**
  * Testes unitários para characterFactory
  *
- * Testa a criação de personagens com valores padrão de nível 1
+ * Testa a criação de personagens com valores padrão de nível 0
  * conforme regras do Tabuleiro do Caos RPG
  */
 
@@ -85,50 +85,50 @@ describe('characterFactory', () => {
     });
 
     describe('Nível e Experiência', () => {
-      it('deve começar no nível 1', () => {
-        expect(character.level).toBe(1);
+      it('deve começar no nível 0', () => {
+        expect(character.level).toBe(0);
       });
 
-      it('deve começar com 0 XP', () => {
-        expect(character.experience.current).toBe(0);
+      it('deve começar com 15 XP (pronto para nível 1)', () => {
+        expect(character.experience.current).toBe(15);
       });
 
       it('deve ter XP para próximo nível definido', () => {
-        expect(character.experience.toNextLevel).toBe(50);
+        expect(character.experience.toNextLevel).toBe(15);
       });
     });
 
     describe('Atributos', () => {
       it('deve ter todos os 6 atributos', () => {
         expect(character.attributes).toHaveProperty('agilidade');
-        expect(character.attributes).toHaveProperty('constituicao');
-        expect(character.attributes).toHaveProperty('forca');
+        expect(character.attributes).toHaveProperty('corpo');
         expect(character.attributes).toHaveProperty('influencia');
         expect(character.attributes).toHaveProperty('mente');
-        expect(character.attributes).toHaveProperty('presenca');
+        expect(character.attributes).toHaveProperty('essencia');
+        expect(character.attributes).toHaveProperty('instinto');
       });
 
       it('deve ter todos os atributos começando em 1', () => {
         expect(character.attributes.agilidade).toBe(1);
-        expect(character.attributes.constituicao).toBe(1);
-        expect(character.attributes.forca).toBe(1);
+        expect(character.attributes.corpo).toBe(1);
         expect(character.attributes.influencia).toBe(1);
         expect(character.attributes.mente).toBe(1);
-        expect(character.attributes.presenca).toBe(1);
+        expect(character.attributes.essencia).toBe(1);
+        expect(character.attributes.instinto).toBe(1);
       });
     });
 
-    describe('Pontos de Vida (PV)', () => {
-      it('deve ter 15 PV máximo', () => {
-        expect(character.combat.hp.max).toBe(15);
+    describe('Guarda (GA) e Vitalidade (PV)', () => {
+      it('deve ter 15 GA máximo', () => {
+        expect(character.combat.guard.max).toBe(15);
       });
 
-      it('deve ter 15 PV atual (cheio)', () => {
-        expect(character.combat.hp.current).toBe(15);
+      it('deve ter 15 GA atual (cheio)', () => {
+        expect(character.combat.guard.current).toBe(15);
       });
 
-      it('deve ter 0 PV temporário', () => {
-        expect(character.combat.hp.temporary).toBe(0);
+      it('deve ter 5 PV (Vitalidade) máximo', () => {
+        expect(character.combat.vitality.max).toBe(5);
       });
     });
 
@@ -260,7 +260,7 @@ describe('characterFactory', () => {
       });
 
       describe('Capacidade de Carga', () => {
-        it('deve ter capacidade base de 10 (5 + Força(1) * 5)', () => {
+        it('deve ter capacidade base de 10 (5 + Corpo(1) * 5)', () => {
           expect(character.inventory.carryingCapacity.base).toBe(10);
         });
 
@@ -293,42 +293,39 @@ describe('characterFactory', () => {
         expect(character.combat.dyingState.isDying).toBe(false);
       });
 
-      it('deve ter rodadas máximas de morte = 3 (2 + Constituição(1))', () => {
+      it('deve ter rodadas máximas de morte = 3 (2 + Corpo(1))', () => {
         expect(character.combat.dyingState.maxRounds).toBe(3);
       });
 
-      it('deve ter todas as ações disponíveis', () => {
-        expect(character.combat.actionEconomy.majorAction).toBe(true);
-        expect(character.combat.actionEconomy.minorAction1).toBe(true);
-        expect(character.combat.actionEconomy.minorAction2).toBe(true);
+      it('deve ter todas as ações disponíveis (turno rápido)', () => {
+        expect(character.combat.actionEconomy.turnType).toBe('rapido');
+        expect(character.combat.actionEconomy.actions).toEqual([true, true]);
         expect(character.combat.actionEconomy.reaction).toBe(true);
-        expect(character.combat.actionEconomy.defensiveReaction).toBe(true);
         expect(character.combat.actionEconomy.extraActions).toEqual([]);
       });
 
-      it('deve ter defesa base de 15', () => {
-        expect(character.combat.defense.base).toBe(15);
-      });
-
-      it('deve ter defesa total de 16 (15 + Agilidade(1))', () => {
-        expect(character.combat.defense.total).toBe(16);
-      });
-
-      it('deve ter limite de PP por rodada = 2 (Nível(1) + Presença(1))', () => {
+      it('deve ter limite de PP por rodada = 2 (Nível(1) + Essência(1))', () => {
         expect(character.combat.ppLimit.total).toBe(2);
       });
 
-      it('deve ter os 4 testes de resistência', () => {
-        expect(character.combat.savingThrows).toHaveLength(4);
+      it('deve ter os 5 testes de resistência', () => {
+        expect(character.combat.savingThrows).toHaveLength(5);
         const types = character.combat.savingThrows.map((st) => st.type);
         expect(types).toContain('determinacao');
         expect(types).toContain('reflexo');
+        expect(types).toContain('sintonia');
         expect(types).toContain('tenacidade');
         expect(types).toContain('vigor');
       });
 
-      it('deve não ter ataques inicialmente', () => {
-        expect(character.combat.attacks).toEqual([]);
+      it('deve ter ataque desarmado padrão', () => {
+        expect(character.combat.attacks).toHaveLength(1);
+        expect(character.combat.attacks[0].name).toBe('Ataque Desarmado');
+        expect(character.combat.attacks[0].type).toBe('corpo-a-corpo');
+        expect(character.combat.attacks[0].attackSkill).toBe('luta');
+        expect(character.combat.attacks[0].attackAttribute).toBe('corpo');
+        expect(character.combat.attacks[0].damageRoll.type).toBe('d2');
+        expect(character.combat.attacks[0].isDefaultAttack).toBe(true);
       });
 
       it('deve não ter condições ativas', () => {
@@ -462,14 +459,9 @@ describe('characterFactory', () => {
         expect(character.levelProgression).toHaveLength(15);
       });
 
-      it('apenas nível 1 deve estar alcançado', () => {
-        character.levelProgression.forEach((prog, index) => {
-          if (index === 0) {
-            expect(prog.achieved).toBe(true);
-            expect(prog.level).toBe(1);
-          } else {
-            expect(prog.achieved).toBe(false);
-          }
+      it('nenhum nível deve estar alcançado (personagem começa nível 0)', () => {
+        character.levelProgression.forEach((prog) => {
+          expect(prog.achieved).toBe(false);
         });
       });
 
@@ -529,8 +521,8 @@ describe('characterFactory', () => {
     });
 
     describe('Valores Padrão Conforme Regras do RPG', () => {
-      it('deve seguir regra: PV base = 15', () => {
-        expect(character.combat.hp.max).toBe(15);
+      it('deve seguir regra: GA base = 15', () => {
+        expect(character.combat.guard.max).toBe(15);
       });
 
       it('deve seguir regra: PP base = 2', () => {
@@ -566,13 +558,13 @@ describe('characterFactory', () => {
         expect(hasGold).toBe(true);
       });
 
-      it('deve seguir regra: Defesa = 15 + Agilidade', () => {
-        const expectedDefense = 15 + character.attributes.agilidade;
-        expect(character.combat.defense.total).toBe(expectedDefense);
+      it('deve seguir regra: PV = floor(GA_max / 3)', () => {
+        const expectedPV = Math.floor(character.combat.guard.max / 3);
+        expect(character.combat.vitality.max).toBe(expectedPV);
       });
 
-      it('deve seguir regra: Capacidade de carga = 5 + (Força * 5)', () => {
-        const expectedCapacity = 5 + character.attributes.forca * 5;
+      it('deve seguir regra: Capacidade de carga = 5 + (Corpo * 5)', () => {
+        const expectedCapacity = 5 + character.attributes.corpo * 5;
         expect(character.inventory.carryingCapacity.base).toBe(
           expectedCapacity
         );

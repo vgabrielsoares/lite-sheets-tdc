@@ -83,22 +83,22 @@ describe('Type System', () => {
     });
 
     it('should have all six attributes categorized', () => {
-      expect(ATTRIBUTE_CATEGORIES.agilidade).toBe('corporal');
-      expect(ATTRIBUTE_CATEGORIES.constituicao).toBe('corporal');
-      expect(ATTRIBUTE_CATEGORIES.forca).toBe('corporal');
+      expect(ATTRIBUTE_CATEGORIES.agilidade).toBe('fisico');
+      expect(ATTRIBUTE_CATEGORIES.corpo).toBe('fisico');
       expect(ATTRIBUTE_CATEGORIES.influencia).toBe('mental');
       expect(ATTRIBUTE_CATEGORIES.mente).toBe('mental');
-      expect(ATTRIBUTE_CATEGORIES.presenca).toBe('mental');
+      expect(ATTRIBUTE_CATEGORIES.essencia).toBe('espiritual');
+      expect(ATTRIBUTE_CATEGORIES.instinto).toBe('espiritual');
     });
 
     it('should have descriptions for all attributes', () => {
       const attributeNames: AttributeName[] = [
         'agilidade',
-        'constituicao',
-        'forca',
+        'corpo',
         'influencia',
         'mente',
-        'presenca',
+        'essencia',
+        'instinto',
       ];
 
       attributeNames.forEach((attr) => {
@@ -123,7 +123,6 @@ describe('Type System', () => {
     it('should have combat skills defined', () => {
       expect(COMBAT_SKILLS).toContain('acerto');
       expect(COMBAT_SKILLS).toContain('determinacao');
-      expect(COMBAT_SKILLS).toContain('iniciativa');
       expect(COMBAT_SKILLS).toContain('luta');
       expect(COMBAT_SKILLS).toContain('natureza');
       expect(COMBAT_SKILLS).toContain('reflexo');
@@ -181,16 +180,16 @@ describe('Type System', () => {
     it('should have correct level 1 character defaults', () => {
       expect(DEFAULT_LEVEL_1_CHARACTER.level).toBe(1);
       expect(DEFAULT_LEVEL_1_CHARACTER.attributes?.agilidade).toBe(1);
-      expect(DEFAULT_LEVEL_1_CHARACTER.attributes?.constituicao).toBe(1);
-      expect(DEFAULT_LEVEL_1_CHARACTER.attributes?.forca).toBe(1);
+      expect(DEFAULT_LEVEL_1_CHARACTER.attributes?.corpo).toBe(1);
       expect(DEFAULT_LEVEL_1_CHARACTER.attributes?.influencia).toBe(1);
       expect(DEFAULT_LEVEL_1_CHARACTER.attributes?.mente).toBe(1);
-      expect(DEFAULT_LEVEL_1_CHARACTER.attributes?.presenca).toBe(1);
+      expect(DEFAULT_LEVEL_1_CHARACTER.attributes?.essencia).toBe(1);
+      expect(DEFAULT_LEVEL_1_CHARACTER.attributes?.instinto).toBe(1);
     });
 
     it('should have correct level 1 combat defaults', () => {
-      expect(DEFAULT_LEVEL_1_CHARACTER.combat?.hp.max).toBe(15);
-      expect(DEFAULT_LEVEL_1_CHARACTER.combat?.hp.current).toBe(15);
+      expect(DEFAULT_LEVEL_1_CHARACTER.combat?.guard.max).toBe(15);
+      expect(DEFAULT_LEVEL_1_CHARACTER.combat?.guard.current).toBe(15);
       expect(DEFAULT_LEVEL_1_CHARACTER.combat?.pp.max).toBe(2);
       expect(DEFAULT_LEVEL_1_CHARACTER.combat?.pp.current).toBe(2);
     });
@@ -225,15 +224,15 @@ describe('Type System', () => {
     it('should compile Attributes type correctly', () => {
       const attrs: Attributes = {
         agilidade: 2,
-        constituicao: 1,
-        forca: 3,
+        corpo: 3,
         influencia: 1,
         mente: 2,
-        presenca: 1,
+        essencia: 1,
+        instinto: 1,
       };
 
       expect(attrs.agilidade).toBe(2);
-      expect(attrs.forca).toBe(3);
+      expect(attrs.corpo).toBe(3);
     });
 
     it('should enforce ProficiencyLevel type', () => {

@@ -101,6 +101,9 @@ export const ProficiencySelector: React.FC<ProficiencySelectorProps> = ({
 
     SKILL_LIST.forEach((skillName) => {
       const skill = skills[skillName];
+      // Verifica se a skill existe (pode não existir em fichas antigas)
+      if (!skill) return;
+
       if (skill.proficiencyLevel !== 'leigo') {
         proficient.push(skillName);
       } else {

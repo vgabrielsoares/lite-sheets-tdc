@@ -1,7 +1,13 @@
 /**
  * Testes para skillCalculations.ts
  *
- * Testa todos os cálculos relacionados a habilidades do sistema
+ * Sistema v0.0.2:
+ * - Proficiência → tamanho do dado: Leigo(d6), Adepto(d8), Versado(d10), Mestre(d12)
+ * - Atributo → quantidade base de dados na pool
+ * - Modificadores são sempre +Xd / -Xd (affectsDice: true)
+ * - Bônus de Assinatura: Math.min(3, Math.ceil(level / 5)) dados extras
+ * - Pool ≤ 0 → rola 2d e pega o menor (isPenaltyRoll)
+ * - Máximo 8 dados por teste (MAX_SKILL_DICE)
  */
 
 import {
@@ -10,6 +16,7 @@ import {
   calculateSkillRoll,
   calculateSkillUseModifier,
   calculateSkillUseRollFormula,
+  calculateSkillPenalties,
   hasLoadPenalty,
   requiresInstrument,
   requiresProficiency,
@@ -19,7 +26,7 @@ import type { Attributes, Modifier, Skill } from '@/types';
 
 describe('skillCalculations', () => {
   describe('calculateSkillTotalModifier', () => {
-    it('deve calcular modificador corretamente para Leigo (x0)', () => {
+    it('deve retornar dieSize d6 para Leigo', () => {
       const result = calculateSkillTotalModifier(
         'acrobacia',
         'agilidade',
@@ -31,17 +38,19 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.proficiencyMultiplier).toBe(0);
-      expect(result.baseModifier).toBe(0); // 3 × 0
-      expect(result.signatureBonus).toBe(0);
-      expect(result.otherModifiers).toBe(0);
-      expect(result.totalModifier).toBe(0);
+      expect(result.attributeValue).toBe(3);
+      expect(result.dieSize).toBe('d6');
+      expect(result.signatureDiceBonus).toBe(0);
+      expect(result.otherDiceModifiers).toBe(0);
+      expect(result.totalDiceModifier).toBe(0);
+      expect(result.totalDice).toBe(3);
+      expect(result.isPenaltyRoll).toBe(false);
     });
 
-    it('deve calcular modificador corretamente para Adepto (x1)', () => {
+    it('deve retornar dieSize d8 para Adepto', () => {
       const result = calculateSkillTotalModifier(
         'atletismo',
-        'constituicao',
+        'corpo',
         2,
         'adepto',
         false,
@@ -50,15 +59,16 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.proficiencyMultiplier).toBe(1);
-      expect(result.baseModifier).toBe(2); // 2 × 1
-      expect(result.totalModifier).toBe(2);
+      expect(result.attributeValue).toBe(2);
+      expect(result.dieSize).toBe('d8');
+      expect(result.totalDiceModifier).toBe(0);
+      expect(result.totalDice).toBe(2);
     });
 
-    it('deve calcular modificador corretamente para Versado (x2)', () => {
+    it('deve retornar dieSize d10 para Versado', () => {
       const result = calculateSkillTotalModifier(
         'percepcao',
-        'presenca',
+        'instinto',
         3,
         'versado',
         false,
@@ -67,12 +77,13 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.proficiencyMultiplier).toBe(2);
-      expect(result.baseModifier).toBe(6); // 3 × 2
-      expect(result.totalModifier).toBe(6);
+      expect(result.attributeValue).toBe(3);
+      expect(result.dieSize).toBe('d10');
+      expect(result.totalDiceModifier).toBe(0);
+      expect(result.totalDice).toBe(3);
     });
 
-    it('deve calcular modificador corretamente para Mestre (x3)', () => {
+    it('deve retornar dieSize d12 para Mestre', () => {
       const result = calculateSkillTotalModifier(
         'investigacao',
         'mente',
@@ -84,15 +95,16 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.proficiencyMultiplier).toBe(3);
-      expect(result.baseModifier).toBe(12); // 4 × 3
-      expect(result.totalModifier).toBe(12);
+      expect(result.attributeValue).toBe(4);
+      expect(result.dieSize).toBe('d12');
+      expect(result.totalDiceModifier).toBe(0);
+      expect(result.totalDice).toBe(4);
     });
 
-    it('deve aplicar bônus de Habilidade de Assinatura para habilidade NÃO-COMBATE', () => {
+    it('deve aplicar bônus de Habilidade de Assinatura (+1d para nível 1-5)', () => {
       const result = calculateSkillTotalModifier(
-        'atletismo', // não-combate
-        'constituicao',
+        'atletismo',
+        'corpo',
         2,
         'adepto',
         true, // é assinatura
@@ -101,14 +113,16 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.baseModifier).toBe(2); // 2 × 1
-      expect(result.signatureBonus).toBe(5); // nível do personagem
-      expect(result.totalModifier).toBe(7); // 2 + 5
+      // Assinatura nível 5 = Math.min(3, ceil(5/5)) = 1
+      expect(result.attributeValue).toBe(2);
+      expect(result.signatureDiceBonus).toBe(1);
+      expect(result.totalDiceModifier).toBe(1);
+      expect(result.totalDice).toBe(3); // 2 + 1
     });
 
-    it('deve aplicar bônus de Habilidade de Assinatura para habilidade DE COMBATE (dividido por 3)', () => {
+    it('deve aplicar bônus de Assinatura +2d para nível 6-10', () => {
       const result = calculateSkillTotalModifier(
-        'acerto', // combate
+        'acerto',
         'agilidade',
         3,
         'versado',
@@ -118,15 +132,17 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.baseModifier).toBe(6); // 3 × 2
-      expect(result.signatureBonus).toBe(3); // 9 ÷ 3 = 3
-      expect(result.totalModifier).toBe(9); // 6 + 3
+      // Assinatura nível 9 = Math.min(3, ceil(9/5)) = 2
+      expect(result.attributeValue).toBe(3);
+      expect(result.signatureDiceBonus).toBe(2);
+      expect(result.totalDiceModifier).toBe(2);
+      expect(result.totalDice).toBe(5); // 3 + 2
     });
 
-    it('deve aplicar bônus de Assinatura mínimo de 1 para habilidade de combate (nível baixo)', () => {
+    it('deve aplicar bônus de Assinatura +1d para nível 1 (mínimo)', () => {
       const result = calculateSkillTotalModifier(
-        'luta', // combate
-        'forca',
+        'luta',
+        'corpo',
         2,
         'adepto',
         true, // é assinatura
@@ -135,15 +151,15 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.baseModifier).toBe(2); // 2 × 1
-      expect(result.signatureBonus).toBe(1); // mínimo 1 (1 ÷ 3 = 0.33, mas mínimo é 1)
-      expect(result.totalModifier).toBe(3); // 2 + 1
+      // Assinatura nível 1 = Math.min(3, ceil(1/5)) = 1
+      expect(result.signatureDiceBonus).toBe(1);
+      expect(result.totalDice).toBe(3); // 2 + 1
     });
 
-    it('deve somar outros modificadores positivos', () => {
+    it('deve somar modificadores de dados positivos (+Xd)', () => {
       const modifiers: Modifier[] = [
-        { name: 'Bênção', type: 'bonus', value: 2 },
-        { name: 'Item Mágico', type: 'bonus', value: 3 },
+        { name: 'Bênção', type: 'bonus', value: 2, affectsDice: true },
+        { name: 'Item Mágico', type: 'bonus', value: 3, affectsDice: true },
       ];
 
       const result = calculateSkillTotalModifier(
@@ -157,14 +173,19 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.baseModifier).toBe(2); // 2 × 1
-      expect(result.otherModifiers).toBe(5); // 2 + 3
-      expect(result.totalModifier).toBe(7); // 2 + 5
+      expect(result.otherDiceModifiers).toBe(5); // 2 + 3
+      expect(result.totalDiceModifier).toBe(5);
+      expect(result.totalDice).toBe(7); // 2 + 5
     });
 
-    it('deve somar outros modificadores negativos', () => {
+    it('deve somar modificadores de dados negativos (-Xd)', () => {
       const modifiers: Modifier[] = [
-        { name: 'Ferimento', type: 'penalidade', value: -2 },
+        {
+          name: 'Ferimento',
+          type: 'penalidade',
+          value: -2,
+          affectsDice: true,
+        },
       ];
 
       const result = calculateSkillTotalModifier(
@@ -178,12 +199,12 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.baseModifier).toBe(6); // 3 × 2
-      expect(result.otherModifiers).toBe(-2);
-      expect(result.totalModifier).toBe(4); // 6 - 2
+      expect(result.otherDiceModifiers).toBe(-2);
+      expect(result.totalDiceModifier).toBe(-2);
+      expect(result.totalDice).toBe(1); // 3 - 2
     });
 
-    it('deve aplicar penalidade de carga (-5) quando Sobrecarregado E habilidade tem propriedade Carga', () => {
+    it('deve aplicar penalidade de carga (-2d) quando Sobrecarregado E habilidade tem Carga', () => {
       const result = calculateSkillTotalModifier(
         'acrobacia', // tem propriedade Carga
         'agilidade',
@@ -195,14 +216,14 @@ describe('skillCalculations', () => {
         true // sobrecarregado
       );
 
-      expect(result.baseModifier).toBe(6); // 3 × 2
-      expect(result.otherModifiers).toBe(-5); // penalidade de carga
-      expect(result.totalModifier).toBe(1); // 6 - 5
+      expect(result.loadDicePenalty).toBe(-2);
+      expect(result.totalDiceModifier).toBe(-2);
+      expect(result.totalDice).toBe(1); // 3 - 2
     });
 
     it('NÃO deve aplicar penalidade de carga quando NÃO sobrecarregado', () => {
       const result = calculateSkillTotalModifier(
-        'acrobacia', // tem propriedade Carga
+        'acrobacia',
         'agilidade',
         3,
         'versado',
@@ -212,15 +233,15 @@ describe('skillCalculations', () => {
         false // NÃO sobrecarregado
       );
 
-      expect(result.baseModifier).toBe(6); // 3 × 2
-      expect(result.otherModifiers).toBe(0); // sem penalidade
-      expect(result.totalModifier).toBe(6);
+      expect(result.loadDicePenalty).toBe(0);
+      expect(result.totalDiceModifier).toBe(0);
+      expect(result.totalDice).toBe(3);
     });
 
-    it('NÃO deve aplicar penalidade de carga quando habilidade NÃO tem propriedade Carga', () => {
+    it('NÃO deve aplicar penalidade de carga quando habilidade NÃO tem Carga', () => {
       const result = calculateSkillTotalModifier(
         'percepcao', // NÃO tem propriedade Carga
-        'presenca',
+        'instinto',
         3,
         'versado',
         false,
@@ -229,15 +250,15 @@ describe('skillCalculations', () => {
         true // sobrecarregado (mas habilidade não sofre penalidade)
       );
 
-      expect(result.baseModifier).toBe(6); // 3 × 2
-      expect(result.otherModifiers).toBe(0); // sem penalidade
-      expect(result.totalModifier).toBe(6);
+      expect(result.loadDicePenalty).toBe(0);
+      expect(result.totalDiceModifier).toBe(0);
+      expect(result.totalDice).toBe(3);
     });
 
-    it('deve funcionar corretamente com atributo 0', () => {
+    it('deve ativar isPenaltyRoll quando atributo 0 e sem modificadores', () => {
       const result = calculateSkillTotalModifier(
         'atletismo',
-        'constituicao',
+        'corpo',
         0, // atributo 0
         'adepto',
         false,
@@ -247,19 +268,24 @@ describe('skillCalculations', () => {
       );
 
       expect(result.attributeValue).toBe(0);
-      expect(result.baseModifier).toBe(0); // 0 × 1
-      expect(result.totalModifier).toBe(0);
+      expect(result.totalDice).toBe(0);
+      expect(result.isPenaltyRoll).toBe(true);
     });
 
     it('deve combinar todos os modificadores corretamente', () => {
       const modifiers: Modifier[] = [
-        { name: 'Bênção', type: 'bonus', value: 2 },
-        { name: 'Ferimento', type: 'penalidade', value: -1 },
+        { name: 'Bênção', type: 'bonus', value: 2, affectsDice: true },
+        {
+          name: 'Ferimento',
+          type: 'penalidade',
+          value: -1,
+          affectsDice: true,
+        },
       ];
 
       const result = calculateSkillTotalModifier(
         'atletismo', // tem propriedade Carga
-        'constituicao',
+        'corpo',
         3,
         'versado',
         true, // assinatura
@@ -268,126 +294,195 @@ describe('skillCalculations', () => {
         true // sobrecarregado
       );
 
-      expect(result.baseModifier).toBe(6); // 3 × 2
-      expect(result.signatureBonus).toBe(5); // nível 5 (não-combate)
-      expect(result.otherModifiers).toBe(-4); // +2 - 1 - 5 (carga)
-      expect(result.totalModifier).toBe(7); // 6 + 5 - 4
+      // signatureDiceBonus = Math.min(3, ceil(5/5)) = 1
+      // otherDiceModifiers = 2 + (-1) = 1
+      // loadDicePenalty = -2 (atletismo has carga, overloaded)
+      // totalDiceModifier = 1 + 1 + (-2) = 0
+      // totalDice = 3 + 0 = 3
+      expect(result.signatureDiceBonus).toBe(1);
+      expect(result.otherDiceModifiers).toBe(1);
+      expect(result.loadDicePenalty).toBe(-2);
+      expect(result.totalDiceModifier).toBe(0);
+      expect(result.totalDice).toBe(3);
+      expect(result.isPenaltyRoll).toBe(false);
+    });
+
+    it('deve ignorar modificadores sem affectsDice (legacy)', () => {
+      const modifiers: Modifier[] = [
+        { name: 'Bônus numérico', type: 'bonus', value: 5 }, // sem affectsDice
+      ];
+
+      const result = calculateSkillTotalModifier(
+        'acrobacia',
+        'agilidade',
+        3,
+        'versado',
+        false,
+        1,
+        modifiers,
+        false
+      );
+
+      // Modificador sem affectsDice é ignorado
+      expect(result.otherDiceModifiers).toBe(0);
+      expect(result.totalDice).toBe(3);
+    });
+
+    it('deve aceitar SkillPenaltyContext com armadura', () => {
+      const result = calculateSkillTotalModifier(
+        'acrobacia',
+        'agilidade',
+        3,
+        'versado',
+        false,
+        1,
+        [],
+        { isOverloaded: true, equippedArmorType: 'pesada' }
+      );
+
+      // loadDicePenalty = -2 (overloaded + carga)
+      // armorDicePenalty = -2 (pesada + carga)
+      // totalDice = 3 + (-2) + (-2) = -1, isPenaltyRoll
+      expect(result.loadDicePenalty).toBe(-2);
+      expect(result.armorDicePenalty).toBe(-2);
+      expect(result.totalDice).toBe(-1);
+      expect(result.isPenaltyRoll).toBe(true);
+    });
+  });
+
+  describe('calculateSkillPenalties', () => {
+    it('deve retornar todas penalidades zero quando sem penalidades', () => {
+      const result = calculateSkillPenalties('percepcao', 'versado', {});
+      expect(result.loadDicePenalty).toBe(0);
+      expect(result.armorDicePenalty).toBe(0);
+      expect(result.proficiencyDicePenalty).toBe(0);
+      expect(result.instrumentDicePenalty).toBe(0);
+      expect(result.totalPenalty).toBe(0);
+    });
+
+    it('deve aplicar penalidade de carga (-2d) quando sobrecarregado em habilidade com Carga', () => {
+      const result = calculateSkillPenalties('acrobacia', 'versado', {
+        isOverloaded: true,
+      });
+      expect(result.loadDicePenalty).toBe(-2);
+      expect(result.totalPenalty).toBe(-2);
+    });
+
+    it('deve aplicar penalidade de armadura média (-1d) em habilidade com Carga', () => {
+      const result = calculateSkillPenalties('atletismo', 'adepto', {
+        equippedArmorType: 'media',
+      });
+      expect(result.armorDicePenalty).toBe(-1);
+      expect(result.totalPenalty).toBe(-1);
+    });
+
+    it('deve aplicar penalidade de armadura pesada (-2d) em habilidade com Carga', () => {
+      const result = calculateSkillPenalties('atletismo', 'adepto', {
+        equippedArmorType: 'pesada',
+      });
+      expect(result.armorDicePenalty).toBe(-2);
+      expect(result.totalPenalty).toBe(-2);
+    });
+
+    it('deve aplicar penalidade de proficiência (-2d) quando Leigo em habilidade que requer proficiência', () => {
+      const result = calculateSkillPenalties('arcano', 'leigo', {});
+      expect(result.proficiencyDicePenalty).toBe(-2);
+      expect(result.totalPenalty).toBe(-2);
+    });
+
+    it('NÃO deve aplicar penalidade de proficiência quando Adepto ou superior', () => {
+      const result = calculateSkillPenalties('arcano', 'adepto', {});
+      expect(result.proficiencyDicePenalty).toBe(0);
+    });
+
+    it('deve aplicar penalidade de instrumento (-2d) quando falta instrumento', () => {
+      const result = calculateSkillPenalties('medicina', 'adepto', {
+        hasRequiredInstrument: false,
+      });
+      expect(result.instrumentDicePenalty).toBe(-2);
+      expect(result.totalPenalty).toBe(-2);
+    });
+
+    it('deve acumular penalidades de carga e armadura', () => {
+      const result = calculateSkillPenalties('acrobacia', 'versado', {
+        isOverloaded: true,
+        equippedArmorType: 'pesada',
+      });
+      expect(result.loadDicePenalty).toBe(-2);
+      expect(result.armorDicePenalty).toBe(-2);
+      expect(result.totalPenalty).toBe(-4);
     });
   });
 
   describe('calculateSkillRollFormula', () => {
-    it('deve gerar fórmula correta para atributo normal (≥1)', () => {
-      const result = calculateSkillRollFormula(2, 4, []);
+    it('deve gerar fórmula correta para pool normal', () => {
+      const result = calculateSkillRollFormula(3, 'd8');
+
+      expect(result.diceCount).toBe(3);
+      expect(result.dieSize).toBe('d8');
+      expect(result.isPenaltyRoll).toBe(false);
+      expect(result.formula).toBe('3d8');
+    });
+
+    it('deve gerar fórmula de penalidade quando totalDice = 0', () => {
+      const result = calculateSkillRollFormula(0, 'd6');
 
       expect(result.diceCount).toBe(2);
-      expect(result.takeLowest).toBe(false);
-      expect(result.modifier).toBe(4);
-      expect(result.formula).toBe('2d20+4');
+      expect(result.dieSize).toBe('d6');
+      expect(result.isPenaltyRoll).toBe(true);
+      expect(result.formula).toBe('2d6 (menor)');
     });
 
-    it('deve gerar fórmula correta para atributo 0 (desvantagem)', () => {
-      const result = calculateSkillRollFormula(0, 2, []);
+    it('deve gerar fórmula de penalidade quando totalDice negativo', () => {
+      const result = calculateSkillRollFormula(-2, 'd10');
 
       expect(result.diceCount).toBe(2);
-      expect(result.takeLowest).toBe(true); // escolhe o menor
-      expect(result.modifier).toBe(2);
-      expect(result.formula).toBe('-2d20+2'); // prefixo "-" indica menor - UI usa cor vermelha
+      expect(result.isPenaltyRoll).toBe(true);
+      expect(result.formula).toBe('2d10 (menor)');
     });
 
-    it('deve gerar fórmula com modificador negativo', () => {
-      const result = calculateSkillRollFormula(3, -2, []);
+    it('deve limitar pool a 8 dados (MAX_SKILL_DICE)', () => {
+      const result = calculateSkillRollFormula(10, 'd12');
 
-      expect(result.formula).toBe('3d20-2');
+      expect(result.diceCount).toBe(8);
+      expect(result.isPenaltyRoll).toBe(false);
+      expect(result.formula).toBe('8d12');
     });
 
-    it('deve gerar fórmula sem modificador quando modificador = 0', () => {
-      const result = calculateSkillRollFormula(2, 0, []);
+    it('deve funcionar com exatamente 8 dados', () => {
+      const result = calculateSkillRollFormula(8, 'd6');
 
-      expect(result.formula).toBe('2d20');
+      expect(result.diceCount).toBe(8);
+      expect(result.formula).toBe('8d6');
     });
 
-    it('deve aplicar modificadores de dados positivos', () => {
-      const diceModifiers: Modifier[] = [
-        { name: 'Vantagem', type: 'bonus', value: 1, affectsDice: true },
-      ];
+    it('deve funcionar com 1 dado', () => {
+      const result = calculateSkillRollFormula(1, 'd6');
 
-      const result = calculateSkillRollFormula(2, 4, diceModifiers);
-
-      expect(result.diceCount).toBe(3); // 2 + 1
-      expect(result.takeLowest).toBe(false);
-      expect(result.formula).toBe('3d20+4');
+      expect(result.diceCount).toBe(1);
+      expect(result.isPenaltyRoll).toBe(false);
+      expect(result.formula).toBe('1d6');
     });
 
-    it('deve aplicar modificadores de dados negativos', () => {
-      const diceModifiers: Modifier[] = [
-        {
-          name: 'Desvantagem',
-          type: 'penalidade',
-          value: -1,
-          affectsDice: true,
-        },
-      ];
-
-      const result = calculateSkillRollFormula(3, 5, diceModifiers);
-
-      expect(result.diceCount).toBe(2); // 3 - 1
-      expect(result.takeLowest).toBe(false);
-      expect(result.formula).toBe('2d20+5');
-    });
-
-    it('deve aplicar regra especial quando dados ficam < 1 (rola valor absoluto, escolhe menor)', () => {
-      const diceModifiers: Modifier[] = [
-        {
-          name: 'Desvantagem Extrema',
-          type: 'penalidade',
-          value: -3,
-          affectsDice: true,
-        },
-      ];
-
-      const result = calculateSkillRollFormula(2, 5, diceModifiers);
-
-      expect(result.diceCount).toBe(3); // 2 - 3 = -1 → 2 - (-1) = 3
-      expect(result.takeLowest).toBe(true); // passou de negativo
-      expect(result.formula).toBe('-3d20+5'); // prefixo "-" indica menor - UI usa cor vermelha
-    });
-
-    it('deve combinar múltiplos modificadores de dados', () => {
-      const diceModifiers: Modifier[] = [
-        { name: 'Vantagem', type: 'bonus', value: 2, affectsDice: true },
-        {
-          name: 'Desvantagem',
-          type: 'penalidade',
-          value: -1,
-          affectsDice: true,
-        },
-      ];
-
-      const result = calculateSkillRollFormula(3, 4, diceModifiers);
-
-      expect(result.diceCount).toBe(4); // 3 + 2 - 1
-      expect(result.formula).toBe('4d20+4');
-    });
-
-    it('deve funcionar corretamente com atributo alto', () => {
-      const result = calculateSkillRollFormula(5, 15, []);
-
-      expect(result.diceCount).toBe(5);
-      expect(result.formula).toBe('5d20+15');
+    it('deve usar dieSize correto para cada proficiência', () => {
+      expect(calculateSkillRollFormula(2, 'd6').formula).toBe('2d6');
+      expect(calculateSkillRollFormula(2, 'd8').formula).toBe('2d8');
+      expect(calculateSkillRollFormula(2, 'd10').formula).toBe('2d10');
+      expect(calculateSkillRollFormula(2, 'd12').formula).toBe('2d12');
     });
   });
 
   describe('calculateSkillRoll', () => {
     const attributes: Attributes = {
       agilidade: 2,
-      constituicao: 3,
-      forca: 1,
+      corpo: 3,
       influencia: 2,
       mente: 2,
-      presenca: 1,
+      essencia: 1,
+      instinto: 1,
     };
 
-    it('deve combinar cálculo de modificador e fórmula de rolagem', () => {
+    it('deve combinar cálculo de pool e fórmula de rolagem', () => {
       const result = calculateSkillRoll(
         'acrobacia',
         'agilidade',
@@ -400,23 +495,24 @@ describe('skillCalculations', () => {
       );
 
       expect(result.calculation.attributeValue).toBe(2);
-      expect(result.calculation.baseModifier).toBe(4); // 2 × 2
-      expect(result.calculation.totalModifier).toBe(4);
+      expect(result.calculation.dieSize).toBe('d10');
+      expect(result.calculation.totalDiceModifier).toBe(0);
+      expect(result.calculation.totalDice).toBe(2);
 
       expect(result.rollFormula.diceCount).toBe(2);
-      expect(result.rollFormula.modifier).toBe(4);
-      expect(result.rollFormula.formula).toBe('2d20+4');
+      expect(result.rollFormula.dieSize).toBe('d10');
+      expect(result.rollFormula.formula).toBe('2d10');
     });
 
-    it('deve separar modificadores de valor e de dados corretamente', () => {
+    it('deve contar apenas modificadores de dados (affectsDice) na pool', () => {
       const modifiers: Modifier[] = [
-        { name: 'Bênção', type: 'bonus', value: 2 },
+        { name: 'Bênção', type: 'bonus', value: 2 }, // NÃO afeta dados
         { name: 'Vantagem', type: 'bonus', value: 1, affectsDice: true },
       ];
 
       const result = calculateSkillRoll(
         'atletismo',
-        'constituicao',
+        'corpo',
         attributes,
         'adepto',
         false,
@@ -425,19 +521,19 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.calculation.baseModifier).toBe(3); // 3 × 1
-      expect(result.calculation.otherModifiers).toBe(2); // apenas bônus de valor
-      expect(result.calculation.totalModifier).toBe(5); // 3 + 2
+      // corpo=3, +1d (vantagem), bônus numérico ignorado
+      expect(result.calculation.otherDiceModifiers).toBe(1);
+      expect(result.calculation.totalDice).toBe(4); // 3 + 1
 
-      expect(result.rollFormula.diceCount).toBe(4); // 3 + 1 (modificador de dados)
-      expect(result.rollFormula.modifier).toBe(5);
-      expect(result.rollFormula.formula).toBe('4d20+5');
+      expect(result.rollFormula.diceCount).toBe(4);
+      expect(result.rollFormula.dieSize).toBe('d8');
+      expect(result.rollFormula.formula).toBe('4d8');
     });
 
     it('deve funcionar com Habilidade de Assinatura', () => {
       const result = calculateSkillRoll(
         'percepcao',
-        'presenca',
+        'instinto',
         attributes,
         'versado',
         true, // assinatura
@@ -446,14 +542,14 @@ describe('skillCalculations', () => {
         false
       );
 
-      expect(result.calculation.baseModifier).toBe(2); // 1 × 2
-      expect(result.calculation.signatureBonus).toBe(5);
-      expect(result.calculation.totalModifier).toBe(7); // 2 + 5
+      // instinto=1, signatureDiceBonus=Math.min(3, ceil(5/5))=1, totalDice=2
+      expect(result.calculation.signatureDiceBonus).toBe(1);
+      expect(result.calculation.totalDice).toBe(2);
 
-      expect(result.rollFormula.formula).toBe('1d20+7');
+      expect(result.rollFormula.formula).toBe('2d10');
     });
 
-    it('deve aplicar penalidade de carga quando sobrecarregado', () => {
+    it('deve ativar penaltyRoll quando pool zerada por penalidade de carga', () => {
       const result = calculateSkillRoll(
         'acrobacia',
         'agilidade',
@@ -465,11 +561,13 @@ describe('skillCalculations', () => {
         true // sobrecarregado
       );
 
-      expect(result.calculation.baseModifier).toBe(4); // 2 × 2
-      expect(result.calculation.otherModifiers).toBe(-5); // penalidade de carga
-      expect(result.calculation.totalModifier).toBe(-1); // 4 - 5
+      // agilidade=2, loadDicePenalty=-2, totalDice=0, isPenaltyRoll=true
+      expect(result.calculation.loadDicePenalty).toBe(-2);
+      expect(result.calculation.totalDice).toBe(0);
+      expect(result.calculation.isPenaltyRoll).toBe(true);
 
-      expect(result.rollFormula.formula).toBe('2d20-1');
+      expect(result.rollFormula.isPenaltyRoll).toBe(true);
+      expect(result.rollFormula.formula).toBe('2d10 (menor)');
     });
   });
 
@@ -490,9 +588,11 @@ describe('skillCalculations', () => {
 
   describe('requiresInstrument', () => {
     it('deve retornar true para habilidades que requerem instrumento', () => {
-      expect(requiresInstrument('arte')).toBe(true);
       expect(requiresInstrument('medicina')).toBe(true);
       expect(requiresInstrument('conducao')).toBe(true);
+      expect(requiresInstrument('destreza')).toBe(true);
+      expect(requiresInstrument('enganacao')).toBe(true);
+      expect(requiresInstrument('oficio')).toBe(true);
     });
 
     it('deve retornar false para habilidades que NÃO requerem instrumento', () => {
@@ -518,11 +618,14 @@ describe('skillCalculations', () => {
     it('deve retornar true para habilidades de combate', () => {
       expect(isCombatSkill('acerto')).toBe(true);
       expect(isCombatSkill('luta')).toBe(true);
-      expect(isCombatSkill('iniciativa')).toBe(true);
       expect(isCombatSkill('reflexo')).toBe(true);
       expect(isCombatSkill('determinacao')).toBe(true);
       expect(isCombatSkill('natureza')).toBe(true);
       expect(isCombatSkill('religiao')).toBe(true);
+      expect(isCombatSkill('arcano')).toBe(true);
+      expect(isCombatSkill('sintonia')).toBe(true);
+      expect(isCombatSkill('tenacidade')).toBe(true);
+      expect(isCombatSkill('vigor')).toBe(true);
     });
 
     it('deve retornar false para habilidades NÃO-combate', () => {
@@ -536,16 +639,16 @@ describe('skillCalculations', () => {
   describe('calculateSkillUseModifier', () => {
     const mockAttributes: Attributes = {
       agilidade: 3,
-      constituicao: 2,
-      forca: 4,
+      corpo: 4,
       influencia: 1,
       mente: 2,
-      presenca: 3,
+      essencia: 3,
+      instinto: 1,
     };
 
-    it('deve calcular modificador de uso customizado com atributo diferente', () => {
+    it('deve calcular total de dados com atributo customizado', () => {
       const skillUse = {
-        keyAttribute: 'forca' as const,
+        keyAttribute: 'corpo' as const,
         bonus: 2,
         skillName: 'acrobacia' as const,
       };
@@ -553,7 +656,7 @@ describe('skillCalculations', () => {
       const baseSkill: Skill = {
         name: 'acrobacia',
         keyAttribute: 'agilidade',
-        proficiencyLevel: 'versado',
+        proficiencyLevel: 'versado' as const,
         isSignature: false,
         modifiers: [],
       };
@@ -566,22 +669,22 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Força 4 × Versado (2) + Bônus +2 = 8 + 2 = 10
-      expect(result).toBe(10);
+      // corpo=4 + bonus=2 = 6
+      expect(result).toBe(6);
     });
 
-    it('deve incluir bônus de assinatura em uso customizado (habilidade não-combate)', () => {
+    it('deve incluir bônus de assinatura em uso customizado', () => {
       const skillUse = {
-        keyAttribute: 'forca' as const,
+        keyAttribute: 'corpo' as const,
         bonus: 1,
         skillName: 'atletismo' as const,
       };
 
       const baseSkill: Skill = {
         name: 'atletismo',
-        keyAttribute: 'constituicao',
-        proficiencyLevel: 'adepto',
-        isSignature: true, // Habilidade de Assinatura
+        keyAttribute: 'corpo',
+        proficiencyLevel: 'adepto' as const,
+        isSignature: true,
         modifiers: [],
       };
 
@@ -593,22 +696,22 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Força 4 × Adepto (1) + Assinatura (7, não-combate) + Bônus +1 = 4 + 7 + 1 = 12
-      expect(result).toBe(12);
+      // corpo=4 + signatureBonus=ceil(7/5)=2 + bonus=1 = 7
+      expect(result).toBe(7);
     });
 
-    it('deve incluir bônus de assinatura reduzido em uso customizado (habilidade de combate)', () => {
+    it('deve aplicar mesma fórmula de assinatura para combate e não-combate', () => {
       const skillUse = {
-        keyAttribute: 'constituicao' as const,
+        keyAttribute: 'mente' as const,
         bonus: 0,
         skillName: 'luta' as const,
       };
 
       const baseSkill: Skill = {
         name: 'luta',
-        keyAttribute: 'forca',
-        proficiencyLevel: 'mestre',
-        isSignature: true, // Habilidade de Assinatura
+        keyAttribute: 'corpo',
+        proficiencyLevel: 'mestre' as const,
+        isSignature: true,
         modifiers: [],
       };
 
@@ -620,21 +723,21 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Constituição 2 × Mestre (3) + Assinatura (9÷3 = 3, combate) + Bônus 0 = 6 + 3 = 9
-      expect(result).toBe(9);
+      // mente=2 + signatureBonus=ceil(9/5)=2 + bonus=0 = 4
+      expect(result).toBe(4);
     });
 
     it('deve aplicar penalidade de carga quando sobrecarregado', () => {
       const skillUse = {
         keyAttribute: 'agilidade' as const,
         bonus: 0,
-        skillName: 'acrobacia' as const, // Tem propriedade Carga
+        skillName: 'acrobacia' as const,
       };
 
       const baseSkill: Skill = {
         name: 'acrobacia',
         keyAttribute: 'agilidade',
-        proficiencyLevel: 'versado',
+        proficiencyLevel: 'versado' as const,
         isSignature: false,
         modifiers: [],
       };
@@ -647,13 +750,13 @@ describe('skillCalculations', () => {
         true // Sobrecarregado
       );
 
-      // Agilidade 3 × Versado (2) - Carga (-5) = 6 - 5 = 1
+      // agilidade=3 + loadPenalty=-2 = 1
       expect(result).toBe(1);
     });
 
-    it('deve incluir modificadores da habilidade base', () => {
+    it('deve incluir modificadores de dados da habilidade base', () => {
       const skillUse = {
-        keyAttribute: 'presenca' as const,
+        keyAttribute: 'essencia' as const,
         bonus: 3,
         skillName: 'persuasao' as const,
       };
@@ -661,11 +764,21 @@ describe('skillCalculations', () => {
       const baseSkill: Skill = {
         name: 'persuasao',
         keyAttribute: 'influencia',
-        proficiencyLevel: 'adepto',
+        proficiencyLevel: 'adepto' as const,
         isSignature: false,
         modifiers: [
-          { name: 'Bônus de item', value: 2, type: 'bonus' },
-          { name: 'Penalidade de debuff', value: -1, type: 'penalidade' },
+          {
+            name: 'Bônus de item',
+            value: 2,
+            type: 'bonus' as const,
+            affectsDice: true,
+          },
+          {
+            name: 'Penalidade de debuff',
+            value: -1,
+            type: 'penalidade' as const,
+            affectsDice: true,
+          },
         ],
       };
 
@@ -677,24 +790,53 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Presença 3 × Adepto (1) + Modificadores (2-1) + Bônus +3 = 3 + 1 + 3 = 7
+      // essencia=3 + diceModifiers(2-1=1) + bonus=3 = 7
       expect(result).toBe(7);
+    });
+
+    it('deve ignorar modificadores sem affectsDice nos modificadores da base', () => {
+      const skillUse = {
+        keyAttribute: 'essencia' as const,
+        bonus: 0,
+        skillName: 'persuasao' as const,
+      };
+
+      const baseSkill: Skill = {
+        name: 'persuasao',
+        keyAttribute: 'influencia',
+        proficiencyLevel: 'adepto' as const,
+        isSignature: false,
+        modifiers: [
+          { name: 'Bônus numérico', value: 5, type: 'bonus' as const },
+        ],
+      };
+
+      const result = calculateSkillUseModifier(
+        skillUse,
+        baseSkill,
+        mockAttributes,
+        1,
+        false
+      );
+
+      // essencia=3, modificador ignorado, bonus=0 → total=3
+      expect(result).toBe(3);
     });
   });
 
   describe('calculateSkillUseRollFormula', () => {
     const mockAttributes: Attributes = {
       agilidade: 3,
-      constituicao: 2,
-      forca: 4,
+      corpo: 4,
       influencia: 0, // Atributo 0 para testar regra especial
       mente: 2,
-      presenca: 3,
+      essencia: 3,
+      instinto: 3,
     };
 
-    it('deve gerar fórmula correta para uso customizado', () => {
+    it('deve gerar fórmula pool correta para uso customizado', () => {
       const skillUse = {
-        keyAttribute: 'forca' as const,
+        keyAttribute: 'corpo' as const,
         bonus: 2,
         skillName: 'acrobacia' as const,
       };
@@ -702,7 +844,7 @@ describe('skillCalculations', () => {
       const baseSkill: Skill = {
         name: 'acrobacia',
         keyAttribute: 'agilidade',
-        proficiencyLevel: 'versado',
+        proficiencyLevel: 'versado' as const,
         isSignature: false,
         modifiers: [],
       };
@@ -715,13 +857,13 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Força 4 = 4d20, modificador +10
-      expect(result).toBe('4d20+10');
+      // corpo=4 + bonus=2 = 6d10 (versado)
+      expect(result).toBe('6d10');
     });
 
-    it('deve aplicar regra especial para atributo 0', () => {
+    it('deve aplicar regra de penalidade para atributo 0 sem bônus', () => {
       const skillUse = {
-        keyAttribute: 'influencia' as const, // Influência = 0
+        keyAttribute: 'influencia' as const,
         bonus: 0,
         skillName: 'persuasao' as const,
       };
@@ -729,7 +871,7 @@ describe('skillCalculations', () => {
       const baseSkill: Skill = {
         name: 'persuasao',
         keyAttribute: 'influencia',
-        proficiencyLevel: 'leigo',
+        proficiencyLevel: 'leigo' as const,
         isSignature: false,
         modifiers: [],
       };
@@ -742,11 +884,11 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Influência 0 = 2d20 (menor), modificador 0
-      expect(result).toBe('-2d20'); // prefixo "-" indica menor - UI usa cor vermelha
+      // influencia=0, totalDice=0, isPenalty → 2d6 (menor)
+      expect(result).toBe('2d6 (menor)');
     });
 
-    it('deve gerar fórmula com modificador negativo', () => {
+    it('deve gerar fórmula de penalidade quando bônus negativo reduz pool a ≤ 0', () => {
       const skillUse = {
         keyAttribute: 'mente' as const,
         bonus: -3,
@@ -756,7 +898,7 @@ describe('skillCalculations', () => {
       const baseSkill: Skill = {
         name: 'investigacao',
         keyAttribute: 'mente',
-        proficiencyLevel: 'leigo',
+        proficiencyLevel: 'leigo' as const,
         isSignature: false,
         modifiers: [],
       };
@@ -769,21 +911,21 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Mente 2 = 2d20, modificador -3
-      expect(result).toBe('2d20-3');
+      // mente=2 + bonus=-3 = -1, isPenalty → 2d6 (menor)
+      expect(result).toBe('2d6 (menor)');
     });
 
-    it('deve gerar fórmula sem modificador quando zero', () => {
+    it('deve gerar fórmula pool normal quando sem modificadores', () => {
       const skillUse = {
-        keyAttribute: 'presenca' as const,
+        keyAttribute: 'instinto' as const,
         bonus: 0,
         skillName: 'percepcao' as const,
       };
 
       const baseSkill: Skill = {
         name: 'percepcao',
-        keyAttribute: 'presenca',
-        proficiencyLevel: 'leigo',
+        keyAttribute: 'instinto',
+        proficiencyLevel: 'leigo' as const,
         isSignature: false,
         modifiers: [],
       };
@@ -796,8 +938,64 @@ describe('skillCalculations', () => {
         false
       );
 
-      // Presença 3 = 3d20, modificador 0
-      expect(result).toBe('3d20');
+      // instinto=3, totalDice=3 → 3d6 (leigo)
+      expect(result).toBe('3d6');
+    });
+
+    it('deve usar tamanho de dado correto por proficiência', () => {
+      const makeSkillUse = () => ({
+        keyAttribute: 'corpo' as const,
+        bonus: 0,
+        skillName: 'atletismo' as const,
+      });
+
+      const makeBaseSkill = (
+        proficiencyLevel: 'leigo' | 'adepto' | 'versado' | 'mestre'
+      ): Skill => ({
+        name: 'atletismo',
+        keyAttribute: 'corpo',
+        proficiencyLevel,
+        isSignature: false,
+        modifiers: [],
+      });
+
+      // corpo=4, variando proficiência
+      expect(
+        calculateSkillUseRollFormula(
+          makeSkillUse(),
+          makeBaseSkill('leigo'),
+          mockAttributes,
+          1,
+          false
+        )
+      ).toBe('4d6');
+      expect(
+        calculateSkillUseRollFormula(
+          makeSkillUse(),
+          makeBaseSkill('adepto'),
+          mockAttributes,
+          1,
+          false
+        )
+      ).toBe('4d8');
+      expect(
+        calculateSkillUseRollFormula(
+          makeSkillUse(),
+          makeBaseSkill('versado'),
+          mockAttributes,
+          1,
+          false
+        )
+      ).toBe('4d10');
+      expect(
+        calculateSkillUseRollFormula(
+          makeSkillUse(),
+          makeBaseSkill('mestre'),
+          mockAttributes,
+          1,
+          false
+        )
+      ).toBe('4d12');
     });
   });
 });

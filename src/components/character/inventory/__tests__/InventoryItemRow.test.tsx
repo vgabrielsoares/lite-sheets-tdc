@@ -13,7 +13,7 @@ import type { InventoryItem } from '@/types/inventory';
 const createItem = (overrides: Partial<InventoryItem> = {}): InventoryItem => ({
   id: 'test-item-1',
   name: 'Test Item',
-  category: 'diversos',
+  category: 'miscelanea',
   quantity: 1,
   weight: 2,
   value: 10,
@@ -74,7 +74,7 @@ describe('InventoryItemRow', () => {
     });
 
     it('deve exibir a categoria do item', () => {
-      const item = createItem({ category: 'arma' });
+      const item = createItem({ category: 'armas' });
 
       render(
         <InventoryItemRow
@@ -84,7 +84,7 @@ describe('InventoryItemRow', () => {
         />
       );
 
-      expect(screen.getByText('Arma')).toBeInTheDocument();
+      expect(screen.getByText('Armas')).toBeInTheDocument();
     });
 
     it('deve exibir ícone de equipado quando item está equipado', () => {
@@ -133,14 +133,14 @@ describe('InventoryItemRow', () => {
 
   describe('Categorias de item', () => {
     it.each([
-      ['arma', 'Arma'],
-      ['armadura', 'Armadura'],
-      ['escudo', 'Escudo'],
-      ['ferramenta', 'Ferramenta'],
-      ['consumivel', 'Consumível'],
-      ['material', 'Material'],
-      ['magico', 'Mágico'],
-      ['diversos', 'Diversos'],
+      ['armas', 'Armas'],
+      ['protecoes', 'Proteções'],
+      ['municoes', 'Munições'],
+      ['ferramentas', 'Ferramentas'],
+      ['comida-bebida', 'Comida e Bebida'],
+      ['materiais', 'Materiais'],
+      ['itens-magicos', 'Itens Mágicos'],
+      ['miscelanea', 'Miscelânea'],
     ] as const)(
       'deve exibir label correto para categoria %s',
       (category, expectedLabel) => {

@@ -28,8 +28,8 @@ import {
   Star as StarIcon,
   AutoAwesome as AutoAwesomeIcon,
   Shield as ShieldIcon,
-  Favorite as FavoriteIcon,
   FlashOn as FlashOnIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import {
   ARCHETYPE_LEVEL_GAINS,
@@ -57,11 +57,8 @@ const ARCHETYPE_GAIN_COLORS: Record<
   'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error'
 > = {
   caracteristica: 'primary',
-  poder: 'secondary',
+  poder_ou_talento: 'secondary',
   competencia: 'success',
-  atributo: 'warning',
-  grau_habilidade: 'info',
-  defesa_etapa: 'error',
 };
 
 /**
@@ -82,11 +79,8 @@ const CLASS_GAIN_COLORS: Record<
  */
 const ARCHETYPE_GAIN_SHORT_LABELS: Record<ArchetypeLevelGainType, string> = {
   caracteristica: 'Característica',
-  poder: 'Poder',
+  poder_ou_talento: 'Poder / Talento',
   competencia: 'Competência',
-  atributo: '+1 Atributo',
-  grau_habilidade: 'Grau Habilidade',
-  defesa_etapa: 'Defesa p/ Etapa',
 };
 
 /**
@@ -95,7 +89,7 @@ const ARCHETYPE_GAIN_SHORT_LABELS: Record<ArchetypeLevelGainType, string> = {
 const CLASS_GAIN_SHORT_LABELS: Record<ClassGainType, string> = {
   habilidade: 'Habilidade',
   melhoria: 'Melhoria',
-  defesa: 'Defesa p/ Etapa',
+  defesa: 'Defesa',
   proficiencia: 'Proficiência',
 };
 
@@ -217,14 +211,14 @@ export default function LevelRow({
           </Stack>
         </TableCell>
 
-        {/* PV/PP (mostrado apenas como indicador - valores reais dependem do arquétipo) */}
+        {/* GA/PP (mostrado apenas como indicador - valores reais dependem do arquétipo) */}
         <TableCell>
           <Stack direction="row" spacing={1} alignItems="center">
             <Chip
-              icon={<FavoriteIcon fontSize="small" />}
-              label="+PV"
+              icon={<ShieldIcon fontSize="small" />}
+              label="+GA"
               size="small"
-              color="error"
+              color="primary"
               variant="outlined"
               sx={{ fontSize: '0.7rem' }}
             />
@@ -342,12 +336,14 @@ export default function LevelRow({
                   </Box>
                 )}
 
-                {/* Nota sobre PV/PP */}
+                {/* Nota sobre GA/PP */}
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    💡 <strong>PV ganho:</strong> Base do arquétipo +
-                    Constituição | <strong>PP ganho:</strong> Base do arquétipo
-                    + Presença
+                    <InfoIcon
+                      sx={{ fontSize: 14, verticalAlign: 'middle', mr: 0.5 }}
+                    />
+                    <strong>GA ganho:</strong> Atributo relevante do arquétipo |{' '}
+                    <strong>PP ganho:</strong> Base do arquétipo + Essência
                   </Typography>
                 </Box>
               </Box>

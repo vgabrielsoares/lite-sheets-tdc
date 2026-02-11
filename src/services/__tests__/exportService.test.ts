@@ -278,15 +278,11 @@ describe('ExportService', () => {
       );
     });
 
-    it('should throw error for character with invalid level', async () => {
+    it('should accept character with level 0', async () => {
       const character = createMockCharacter({ level: 0 });
 
-      await expect(exportCharacter(character)).rejects.toThrow(
-        ExportServiceError
-      );
-      await expect(exportCharacter(character)).rejects.toThrow(
-        'nível inválido'
-      );
+      // Level 0 is valid now (character starts at level 0)
+      await expect(exportCharacter(character)).resolves.not.toThrow();
     });
 
     it('should throw error for character with negative level', async () => {

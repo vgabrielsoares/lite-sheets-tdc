@@ -233,13 +233,13 @@ describe('attributeUpdates utilities', () => {
 
     it('should preserve other attributes when changing one', () => {
       const character = createDefaultCharacter({ name: 'Test' });
-      character.attributes.forca = 2;
-      character.attributes.constituicao = 3;
+      character.attributes.corpo = 2;
+      character.attributes.essencia = 3;
 
       const updates = handleAttributeChange(character, 'agilidade', 4);
 
-      expect(updates.attributes?.forca).toBe(2);
-      expect(updates.attributes?.constituicao).toBe(3);
+      expect(updates.attributes?.corpo).toBe(2);
+      expect(updates.attributes?.essencia).toBe(3);
       expect(updates.attributes?.agilidade).toBe(4);
     });
 

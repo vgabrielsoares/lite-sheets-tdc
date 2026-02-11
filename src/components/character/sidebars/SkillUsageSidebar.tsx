@@ -57,7 +57,6 @@ import { SkillRollButton } from '@/components/character/skills/SkillRollButton';
 import {
   InlineModifiers,
   extractDiceModifier,
-  extractNumericModifier,
   buildModifiersArray,
 } from '@/components/character/skills/ModifierManager';
 import type {
@@ -72,8 +71,12 @@ import type {
 import {
   SKILL_LABELS,
   ATTRIBUTE_LABELS,
-  SKILL_METADATA,
   SKILL_PROFICIENCY_LABELS,
+  LUCK_LEVELS,
+  LUCK_BETTING_TABLE,
+  LUCK_BET_PLACE_LEVELS,
+  MIN_LUCK_LEVEL,
+  MAX_LUCK_LEVEL,
 } from '@/constants';
 import { SKILL_DESCRIPTIONS } from '@/types/skills';
 import { ATTRIBUTE_LIST } from '@/constants/attributes';
@@ -90,8 +93,22 @@ import {
   getKeenSenseBonus,
   PERCEPTION_USE_TO_SENSE,
 } from '@/utils/senseCalculations';
-import { calculateSignatureAbilityBonus, getCraftMultiplier } from '@/utils';
-import { COMBAT_SKILLS } from '@/constants/skills';
+import { calculateSignatureAbilityBonus } from '@/utils';
+import {
+  getSkillDieSize,
+  SKILL_METADATA,
+  PROFICIENCY_DICE_PENALTY,
+} from '@/constants/skills';
+import WarningIcon from '@mui/icons-material/Warning';
+
+/** Labels descritivos para custos de ação */
+const ACTION_COST_LABELS: Record<string, string> = {
+  '▶': '1 Ação',
+  '▶▶': '2 Ações (Turno Rápido)',
+  '▶▶▶': '3 Ações (Turno Lento)',
+  '↩': 'Reação',
+  '∆': 'Ação Livre',
+};
 
 /** Lista ordenada de níveis de proficiência para selects */
 const PROFICIENCY_LEVEL_LIST: ProficiencyLevel[] = [
@@ -482,10 +499,9 @@ export function SkillUsageSidebar({
    */
   const handleUpdateDefaultUseModifiers = (
     useName: string,
-    diceModifier: number,
-    numericModifier: number
+    diceModifier: number
   ) => {
-    const newModifiers = buildModifiersArray(diceModifier, numericModifier);
+    const newModifiers = buildModifiersArray(diceModifier);
     const newOverrides = {
       ...localDefaultModifiers,
       [useName]: newModifiers,
@@ -566,11 +582,8 @@ export function SkillUsageSidebar({
             </Typography>
             <InlineModifiers
               diceModifier={extractDiceModifier(editingUse.modifiers || [])}
-              numericModifier={extractNumericModifier(
-                editingUse.modifiers || []
-              )}
-              onUpdate={(dice, numeric) => {
-                const newModifiers = buildModifiersArray(dice, numeric);
+              onUpdate={(dice) => {
+                const newModifiers = buildModifiersArray(dice);
                 setEditingUse({ ...editingUse, modifiers: newModifiers });
               }}
             />
@@ -631,11 +644,18 @@ export function SkillUsageSidebar({
 
     const allModifiers = [...(skill.modifiers || []), ...(use.modifiers || [])];
 
-    const diceModifiers = allModifiers
+    const baseDiceModifiers = allModifiers
       .filter((mod) => mod.affectsDice === true)
       .reduce((sum, mod) => sum + mod.value, 0);
 
-    // Para atributo 0, rollD20 espera 0 e trata internamente como 2d20 (pega menor)
+    // Penalidade de proficiência (-2d se Leigo em habilidade que requer Adepto+)
+    const metadata = SKILL_METADATA[skill.name];
+    const hasProficiencyPenalty =
+      metadata?.requiresProficiency && skill.proficiencyLevel === 'leigo';
+    const profPenalty = hasProficiencyPenalty ? PROFICIENCY_DICE_PENALTY : 0;
+    const diceModifiers = baseDiceModifiers + profPenalty;
+
+    // Para atributo 0, rola 2d e pega o menor resultado
     // Para outros atributos, passa o valor direto
     const finalDiceCount = attributeValue + diceModifiers;
     const takeLowest = attributeValue === 0;
@@ -768,30 +788,17 @@ export function SkillUsageSidebar({
                 )}
 
                 {/* Modificadores inline - exibição compacta */}
-                {(extractDiceModifier(use.modifiers) !== 0 ||
-                  extractNumericModifier(use.modifiers) !== 0) && (
+                {extractDiceModifier(use.modifiers) !== 0 && (
                   <Box
                     sx={{ display: 'flex', gap: 0.5, minWidth: 'fit-content' }}
                   >
                     {extractDiceModifier(use.modifiers) !== 0 && (
                       <Chip
-                        label={`${extractDiceModifier(use.modifiers) >= 0 ? '+' : ''}${extractDiceModifier(use.modifiers)}d20`}
+                        label={`${extractDiceModifier(use.modifiers) >= 0 ? '+' : ''}${extractDiceModifier(use.modifiers)}d`}
                         size="small"
                         variant="outlined"
                         color={
                           extractDiceModifier(use.modifiers) > 0
-                            ? 'success'
-                            : 'error'
-                        }
-                      />
-                    )}
-                    {extractNumericModifier(use.modifiers) !== 0 && (
-                      <Chip
-                        label={`${extractNumericModifier(use.modifiers) >= 0 ? '+' : ''}${extractNumericModifier(use.modifiers)}`}
-                        size="small"
-                        variant="outlined"
-                        color={
-                          extractNumericModifier(use.modifiers) > 0
                             ? 'success'
                             : 'error'
                         }
@@ -860,12 +867,18 @@ export function SkillUsageSidebar({
                 {/* Botão de Rolagem (mais à direita) */}
                 <SkillRollButton
                   skillLabel={`${SKILL_LABELS[skill.name]}: ${use.name}`}
-                  diceCount={finalDiceCount}
-                  modifier={modifier}
-                  formula={rollFormula}
-                  takeLowest={takeLowest}
+                  attributeValue={attributeValue}
+                  proficiencyLevel={skill.proficiencyLevel}
+                  diceModifier={diceModifiers}
                   size="small"
-                  tooltipText={`Rolar ${use.name}: ${rollFormula}`}
+                  tooltipText={`Rolar ${use.name}`}
+                  penaltyWarnings={
+                    hasProficiencyPenalty
+                      ? [
+                          `Penalidade de Proficiência: ${PROFICIENCY_DICE_PENALTY}d (Leigo em habilidade que requer Adepto+)`,
+                        ]
+                      : []
+                  }
                 />
               </Box>
             </>
@@ -901,7 +914,7 @@ export function SkillUsageSidebar({
             name: 'Sentido Aguçado',
             value: keenSenseBonus,
             type: keenSenseBonus > 0 ? 'bonus' : 'penalidade',
-            affectsDice: false,
+            affectsDice: true,
           });
         }
       }
@@ -937,11 +950,21 @@ export function SkillUsageSidebar({
     // Combinar modificadores: habilidade base + uso específico (effectiveModifiers)
     const allModifiers = [...(skill.modifiers || []), ...effectiveModifiers];
 
-    const diceModifiers = allModifiers
+    const baseDiceModifiers = allModifiers
       .filter((mod) => mod.affectsDice === true)
       .reduce((sum, mod) => sum + mod.value, 0);
 
-    // Para atributo 0, rollD20 espera 0 e trata internamente como 2d20 (pega menor)
+    // Penalidade de proficiência (-2d se Leigo em habilidade que requer Adepto+)
+    const defaultUseMetadata = SKILL_METADATA[skill.name];
+    const defaultUseHasProfPenalty =
+      defaultUseMetadata?.requiresProficiency &&
+      skill.proficiencyLevel === 'leigo';
+    const defaultUseProfPenalty = defaultUseHasProfPenalty
+      ? PROFICIENCY_DICE_PENALTY
+      : 0;
+    const diceModifiers = baseDiceModifiers + defaultUseProfPenalty;
+
+    // Para atributo 0, rola 2d e pega o menor resultado
     // Para outros atributos, passa o valor direto
     const finalDiceCount = attributeValue + diceModifiers;
     const takeLowest = attributeValue === 0;
@@ -952,9 +975,7 @@ export function SkillUsageSidebar({
     );
 
     const isCustomAttribute = customAttribute !== undefined;
-    const hasCustomModifiers =
-      extractDiceModifier(customModifiers) !== 0 ||
-      extractNumericModifier(customModifiers) !== 0;
+    const hasCustomModifiers = extractDiceModifier(customModifiers) !== 0;
 
     return (
       <Box
@@ -1018,7 +1039,48 @@ export function SkillUsageSidebar({
 
             {/* Nome */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Tooltip title={defaultUse.name} placement="top" arrow>
+              <Tooltip
+                title={
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>
+                      {defaultUse.name}
+                    </Typography>
+                    {defaultUse.description && (
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ mt: 0.5 }}
+                      >
+                        {defaultUse.description}
+                      </Typography>
+                    )}
+                    {defaultUse.testInfo && (
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        fontStyle="italic"
+                        sx={{ mt: 0.5 }}
+                      >
+                        {defaultUse.testInfo}
+                      </Typography>
+                    )}
+                    {defaultUse.alternateAttribute && (
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ mt: 0.5 }}
+                      >
+                        Atributo alt.:{' '}
+                        {ATTRIBUTE_LABELS[defaultUse.alternateAttribute]}
+                        {defaultUse.alternateAttributeNote &&
+                          ` — ${defaultUse.alternateAttributeNote}`}
+                      </Typography>
+                    )}
+                  </Box>
+                }
+                placement="top"
+                arrow
+              >
                 <Typography
                   variant="body2"
                   fontWeight={600}
@@ -1050,14 +1112,48 @@ export function SkillUsageSidebar({
                   flexWrap: isSmallScreen && !isExpanded ? 'wrap' : 'nowrap',
                 }}
               >
+                {/* Custo de Ação */}
+                {defaultUse.actionCost && (
+                  <Tooltip
+                    title={
+                      ACTION_COST_LABELS[defaultUse.actionCost] ??
+                      defaultUse.actionCost
+                    }
+                    placement="top"
+                    arrow
+                  >
+                    <Chip
+                      label={defaultUse.actionCost}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        minWidth: 'fit-content',
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                      }}
+                    />
+                  </Tooltip>
+                )}
+
                 {/* Atributo */}
-                <Chip
-                  label={ATTRIBUTE_LABELS[useAttribute]}
-                  size="small"
-                  variant={isCustomAttribute ? 'filled' : 'outlined'}
-                  color={isCustomAttribute ? 'primary' : 'default'}
-                  sx={{ minWidth: 'fit-content' }}
-                />
+                <Tooltip
+                  title={
+                    defaultUse.alternateAttribute
+                      ? `Alt: ${ATTRIBUTE_LABELS[defaultUse.alternateAttribute]}${defaultUse.alternateAttributeNote ? ` — ${defaultUse.alternateAttributeNote}` : ''}`
+                      : ''
+                  }
+                  disableHoverListener={!defaultUse.alternateAttribute}
+                  placement="top"
+                  arrow
+                >
+                  <Chip
+                    label={ATTRIBUTE_LABELS[useAttribute]}
+                    size="small"
+                    variant={isCustomAttribute ? 'filled' : 'outlined'}
+                    color={isCustomAttribute ? 'primary' : 'default'}
+                    sx={{ minWidth: 'fit-content' }}
+                  />
+                </Tooltip>
 
                 {/* Modificadores (apenas exibição, não editáveis aqui) */}
                 {hasCustomModifiers && !isEditing && (
@@ -1066,23 +1162,11 @@ export function SkillUsageSidebar({
                   >
                     {extractDiceModifier(customModifiers) !== 0 && (
                       <Chip
-                        label={`${extractDiceModifier(customModifiers) >= 0 ? '+' : ''}${extractDiceModifier(customModifiers)}d20`}
+                        label={`${extractDiceModifier(customModifiers) >= 0 ? '+' : ''}${extractDiceModifier(customModifiers)}d`}
                         size="small"
                         variant="outlined"
                         color={
                           extractDiceModifier(customModifiers) > 0
-                            ? 'success'
-                            : 'error'
-                        }
-                      />
-                    )}
-                    {extractNumericModifier(customModifiers) !== 0 && (
-                      <Chip
-                        label={`${extractNumericModifier(customModifiers) >= 0 ? '+' : ''}${extractNumericModifier(customModifiers)}`}
-                        size="small"
-                        variant="outlined"
-                        color={
-                          extractNumericModifier(customModifiers) > 0
                             ? 'success'
                             : 'error'
                         }
@@ -1155,12 +1239,18 @@ export function SkillUsageSidebar({
                 {/* Botão de Rolagem (mais à direita) */}
                 <SkillRollButton
                   skillLabel={`${SKILL_LABELS[skill.name]}: ${defaultUse.name}`}
-                  diceCount={finalDiceCount}
-                  modifier={modifier}
-                  formula={rollFormula}
-                  takeLowest={takeLowest}
+                  attributeValue={attributeValue}
+                  proficiencyLevel={skill.proficiencyLevel}
+                  diceModifier={diceModifiers}
                   size="small"
-                  tooltipText={`Rolar ${defaultUse.name}: ${rollFormula}`}
+                  tooltipText={`Rolar ${defaultUse.name}`}
+                  penaltyWarnings={
+                    defaultUseHasProfPenalty
+                      ? [
+                          `Penalidade de Proficiência: ${PROFICIENCY_DICE_PENALTY}d (Leigo em habilidade que requer Adepto+)`,
+                        ]
+                      : []
+                  }
                 />
               </Box>
             </>
@@ -1223,13 +1313,8 @@ export function SkillUsageSidebar({
                   </Typography>
                   <InlineModifiers
                     diceModifier={extractDiceModifier(customModifiers)}
-                    numericModifier={extractNumericModifier(customModifiers)}
-                    onUpdate={(dice, numeric) =>
-                      handleUpdateDefaultUseModifiers(
-                        defaultUse.name,
-                        dice,
-                        numeric
-                      )
+                    onUpdate={(dice) =>
+                      handleUpdateDefaultUseModifiers(defaultUse.name, dice)
                     }
                     disabled={false}
                   />
@@ -1311,9 +1396,9 @@ export function SkillUsageSidebar({
           {skill.name === 'sorte' && (
             <>
               <Typography variant="caption" color="text.secondary" paragraph>
-                Sorte é uma habilidade especial que usa níveis ao invés de
-                proficiência. Cada nível determina quantos dados são rolados e
-                qual bônus é aplicado.
+                Sorte é uma habilidade especial com 7 níveis de progressão,
+                independente do nível do personagem. Cada nível determina a
+                quantidade e tamanho dos dados a rolar.
               </Typography>
               <FormControl fullWidth size="small">
                 <InputLabel>Nível de Sorte</InputLabel>
@@ -1327,25 +1412,125 @@ export function SkillUsageSidebar({
                   label="Nível de Sorte"
                   disabled={!onLuckLevelChange}
                 >
-                  {[0, 1, 2, 3, 4, 5, 6, 7].map((level) => {
-                    const formulas: Record<number, string> = {
-                      0: '1d20',
-                      1: '2d20',
-                      2: '2d20+2',
-                      3: '3d20+3',
-                      4: '3d20+6',
-                      5: '4d20+8',
-                      6: '4d20+12',
-                      7: '5d20+15',
-                    };
+                  {Array.from(
+                    { length: MAX_LUCK_LEVEL - MIN_LUCK_LEVEL + 1 },
+                    (_, i) => MIN_LUCK_LEVEL + i
+                  ).map((level) => {
+                    const entry = LUCK_LEVELS[level];
                     return (
                       <MenuItem key={level} value={level}>
-                        Nível {level} ({formulas[level]})
+                        Nível {level} ({entry?.formula ?? `${level}d12`})
                       </MenuItem>
                     );
                   })}
                 </Select>
               </FormControl>
+
+              {/* Tabela de Apostas - Referência */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Tabela de Apostas
+                </Typography>
+                <Typography variant="caption" color="text.secondary" paragraph>
+                  Ao apostar, role Sorte e consulte a tabela abaixo. Uso requer
+                  1d6 horas.
+                </Typography>
+                <Box
+                  component="table"
+                  sx={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    '& th, & td': {
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      px: 1,
+                      py: 0.5,
+                      fontSize: '0.75rem',
+                    },
+                    '& th': {
+                      bgcolor: 'action.hover',
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <Box component="th">Teste</Box>
+                      <Box component="th">Resultado</Box>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LUCK_BETTING_TABLE.map((entry) => (
+                      <tr key={entry.successes}>
+                        <Box component="td" sx={{ textAlign: 'center' }}>
+                          {entry.successes}✶
+                        </Box>
+                        <Box
+                          component="td"
+                          sx={{
+                            color:
+                              entry.multiplier < 0
+                                ? 'error.main'
+                                : entry.multiplier === 0
+                                  ? 'text.secondary'
+                                  : 'success.main',
+                          }}
+                        >
+                          {entry.result}
+                        </Box>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Box>
+              </Box>
+
+              {/* Níveis de Local de Aposta */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Locais de Aposta
+                </Typography>
+                <Box
+                  component="table"
+                  sx={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    '& th, & td': {
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      px: 1,
+                      py: 0.5,
+                      fontSize: '0.75rem',
+                    },
+                    '& th': {
+                      bgcolor: 'action.hover',
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <Box component="th">Local</Box>
+                      <Box component="th">×</Box>
+                      <Box component="th">Nível</Box>
+                      <Box component="th">×</Box>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LUCK_BET_PLACE_LEVELS.map((entry) => (
+                      <tr key={entry.place}>
+                        <Box component="td">{entry.place}</Box>
+                        <Box component="td" sx={{ textAlign: 'center' }}>
+                          ×{entry.placeMultiplier}
+                        </Box>
+                        <Box component="td">{entry.betLevel}</Box>
+                        <Box component="td" sx={{ textAlign: 'center' }}>
+                          ×{entry.betMultiplier}
+                        </Box>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Box>
+              </Box>
             </>
           )}
 
@@ -1443,20 +1628,29 @@ export function SkillUsageSidebar({
                   >
                     {PROFICIENCY_LEVEL_LIST.map((level) => (
                       <MenuItem key={level} value={level}>
-                        {SKILL_PROFICIENCY_LABELS[level]} (×
-                        {level === 'leigo'
-                          ? '0'
-                          : level === 'adepto'
-                            ? '1'
-                            : level === 'versado'
-                              ? '2'
-                              : '3'}
-                        )
+                        {SKILL_PROFICIENCY_LABELS[level]} (
+                        {getSkillDieSize(level)})
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
               </Stack>
+
+              {/* Aviso de penalidade de proficiência */}
+              {SKILL_METADATA[skill.name]?.requiresProficiency &&
+                skill.proficiencyLevel === 'leigo' && (
+                  <Alert
+                    severity="warning"
+                    icon={<WarningIcon fontSize="small" />}
+                    sx={{ mt: 1.5 }}
+                  >
+                    <Typography variant="caption">
+                      Esta habilidade requer proficiência (Adepto+). Como Leigo,
+                      todas as rolagens sofrem penalidade de{' '}
+                      <strong>{PROFICIENCY_DICE_PENALTY}d</strong>.
+                    </Typography>
+                  </Alert>
+                )}
             </>
           )}
         </Box>
@@ -1471,11 +1665,8 @@ export function SkillUsageSidebar({
                 Habilidade de Assinatura
               </Typography>
               <Typography variant="caption" color="text.secondary" paragraph>
-                Escolha UMA habilidade especial que recebe bônus adicional igual
-                ao seu nível
-                {COMBAT_SKILLS.includes(skill.name) &&
-                  ' (÷3 para habilidades de combate)'}
-                .
+                Escolha UMA habilidade especial que recebe dados extras: +1d
+                (nível 1-5), +2d (nível 6-10), +3d (nível 11-15).
               </Typography>
 
               {isCurrentSignature ? (
@@ -1496,15 +1687,10 @@ export function SkillUsageSidebar({
                     <strong>{SKILL_LABELS[skill.name]}</strong> é sua Habilidade
                     de Assinatura e recebe{' '}
                     <strong>
-                      +
-                      {calculateSignatureAbilityBonus(
-                        characterLevel,
-                        COMBAT_SKILLS.includes(skill.name)
-                      )}
+                      +{calculateSignatureAbilityBonus(characterLevel)}d
                     </strong>{' '}
-                    de bônus
-                    {COMBAT_SKILLS.includes(skill.name) &&
-                      ` (nível ${characterLevel} ÷ 3 = ${Math.floor(characterLevel / 3) || 1})`}
+                    de bônus em dados
+                    {` (nível ${characterLevel}: +${calculateSignatureAbilityBonus(characterLevel)}d)`}
                     .
                   </Typography>
                 </Alert>
@@ -1537,9 +1723,8 @@ export function SkillUsageSidebar({
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2 }}>
             <InlineModifiers
               diceModifier={extractDiceModifier(skill.modifiers)}
-              numericModifier={extractNumericModifier(skill.modifiers)}
-              onUpdate={(dice, numeric) => {
-                const newModifiers = buildModifiersArray(dice, numeric);
+              onUpdate={(dice) => {
+                const newModifiers = buildModifiersArray(dice);
                 if (onUpdateSkillModifiers) {
                   onUpdateSkillModifiers(skill.name, newModifiers);
                 }
@@ -1549,18 +1734,10 @@ export function SkillUsageSidebar({
               {extractDiceModifier(skill.modifiers) !== 0 && (
                 <>
                   {extractDiceModifier(skill.modifiers) > 0 ? '+' : ''}
-                  {extractDiceModifier(skill.modifiers)}d20
-                  {extractNumericModifier(skill.modifiers) !== 0 ? ', ' : ''}
-                </>
-              )}
-              {extractNumericModifier(skill.modifiers) !== 0 && (
-                <>
-                  {extractNumericModifier(skill.modifiers) > 0 ? '+' : ''}
-                  {extractNumericModifier(skill.modifiers)} numérico
+                  {extractDiceModifier(skill.modifiers)}d
                 </>
               )}
               {extractDiceModifier(skill.modifiers) === 0 &&
-                extractNumericModifier(skill.modifiers) === 0 &&
                 'Nenhum modificador aplicado'}
             </Typography>
           </Box>
@@ -1663,25 +1840,25 @@ export function SkillUsageSidebar({
                 <Stack spacing={1}>
                   {crafts.map((craft) => {
                     const attributeValue = attributes[craft.attributeKey];
-                    const multiplier = getCraftMultiplier(craft.level);
-                    const baseModifier = attributeValue * multiplier;
 
-                    // Calcular bônus de assinatura se aplicável
+                    // Calcular bônus de assinatura (+Xd) se aplicável — v0.0.2: sem distinção combate/não-combate
                     const signatureBonus = skill.isSignature
-                      ? calculateSignatureAbilityBonus(
-                          characterLevel,
-                          SKILL_METADATA[skill.name].isCombatSkill
-                        )
+                      ? calculateSignatureAbilityBonus(characterLevel)
                       : 0;
 
-                    const totalModifier =
-                      baseModifier + signatureBonus + craft.numericModifier;
-
-                    // Calcular fórmula de rolagem
-                    const totalDice = 1 + (craft.diceModifier || 0);
-                    const diceCount = Math.abs(totalDice) || 1;
-                    const takeLowest = totalDice < 1 || attributeValue === 0;
-                    const formula = `${takeLowest ? '-' : ''}${diceCount}d20${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+                    // Pool de dados v0.0.2: atributo + assinatura + modificadores de dados
+                    const totalDice =
+                      attributeValue +
+                      signatureBonus +
+                      (craft.diceModifier || 0);
+                    const isPenaltyRoll = totalDice <= 0;
+                    const effectiveDice = isPenaltyRoll
+                      ? 2
+                      : Math.min(totalDice, 8);
+                    const dieSize = getSkillDieSize(skill.proficiencyLevel);
+                    const formula = isPenaltyRoll
+                      ? `2${dieSize} (menor)`
+                      : `${effectiveDice}${dieSize}`;
 
                     return (
                       <Paper
@@ -1752,14 +1929,14 @@ export function SkillUsageSidebar({
                               variant="caption"
                               color="text.secondary"
                             >
-                              Multiplicador: <strong>×{multiplier}</strong>
+                              Dado: <strong>{dieSize}</strong>
                             </Typography>
                             <Typography
                               variant="caption"
                               color="primary"
                               fontWeight={600}
                             >
-                              Base: <strong>+{baseModifier}</strong>
+                              Pool: <strong>{formula}</strong>
                             </Typography>
                             {signatureBonus > 0 && (
                               <Typography
@@ -1767,7 +1944,7 @@ export function SkillUsageSidebar({
                                 color="warning.main"
                                 fontWeight={600}
                               >
-                                Assinatura: <strong>+{signatureBonus}</strong>
+                                Assinatura: <strong>+{signatureBonus}d</strong>
                               </Typography>
                             )}
                           </Box>
@@ -1784,11 +1961,9 @@ export function SkillUsageSidebar({
                             {onUpdateCraft && (
                               <InlineModifiers
                                 diceModifier={craft.diceModifier}
-                                numericModifier={craft.numericModifier}
-                                onUpdate={(dice, numeric) => {
+                                onUpdate={(dice) => {
                                   onUpdateCraft(craft.id, {
                                     diceModifier: dice,
-                                    numericModifier: numeric,
                                   });
                                 }}
                               />
@@ -1814,13 +1989,9 @@ export function SkillUsageSidebar({
                               }}
                             >
                               <Chip
-                                label={
-                                  totalModifier >= 0
-                                    ? `+${totalModifier}`
-                                    : totalModifier
-                                }
+                                label={formula}
                                 size="small"
-                                color={totalModifier >= 0 ? 'success' : 'error'}
+                                color={isPenaltyRoll ? 'error' : 'success'}
                                 variant="outlined"
                                 sx={{ fontWeight: 600 }}
                               />
@@ -1836,12 +2007,27 @@ export function SkillUsageSidebar({
                             </Box>
                             <SkillRollButton
                               skillLabel={`${SKILL_LABELS[skill.name]}: ${craft.name}`}
-                              diceCount={diceCount}
-                              modifier={totalModifier}
-                              formula={formula}
-                              takeLowest={takeLowest}
+                              attributeValue={attributeValue}
+                              proficiencyLevel={skill.proficiencyLevel}
+                              diceModifier={
+                                (craft.diceModifier || 0) +
+                                (SKILL_METADATA[skill.name]
+                                  ?.requiresProficiency &&
+                                skill.proficiencyLevel === 'leigo'
+                                  ? PROFICIENCY_DICE_PENALTY
+                                  : 0)
+                              }
                               size="small"
-                              tooltipText={`Rolar ${craft.name}: ${formula}`}
+                              tooltipText={`Rolar ${craft.name}`}
+                              penaltyWarnings={
+                                SKILL_METADATA[skill.name]
+                                  ?.requiresProficiency &&
+                                skill.proficiencyLevel === 'leigo'
+                                  ? [
+                                      `Penalidade de Proficiência: ${PROFICIENCY_DICE_PENALTY}d (Leigo em habilidade que requer Adepto+)`,
+                                    ]
+                                  : []
+                              }
                             />
                           </Box>
                         </Stack>
@@ -1907,7 +2093,7 @@ export function SkillUsageSidebar({
           signatureAction === 'set'
             ? currentSignatureSkill
               ? `Tem certeza que deseja tornar "${SKILL_LABELS[skill.name]}" sua Habilidade de Assinatura? Isso irá remover "${SKILL_LABELS[currentSignatureSkill]}" como sua habilidade especial.`
-              : `Tem certeza que deseja tornar "${SKILL_LABELS[skill.name]}" sua Habilidade de Assinatura? Esta habilidade receberá bônus especial igual ao seu nível.`
+              : `Tem certeza que deseja tornar "${SKILL_LABELS[skill.name]}" sua Habilidade de Assinatura? Esta habilidade receberá +${calculateSignatureAbilityBonus(characterLevel)}d de bônus em dados.`
             : `Tem certeza que deseja remover "${SKILL_LABELS[skill.name]}" como sua Habilidade de Assinatura? Você perderá o bônus especial desta habilidade.`
         }
         onConfirm={handleConfirmSignature}

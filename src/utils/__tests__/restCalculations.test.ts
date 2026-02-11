@@ -34,7 +34,7 @@ describe('restCalculations', () => {
       expect(result.sleepBase).toBe(6); // 3 * 2
       expect(result.meditateBase).toBe(3); // 3 * 1
       expect(result.multiplier).toBe(1);
-      expect(result.pvRecovery).toBe(6); // 6 * 1 (dormir recupera PV)
+      expect(result.gaRecovery).toBe(6); // 6 * 1 (dormir recupera GA)
       expect(result.ppRecovery).toBe(3); // 3 * 1 (relaxar recupera PP)
     });
 
@@ -50,7 +50,7 @@ describe('restCalculations', () => {
 
       expect(result.sleepBase).toBe(15); // 5 * 3
       expect(result.meditateBase).toBe(0);
-      expect(result.pvRecovery).toBe(15); // dormir recupera PV
+      expect(result.gaRecovery).toBe(15); // dormir recupera GA
       expect(result.ppRecovery).toBe(0); // não relaxou
     });
 
@@ -66,7 +66,7 @@ describe('restCalculations', () => {
 
       expect(result.sleepBase).toBe(0);
       expect(result.meditateBase).toBe(12); // 4 * 3
-      expect(result.pvRecovery).toBe(0); // não dormiu
+      expect(result.gaRecovery).toBe(0); // não dormiu
       expect(result.ppRecovery).toBe(12); // relaxar recupera PP
     });
 
@@ -83,7 +83,7 @@ describe('restCalculations', () => {
       expect(result.sleepBase).toBe(6); // 2 * 3
       expect(result.meditateBase).toBe(4); // 2 * 2
       expect(result.multiplier).toBe(0.5);
-      expect(result.pvRecovery).toBe(3); // floor(6 * 0.5)
+      expect(result.gaRecovery).toBe(3); // floor(6 * 0.5)
       expect(result.ppRecovery).toBe(2); // floor(4 * 0.5)
     });
 
@@ -100,7 +100,7 @@ describe('restCalculations', () => {
       expect(result.sleepBase).toBe(6); // 3 * 2
       expect(result.meditateBase).toBe(6); // 3 * 2
       expect(result.multiplier).toBe(1.5);
-      expect(result.pvRecovery).toBe(9); // floor(6 * 1.5)
+      expect(result.gaRecovery).toBe(9); // floor(6 * 1.5)
       expect(result.ppRecovery).toBe(9); // floor(6 * 1.5)
     });
 
@@ -117,7 +117,7 @@ describe('restCalculations', () => {
       expect(result.sleepBase).toBe(4); // 2 * 2
       expect(result.meditateBase).toBe(2); // 2 * 1
       expect(result.multiplier).toBe(4.5);
-      expect(result.pvRecovery).toBe(18); // floor(4 * 4.5)
+      expect(result.gaRecovery).toBe(18); // floor(4 * 4.5)
       expect(result.ppRecovery).toBe(9); // floor(2 * 4.5)
     });
 
@@ -133,7 +133,7 @@ describe('restCalculations', () => {
 
       expect(result.sleepBase).toBe(3); // 3 * 1
       expect(result.meditateBase).toBe(3); // 3 * 1
-      expect(result.pvRecovery).toBe(1); // floor(3 * 0.5) = floor(1.5) = 1
+      expect(result.gaRecovery).toBe(1); // floor(3 * 0.5) = floor(1.5) = 1
       expect(result.ppRecovery).toBe(1); // floor(3 * 0.5) = floor(1.5) = 1
     });
 
@@ -150,7 +150,7 @@ describe('restCalculations', () => {
 
       expect(result.sleepBase).toBe(9); // (2 * 2) + 5
       expect(result.meditateBase).toBe(2); // 2 * 1
-      expect(result.pvRecovery).toBe(9); // 9 * 1
+      expect(result.gaRecovery).toBe(9); // 9 * 1
       expect(result.ppRecovery).toBe(2); // 2 * 1
     });
 
@@ -168,7 +168,7 @@ describe('restCalculations', () => {
 
       expect(result.sleepBase).toBe(4); // 2 * 2
       expect(result.meditateBase).toBe(5); // (2 * 1) + 3
-      expect(result.pvRecovery).toBe(4); // 4 * 1
+      expect(result.gaRecovery).toBe(4); // 4 * 1
       expect(result.ppRecovery).toBe(5); // 5 * 1
     });
 
@@ -186,7 +186,7 @@ describe('restCalculations', () => {
 
       expect(result.sleepBase).toBe(4); // (1 * 2) + 2
       expect(result.meditateBase).toBe(5); // (1 * 2) + 3
-      expect(result.pvRecovery).toBe(4); // 4 * 1
+      expect(result.gaRecovery).toBe(4); // 4 * 1
       expect(result.ppRecovery).toBe(5); // 5 * 1
     });
 
@@ -202,7 +202,7 @@ describe('restCalculations', () => {
 
       expect(result.sleepBase).toBe(0);
       expect(result.meditateBase).toBe(0);
-      expect(result.pvRecovery).toBe(0);
+      expect(result.gaRecovery).toBe(0);
       expect(result.ppRecovery).toBe(0);
     });
 
@@ -218,7 +218,7 @@ describe('restCalculations', () => {
 
       expect(result.sleepBase).toBe(0); // 2 * 0
       expect(result.meditateBase).toBe(4); // 2 * 2
-      expect(result.pvRecovery).toBe(0);
+      expect(result.gaRecovery).toBe(0);
       expect(result.ppRecovery).toBe(4);
     });
   });
@@ -230,22 +230,28 @@ describe('restCalculations', () => {
       expect(result.error).toBeUndefined();
     });
 
-    it('deve rejeitar nível menor que 1', () => {
-      const result = validateRestInputs(0, 2, 3);
+    it('deve rejeitar nível negativo', () => {
+      const result = validateRestInputs(-1, 2, 3);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('Nível deve ser maior que 0');
+      expect(result.error).toBe('Nível não pode ser negativo');
     });
 
-    it('deve rejeitar constituição negativa', () => {
+    it('deve aceitar nível 0', () => {
+      const result = validateRestInputs(0, 2, 3);
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it('deve rejeitar corpo negativo', () => {
       const result = validateRestInputs(1, -1, 3);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('Constituição não pode ser negativa');
+      expect(result.error).toBe('Corpo não pode ser negativo');
     });
 
-    it('deve rejeitar presença negativa', () => {
+    it('deve rejeitar essência negativa', () => {
       const result = validateRestInputs(1, 2, -1);
       expect(result.valid).toBe(false);
-      expect(result.error).toBe('Presença não pode ser negativa');
+      expect(result.error).toBe('Essência não pode ser negativa');
     });
 
     it('deve aceitar atributos zero', () => {

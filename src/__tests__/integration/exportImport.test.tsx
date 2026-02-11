@@ -56,7 +56,7 @@ describe('Fluxo de Exportação e Importação (Integração)', () => {
     // Customiza personagem para ter dados diversos
     testCharacter.level = 5;
     testCharacter.experience.current = 1500;
-    testCharacter.attributes.forca = 3;
+    testCharacter.attributes.corpo = 3;
     testCharacter.attributes.agilidade = 4;
     testCharacter.attributes.mente = 2;
     testCharacter.skills.atletismo.proficiencyLevel = 'versado';
@@ -129,7 +129,7 @@ describe('Fluxo de Exportação e Importação (Integração)', () => {
       expect(exportedData.character.experience.current).toBe(1500);
 
       // Assert - Atributos
-      expect(exportedData.character.attributes.forca).toBe(3);
+      expect(exportedData.character.attributes.corpo).toBe(3);
       expect(exportedData.character.attributes.agilidade).toBe(4);
       expect(exportedData.character.attributes.mente).toBe(2);
 
@@ -201,7 +201,7 @@ describe('Fluxo de Exportação e Importação (Integração)', () => {
         expect(importedCharacter.playerName).toBe('Jogador Teste');
         expect(importedCharacter.level).toBe(5);
         expect(importedCharacter.experience.current).toBe(1500);
-        expect(importedCharacter.attributes.forca).toBe(3);
+        expect(importedCharacter.attributes.corpo).toBe(3);
         expect(importedCharacter.attributes.agilidade).toBe(4);
         expect(importedCharacter.skills.atletismo.proficiencyLevel).toBe(
           'versado'
@@ -346,8 +346,8 @@ describe('Fluxo de Exportação e Importação (Integração)', () => {
         skillProficiencies: [],
         attributeModifiers: [],
       };
-      testCharacter.combat.hp.current = 50;
-      testCharacter.combat.hp.max = 60;
+      testCharacter.combat.guard.current = 50;
+      testCharacter.combat.guard.max = 60;
       testCharacter.combat.pp.current = 5;
       testCharacter.combat.pp.max = 10;
 
@@ -376,11 +376,11 @@ describe('Fluxo de Exportação e Importação (Integração)', () => {
         );
         expect(importedCharacter.origin?.name).toBe(testCharacter.origin?.name);
         expect(importedCharacter.level).toBe(testCharacter.level);
-        expect(importedCharacter.combat.hp.current).toBe(
-          testCharacter.combat.hp.current
+        expect(importedCharacter.combat.guard.current).toBe(
+          testCharacter.combat.guard.current
         );
-        expect(importedCharacter.combat.hp.max).toBe(
-          testCharacter.combat.hp.max
+        expect(importedCharacter.combat.guard.max).toBe(
+          testCharacter.combat.guard.max
         );
         expect(importedCharacter.combat.pp.current).toBe(
           testCharacter.combat.pp.current
@@ -438,7 +438,7 @@ describe('Fluxo de Exportação e Importação (Integração)', () => {
       testCharacter.inventory.items.push({
         id: 'sword-1',
         name: 'Andúril',
-        category: 'arma',
+        category: 'armas',
         quantity: 1,
         weight: 3,
         value: 0,

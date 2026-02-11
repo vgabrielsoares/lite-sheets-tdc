@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { Box, Stack } from '@mui/material';
 import type {
   Character,
+  ArchetypeName,
   AttributeName,
   SkillName,
   ProficiencyLevel,
@@ -11,18 +12,31 @@ import type {
   Craft,
   LanguageName,
 } from '@/types';
+import type { LevelUpSpecialGain } from '@/utils/levelUpCalculations';
 import {
   BasicStats,
-  CompactHealthPoints,
+  CompactGuardVitality,
   CompactPowerPoints,
-  DefenseDisplay,
+  CompactDefenseTest,
   MovementDisplay,
   SensesDisplay,
 } from '../stats';
 import { AttributesDisplay } from '../attributes';
 import { SkillsDisplay, CraftsDisplay } from '../skills';
 import { LanguagesDisplay } from '../languages';
-import { getEncumbranceState, calculateCarryCapacity } from '@/utils';
+import {
+  getEncumbranceState,
+  calculateCarryCapacity,
+  getEquippedArmorType,
+} from '@/utils';
+import {
+  calculateConditionDicePenalties,
+  type DicePenaltyMap,
+} from '@/utils/conditionEffects';
+import {
+  shouldConditionBeActive,
+  type ConditionId,
+} from '@/constants/conditions';
 import { getSizeModifiers } from '@/constants/lineage';
 
 export interface MainTabProps {
@@ -52,7 +66,7 @@ export interface MainTabProps {
   onOpenSize?: () => void;
 
   /**
-   * Callback para abrir detalhes de PV
+   * Callback para abrir detalhes de GA/PV
    */
   onOpenHP?: () => void;
 
@@ -61,7 +75,7 @@ export interface MainTabProps {
    */
   onOpenPP?: () => void;
   /**
-   * Callback para abrir detalhes de Defesa
+   * @deprecated Defesa é teste ativo em v0.0.2 — use a aba de Combate
    */
   onOpenDefense?: () => void;
   /**
@@ -127,6 +141,14 @@ export interface MainTabProps {
    * Callback para alterar ofício selecionado
    */
   onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
+
+  /**
+   * Callback para confirmar level up (arquétipo + ganhos especiais)
+   */
+  onLevelUp?: (
+    archetypeName: ArchetypeName,
+    specialGains: LevelUpSpecialGain[]
+  ) => void;
 }
 
 /**
@@ -160,7 +182,6 @@ export const MainTab = React.memo(function MainTab({
   onOpenSize,
   onOpenHP,
   onOpenPP,
-  onOpenDefense,
   onOpenMovement,
   onOpenSenses,
   onOpenAttribute,
@@ -172,9 +193,10 @@ export const MainTab = React.memo(function MainTab({
   onUpdateCraft,
   onRemoveCraft,
   onSelectedCraftChange,
+  onLevelUp,
 }: MainTabProps) {
   // Calcular se personagem está sobrecarregado
-  const carryCapacity = calculateCarryCapacity(character.attributes.forca);
+  const carryCapacity = calculateCarryCapacity(character.attributes.corpo);
   // Calcular carga atual somando peso de todos os itens
   const currentLoad = character.inventory.items.reduce(
     (total, item) => total + (item.weight || 0) * (item.quantity || 1),
@@ -184,9 +206,40 @@ export const MainTab = React.memo(function MainTab({
   const isOverloaded =
     encumbranceState === 'sobrecarregado' || encumbranceState === 'imobilizado';
 
-  // Obter modificador de defesa pelo tamanho
+  // Detectar tipo de armadura equipada para penalidades de carga
+  const equippedArmorType = useMemo(
+    () => getEquippedArmorType(character.inventory.items),
+    [character.inventory.items]
+  );
+
+  // Obter modificadores de tamanho
   const sizeModifiers = getSizeModifiers(character.size);
-  const sizeDefenseBonus = sizeModifiers.defense;
+
+  // Calcular penalidades de dados das condições ativas (manuais + automáticas)
+  const conditionDicePenalties = useMemo((): DicePenaltyMap => {
+    const AUTO_IDS: ConditionId[] = ['avariado', 'machucado', 'esgotado'];
+    const state = {
+      gaCurrent: character.combat.guard.current,
+      gaMax: character.combat.guard.max,
+      pvCurrent: character.combat.vitality.current,
+      pvMax: character.combat.vitality.max,
+      ppCurrent: character.combat.pp.current,
+    };
+    const activeAutoIds = AUTO_IDS.filter((id) =>
+      shouldConditionBeActive(id, state)
+    );
+    return calculateConditionDicePenalties(
+      character.combat.conditions,
+      activeAutoIds
+    );
+  }, [
+    character.combat.conditions,
+    character.combat.guard.current,
+    character.combat.guard.max,
+    character.combat.vitality.current,
+    character.combat.vitality.max,
+    character.combat.pp.current,
+  ]);
 
   return (
     <Box>
@@ -199,10 +252,11 @@ export const MainTab = React.memo(function MainTab({
             onOpenLineage={onOpenLineage}
             onOpenOrigin={onOpenOrigin}
             onOpenSize={onOpenSize}
+            onLevelUp={onLevelUp}
           />
         </Box>
 
-        {/* PV e PP lado a lado */}
+        {/* GA/PV e PP lado a lado */}
         <Box
           id="section-hp-pp"
           sx={{
@@ -211,32 +265,22 @@ export const MainTab = React.memo(function MainTab({
             gap: 2,
           }}
         >
-          {/* Pontos de Vida (Compacto) */}
-          <CompactHealthPoints
-            hp={character.combat.hp}
-            onChange={(hp) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  hp,
-                },
-              })
-            }
+          {/* Guarda + Vitalidade (Compacto) */}
+          <CompactGuardVitality
+            guard={character.combat.guard ?? { current: 0, max: 0 }}
+            vitality={character.combat.vitality ?? { current: 0, max: 0 }}
             onOpenDetails={onOpenHP}
           />
 
-          {/* Pontos de Poder (Compacto) */}
+          {/* Potencial Energético (PP + PF compacto) */}
           <CompactPowerPoints
             pp={character.combat.pp}
-            onChange={(pp) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  pp,
-                },
-              })
-            }
             onOpenDetails={onOpenPP}
+            spellPoints={
+              character.spellcasting?.isCaster
+                ? (character.spellcasting.spellPoints ?? { current: 0, max: 0 })
+                : undefined
+            }
           />
         </Box>
 
@@ -249,15 +293,16 @@ export const MainTab = React.memo(function MainTab({
             gap: 2,
           }}
         >
-          {/* Defesa */}
-          <DefenseDisplay
-            agilidade={character.attributes.agilidade}
-            sizeBonus={sizeDefenseBonus}
-            armorBonus={character.combat.defense.armorBonus}
-            shieldBonus={character.combat.defense.shieldBonus}
-            maxAgilityBonus={character.combat.defense.maxAgilityBonus}
-            otherBonuses={character.combat.defense.otherBonuses}
-            onOpenDetails={onOpenDefense}
+          {/* Teste de Defesa Ativo */}
+          <CompactDefenseTest
+            attributes={character.attributes}
+            skills={character.skills}
+            characterLevel={character.level}
+            signatureSkill={
+              Object.entries(character.skills).find(
+                ([, s]) => s.isSignature
+              )?.[0] as import('@/types').SkillName | undefined
+            }
           />
 
           {/* Deslocamento */}
@@ -277,6 +322,7 @@ export const MainTab = React.memo(function MainTab({
           <AttributesDisplay
             attributes={character.attributes}
             onAttributeClick={onOpenAttribute}
+            conditionPenalties={conditionDicePenalties}
           />
         </Box>
 
@@ -290,6 +336,7 @@ export const MainTab = React.memo(function MainTab({
                 attributes={character.attributes}
                 characterLevel={character.level}
                 isOverloaded={isOverloaded}
+                equippedArmorType={equippedArmorType}
                 onKeyAttributeChange={onSkillKeyAttributeChange}
                 onProficiencyChange={onSkillProficiencyChange}
                 onModifiersChange={onSkillModifiersChange}
@@ -321,6 +368,7 @@ export const MainTab = React.memo(function MainTab({
                 onSkillProficiencyBonusSlotsChange={(bonusSlots) =>
                   onUpdate({ skillProficiencyBonusSlots: bonusSlots })
                 }
+                conditionPenalties={conditionDicePenalties}
               />
             )}
         </Box>

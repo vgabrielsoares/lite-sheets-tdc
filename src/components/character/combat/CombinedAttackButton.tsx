@@ -42,9 +42,13 @@ import {
   rollD20,
   rollDamageWithCritical,
   globalDiceHistory,
+  legacyRollToHistoryEntry,
 } from '@/utils/diceRoller';
 import { calculateAttackRoll } from '@/utils/attackCalculations';
-import type { DiceRollResult as RollResult } from '@/utils/diceRoller';
+import type {
+  DiceRollResult as RollResult,
+  DamageDiceRollResult,
+} from '@/utils/diceRoller';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
 import type { DiceRoll, DamageType, Character, AttributeName } from '@/types';
 import type { SkillName } from '@/types/skills';
@@ -77,7 +81,7 @@ export interface CombinedAttackButtonProps {
   /** Callback quando rolar (opcional) */
   onRoll?: (
     attackResult: RollResult,
-    damageResult: RollResult | null,
+    damageResult: DamageDiceRollResult | null,
     hit: boolean,
     critical: boolean
   ) => void;
@@ -135,7 +139,9 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [attackResult, setAttackResult] = useState<RollResult | null>(null);
-  const [damageResult, setDamageResult] = useState<RollResult | null>(null);
+  const [damageResult, setDamageResult] = useState<DamageDiceRollResult | null>(
+    null
+  );
   const [defenseInput, setDefenseInput] = useState<string>(
     targetDefense?.toString() || ''
   );
@@ -209,7 +215,7 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
       'normal',
       `Ataque: ${attackName}`
     );
-    globalDiceHistory.add(attackRollResult);
+    globalDiceHistory.add(legacyRollToHistoryEntry(attackRollResult));
     setAttackResult(attackRollResult);
 
     // 2. Verificar resultado do ataque
@@ -221,7 +227,7 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
     const hit = defense !== undefined ? attackRoll > defense : false; // Acerto: maior que Defesa
     const critical = attackRollResult.isCritical || false;
 
-    let damageRollResult: RollResult | null = null;
+    let damageRollResult: DamageDiceRollResult | null = null;
 
     // 3. Rolar dano se acertou ou raspão (ou se não há defesa definida)
     if (hit || isGraze || defense === undefined) {
@@ -243,7 +249,6 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
           baseResult: grazeDamage,
           finalResult: grazeDamage,
           timestamp: new Date(),
-          rollType: 'normal',
           context: `Dano de Raspão (${DAMAGE_TYPE_LABELS[damageType]}): ${attackName}`,
           isDamageRoll: true,
         };
@@ -314,7 +319,7 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
         'normal',
         `Ataque: ${attackName}`
       );
-      globalDiceHistory.add(attackRollResult);
+      globalDiceHistory.add(legacyRollToHistoryEntry(attackRollResult));
 
       // 2. Verificar resultado do ataque
       const defense = targetDefense;
@@ -324,7 +329,7 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
       const hit = defense !== undefined ? attackRoll > defense : false;
       const critical = attackRollResult.isCritical || false;
 
-      let damageRollResult: RollResult | null = null;
+      let damageRollResult: DamageDiceRollResult | null = null;
 
       // 3. Rolar dano se acertou, raspão ou sem defesa
       if (hit || isGraze || defense === undefined) {
@@ -346,7 +351,6 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
             baseResult: grazeDamage,
             finalResult: grazeDamage,
             timestamp: new Date(),
-            rollType: 'normal',
             context: `Dano de Raspão (${DAMAGE_TYPE_LABELS[damageType]}): ${attackName}`,
             isDamageRoll: true,
           };
@@ -512,7 +516,11 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
                   <Typography variant="subtitle2" gutterBottom>
                     Rolagem de Ataque
                   </Typography>
-                  <DiceRollResult result={attackResult} showBreakdown animate />
+                  <DiceRollResult
+                    result={legacyRollToHistoryEntry(attackResult)}
+                    showBreakdown
+                    animate
+                  />
 
                   {/* Indicador de crítico */}
                   {critical && (

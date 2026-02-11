@@ -39,6 +39,10 @@ describe('SignatureAbility', () => {
     mockOnSignatureChange.mockClear();
   });
 
+  // Helper: busca o Alert de sucesso que mostra o bônus de assinatura
+  const getSuccessAlert = () =>
+    screen.getAllByRole('alert').find((a) => a.textContent?.includes('recebe'));
+
   describe('Renderização', () => {
     it('deve renderizar o componente sem habilidade selecionada', () => {
       const skills = createMockSkills();
@@ -72,7 +76,7 @@ describe('SignatureAbility', () => {
       const select = screen.getByRole('combobox');
       expect(select).toHaveTextContent('Acrobacia');
 
-      // Verificar Alert de sucesso com o bônus (filter alerts to get the success one)
+      // Verificar Alert de sucesso com o bônus (v0.0.2: Math.min(3, ceil(3/5)) = 1)
       const alerts = screen.getAllByRole('alert');
       const successAlert = alerts.find((alert) =>
         alert.textContent?.includes('Acrobacia recebe')
@@ -80,7 +84,7 @@ describe('SignatureAbility', () => {
       expect(successAlert).toBeDefined();
       expect(successAlert).toHaveTextContent('Acrobacia');
       expect(successAlert).toHaveTextContent('recebe');
-      expect(successAlert).toHaveTextContent('+3');
+      expect(successAlert).toHaveTextContent('+1d');
     });
 
     it('deve renderizar em modo compacto', () => {
@@ -115,10 +119,10 @@ describe('SignatureAbility', () => {
       expect(
         screen.getByText(/Bônus de Habilidade de Assinatura:/i)
       ).toBeInTheDocument();
-      expect(screen.getByText(/Habilidades não-combate:/i)).toBeInTheDocument();
-      // Use getAllByText to handle duplicate text, just verify one exists
-      const combatHeadings = screen.getAllByText(/Habilidades de combate/i);
-      expect(combatHeadings.length).toBeGreaterThan(0);
+      // v0.0.2: Mostra faixas de nível em vez de combate/não-combate
+      expect(screen.getByText(/Nível 1-5:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nível 6-10:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nível 11-15:/i)).toBeInTheDocument();
     });
   });
 
@@ -196,7 +200,7 @@ describe('SignatureAbility', () => {
   });
 
   describe('Cálculo de Bônus', () => {
-    it('deve calcular bônus corretamente para habilidade não-combate (= nível)', () => {
+    it('deve calcular bônus +2d para nível 7 (faixa 6-10)', () => {
       const skills = createMockSkills('atletismo');
 
       render(
@@ -207,11 +211,12 @@ describe('SignatureAbility', () => {
         />
       );
 
-      expect(screen.getByText(/\+7/i)).toBeInTheDocument();
+      // v0.0.2: Math.min(3, ceil(7/5)) = 2
+      expect(getSuccessAlert()).toHaveTextContent('+2d');
     });
 
-    it('deve calcular bônus corretamente para habilidade de combate (nível ÷ 3)', () => {
-      const skills = createMockSkills('acerto'); // Acerto é combate
+    it('deve calcular bônus +2d para nível 9 (faixa 6-10)', () => {
+      const skills = createMockSkills('acerto'); // Acerto é combate, mas bônus é o mesmo
 
       render(
         <SignatureAbility
@@ -221,12 +226,11 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // 9 ÷ 3 = 3
-      expect(screen.getByText(/\+3/i)).toBeInTheDocument();
-      expect(screen.getByText(/habilidade de combate:/i)).toBeInTheDocument();
+      // v0.0.2: Math.min(3, ceil(9/5)) = 2
+      expect(getSuccessAlert()).toHaveTextContent('+2d');
     });
 
-    it('deve garantir bônus mínimo de 1 para habilidades de combate em nível baixo', () => {
+    it('deve calcular bônus +1d para nível baixo (faixa 1-5)', () => {
       const skills = createMockSkills('luta'); // Luta é combate
 
       render(
@@ -237,12 +241,12 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // 2 ÷ 3 = 0.66, mas mínimo 1
-      expect(screen.getByText(/\+1/i)).toBeInTheDocument();
+      // v0.0.2: Math.min(3, ceil(2/5)) = 1
+      expect(getSuccessAlert()).toHaveTextContent('+1d');
     });
 
     it('deve mostrar chip "Combate" para habilidades de combate', () => {
-      const skills = createMockSkills('iniciativa');
+      const skills = createMockSkills('acerto');
 
       render(
         <SignatureAbility
@@ -252,13 +256,13 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // Deve haver múltiplos chips "Combate" (no select + na explicação)
+      // Deve haver chip "Combate" no select renderValue
       const combatChips = screen.getAllByText('Combate');
       expect(combatChips.length).toBeGreaterThan(0);
     });
 
-    it('deve calcular bônus diferente para combate vs não-combate no mesmo nível', () => {
-      // Primeiro, não-combate
+    it('deve calcular mesmo bônus para combate e não-combate no mesmo nível (v0.0.2)', () => {
+      // v0.0.2: Sem distinção combate/não-combate para assinatura
       const skillsNonCombat = createMockSkills('atletismo');
       const { rerender } = render(
         <SignatureAbility
@@ -268,9 +272,10 @@ describe('SignatureAbility', () => {
         />
       );
 
-      expect(screen.getByText(/\+6/i)).toBeInTheDocument(); // Nível 6 = +6
+      // v0.0.2: Math.min(3, ceil(6/5)) = 2 para não-combate
+      expect(getSuccessAlert()).toHaveTextContent('+2d');
 
-      // Depois, combate
+      // Combate: mesmo bônus
       const skillsCombat = createMockSkills('acerto');
       rerender(
         <SignatureAbility
@@ -280,7 +285,8 @@ describe('SignatureAbility', () => {
         />
       );
 
-      expect(screen.getByText(/\+2/i)).toBeInTheDocument(); // 6 ÷ 3 = 2
+      // v0.0.2: Math.min(3, ceil(6/5)) = 2 para combate também
+      expect(getSuccessAlert()).toHaveTextContent('+2d');
     });
   });
 
@@ -319,11 +325,11 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // Nível 0, não-combate = 0
-      expect(screen.getByText(/\+0/i)).toBeInTheDocument();
+      // Nível 0, bônus = Math.min(3, ceil(0/5)) = 0
+      expect(screen.getByText(/\+0d/i)).toBeInTheDocument();
     });
 
-    it('deve lidar com nível muito alto', () => {
+    it('deve ter bônus máximo de +3d para nível alto', () => {
       const skills = createMockSkills('persuasao');
 
       render(
@@ -334,7 +340,8 @@ describe('SignatureAbility', () => {
         />
       );
 
-      expect(screen.getByText(/\+30/i)).toBeInTheDocument();
+      // v0.0.2: Math.min(3, ceil(30/5)) = 3 (cap at 3)
+      expect(getSuccessAlert()).toHaveTextContent('+3d');
     });
 
     it('deve atualizar bônus quando nível muda', () => {
@@ -348,7 +355,8 @@ describe('SignatureAbility', () => {
         />
       );
 
-      expect(screen.getByText(/\+3/i)).toBeInTheDocument();
+      // v0.0.2: Math.min(3, ceil(3/5)) = 1
+      expect(getSuccessAlert()).toHaveTextContent('+1d');
 
       // Atualizar nível
       rerender(
@@ -359,7 +367,8 @@ describe('SignatureAbility', () => {
         />
       );
 
-      expect(screen.getByText(/\+7/i)).toBeInTheDocument();
+      // v0.0.2: Math.min(3, ceil(7/5)) = 2
+      expect(getSuccessAlert()).toHaveTextContent('+2d');
     });
   });
 

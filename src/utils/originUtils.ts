@@ -137,7 +137,7 @@ export function createExampleOrigin(): Origin {
     attributeModifiers: [
       { attribute: 'influencia', value: 1 },
       { attribute: 'mente', value: 1 },
-      { attribute: 'forca', value: -1 },
+      { attribute: 'corpo', value: -1 },
     ],
     specialAbility: {
       name: 'Prestígio',

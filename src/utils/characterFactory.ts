@@ -19,7 +19,12 @@ import type {
   HealthPoints,
   PowerPoints,
   Attack,
+  GuardPoints,
+  VitalityPoints,
+  VulnerabilityDie,
 } from '@/types/combat';
+import { DEFAULT_GA_LEVEL_1 } from '@/types/combat';
+import { calculateVitality } from '@/utils/calculations';
 import type {
   Inventory,
   InventoryItem,
@@ -37,6 +42,7 @@ import { ATTRIBUTE_DEFAULT } from '@/constants/attributes';
 import { SKILL_LIST } from '@/constants/skills';
 import { SKILL_KEY_ATTRIBUTES } from '@/types/skills';
 import { DEFAULT_WEAPON_PROFICIENCY } from '@/constants/proficiencies';
+import { createDefaultResources } from '@/constants/resources';
 
 /**
  * Cria atributos padrão de nível 1
@@ -45,11 +51,11 @@ import { DEFAULT_WEAPON_PROFICIENCY } from '@/constants/proficiencies';
 function createDefaultAttributes(): Attributes {
   return {
     agilidade: ATTRIBUTE_DEFAULT,
-    constituicao: ATTRIBUTE_DEFAULT,
-    forca: ATTRIBUTE_DEFAULT,
+    corpo: ATTRIBUTE_DEFAULT,
     influencia: ATTRIBUTE_DEFAULT,
     mente: ATTRIBUTE_DEFAULT,
-    presenca: ATTRIBUTE_DEFAULT,
+    essencia: ATTRIBUTE_DEFAULT,
+    instinto: ATTRIBUTE_DEFAULT,
   };
 }
 
@@ -76,7 +82,41 @@ function createDefaultSkills(): Skills {
 }
 
 /**
- * Cria pontos de vida padrão de nível 1
+ * Cria Guarda (GA) padrão de nível 1
+ * Base: 15 GA máximo e atual
+ */
+function createDefaultGuard(): GuardPoints {
+  return {
+    current: DEFAULT_GA_LEVEL_1,
+    max: DEFAULT_GA_LEVEL_1,
+  };
+}
+
+/**
+ * Cria Vitalidade (PV) padrão de nível 1
+ * Base: floor(GA_max / 3) = 5
+ */
+function createDefaultVitality(): VitalityPoints {
+  const pvMax = calculateVitality(DEFAULT_GA_LEVEL_1);
+  return {
+    current: pvMax,
+    max: pvMax,
+  };
+}
+
+/**
+ * Cria dado de vulnerabilidade padrão (inativo, começa em d20)
+ */
+function createDefaultVulnerabilityDie(): VulnerabilityDie {
+  return {
+    currentDie: 'd20',
+    isActive: false,
+  };
+}
+
+/**
+ * @deprecated Substituído por createDefaultGuard + createDefaultVitality em v0.0.2
+ * Cria pontos de vida padrão de nível 1 (legado)
  * Base: 15 PV máximo e atual, 0 temporário
  */
 function createDefaultHP(): HealthPoints {
@@ -107,9 +147,9 @@ export const UNARMED_ATTACK_NAME = 'Ataque Desarmado';
 /**
  * Cria o ataque desarmado padrão
  * Todos os personagens têm esse ataque por padrão
- * - Usa Força e o uso "Atacar"
- * - Crítico: 20/+1
- * - Dano: 1d2 + Força
+ * - Usa Corpo e o uso "Atacar"
+ * - Dano: 1d2 + Corpo
+ * - Custo: 1 ação (▶)
  * - Não pode ser deletado
  * - Nome não pode ser alterado
  */
@@ -119,26 +159,19 @@ function createUnarmedAttack(): Attack {
     type: 'corpo-a-corpo',
     attackSkill: 'luta',
     attackSkillUseId: 'atacar',
-    attackAttribute: 'forca',
-    attackBonus: 0,
+    attackAttribute: 'corpo',
+    attackDiceModifier: 0,
     damageRoll: {
       quantity: 1,
       type: 'd2',
       modifier: 0,
     },
     damageType: 'impacto',
-    criticalRange: 20,
-    criticalDamage: {
-      quantity: 1,
-      type: 'd2',
-      modifier: 0,
-    },
     range: 'Adjacente/Toque (1m)',
     description:
       'Um ataque corpo a corpo desarmado usando punhos, chutes ou outras partes do corpo.',
     ppCost: 0,
-    actionType: 'maior',
-    numberOfAttacks: 1,
+    actionCost: 1, // ▶ (1 ação)
     addAttributeToDamage: true,
     doubleAttributeDamage: false,
     isDefaultAttack: true,
@@ -147,34 +180,34 @@ function createUnarmedAttack(): Attack {
 
 /**
  * Cria dados de combate padrão de nível 1
+ *
+ * Mudanças v0.0.2:
+ * - HP → GA (Guarda) + PV (Vitalidade)
+ * - Defesa fixa → removida (teste ativo)
+ * - Ação Maior/Menor → Turno Rápido/Lento
+ * - Dado de vulnerabilidade adicionado
+ * - Iniciativa removida (turno é voluntário)
  */
 function createDefaultCombat(): CombatData {
   return {
-    hp: createDefaultHP(),
+    guard: createDefaultGuard(),
+    vitality: createDefaultVitality(),
     pp: createDefaultPP(),
     state: 'normal',
     dyingState: {
       isDying: false,
       currentRounds: 0,
-      maxRounds: 3, // 2 + Constituição (1)
+      maxRounds: 3, // 2 + Corpo (1)
     },
+    vulnerabilityDie: createDefaultVulnerabilityDie(),
     actionEconomy: {
-      majorAction: true,
-      minorAction1: true,
-      minorAction2: true,
-      reaction: true,
-      defensiveReaction: true,
+      turnType: 'rapido',
+      actions: [true, true], // ▶▶ (2 ações para turno rápido)
+      reaction: true, // ↩ (1 reação por rodada)
       extraActions: [],
     },
-    defense: {
-      base: 15,
-      armorBonus: 0,
-      shieldBonus: 0,
-      otherBonuses: [],
-      total: 16, // 15 + Agilidade (1)
-    },
     ppLimit: {
-      base: 2, // Nível (1) + Presença (1)
+      base: 2, // Nível (1) + Essência (1)
       modifiers: [],
       total: 2,
     },
@@ -183,22 +216,27 @@ function createDefaultCombat(): CombatData {
       {
         type: 'determinacao',
         skill: 'determinacao',
-        modifier: 0,
+        diceModifier: 0,
       },
       {
         type: 'reflexo',
         skill: 'reflexo',
-        modifier: 0,
+        diceModifier: 0,
+      },
+      {
+        type: 'sintonia',
+        skill: 'sintonia',
+        diceModifier: 0,
       },
       {
         type: 'tenacidade',
         skill: 'tenacidade',
-        modifier: 0,
+        diceModifier: 0,
       },
       {
         type: 'vigor',
         skill: 'vigor',
-        modifier: 0,
+        diceModifier: 0,
       },
     ],
     resistances: {
@@ -209,14 +247,12 @@ function createDefaultCombat(): CombatData {
       conditionImmunities: [],
     },
     conditions: [],
-    initiative: {
-      modifier: 0,
-    },
     penalties: {
       defensePenalty: 0,
       savingThrowPenalties: {
         determinacao: 0,
         reflexo: 0,
+        sintonia: 0,
         tenacidade: 0,
         vigor: 0,
       },
@@ -229,7 +265,7 @@ function createDefaultCombat(): CombatData {
  */
 function createDefaultCarryingCapacity(): CarryingCapacity {
   return {
-    base: 10, // 5 + (Força (1) * 5)
+    base: 10, // 5 + (Corpo (1) * 5)
     sizeModifier: 0,
     otherModifiers: 0,
     modifiers: 0,
@@ -251,7 +287,7 @@ function createDefaultInventory(): Inventory {
       id: uuidv4(),
       name: 'Mochila',
       description: 'Mochila padrão de aventureiro',
-      category: 'diversos',
+      category: 'miscelanea',
       quantity: 1,
       weight: null, // Mochila não tem peso
       value: 0,
@@ -261,7 +297,7 @@ function createDefaultInventory(): Inventory {
       id: uuidv4(),
       name: 'Cartão do Banco',
       description: 'Cartão para acesso à conta bancária',
-      category: 'diversos',
+      category: 'miscelanea',
       quantity: 1,
       weight: null, // Cartão não tem peso
       value: 0,
@@ -367,8 +403,8 @@ function createDefaultPhysicalDescription(): PhysicalDescription {
  */
 function createDefaultExperience(): Experience {
   return {
-    current: 0,
-    toNextLevel: 50, // XP necessário para nível 2
+    current: 15, // Começa com 15 XP (suficiente para subir ao nível 1)
+    toNextLevel: 15, // XP necessário para nível 0→1
   };
 }
 
@@ -383,7 +419,7 @@ function createDefaultLevelProgression(): LevelProgression[] {
     progression.push({
       level: i,
       gains: [],
-      achieved: i === 1, // Apenas nível 1 já alcançado
+      achieved: false, // Nenhum nível alcançado (personagem começa nível 0)
     });
   }
 
@@ -400,7 +436,7 @@ interface CreateCharacterParams {
 }
 
 /**
- * Cria um personagem com valores padrão de nível 1
+ * Cria um personagem com valores padrão de nível 0
  *
  * Valores aplicados automaticamente conforme regras do RPG:
  * - 15 PV máximo e atual, 0 temporário
@@ -426,14 +462,17 @@ export function createDefaultCharacter(
     createdAt: now.toString(),
     updatedAt: now.toString(),
 
+    // Versão do schema
+    schemaVersion: 2,
+
     // Informações Básicas
     name: params.name,
     playerName: params.playerName,
     concept: params.concept,
     conceptExpanded: undefined,
 
-    // Nível e Experiência
-    level: 1,
+    // Nível e Experiência (começa em 0, sobe ao 1 escolhendo um arquétipo)
+    level: 0,
     experience: createDefaultExperience(),
 
     // Origem e Linhagem (vazios, preenchidos manualmente no MVP 1)
@@ -469,6 +508,7 @@ export function createDefaultCharacter(
       tools: [],
       other: [],
     },
+    proficiencyPurchases: [], // Proficiências compradas com pontos de atributo
 
     // Sorte e Ofícios
     luck: {
@@ -478,6 +518,12 @@ export function createDefaultCharacter(
       numericModifier: 0,
     },
     crafts: [],
+
+    // Recursos (Dados de Recurso)
+    resources: createDefaultResources(uuidv4),
+
+    // Habilidades Especiais
+    specialAbilities: [],
 
     // Inventário
     inventory: createDefaultInventory(),
@@ -498,6 +544,7 @@ export function createDefaultCharacter(
 
     // Progressão
     levelProgression: createDefaultLevelProgression(),
+    levelHistory: [],
 
     // Anotações
     notes: [],

@@ -20,14 +20,34 @@ export {
 
 // Dice rolling utilities
 export {
-  rollD20,
+  // Pool-based skill testing (new)
+  rollDicePool,
+  rollWithPenalty,
+  rollSkillTest,
+  rollCustomDice,
+  // Damage rolling (preserved)
   rollDamage,
   rollDamageWithCritical,
-  rollSkillTest,
+  // History
   DiceRollHistory,
   globalDiceHistory,
-  type DiceRollResult,
+  // Type guards
+  isDicePoolResult,
+  isDamageDiceRollResult,
+  isCustomDiceResult,
+  // Constants
+  MAX_SKILL_DICE,
+  SUCCESS_THRESHOLD,
+  CANCELLATION_VALUE,
+  // Types
+  type DamageDiceRollResult,
+  type CustomDiceResult,
+  type HistoryEntry,
+  // Legacy (deprecated - to be removed in Phase 3)
+  rollD20,
+  legacyRollToHistoryEntry,
   type RollType,
+  type DiceRollResult,
 } from './diceRoller';
 
 // Calculation utilities
@@ -123,11 +143,14 @@ export {
   calculateSkillTotalModifier,
   calculateSkillRollFormula,
   calculateSkillRoll,
+  calculateSkillPenalties,
+  getEquippedArmorType,
   hasLoadPenalty,
   requiresInstrument,
   requiresProficiency,
   isCombatSkill,
 } from './skillCalculations';
+export type { SkillPenaltyContext } from './skillCalculations';
 
 // Proficiency calculation utilities
 export {
@@ -194,6 +217,15 @@ export {
   SAVING_THROW_COLORS,
 } from './combatPenalties';
 export type { CombatPenaltiesState } from './combatPenalties';
+
+// Condition effects utilities
+export {
+  calculateConditionDicePenalties,
+  getDicePenaltyForAttribute,
+  hasActivePenalties,
+  formatPenaltySummary,
+} from './conditionEffects';
+export type { DicePenaltyMap } from './conditionEffects';
 
 // Currency calculation utilities
 export {

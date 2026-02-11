@@ -96,8 +96,8 @@ describe('TabNavigation', () => {
   });
 
   describe('Dados das abas', () => {
-    it('deve ter 8 abas definidas', () => {
-      expect(CHARACTER_TABS).toHaveLength(8);
+    it('deve ter 9 abas definidas', () => {
+      expect(CHARACTER_TABS).toHaveLength(9);
     });
 
     it('deve ter todas as abas com id e label', () => {
@@ -115,6 +115,7 @@ describe('TabNavigation', () => {
         'combat',
         'archetypes',
         'resources',
+        'specials',
         'inventory',
         'spells',
         'description',

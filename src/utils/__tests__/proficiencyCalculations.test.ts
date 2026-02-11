@@ -179,6 +179,11 @@ const createMockSkills = (
       name: 'sorte' as const,
       proficiencyLevel: 'leigo' as const,
     },
+    sintonia: {
+      ...defaultSkill,
+      name: 'sintonia' as const,
+      proficiencyLevel: 'leigo' as const,
+    },
     tenacidade: {
       ...defaultSkill,
       name: 'tenacidade' as const,

@@ -1,6 +1,6 @@
 {
   "name": "lite-sheets-tdc",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "Sistema de criação e gerenciamento de fichas de RPG totalmente no navegador, com experiência PWA, funcionamento offline, responsividade e foco em acessibilidade. Ideal para jogadores e mestres que buscam praticidade, performance e facilidade de uso, sem depender de backend ou banco de dados externo.",
   "main": "index.js",
   "scripts": {
@@ -58,7 +58,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/uuid": "^10.0.0",
-    "baseline-browser-mapping": "^2.9.5",
+    "baseline-browser-mapping": "^2.9.19",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.1",
     "eslint-config-prettier": "^10.1.8",

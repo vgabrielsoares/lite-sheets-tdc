@@ -49,3 +49,30 @@ export * from './conditions';
 
 // Moedas
 export * from './currency';
+
+// Tamanhos de Criatura
+export * from './creatureSizes';
+
+// Ações de Combate
+export * from './combatActions';
+
+// Recursos (Dados de Recurso)
+export * from './resources';
+
+// Inventário (Categorias de Itens)
+export * from './inventory';
+
+// Progressão (XP, Level Up)
+export * from './progression';
+
+// Compra de Proficiências
+export * from './proficiencyPurchases';
+
+// Símbolos do Sistema
+export * from './symbols';
+
+// Passos de Dados
+export * from './diceSteps';
+
+// Versão do Sistema
+export * from './version';

@@ -2,63 +2,63 @@
  * Attributes - Tipos relacionados a atributos do personagem
  *
  * Este arquivo contém os tipos e interfaces relacionados aos seis atributos base
- * do sistema Tabuleiro do Caos RPG: Agilidade, Constituição, Força, Influência, Mente e Presença.
+ * do sistema Tabuleiro do Caos RPG (v0.1.7): Agilidade, Corpo, Influência, Mente, Essência e Instinto.
  */
 
 /**
  * Nomes dos atributos disponíveis no sistema
- * - Agilidade: Reflexos, coordenação motora e destreza
- * - Constituição: Saúde, resistência física e vigor
- * - Força: Poder muscular e capacidade física
- * - Influência: Carisma, persuasão e liderança
- * - Mente: Inteligência, raciocínio e conhecimento
- * - Presença: Percepção, capacidades mágicas e resiliência mental
+ * - Agilidade (Agi): Destreza manual/física, reflexos, coordenação motora, flexibilidade e rapidez
+ * - Corpo (Cor): Capacidades físicas, saúde, força e resistência
+ * - Influência (Inf): Habilidades sociais e carisma
+ * - Mente (Men): Inteligência, raciocínio lógico, conhecimentos
+ * - Essência (Ess): Capacidades mágicas e potencial energético
+ * - Instinto (Ins): Sentidos e instintos naturais
  */
 export type AttributeName =
   | 'agilidade'
-  | 'constituicao'
-  | 'forca'
+  | 'corpo'
   | 'influencia'
   | 'mente'
-  | 'presenca';
+  | 'essencia'
+  | 'instinto';
 
 /**
- * Categoria do atributo (corporal ou mental)
+ * Categoria do atributo (físico, mental ou espiritual)
  */
-export type AttributeCategory = 'corporal' | 'mental';
+export type AttributeCategory = 'fisico' | 'mental' | 'espiritual';
 
 /**
  * Mapeamento de atributos para suas categorias
  */
 export const ATTRIBUTE_CATEGORIES: Record<AttributeName, AttributeCategory> = {
-  agilidade: 'corporal',
-  constituicao: 'corporal',
-  forca: 'corporal',
+  agilidade: 'fisico',
+  corpo: 'fisico',
   influencia: 'mental',
   mente: 'mental',
-  presenca: 'mental',
+  essencia: 'espiritual',
+  instinto: 'espiritual',
 } as const;
 
 /**
  * Interface para os seis atributos base do personagem
  *
- * Valores padrão vão de 0 a 5, mas podem ser superados em casos especiais.
- * - Valor 0: Rola 2d20 e escolhe o menor resultado
- * - Valores 1-5: Rola quantidade de d20 igual ao valor e escolhe o maior
+ * Valores padrão vão de 0 a 5, mas podem ser superados em casos especiais (linhagem, máximo 6).
+ * - Valor 0: Rola 2d6 e escolhe o menor resultado
+ * - Valores 1-5: Rola quantidade de dados igual ao valor do atributo
  */
 export interface Attributes {
-  /** Agilidade - Reflexos e coordenação motora */
+  /** Agilidade (Agi) - Destreza manual/física, reflexos, coordenação motora, flexibilidade e rapidez */
   agilidade: number;
-  /** Constituição - Saúde e resistência física */
-  constituicao: number;
-  /** Força - Poder muscular */
-  forca: number;
-  /** Influência - Carisma e persuasão */
+  /** Corpo (Cor) - Capacidades físicas, saúde, força e resistência */
+  corpo: number;
+  /** Influência (Inf) - Habilidades sociais e carisma */
   influencia: number;
-  /** Mente - Inteligência e raciocínio */
+  /** Mente (Men) - Inteligência, raciocínio lógico, conhecimentos */
   mente: number;
-  /** Presença - Percepção e capacidades mágicas */
-  presenca: number;
+  /** Essência (Ess) - Capacidades mágicas e potencial energético */
+  essencia: number;
+  /** Instinto (Ins) - Sentidos e instintos naturais */
+  instinto: number;
 }
 
 /**
@@ -69,21 +69,21 @@ export const ATTRIBUTE_MIN = 0;
 export const ATTRIBUTE_MAX_DEFAULT = 5; // Pode ser superado em casos especiais
 
 /**
- * Descrições dos atributos
+ * Descrições dos atributos (conforme livro v0.1.7)
  */
 export const ATTRIBUTE_DESCRIPTIONS: Record<AttributeName, string> = {
   agilidade:
-    'A agilidade diz respeito a seus reflexos e coordenação motora, utilizadas em ações rápidas e precisas.',
-  constituicao:
-    'A constituição diz respeito a sua saúde e resistência física, utilizadas para resistir a fadiga, doença e dano.',
-  forca:
-    'A força diz respeito ao seu poder muscular e capacidade física, utilizadas em ações de força bruta e atletismo.',
+    'A agilidade mede a destreza manual e física, reflexos, coordenação motora, flexibilidade e rapidez. Foco: esquiva, ataques à distância, armas com propriedades ideais, destreza, acrobacia, furtividade.',
+  corpo:
+    'O corpo mede as capacidades físicas de uma criatura, sua saúde, força e resistência. Foco: combate corpo a corpo, vigor, atletismo, luta, testes de resistência.',
   influencia:
-    'A influência diz respeito ao seu carisma e capacidade de persuasão, utilizadas para influenciar outros e liderar.',
+    'A influência diz respeito às habilidades sociais de uma criatura e seu carisma. Foco: persuasão, enganação, intimidação.',
   mente:
-    'A mente diz respeito à sua inteligência e capacidade de raciocínio, utilizadas para lembrar, aprender e deduzir.',
-  presenca:
-    'A presença diz respeito aos sentidos naturais, capacidades mágicas e resiliência mental, utilizadas para perceber, conjurar e resistir magias.',
+    'A mente diz respeito à inteligência, raciocínio lógico, capacidade de armazenar informações e conhecimentos. Foco: quantidade de habilidades proficientes, aprendizado de feitiços.',
+  essencia:
+    'A Essência diz respeito às capacidades mágicas e potencial energético. Foco: PP, poder mágico, conjuração, testes de Sintonia.',
+  instinto:
+    'O Instinto diz respeito aos sentidos e instintos naturais. Foco: percepção, rastreamento, perspicácia, natureza.',
 } as const;
 
 /**

@@ -184,7 +184,7 @@ describe('CharacterList', () => {
       });
       await user.click(card);
 
-      expect(mockPush).toHaveBeenCalledWith('/characters/test-id-123');
+      expect(mockPush).toHaveBeenCalledWith('/characters?id=test-id-123');
     });
   });
 

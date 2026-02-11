@@ -258,7 +258,7 @@ export function LinhagemSidebar({
       ...prev,
       keenSenses: [
         ...(prev.keenSenses || []),
-        { type: 'visao', bonus: 5, description: '' },
+        { type: 'visao', bonus: 1, description: '' },
       ],
     }));
   };
@@ -748,7 +748,7 @@ export function LinhagemSidebar({
               inputProps={{ min: 1, max: 10000 }}
             />
             <TextField
-              label="Peso"
+              label="Espaço"
               type="number"
               value={localLineage.weightRPG}
               onChange={handleNumberChange('weightRPG')}
@@ -956,14 +956,14 @@ export function LinhagemSidebar({
                         </FormControl>
 
                         <TextField
-                          label="Bônus"
+                          label="Bônus em Dados"
                           type="number"
                           value={sense.bonus}
                           onChange={handleKeenSenseBonusChange(index)}
                           fullWidth
                           size="small"
-                          inputProps={{ min: 2, max: 10, step: 1 }}
-                          helperText="Bônus de +2 a +10"
+                          inputProps={{ min: 1, max: 5, step: 1 }}
+                          helperText="Bônus em dados (+1d a +5d)"
                         />
 
                         <TextField

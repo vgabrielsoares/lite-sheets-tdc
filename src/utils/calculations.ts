@@ -1,13 +1,22 @@
 /**
  * Utility functions for RPG system calculations
  *
- * All calculations follow Tabuleiro do Caos RPG rules:
+ * All calculations follow Tabuleiro do Caos RPG rules (livro v0.1.7):
  * - Always round DOWN for fractional results
- * - Attributes range from 0 to 5 by default (can exceed in special cases)
- * - Attribute value 0: Roll 2d20 and take LOWEST result
+ * - Attributes range from 0 to 5 by default (can exceed in special cases, max 6)
+ * - Attribute value 0: Roll 2d6 and take LOWEST result
+ *
+ * v0.0.2: GA (Guarda) + PV (Vitalidade) replace old HP system.
+ * Defense is now an active test, not a fixed value.
  */
 
 import type { ProficiencyLevel } from '@/types';
+import type {
+  GuardPoints,
+  VitalityPoints,
+  VulnerabilityDieSize,
+} from '@/types/combat';
+import { VULNERABILITY_DIE_STEPS, PV_RECOVERY_COST } from '@/types/combat';
 import { SKILL_PROFICIENCY_LEVELS } from '@/constants';
 
 /**
@@ -28,23 +37,241 @@ export function roundDown(value: number): number {
 }
 
 /**
- * Calculates the Defense value for a character
+ * @deprecated Defesa fixa não existe mais em v0.0.2. Defesa agora é teste ativo (Reflexo ou Vigor).
+ * Mantido para compatibilidade.
+ *
+ * Calculates the Defense value for a character (LEGACY)
  * Formula: 15 + Agilidade + outros bônus
- *
- * @param agilidade - The Agilidade (Agility) attribute value
- * @param otherBonuses - Additional bonuses from equipment, spells, etc. (default: 0)
- * @returns The total Defense value
- *
- * @example
- * calculateDefense(2); // 17 (15 + 2)
- * calculateDefense(3, 2); // 20 (15 + 3 + 2)
- * calculateDefense(0); // 15 (15 + 0)
  */
 export function calculateDefense(
   agilidade: number,
   otherBonuses: number = 0
 ): number {
   return 15 + agilidade + otherBonuses;
+}
+
+// ─── GA (Guarda) & PV (Vitalidade) ─────────────────────────
+
+/**
+ * Calculates maximum Vitality Points (PV) from maximum Guard Points (GA)
+ * Formula: floor(GA_max / 3)
+ *
+ * @param gaMax - Maximum Guard Points
+ * @returns Maximum Vitality Points
+ *
+ * @example
+ * calculateVitality(15); // 5 (floor(15/3))
+ * calculateVitality(20); // 6 (floor(20/3))
+ * calculateVitality(16); // 5 (floor(16/3))
+ */
+export function calculateVitality(gaMax: number): number {
+  return roundDown(gaMax / 3);
+}
+
+/**
+ * Applies damage to the Guard/Vitality system.
+ * Damage hits GA first; overflow goes to PV.
+ *
+ * @param guard - Current guard state
+ * @param vitality - Current vitality state
+ * @param damage - Amount of raw damage (positive number)
+ * @returns Updated guard and vitality states
+ *
+ * @example
+ * // Damage absorbed by GA only
+ * applyDamageToGuardVitality({current: 10, max: 15}, {current: 5, max: 5}, 5);
+ * // → guard.current = 5, vitality.current = 5
+ *
+ * // Damage overflows from GA to PV
+ * applyDamageToGuardVitality({current: 3, max: 15}, {current: 5, max: 5}, 7);
+ * // → guard.current = 0, vitality.current = 1
+ */
+export function applyDamageToGuardVitality(
+  guard: GuardPoints,
+  vitality: VitalityPoints,
+  damage: number
+): { guard: GuardPoints; vitality: VitalityPoints } {
+  if (damage <= 0) return { guard, vitality };
+
+  let remaining = damage;
+  let newTemporary = guard.temporary ?? 0;
+  let newGuardCurrent = guard.current;
+  let newVitalityCurrent = vitality.current;
+
+  // Damage hits temporary GA first
+  if (newTemporary > 0) {
+    const tempDamage = Math.min(newTemporary, remaining);
+    newTemporary -= tempDamage;
+    remaining -= tempDamage;
+  }
+
+  // Then hits regular GA
+  if (remaining > 0 && newGuardCurrent > 0) {
+    const guardDamage = Math.min(newGuardCurrent, remaining);
+    newGuardCurrent -= guardDamage;
+    remaining -= guardDamage;
+  }
+
+  // Overflow goes to PV
+  if (remaining > 0) {
+    newVitalityCurrent = Math.max(0, newVitalityCurrent - remaining);
+  }
+
+  return {
+    guard: { ...guard, current: newGuardCurrent, temporary: newTemporary },
+    vitality: { ...vitality, current: newVitalityCurrent },
+  };
+}
+
+/**
+ * Applies healing to Guard Points (GA).
+ * Cannot exceed max.
+ *
+ * @param guard - Current guard state
+ * @param amount - Amount to heal (positive number)
+ * @returns Updated guard state
+ */
+export function healGuard(guard: GuardPoints, amount: number): GuardPoints {
+  if (amount <= 0) return guard;
+  return {
+    ...guard,
+    current: Math.min(guard.current + amount, guard.max),
+  };
+}
+
+/**
+ * Applies healing to Vitality Points (PV).
+ * PV recovery costs 5 recovery points per 1 PV.
+ * Option should only be available when PV < PV_max AND recovery ≥ 5.
+ *
+ * @param vitality - Current vitality state
+ * @param recoveryPoints - Total recovery points available
+ * @returns Updated vitality state and remaining recovery points
+ */
+export function healVitality(
+  vitality: VitalityPoints,
+  recoveryPoints: number
+): { vitality: VitalityPoints; remainingRecovery: number } {
+  if (recoveryPoints < PV_RECOVERY_COST || vitality.current >= vitality.max) {
+    return { vitality, remainingRecovery: recoveryPoints };
+  }
+
+  const pvCanHeal = vitality.max - vitality.current;
+  const pvFromRecovery = roundDown(recoveryPoints / PV_RECOVERY_COST);
+  const pvHealed = Math.min(pvCanHeal, pvFromRecovery);
+  const recoverySpent = pvHealed * PV_RECOVERY_COST;
+
+  return {
+    vitality: {
+      ...vitality,
+      current: vitality.current + pvHealed,
+    },
+    remainingRecovery: recoveryPoints - recoverySpent,
+  };
+}
+
+/**
+ * Determines the effective GA max when PV is critically low.
+ * Rule: When PV = 0, GA max is halved.
+ *
+ * @param gaMax - Normal maximum GA
+ * @param pvCurrent - Current PV
+ * @returns Effective GA max
+ */
+export function getEffectiveGAMax(gaMax: number, pvCurrent: number): number {
+  if (pvCurrent <= 0) {
+    return roundDown(gaMax / 2);
+  }
+  return gaMax;
+}
+
+/**
+ * Adjusts current GA when PV crosses the 0 threshold.
+ * Rule: When PV reaches 0, GA current is clamped to half of GA max.
+ * When PV recovers from 0, GA current is restored to at least half of GA max.
+ *
+ * @param guardCurrent - Current GA value
+ * @param gaMax - Maximum GA value (including modifiers)
+ * @param pvWasZero - Whether PV was at 0 before
+ * @param pvIsZero - Whether PV is at 0 now
+ * @returns Adjusted GA current value
+ */
+export function adjustGAOnPVCrossing(
+  guardCurrent: number,
+  gaMax: number,
+  pvWasZero: boolean,
+  pvIsZero: boolean
+): number {
+  const halfMax = roundDown(gaMax / 2);
+
+  // PV chegou a 0: limitar GA à metade
+  if (!pvWasZero && pvIsZero) {
+    return Math.min(guardCurrent, halfMax);
+  }
+
+  // PV saiu de 0: restaurar GA para pelo menos metade
+  if (pvWasZero && !pvIsZero) {
+    return Math.max(guardCurrent, halfMax);
+  }
+
+  // Sem mudança de estado
+  return guardCurrent;
+}
+
+/**
+ * Determines the combat state based on GA and PV values.
+ *
+ * @param gaCurrent - Current GA
+ * @param gaMax - Maximum GA
+ * @param pvCurrent - Current PV
+ * @param pvMax - Maximum PV
+ * @returns The current combat state
+ */
+export function determineCombatState(
+  gaCurrent: number,
+  gaMax: number,
+  pvCurrent: number,
+  pvMax: number
+): 'normal' | 'ferimento-direto' | 'ferimento-critico' {
+  if (pvCurrent <= 0) return 'ferimento-critico';
+  if (pvCurrent < pvMax) return 'ferimento-direto';
+  return 'normal';
+}
+
+// ─── Dado de Vulnerabilidade ────────────────────────────────
+
+/**
+ * Steps down the vulnerability die by one level.
+ * d20 → d12 → d10 → d8 → d6 → d4
+ * If already at d4, stays at d4.
+ *
+ * @param currentDie - Current vulnerability die size
+ * @returns Next smaller die size
+ *
+ * @example
+ * stepDownVulnerabilityDie('d20'); // 'd12'
+ * stepDownVulnerabilityDie('d4');  // 'd4' (cannot go lower)
+ */
+export function stepDownVulnerabilityDie(
+  currentDie: VulnerabilityDieSize
+): VulnerabilityDieSize {
+  const currentIndex = VULNERABILITY_DIE_STEPS.indexOf(currentDie);
+  if (
+    currentIndex === -1 ||
+    currentIndex >= VULNERABILITY_DIE_STEPS.length - 1
+  ) {
+    return 'd4'; // Already at minimum or invalid
+  }
+  return VULNERABILITY_DIE_STEPS[currentIndex + 1];
+}
+
+/**
+ * Resets the vulnerability die to d20 (start of combat or after Ferimento Crítico).
+ *
+ * @returns The default (largest) vulnerability die
+ */
+export function resetVulnerabilityDie(): VulnerabilityDieSize {
+  return 'd20';
 }
 
 /**
@@ -77,12 +304,12 @@ export function calculateSkillModifier(
 
 /**
  * Calculates the carry capacity for a character
- * Formula: 5 + (Força × 5)
- * Result is in "Peso" units (RPG measurement)
+ * Formula: 5 + (Corpo × 5)
+ * Result is in "Espaço" units (RPG measurement)
  *
- * @param forca - The Força (Strength) attribute value
+ * @param corpo - The Corpo (Body) attribute value
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
- * @returns The total carry capacity in "Peso" units
+ * @returns The total carry capacity in "Espaço" units
  *
  * @example
  * calculateCarryCapacity(1); // 10 (5 + 1 × 5)
@@ -90,17 +317,17 @@ export function calculateSkillModifier(
  * calculateCarryCapacity(2, 5); // 20 (5 + 2 × 5 + 5)
  */
 export function calculateCarryCapacity(
-  forca: number,
+  corpo: number,
   otherBonuses: number = 0
 ): number {
-  return 5 + forca * 5 + otherBonuses;
+  return 5 + corpo * 5 + otherBonuses;
 }
 
 /**
  * Calculates the maximum number of rounds a character can stay in "Morrendo" (Dying) state
- * Formula: 2 + Constituição + outros modificadores
+ * Formula: 2 + Corpo + outros modificadores
  *
- * @param constituicao - The Constituição (Constitution) attribute value
+ * @param corpo - The Corpo (Body) attribute value
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
  * @returns The maximum number of rounds before death
  *
@@ -110,18 +337,18 @@ export function calculateCarryCapacity(
  * calculateMaxDyingRounds(2, 1); // 5 (2 + 2 + 1)
  */
 export function calculateMaxDyingRounds(
-  constituicao: number,
+  corpo: number,
   otherBonuses: number = 0
 ): number {
-  return 2 + constituicao + otherBonuses;
+  return 2 + corpo + otherBonuses;
 }
 
 /**
  * Calculates the maximum PP (Power Points) a character can spend per round
- * Formula: Nível do Personagem + Presença + outros modificadores
+ * Formula: Nível do Personagem + Essência + outros modificadores
  *
  * @param characterLevel - The character's current level
- * @param presenca - The Presença (Presence) attribute value
+ * @param essencia - The Essência (Essence) attribute value
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
  * @returns The maximum PP that can be spent in a single round
  *
@@ -132,37 +359,39 @@ export function calculateMaxDyingRounds(
  */
 export function calculatePPPerRound(
   characterLevel: number,
-  presenca: number,
+  essencia: number,
   otherBonuses: number = 0
 ): number {
-  return characterLevel + presenca + otherBonuses;
+  return characterLevel + essencia + otherBonuses;
 }
 
 /**
- * Calculates the Signature Ability bonus based on character level
- * For combat skills: Level ÷ 3 (minimum 1, round down)
- * For non-combat skills: Level
+ * Calculates the Signature Ability dice bonus based on character level
+ *
+ * Formula: Math.min(3, Math.ceil(level / 5))
+ * - Level 1-5: +1d
+ * - Level 6-10: +2d
+ * - Level 11-15: +3d
+ *
+ * No combat/non-combat distinction in v0.0.2.
  *
  * @param characterLevel - The character's current level
- * @param isCombatSkill - Whether the skill is a combat skill
- * @returns The bonus to add to the skill modifier
+ * @param _isCombatSkill - @deprecated Ignored in v0.0.2 (kept for backward compat)
+ * @returns The number of bonus dice (+Xd) to add to the skill pool
  *
  * @example
- * calculateSignatureAbilityBonus(1, false); // 1
- * calculateSignatureAbilityBonus(5, false); // 5
- * calculateSignatureAbilityBonus(1, true); // 1 (1 ÷ 3 = 0.33, min 1)
- * calculateSignatureAbilityBonus(3, true); // 1 (3 ÷ 3 = 1)
- * calculateSignatureAbilityBonus(9, true); // 3 (9 ÷ 3 = 3)
+ * calculateSignatureAbilityBonus(1); // 1 (+1d)
+ * calculateSignatureAbilityBonus(5); // 1 (+1d)
+ * calculateSignatureAbilityBonus(6); // 2 (+2d)
+ * calculateSignatureAbilityBonus(10); // 2 (+2d)
+ * calculateSignatureAbilityBonus(11); // 3 (+3d)
+ * calculateSignatureAbilityBonus(15); // 3 (+3d)
  */
 export function calculateSignatureAbilityBonus(
   characterLevel: number,
-  isCombatSkill: boolean
+  _isCombatSkill?: boolean
 ): number {
-  if (isCombatSkill) {
-    const bonus = roundDown(characterLevel / 3);
-    return Math.max(bonus, 1); // minimum 1
-  }
-  return characterLevel;
+  return Math.min(3, Math.ceil(characterLevel / 5));
 }
 
 /**
@@ -199,26 +428,34 @@ export function calculateTotalSkillModifier(
 }
 
 /**
- * Calculates HP recovery from a Descanso (Rest) using the Dormir (Sleep) action
- * Formula: Nível do Personagem × Constituição + outros modificadores
+ * Calculates GA recovery from a Descanso (Rest) using the Dormir (Sleep) action
+ * Formula: Nível do Personagem × Corpo + outros modificadores
+ *
+ * In v0.0.2, this restores Guard Points (GA), not HP.
  *
  * @param characterLevel - The character's current level
- * @param constituicao - The Constituição (Constitution) attribute value
+ * @param corpo - The Corpo (Body) attribute value
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
- * @returns The amount of HP recovered
+ * @returns The amount of GA recovered
  *
  * @example
- * calculateRestHPRecovery(1, 2); // 2 (1 × 2)
- * calculateRestHPRecovery(5, 3); // 15 (5 × 3)
- * calculateRestHPRecovery(3, 2, 5); // 11 (3 × 2 + 5)
+ * calculateRestGARecovery(1, 2); // 2 (1 × 2)
+ * calculateRestGARecovery(5, 3); // 15 (5 × 3)
+ * calculateRestGARecovery(3, 2, 5); // 11 (3 × 2 + 5)
  */
-export function calculateRestHPRecovery(
+export function calculateRestGARecovery(
   characterLevel: number,
-  constituicao: number,
+  corpo: number,
   otherBonuses: number = 0
 ): number {
-  return characterLevel * constituicao + otherBonuses;
+  return characterLevel * corpo + otherBonuses;
 }
+
+/**
+ * @deprecated Substituído por calculateRestGARecovery em v0.0.2.
+ * Mantido para compatibilidade.
+ */
+export const calculateRestHPRecovery = calculateRestGARecovery;
 
 /**
  * Calculates the number of additional languages known based on Mente attribute
@@ -288,9 +525,9 @@ export function calculateMaxLift(carryCapacity: number): number {
 
 /**
  * Calculates the spell difficulty class (ND) for a character's spells
- * Formula: 12 + Presença + Habilidade de Conjuração + Bônus de ND
+ * Formula: 12 + Essência + Habilidade de Conjuração + Bônus de ND
  *
- * @param presenca - The Presença (Presence) attribute value
+ * @param essencia - The Essência (Essence) attribute value
  * @param spellcastingSkillModifier - The modifier from the spellcasting skill (Arcano, Religião, etc.)
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
  * @returns The spell difficulty class
@@ -300,18 +537,18 @@ export function calculateMaxLift(carryCapacity: number): number {
  * calculateSpellDC(3, 6, 2); // 23 (12 + 3 + 6 + 2)
  */
 export function calculateSpellDC(
-  presenca: number,
+  essencia: number,
   spellcastingSkillModifier: number,
   otherBonuses: number = 0
 ): number {
-  return 12 + presenca + spellcastingSkillModifier + otherBonuses;
+  return 12 + essencia + spellcastingSkillModifier + otherBonuses;
 }
 
 /**
  * Calculates the spell attack bonus for a character
- * Formula: Presença + Habilidade de Conjuração + Bônus de Ataque
+ * Formula: Essência + Habilidade de Conjuração + Bônus de Ataque
  *
- * @param presenca - The Presença (Presence) attribute value
+ * @param essencia - The Essência (Essence) attribute value
  * @param spellcastingSkillModifier - The modifier from the spellcasting skill (Arcano, Religião, etc.)
  * @param otherBonuses - Additional bonuses from abilities, equipment, etc. (default: 0)
  * @returns The spell attack bonus
@@ -321,11 +558,11 @@ export function calculateSpellDC(
  * calculateSpellAttackBonus(3, 6, 2); // 11 (3 + 6 + 2)
  */
 export function calculateSpellAttackBonus(
-  presenca: number,
+  essencia: number,
   spellcastingSkillModifier: number,
   otherBonuses: number = 0
 ): number {
-  return presenca + spellcastingSkillModifier + otherBonuses;
+  return essencia + spellcastingSkillModifier + otherBonuses;
 }
 
 /**
@@ -375,6 +612,9 @@ export function getEncumbranceState(
 /**
  * Applies damage to Health Points prioritizing temporary HP first.
  * When adding (healing), only current HP increases; temporary does not auto-recover.
+ *
+ * @deprecated Use applyDamageToGuardVitality + healGuard for v0.0.2.
+ * Kept for backward compatibility with any remaining HP-based code.
  *
  * @param hp - Current HP object { max, current, temporary }
  * @param delta - Negative for damage, positive for healing
@@ -503,4 +743,84 @@ export function calculateCraftModifier(
 ): number {
   const multiplier = getCraftMultiplier(level);
   return attributeValue * multiplier + otherModifiers;
+}
+
+// ─── Cálculos de Arquétipo / Progressão ─────────────────────
+
+import type { Archetype, ArchetypeName } from '@/types/character';
+import type { Attributes } from '@/types/attributes';
+import {
+  ARCHETYPE_GA_ATTRIBUTE,
+  ARCHETYPE_PP_BASE_PER_LEVEL,
+} from '@/constants/archetypes';
+
+/**
+ * Calcula GA máximo total baseado nos arquétipos do personagem.
+ * Fórmula: 15 (base) + Σ(valor_atributo_do_arquétipo × níveis_nesse_arquétipo) + modificadores
+ *
+ * @param archetypes - Lista de arquétipos do personagem com seus níveis
+ * @param attributes - Atributos atuais do personagem
+ * @param otherModifiers - Bônus/penalidades adicionais (itens, efeitos, etc.)
+ * @returns GA máximo total
+ *
+ * @example
+ * // Combatente nível 3, Corpo=3: 15 + (3 × 3) = 24
+ * calculateTotalGA([{ name: 'combatente', level: 3, features: [] }], { corpo: 3, ... }, 0);
+ */
+export function calculateTotalGA(
+  archetypes: Archetype[],
+  attributes: Attributes,
+  otherModifiers: number = 0
+): number {
+  const BASE_GA = 15;
+  let gaFromArchetypes = 0;
+
+  for (const archetype of archetypes) {
+    const attrKey = ARCHETYPE_GA_ATTRIBUTE[archetype.name];
+    const attrValue = attributes[attrKey] ?? 0;
+    gaFromArchetypes += attrValue * archetype.level;
+  }
+
+  return BASE_GA + gaFromArchetypes + otherModifiers;
+}
+
+/**
+ * Calcula PP máximo total baseado nos arquétipos do personagem.
+ * Fórmula: 2 (base) + Σ((base_pp_arquétipo + Essência) × níveis_nesse_arquétipo) + modificadores
+ *
+ * @param archetypes - Lista de arquétipos do personagem com seus níveis
+ * @param essencia - Valor do atributo Essência
+ * @param otherModifiers - Bônus/penalidades adicionais
+ * @returns PP máximo total
+ *
+ * @example
+ * // Feiticeiro nível 3, Essência=2: 2 + (5+2) × 3 = 23
+ * calculateTotalPP([{ name: 'feiticeiro', level: 3, features: [] }], 2, 0);
+ */
+export function calculateTotalPP(
+  archetypes: Archetype[],
+  essencia: number,
+  otherModifiers: number = 0
+): number {
+  const BASE_PP = 2;
+  let ppFromArchetypes = 0;
+
+  for (const archetype of archetypes) {
+    const basePP = ARCHETYPE_PP_BASE_PER_LEVEL[archetype.name] ?? 0;
+    ppFromArchetypes += (basePP + essencia) * archetype.level;
+  }
+
+  return BASE_PP + ppFromArchetypes + otherModifiers;
+}
+
+/**
+ * Calcula PV máximo baseado na GA total.
+ * Reutiliza calculateVitality(gaMax) existente.
+ * Fórmula: floor(GA_max / 3)
+ *
+ * @param gaMax - GA máximo calculado
+ * @returns PV máximo
+ */
+export function calculateTotalPV(gaMax: number): number {
+  return calculateVitality(gaMax);
 }

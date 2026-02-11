@@ -16,8 +16,11 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
   PHYSICAL_ATTRIBUTES,
   MENTAL_ATTRIBUTES,
+  SPIRITUAL_ATTRIBUTES,
   ATTRIBUTE_ABBREVIATIONS,
 } from '@/constants';
+import type { DicePenaltyMap } from '@/utils/conditionEffects';
+import { getDicePenaltyForAttribute } from '@/utils/conditionEffects';
 import type { Attributes, AttributeName } from '@/types';
 
 export interface AttributesDisplayProps {
@@ -30,6 +33,11 @@ export interface AttributesDisplayProps {
    * Callback quando um atributo é clicado (para abrir sidebar)
    */
   onAttributeClick?: (attribute: AttributeName) => void;
+
+  /**
+   * Penalidades de dados de condições ativas (opcional)
+   */
+  conditionPenalties?: DicePenaltyMap;
 }
 
 /**
@@ -39,20 +47,25 @@ interface CompactAttributeCardProps {
   name: AttributeName;
   value: number;
   onClick?: () => void;
+  /** Penalidade de dados de condições ativas */
+  dicePenalty?: number;
 }
 
 function CompactAttributeCard({
   name,
   value,
   onClick,
+  dicePenalty = 0,
 }: CompactAttributeCardProps) {
   const isZero = value === 0;
   const isAboveDefault = value > 5;
+  const hasPenalty = dicePenalty < 0;
 
-  // Determine tooltip text based on value
+  // Determine tooltip text based on value (d6 pool system)
+  const penaltyText = hasPenalty ? ` (${dicePenalty}d de condições)` : '';
   const tooltipText = isZero
-    ? 'Rola 2d20, usa menor'
-    : `Rola ${value}d20, usa maior`;
+    ? `Rola 2d6, usa menor${penaltyText}`
+    : `Rola ${value}d6${penaltyText}`;
 
   return (
     <Tooltip title={tooltipText} arrow enterDelay={150}>
@@ -64,6 +77,7 @@ function CompactAttributeCard({
           borderWidth: 1,
           borderStyle: 'solid',
           minWidth: 70,
+          height: 88,
           flex: 1,
           '&:hover': onClick
             ? {
@@ -107,15 +121,31 @@ function CompactAttributeCard({
               />
             )}
           </Box>
+
+          {/* Condition penalty indicator */}
+          {hasPenalty && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'error.main',
+                fontWeight: 700,
+                fontSize: '0.65rem',
+                lineHeight: 1,
+              }}
+            >
+              {dicePenalty}d
+            </Typography>
+          )}
         </CardContent>
       </Card>
     </Tooltip>
   );
 }
 
-// Atributos corporais (primeiros 3) e mentais (últimos 3)
+// Grupos de atributos por categoria
 const CORPORAIS_ATTRIBUTES: AttributeName[] = PHYSICAL_ATTRIBUTES;
 const MENTAIS_ATTRIBUTES: AttributeName[] = MENTAL_ATTRIBUTES;
+const ESPIRITUAIS_ATTRIBUTES: AttributeName[] = SPIRITUAL_ATTRIBUTES;
 
 /**
  * Display de Atributos do Personagem (Versão Compacta)
@@ -137,6 +167,7 @@ const MENTAIS_ATTRIBUTES: AttributeName[] = MENTAL_ATTRIBUTES;
 export const AttributesDisplay = React.memo(function AttributesDisplay({
   attributes,
   onAttributeClick,
+  conditionPenalties,
 }: AttributesDisplayProps) {
   return (
     <Paper
@@ -166,8 +197,8 @@ export const AttributesDisplay = React.memo(function AttributesDisplay({
           title={
             <Typography variant="body2">
               <strong>Dica:</strong> Atributos vão de 0-5 (podem ser superados).
-              Com 0, rola 2d20 e usa o menor. Com 1-5, rola essa quantidade de
-              d20 e usa o maior. Clique em um atributo para editar.
+              Com 0, rola 2d6 e usa o menor. Com 1+, rola essa quantidade de d6
+              e conta sucessos (≥6). Clique em um atributo para editar.
             </Typography>
           }
           arrow
@@ -205,6 +236,11 @@ export const AttributesDisplay = React.memo(function AttributesDisplay({
                 onClick={
                   onAttributeClick ? () => onAttributeClick(attr) : undefined
                 }
+                dicePenalty={
+                  conditionPenalties
+                    ? getDicePenaltyForAttribute(conditionPenalties, attr)
+                    : undefined
+                }
               />
             ))}
           </Box>
@@ -236,6 +272,11 @@ export const AttributesDisplay = React.memo(function AttributesDisplay({
                 onClick={
                   onAttributeClick ? () => onAttributeClick(attr) : undefined
                 }
+                dicePenalty={
+                  conditionPenalties
+                    ? getDicePenaltyForAttribute(conditionPenalties, attr)
+                    : undefined
+                }
               />
             ))}
           </Box>
@@ -251,6 +292,42 @@ export const AttributesDisplay = React.memo(function AttributesDisplay({
             }}
           >
             Mentais
+          </Typography>
+        </Box>
+
+        {/* Grupo Espirituais (ESS, INS) */}
+        <Box
+          sx={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 0.5 }}
+        >
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {ESPIRITUAIS_ATTRIBUTES.map((attr) => (
+              <CompactAttributeCard
+                key={attr}
+                name={attr}
+                value={attributes[attr]}
+                onClick={
+                  onAttributeClick ? () => onAttributeClick(attr) : undefined
+                }
+                dicePenalty={
+                  conditionPenalties
+                    ? getDicePenaltyForAttribute(conditionPenalties, attr)
+                    : undefined
+                }
+              />
+            ))}
+          </Box>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              textAlign: 'center',
+              fontWeight: 600,
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+              fontSize: '0.65rem',
+            }}
+          >
+            Espirituais
           </Typography>
         </Box>
       </Box>

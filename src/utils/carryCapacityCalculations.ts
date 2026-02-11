@@ -4,12 +4,14 @@
  * Funções utilitárias para calcular capacidade de carga do personagem,
  * estados de encumbrance, capacidade de empurrar/levantar, e peso de moedas.
  *
- * Fórmula base: 5 + (Força × 5) + sizeModifier + otherModifiers
+ * Fórmula base: 5 + (Corpo × 5) + sizeModifier + otherModifiers
+ * Empurrar: 10 × Corpo (mínimo 5)
+ * Levantar: 5 × Corpo (mínimo 2)
  *
  * Estados de carga:
- * - Normal: peso ≤ capacidade máxima
- * - Sobrecarregado: peso > capacidade máxima E ≤ 2× capacidade máxima
- * - Imobilizado: peso > 2× capacidade máxima
+ * - Normal: espaço ≤ capacidade máxima
+ * - Sobrecarregado: espaço > capacidade máxima E ≤ 2× capacidade máxima
+ * - Imobilizado: espaço > 2× capacidade máxima
  */
 
 import type {
@@ -34,7 +36,7 @@ export type EncumbranceState = 'normal' | 'sobrecarregado' | 'imobilizado';
  * Resultado completo do cálculo de capacidade de carga
  */
 export interface CarryCapacityResult {
-  /** Capacidade base (5 + Força × 5) */
+  /** Capacidade base (5 + Corpo × 5) */
   base: number;
   /** Modificador de tamanho aplicado */
   sizeModifier: number;
@@ -51,13 +53,13 @@ export interface CarryCapacityResult {
 /**
  * Calcula a capacidade de carga base
  *
- * Fórmula: 5 + (Força × 5)
+ * Fórmula: 5 + (Corpo × 5)
  *
- * @param forca - Valor do atributo Força (0-5, podendo exceder)
+ * @param corpo - Valor do atributo Corpo (0-5, podendo exceder)
  * @returns Capacidade de carga base
  */
-export function calculateBaseCarryCapacity(forca: number): number {
-  return BASE_CARRYING_CAPACITY + forca * STRENGTH_CARRY_MULTIPLIER;
+export function calculateBaseCarryCapacity(corpo: number): number {
+  return BASE_CARRYING_CAPACITY + corpo * STRENGTH_CARRY_MULTIPLIER;
 }
 
 /**
@@ -74,44 +76,44 @@ export function getSizeCarryModifier(size: CreatureSize): number {
 /**
  * Calcula a capacidade de carga total
  *
- * Fórmula: 5 + (Força × 5) + sizeModifier + otherModifiers
+ * Fórmula: 5 + (Corpo × 5) + sizeModifier + otherModifiers
  *
- * @param forca - Valor do atributo Força
+ * @param corpo - Valor do atributo Corpo
  * @param sizeModifier - Modificador de tamanho (aditivo)
  * @param otherModifiers - Outros modificadores (itens, habilidades)
  * @returns Capacidade de carga total
  */
 export function calculateCarryCapacity(
-  forca: number,
+  corpo: number,
   sizeModifier: number = 0,
   otherModifiers: number = 0
 ): number {
-  const base = calculateBaseCarryCapacity(forca);
+  const base = calculateBaseCarryCapacity(corpo);
   return Math.max(0, Math.floor(base + sizeModifier + otherModifiers));
 }
 
 /**
  * Calcula a capacidade de empurrar
  *
- * Regra: 2× a capacidade máxima
+ * Regra v0.0.2: 10 × Corpo (mínimo 5)
  *
- * @param maxCapacity - Capacidade de carga máxima
- * @returns Capacidade de empurrar
+ * @param corpo - Valor do atributo Corpo
+ * @returns Capacidade de empurrar em espaços
  */
-export function calculatePushCapacity(maxCapacity: number): number {
-  return Math.floor(maxCapacity * 2);
+export function calculatePushCapacity(corpo: number): number {
+  return Math.max(5, 10 * corpo);
 }
 
 /**
  * Calcula a capacidade de levantar
  *
- * Regra: 0.5× a capacidade máxima (arredondado para baixo)
+ * Regra v0.0.2: 5 × Corpo (mínimo 2)
  *
- * @param maxCapacity - Capacidade de carga máxima
- * @returns Capacidade de levantar
+ * @param corpo - Valor do atributo Corpo
+ * @returns Capacidade de levantar em espaços
  */
-export function calculateLiftCapacity(maxCapacity: number): number {
-  return Math.floor(maxCapacity * 0.5);
+export function calculateLiftCapacity(corpo: number): number {
+  return Math.max(2, 5 * corpo);
 }
 
 /**
@@ -256,34 +258,34 @@ export function calculateTotalWeight(
 /**
  * Calcula a capacidade de carga completa do personagem
  *
- * @param forca - Valor do atributo Força
+ * @param corpo - Valor do atributo Corpo
  * @param size - Tamanho da criatura
  * @param otherModifiers - Outros modificadores
  * @returns Resultado completo do cálculo
  */
 export function calculateFullCarryCapacity(
-  forca: number,
+  corpo: number,
   size: CreatureSize,
   otherModifiers: number = 0
 ): CarryCapacityResult {
-  const base = calculateBaseCarryCapacity(forca);
+  const base = calculateBaseCarryCapacity(corpo);
   const sizeModifier = getSizeCarryModifier(size);
-  const total = calculateCarryCapacity(forca, sizeModifier, otherModifiers);
+  const total = calculateCarryCapacity(corpo, sizeModifier, otherModifiers);
 
   return {
     base,
     sizeModifier,
     otherModifiers,
     total,
-    pushCapacity: calculatePushCapacity(total),
-    liftCapacity: calculateLiftCapacity(total),
+    pushCapacity: calculatePushCapacity(corpo),
+    liftCapacity: calculateLiftCapacity(corpo),
   };
 }
 
 /**
  * Gera um objeto CarryingCapacity completo para o personagem
  *
- * @param forca - Valor do atributo Força
+ * @param corpo - Valor do atributo Corpo
  * @param size - Tamanho da criatura
  * @param items - Lista de itens do inventário
  * @param currency - Dados de moedas do personagem
@@ -291,15 +293,15 @@ export function calculateFullCarryCapacity(
  * @returns Objeto CarryingCapacity completo
  */
 export function generateCarryingCapacity(
-  forca: number,
+  corpo: number,
   size: CreatureSize,
   items: InventoryItem[],
   currency: Currency,
   otherModifiers: number = 0
 ): CarryingCapacity {
-  const base = calculateBaseCarryCapacity(forca);
+  const base = calculateBaseCarryCapacity(corpo);
   const sizeModifier = getSizeCarryModifier(size);
-  const total = calculateCarryCapacity(forca, sizeModifier, otherModifiers);
+  const total = calculateCarryCapacity(corpo, sizeModifier, otherModifiers);
   const currentWeight = calculateTotalWeight(items, currency);
 
   return {
@@ -310,8 +312,8 @@ export function generateCarryingCapacity(
     total,
     currentWeight,
     encumbranceState: getEncumbranceState(currentWeight, total),
-    pushLimit: calculatePushCapacity(total),
-    liftLimit: calculateLiftCapacity(total),
+    pushLimit: calculatePushCapacity(corpo),
+    liftLimit: calculateLiftCapacity(corpo),
   };
 }
 
@@ -320,7 +322,7 @@ export function generateCarryingCapacity(
  */
 export const ENCUMBRANCE_STATE_DESCRIPTIONS: Record<EncumbranceState, string> =
   {
-    normal: 'Peso normal - sem penalidades',
+    normal: 'Espaço normal - sem penalidades',
     sobrecarregado:
       'Sobrecarregado - deslocamento reduzido pela metade, desvantagem em testes físicos',
     imobilizado: 'Imobilizado - incapaz de se mover',

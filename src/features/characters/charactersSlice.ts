@@ -7,7 +7,20 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { Character } from '@/types';
+import type { ArchetypeName } from '@/types/character';
+import type { SpellType, SpellcastingData } from '@/types/spells';
+import { SPELL_CIRCLE_PF_COST } from '@/constants/spells';
+import type { SpellCircle } from '@/constants/spells';
 import { characterService } from '@/services/characterService';
+import {
+  needsMigration,
+  migrateCharacterV1toV2,
+  ensureCombatFields,
+} from '@/utils/characterMigration';
+import {
+  applyLevelUp,
+  type LevelUpSpecialGain,
+} from '@/utils/levelUpCalculations';
 
 /**
  * Estado da slice de personagens
@@ -50,20 +63,37 @@ function syncCharactersArray(state: CharactersState): void {
 
 /**
  * Thunk para carregar personagens do IndexedDB
- * Aplica migração automática para garantir ataque desarmado em todos os personagens
+ * Aplica migração v1→v2 (se necessário) e garante ataque desarmado em todos os personagens.
+ * Personagens migrados são persistidos de volta ao IndexedDB.
+ * Retorna { characters, migratedNames } para possibilitar notificação ao usuário.
  */
 export const loadCharacters = createAsyncThunk(
   'characters/loadCharacters',
   async () => {
     const characters = await characterService.getAll();
-    // Aplicar migração para garantir ataque desarmado
-    return characters.map((char) => characterService.ensureUnarmedAttack(char));
+    const migratedNames: string[] = [];
+
+    const processed = await Promise.all(
+      characters.map(async (char) => {
+        let c = char;
+        if (needsMigration(c)) {
+          c = migrateCharacterV1toV2(c);
+          migratedNames.push(c.name);
+          await characterService.update(c.id, c);
+        }
+        // Garantir campos de combate v0.0.2 (safety net)
+        c = ensureCombatFields(c);
+        return characterService.ensureUnarmedAttack(c);
+      })
+    );
+
+    return { characters: processed, migratedNames };
   }
 );
 
 /**
  * Thunk para carregar um único personagem por ID do IndexedDB
- * Aplica migração automática para garantir ataque desarmado
+ * Aplica migração v1→v2 (se necessário) e garante ataque desarmado.
  */
 export const loadCharacterById = createAsyncThunk(
   'characters/loadCharacterById',
@@ -72,8 +102,14 @@ export const loadCharacterById = createAsyncThunk(
     if (!character) {
       throw new Error(`Personagem com ID ${characterId} não encontrado`);
     }
-    // Aplicar migração para garantir ataque desarmado
-    return characterService.ensureUnarmedAttack(character);
+    let c = character;
+    if (needsMigration(c)) {
+      c = migrateCharacterV1toV2(c);
+      await characterService.update(c.id, c);
+    }
+    // Garantir campos de combate v0.0.2 (safety net)
+    c = ensureCombatFields(c);
+    return characterService.ensureUnarmedAttack(c);
   }
 );
 
@@ -326,6 +362,32 @@ const charactersSlice = createSlice({
     },
 
     /**
+     * Sobe o personagem de nível (Level Up)
+     *
+     * Aplica todos os ganhos do level up: nível, arquétipo, GA, PP, PV, XP,
+     * habilidades especiais, e progressão.
+     */
+    levelUp: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        archetypeName: ArchetypeName;
+        specialGains?: LevelUpSpecialGain[];
+      }>
+    ) => {
+      const { characterId, archetypeName, specialGains } = action.payload;
+      const character = state.entities[characterId];
+
+      if (!character) {
+        state.error = `Personagem com ID ${characterId} não encontrado`;
+        return;
+      }
+
+      applyLevelUp(character, archetypeName, specialGains ?? []);
+      state.error = null;
+    },
+
+    /**
      * Remove um ofício do personagem
      */
     removeCraft: (
@@ -347,6 +409,215 @@ const charactersSlice = createSlice({
       character.updatedAt = new Date().toISOString();
       state.error = null;
     },
+
+    // ─── Feitiços & Conjuração (Fase 6) ───────────────────────────
+
+    /**
+     * Toggle de conjurador — habilita/desabilita o sistema de PF
+     */
+    toggleCaster: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        isCaster: boolean;
+      }>
+    ) => {
+      const { characterId, isCaster } = action.payload;
+      const character = state.entities[characterId];
+      if (!character) {
+        state.error = `Personagem com ID ${characterId} não encontrado`;
+        return;
+      }
+
+      const defaultSpellcasting: SpellcastingData = {
+        isCaster: false,
+        spellPoints: { current: 0, max: 0 },
+        knownSpells: [],
+        maxKnownSpells: 0,
+        knownSpellsModifiers: 0,
+        spellcastingAbilities: [],
+        masteredMatrices: [],
+      };
+
+      character.spellcasting = {
+        ...(character.spellcasting || defaultSpellcasting),
+        isCaster,
+        spellPoints: {
+          current: 0,
+          max: isCaster ? (character.spellcasting?.spellPoints?.max ?? 0) : 0,
+        },
+      };
+
+      if (!isCaster) {
+        character.spellcasting.castingSkill = undefined;
+      }
+
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
+
+    /**
+     * Define a habilidade de conjuração principal
+     */
+    setCastingSkill: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        castingSkill: SpellType;
+      }>
+    ) => {
+      const { characterId, castingSkill } = action.payload;
+      const character = state.entities[characterId];
+      if (!character || !character.spellcasting) {
+        state.error = `Personagem com ID ${characterId} não encontrado ou não é conjurador`;
+        return;
+      }
+
+      character.spellcasting.castingSkill = castingSkill;
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
+
+    /**
+     * Gasta Pontos de Feitiço (PF) — também gasta PP no mesmo valor
+     * Bloqueia se PP insuficiente ou PP = 0
+     */
+    spendSpellPoints: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        amount: number;
+      }>
+    ) => {
+      const { characterId, amount } = action.payload;
+      const character = state.entities[characterId];
+      if (!character || !character.spellcasting) {
+        state.error = `Personagem com ID ${characterId} não encontrado ou não é conjurador`;
+        return;
+      }
+
+      const pp = character.combat.pp;
+      const pf = character.spellcasting.spellPoints;
+
+      // Verificações de bloqueio
+      if (pp.current <= 0) {
+        state.error = 'Esgotado — não pode conjurar com 0 PP';
+        return;
+      }
+      if (pp.current < amount) {
+        state.error = `PP insuficiente (atual: ${pp.current}, custo: ${amount})`;
+        return;
+      }
+      if (pf.current < amount) {
+        state.error = `PF insuficiente (atual: ${pf.current}, custo: ${amount})`;
+        return;
+      }
+
+      // Gastar PF e PP simultaneamente
+      character.spellcasting.spellPoints.current = Math.max(
+        0,
+        pf.current - amount
+      );
+      character.combat.pp.current = Math.max(0, pp.current - amount);
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
+
+    /**
+     * Gera Pontos de Feitiço (PF) — não gasta PP
+     * Usado por Canalizar Mana e final de turno
+     */
+    generateSpellPoints: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        amount: number;
+      }>
+    ) => {
+      const { characterId, amount } = action.payload;
+      const character = state.entities[characterId];
+      if (!character || !character.spellcasting) {
+        state.error = `Personagem com ID ${characterId} não encontrado ou não é conjurador`;
+        return;
+      }
+
+      const pf = character.spellcasting.spellPoints;
+      character.spellcasting.spellPoints.current = Math.min(
+        pf.max,
+        pf.current + amount
+      );
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
+
+    /**
+     * Reseta PF para 0 (início de combate)
+     */
+    resetSpellPoints: (
+      state,
+      action: PayloadAction<{ characterId: string }>
+    ) => {
+      const { characterId } = action.payload;
+      const character = state.entities[characterId];
+      if (!character || !character.spellcasting) {
+        state.error = `Personagem com ID ${characterId} não encontrado ou não é conjurador`;
+        return;
+      }
+
+      character.spellcasting.spellPoints.current = 0;
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
+
+    /**
+     * Lança feitiço por círculo — aplica custo de PF e PP
+     * 1º Círculo: 0 PF mas exige PP ≥ 1
+     */
+    castSpell: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        circle: SpellCircle;
+      }>
+    ) => {
+      const { characterId, circle } = action.payload;
+      const character = state.entities[characterId];
+      if (!character || !character.spellcasting) {
+        state.error = `Personagem com ID ${characterId} não encontrado ou não é conjurador`;
+        return;
+      }
+
+      const pp = character.combat.pp;
+      const pf = character.spellcasting.spellPoints;
+      const cost = SPELL_CIRCLE_PF_COST[circle];
+
+      // Verificações
+      if (pp.current <= 0) {
+        state.error = 'Esgotado — não pode conjurar com 0 PP';
+        return;
+      }
+
+      if (cost > 0) {
+        if (pf.current < cost) {
+          state.error = `PF insuficiente para ${circle}º Círculo (atual: ${pf.current}, custo: ${cost})`;
+          return;
+        }
+        if (pp.current < cost) {
+          state.error = `PP insuficiente para ${circle}º Círculo (atual: ${pp.current}, custo: ${cost})`;
+          return;
+        }
+        // Gastar PF e PP
+        character.spellcasting.spellPoints.current = Math.max(
+          0,
+          pf.current - cost
+        );
+        character.combat.pp.current = Math.max(0, pp.current - cost);
+      }
+      // 1º Círculo: 0 PF cost, mas PP ≥ 1 já verificado acima
+
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     // Load characters
@@ -358,7 +629,7 @@ const charactersSlice = createSlice({
       state.loading = false;
       state.entities = {};
       state.ids = [];
-      action.payload.forEach((character) => {
+      action.payload.characters.forEach((character) => {
         state.entities[character.id] = character;
         state.ids.push(character.id);
       });
@@ -499,9 +770,16 @@ export const {
   clearError,
   setCharacters,
   updateSignatureAbility,
+  levelUp,
   addCraft,
   updateCraft,
   removeCraft,
+  toggleCaster,
+  setCastingSkill,
+  spendSpellPoints,
+  generateSpellPoints,
+  resetSpellPoints,
+  castSpell,
 } = charactersSlice.actions;
 
 /**

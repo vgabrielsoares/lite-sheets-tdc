@@ -73,7 +73,7 @@ describe('SizeSidebar', () => {
       expect(screen.getAllByText('Dano Corpo-a-Corpo').length).toBeGreaterThan(
         0
       );
-      expect(screen.getAllByText('Defesa').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Guarda (GA)').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Manobras de Combate').length).toBeGreaterThan(
         0
       );
@@ -90,9 +90,9 @@ describe('SizeSidebar', () => {
 
       const modifiers = SIZE_MODIFIERS['colossal-1'];
 
-      // Verifica que existem modificadores positivos e negativos
-      expect(screen.getAllByText('+8').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('-8').length).toBeGreaterThan(0);
+      // Verifica que existem modificadores positivos e negativos em dados (v0.0.2)
+      expect(screen.getAllByText('+3d').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('-3d').length).toBeGreaterThan(0);
     });
   });
 
@@ -111,9 +111,10 @@ describe('SizeSidebar', () => {
         <SizeSidebar open={true} onClose={mockOnClose} currentSize="medio" />
       );
 
-      expect(screen.getByText('Peso Carregável')).toBeInTheDocument();
+      expect(screen.getByText('Espaço Carregável')).toBeInTheDocument();
       // carryingCapacity é aditivo (0 para medio), formatado como modificador
-      expect(screen.getByText('×0 (reduzido)')).toBeInTheDocument();
+      // Aparece na sidebar E na tabela de referência
+      expect(screen.getAllByText('0 (normal)').length).toBeGreaterThan(0);
     });
 
     it('deve exibir modificador de carga reduzido para tamanho pequeno', () => {
@@ -122,7 +123,8 @@ describe('SizeSidebar', () => {
       );
 
       // carryingCapacity para pequeno é -2 (aditivo)
-      expect(screen.getByText('×-2 (reduzido)')).toBeInTheDocument();
+      // Aparece na sidebar E na tabela de referência
+      expect(screen.getAllByText('-2 espaços').length).toBeGreaterThan(0);
     });
 
     it('deve exibir modificador de carga aumentado para tamanho grande', () => {
@@ -131,7 +133,8 @@ describe('SizeSidebar', () => {
       );
 
       // carryingCapacity para grande é 2 (aditivo)
-      expect(screen.getByText('×2 (aumentado)')).toBeInTheDocument();
+      // Aparece na sidebar E na tabela de referência
+      expect(screen.getAllByText('+2 espaços').length).toBeGreaterThan(0);
     });
   });
 
@@ -141,8 +144,9 @@ describe('SizeSidebar', () => {
         <SizeSidebar open={true} onClose={mockOnClose} currentSize="medio" />
       );
 
+      // v0.0.2: título inclui "(em dados)"
       expect(
-        screen.getByText('Modificadores de Habilidades')
+        screen.getByText(/Modificadores de Habilidades/i)
       ).toBeInTheDocument();
       expect(screen.getByText('Acrobacia')).toBeInTheDocument();
       expect(screen.getByText('Atletismo')).toBeInTheDocument();
@@ -159,10 +163,12 @@ describe('SizeSidebar', () => {
       const modifiers = SIZE_MODIFIERS.pequeno;
 
       // Verifica que modificadores de habilidades estão presentes
+      // v0.0.2: título inclui "(em dados)", valores em formato +Xd
+      // pequeno: acrobacia:1, furtividade:1, reflexo:1 → "+1d"
       expect(
-        screen.getByText('Modificadores de Habilidades')
+        screen.getByText(/Modificadores de Habilidades/i)
       ).toBeInTheDocument();
-      expect(screen.getAllByText('+4').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('+1d').length).toBeGreaterThan(0);
     });
   });
 
@@ -194,7 +200,7 @@ describe('SizeSidebar', () => {
       // Verifica cabeçalhos principais da tabela
       expect(screen.getByText('Tamanho')).toBeInTheDocument();
       expect(screen.getAllByText('Dano').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('Defesa').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Guarda').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Carga').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Manobras').length).toBeGreaterThan(0);
     });
@@ -213,7 +219,7 @@ describe('SizeSidebar', () => {
         screen.getByText(/Distância que você pode atacar corpo-a-corpo/i)
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/Modificador aplicado à sua Defesa total/i)
+        screen.getByText(/Modificador aplicado ao seu GA máximo/i)
       ).toBeInTheDocument();
     });
 

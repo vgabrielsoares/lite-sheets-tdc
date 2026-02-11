@@ -278,7 +278,7 @@ describe('SpellDetailsSidebar', () => {
         />
       );
 
-      expect(screen.getByText('15 PP')).toBeInTheDocument();
+      expect(screen.getByText('20 PP')).toBeInTheDocument();
     });
   });
 

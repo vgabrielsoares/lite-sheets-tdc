@@ -16,6 +16,12 @@ import {
 } from '@mui/material';
 import { GitHub as GitHubIcon, Lock as LockIcon } from '@mui/icons-material';
 
+import {
+  APP_VERSION,
+  RULEBOOK_VERSION,
+  SYSTEM_NAME,
+} from '@/constants/version';
+
 /**
  * Footer da aplicação
  *
@@ -67,7 +73,7 @@ export default function Footer() {
             <Typography variant="body2" color="text.secondary">
               Sistema de gerenciamento de fichas para
               <br />
-              Tabuleiro do Caos RPG
+              {SYSTEM_NAME}
             </Typography>
           </Box>
 
@@ -140,7 +146,7 @@ export default function Footer() {
           </Typography>
 
           <Typography variant="caption" color="text.secondary">
-            Versão 1.0.0-MVP1
+            v{APP_VERSION} • Livro v{RULEBOOK_VERSION}
           </Typography>
         </Box>
 

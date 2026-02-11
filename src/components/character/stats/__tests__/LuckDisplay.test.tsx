@@ -71,7 +71,7 @@ describe('LuckDisplay', () => {
       );
 
       // Fórmula aparece no Chip e na tabela de referência
-      const formulas = screen.getAllByText('1d20');
+      const formulas = screen.getAllByText('1d6');
       expect(formulas.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -84,7 +84,7 @@ describe('LuckDisplay', () => {
         />
       );
 
-      const formulas = screen.getAllByText('2d20');
+      const formulas = screen.getAllByText('2d6');
       expect(formulas.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -97,7 +97,7 @@ describe('LuckDisplay', () => {
         />
       );
 
-      const formulas = screen.getAllByText('2d20+2');
+      const formulas = screen.getAllByText('2d8');
       expect(formulas.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -110,7 +110,7 @@ describe('LuckDisplay', () => {
         />
       );
 
-      const formulas = screen.getAllByText('3d20+3');
+      const formulas = screen.getAllByText('3d8');
       expect(formulas.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -123,7 +123,7 @@ describe('LuckDisplay', () => {
         />
       );
 
-      const formulas = screen.getAllByText('3d20+6');
+      const formulas = screen.getAllByText('3d10');
       expect(formulas.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -136,7 +136,7 @@ describe('LuckDisplay', () => {
         />
       );
 
-      const formulas = screen.getAllByText('4d20+8');
+      const formulas = screen.getAllByText('4d10');
       expect(formulas.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -149,7 +149,7 @@ describe('LuckDisplay', () => {
         />
       );
 
-      const formulas = screen.getAllByText('4d20+12');
+      const formulas = screen.getAllByText('4d12');
       expect(formulas.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -162,7 +162,7 @@ describe('LuckDisplay', () => {
         />
       );
 
-      const formulas = screen.getAllByText('5d20+15');
+      const formulas = screen.getAllByText('5d12');
       expect(formulas.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -247,14 +247,14 @@ describe('LuckDisplay', () => {
 
   describe('Fórmulas de Rolagem', () => {
     const testCases = [
-      { level: 0, expected: '1d20' },
-      { level: 1, expected: '2d20' },
-      { level: 2, expected: '2d20+2' },
-      { level: 3, expected: '3d20+3' },
-      { level: 4, expected: '3d20+6' },
-      { level: 5, expected: '4d20+8' },
-      { level: 6, expected: '4d20+12' },
-      { level: 7, expected: '5d20+15' },
+      { level: 0, expected: '1d6' },
+      { level: 1, expected: '2d6' },
+      { level: 2, expected: '2d8' },
+      { level: 3, expected: '3d8' },
+      { level: 4, expected: '3d10' },
+      { level: 5, expected: '4d10' },
+      { level: 6, expected: '4d12' },
+      { level: 7, expected: '5d12' },
     ];
 
     testCases.forEach(({ level, expected }) => {
@@ -273,7 +273,7 @@ describe('LuckDisplay', () => {
       });
     });
 
-    it('deve calcular fórmula dinamicamente para níveis acima de 7', () => {
+    it('deve usar fórmula do nível máximo para níveis acima de 7', () => {
       render(
         <LuckDisplay
           luck={createLuck(8)}
@@ -282,8 +282,9 @@ describe('LuckDisplay', () => {
         />
       );
 
-      // Fórmula calculada: 8d20 + (8 * 3) = 8d20+24
-      expect(screen.getByText('8d20+24')).toBeInTheDocument();
+      // Níveis acima de 7 usam a fórmula do nível máximo (7): 5d12
+      const formulas = screen.getAllByText('5d12');
+      expect(formulas.length).toBeGreaterThanOrEqual(1);
     });
   });
 

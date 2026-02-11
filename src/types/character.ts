@@ -21,6 +21,9 @@ import type { Skills, SkillName } from './skills';
 import type { CombatData } from './combat';
 import type { Inventory } from './inventory';
 import type { SpellcastingData } from './spells';
+import type { ResourceDie } from './resources';
+import type { SpecialAbility } from './specialAbilities';
+import type { ProficiencyPurchaseRecord } from '@/constants/proficiencyPurchases';
 
 /**
  * Arquétipos disponíveis no sistema
@@ -358,6 +361,25 @@ export interface LevelProgression {
 }
 
 /**
+ * Registro histórico de cada level up realizado.
+ * Rastreia qual arquétipo foi escolhido e o ganho obtido em cada nível.
+ */
+export interface LevelHistoryEntry {
+  /** Nível do personagem ao fazer o level up */
+  level: number;
+  /** Arquétipo escolhido para este nível */
+  archetype: ArchetypeName;
+  /** Tipo de ganho recebido neste nível */
+  gainType: 'caracteristica' | 'poder_ou_talento' | 'competencia';
+  /** Nome do ganho (poder, talento, competência ou característica escolhida) */
+  gainName?: string;
+  /** Descrição do ganho */
+  gainDescription?: string;
+  /** Timestamp de quando o level up foi feito */
+  timestamp: string;
+}
+
+/**
  * Experiência (XP)
  */
 export interface Experience {
@@ -371,6 +393,10 @@ export interface Experience {
  * Interface principal do Character
  */
 export interface Character extends BaseEntity {
+  // Versão do Schema
+  /** Versão do schema da ficha (2 para v0.0.2+) */
+  schemaVersion: number;
+
   // Informações Básicas
   /** Nome do personagem */
   name: string;
@@ -438,12 +464,22 @@ export interface Character extends BaseEntity {
   extraLanguagesModifier: number;
   /** Proficiências */
   proficiencies: Proficiencies;
+  /** Proficiências compradas com pontos de atributo */
+  proficiencyPurchases: ProficiencyPurchaseRecord[];
 
   // Sorte e Ofícios
   /** Nível de sorte */
   luck: LuckLevel;
   /** Ofícios */
   crafts: Craft[];
+
+  // Recursos (Dados de Recurso)
+  /** Dados de recurso rastreados (água, comida, tochas, etc.) */
+  resources: ResourceDie[];
+
+  // Habilidades Especiais
+  /** Habilidades especiais de todas as fontes */
+  specialAbilities: SpecialAbility[];
 
   // Inventário
   /** Inventário completo */
@@ -474,6 +510,8 @@ export interface Character extends BaseEntity {
   // Progressão
   /** Progressão por nível */
   levelProgression: LevelProgression[];
+  /** Histórico de level ups realizados */
+  levelHistory: LevelHistoryEntry[];
 
   // Anotações
   /** Anotações do jogador */
@@ -484,20 +522,24 @@ export interface Character extends BaseEntity {
  * Valores padrão para um personagem de nível 1
  */
 export const DEFAULT_LEVEL_1_CHARACTER: Partial<Character> = {
+  schemaVersion: 2,
   level: 1,
   attributes: {
     agilidade: 1,
-    constituicao: 1,
-    forca: 1,
+    corpo: 1,
     influencia: 1,
     mente: 1,
-    presenca: 1,
+    essencia: 1,
+    instinto: 1,
   },
   combat: {
-    hp: {
+    guard: {
       current: 15,
       max: 15,
-      temporary: 0,
+    },
+    vitality: {
+      current: 5,
+      max: 5,
     },
     pp: {
       current: 2,
@@ -518,7 +560,7 @@ export const DEFAULT_LEVEL_1_CHARACTER: Partial<Character> = {
       {
         id: 'default-backpack',
         name: 'Mochila',
-        category: 'diversos',
+        category: 'miscelanea',
         quantity: 1,
         weight: 0,
         value: 0,
@@ -527,7 +569,7 @@ export const DEFAULT_LEVEL_1_CHARACTER: Partial<Character> = {
       {
         id: 'default-bank-card',
         name: 'Cartão do Banco',
-        category: 'diversos',
+        category: 'miscelanea',
         quantity: 1,
         weight: 0,
         value: 0,

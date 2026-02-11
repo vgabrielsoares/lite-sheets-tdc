@@ -236,8 +236,8 @@ export const characterService = {
         throw new Error('Nome do personagem é obrigatório');
       }
 
-      if (newCharacter.level < 1) {
-        throw new Error('Nível do personagem deve ser maior que 0');
+      if (newCharacter.level < 0) {
+        throw new Error('Nível do personagem não pode ser negativo');
       }
 
       // Adicionar ao banco
@@ -308,8 +308,8 @@ export const characterService = {
         throw new Error('Nome do personagem não pode ser vazio');
       }
 
-      if (updatedCharacter.level < 1) {
-        throw new Error('Nível do personagem deve ser maior que 0');
+      if (updatedCharacter.level < 0) {
+        throw new Error('Nível do personagem não pode ser negativo');
       }
 
       // Atualizar no banco
@@ -361,8 +361,8 @@ export const characterService = {
         throw new Error('Nome do personagem é obrigatório');
       }
 
-      if (character.level < 1) {
-        throw new Error('Nível do personagem deve ser maior que 0');
+      if (character.level < 0) {
+        throw new Error('Nível do personagem não pode ser negativo');
       }
 
       // Adicionar ao banco preservando todos os campos
@@ -668,7 +668,7 @@ export const characterService = {
       type: 'corpo-a-corpo' as const,
       attackSkill: 'luta' as const,
       attackSkillUseId: 'atacar',
-      attackAttribute: 'forca' as const,
+      attackAttribute: 'corpo' as const,
       attackBonus: 0,
       damageRoll: {
         quantity: 1,
@@ -686,6 +686,7 @@ export const characterService = {
       description:
         'Um ataque corpo a corpo desarmado usando punhos, chutes ou outras partes do corpo.',
       ppCost: 0,
+      actionCost: 2,
       actionType: 'maior' as const,
       numberOfAttacks: 1,
       addAttributeToDamage: true,

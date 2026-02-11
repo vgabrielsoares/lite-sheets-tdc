@@ -89,7 +89,7 @@ describe('Fluxo de Criação de Personagem (Integração)', () => {
     // Assert - Verificar que foi chamado com URL correta
     const callArgs = mockPush.mock.calls[0][0];
     // Fixed regex to allow 'test-uuid' from jest mock
-    expect(callArgs).toMatch(/^\/characters\/[\w-]+$/);
+    expect(callArgs).toMatch(/^\/characters\?id=[\w-]+$/);
 
     // Assert - Verificar persistência no IndexedDB
     const characters = await db.characters.toArray();
@@ -97,21 +97,20 @@ describe('Fluxo de Criação de Personagem (Integração)', () => {
 
     const savedCharacter = characters[0];
     expect(savedCharacter.name).toBe(characterName);
-    expect(savedCharacter.level).toBe(1);
-    expect(savedCharacter.combat.hp.max).toBe(15);
-    expect(savedCharacter.combat.hp.current).toBe(15);
-    expect(savedCharacter.combat.hp.temporary).toBe(0);
+    expect(savedCharacter.level).toBe(0);
+    expect(savedCharacter.combat.guard.max).toBe(15);
+    expect(savedCharacter.combat.guard.current).toBe(15);
     expect(savedCharacter.combat.pp.max).toBe(2);
     expect(savedCharacter.combat.pp.current).toBe(2);
     expect(savedCharacter.combat.pp.temporary).toBe(0);
 
     // Assert - Atributos em 1 (padrão)
     expect(savedCharacter.attributes.agilidade).toBe(1);
-    expect(savedCharacter.attributes.constituicao).toBe(1);
-    expect(savedCharacter.attributes.forca).toBe(1);
+    expect(savedCharacter.attributes.corpo).toBe(1);
     expect(savedCharacter.attributes.influencia).toBe(1);
     expect(savedCharacter.attributes.mente).toBe(1);
-    expect(savedCharacter.attributes.presenca).toBe(1);
+    expect(savedCharacter.attributes.essencia).toBe(1);
+    expect(savedCharacter.attributes.instinto).toBe(1);
 
     // Assert - Idioma Comum presente
     expect(savedCharacter.languages).toContain('comum');
@@ -241,9 +240,9 @@ describe('Fluxo de Criação de Personagem (Integração)', () => {
     const cancelButton = screen.getByRole('button', { name: /cancelar/i });
     fireEvent.click(cancelButton);
 
-    // Assert - Deve ter navegado para home
+    // Assert - Deve ter navegado para lista de fichas
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockPush).toHaveBeenCalledWith('/characters');
     });
 
     // Assert - Não deve ter salvo no IndexedDB

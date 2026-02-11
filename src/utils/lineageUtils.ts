@@ -81,9 +81,9 @@ export function validateAttributeModifier(
 }
 
 /**
- * Calcula capacidade de carga baseada em Força e modificadores de tamanho
+ * Calcula capacidade de carga baseada em Corpo e modificadores de tamanho
  *
- * @param strength - Valor do atributo Força
+ * @param strength - Valor do atributo Corpo
  * @param size - Tamanho da criatura
  * @param otherModifiers - Outros modificadores de carga
  * @returns Capacidade de carga total
@@ -135,13 +135,10 @@ export function createDefaultMovement(): Record<MovementType, number> {
 }
 
 /**
- * Calcula defesa baseada em agilidade e modificadores de tamanho
+ * @deprecated v0.0.2: Defesa agora é um teste ativo (Reflexo ou Vigor), não valor fixo.
+ * Use DefenseTest.tsx para exibição. Use `getGuardSizeModifier` para modificador de GA.
  *
- * @param agility - Valor do atributo Agilidade
- * @param size - Tamanho da criatura
- * @param armorBonus - Bônus de armadura
- * @param otherBonuses - Outros bônus de defesa
- * @returns Defesa total
+ * Calcula defesa baseada em agilidade e modificadores de tamanho (sistema antigo d20)
  */
 export function calculateDefense(
   agility: number,
@@ -155,11 +152,24 @@ export function calculateDefense(
 }
 
 /**
+ * Retorna o modificador de Guarda (GA) baseado no tamanho da criatura.
+ * v0.0.2: É um valor fixo adicionado/subtraído do GA máximo.
+ *
+ * @param size - Tamanho da criatura
+ * @returns Modificador de GA (positivo = mais GA, negativo = menos GA)
+ */
+export function getGuardSizeModifier(size: string): number {
+  const sizeModifiers = getSizeModifiers(size as any);
+  return sizeModifiers.guard;
+}
+
+/**
  * Aplica modificadores de tamanho a uma habilidade específica
+ * v0.0.2: Retorna modificador em DADOS (+Xd/-Xd), não numérico.
  *
  * @param skillName - Nome da habilidade
  * @param size - Tamanho da criatura
- * @returns Modificador de tamanho para a habilidade (0 se não aplicável)
+ * @returns Modificador de dados para a habilidade (0 se não aplicável)
  */
 export function getSizeModifierForSkill(
   skillName: string,

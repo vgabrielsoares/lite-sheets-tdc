@@ -11,6 +11,9 @@ import type { Character, LanguageName, SkillName } from '@/types';
 import {
   calculateAdditionalLanguages,
   calculateSkillProficiencies,
+  calculateTotalGA,
+  calculateTotalPP,
+  calculateTotalPV,
 } from './calculations';
 
 /**
@@ -186,12 +189,57 @@ export function handleAttributeChange(
   attribute: string,
   newValue: number
 ): Partial<Character> {
-  const updates: Partial<Character> = {
-    attributes: {
-      ...character.attributes,
-      [attribute]: newValue,
-    },
+  const newAttributes = {
+    ...character.attributes,
+    [attribute]: newValue,
   };
+
+  const updates: Partial<Character> = {
+    attributes: newAttributes,
+  };
+
+  // Recalcular GA/PP/PV (dinâmicos com base nos atributos atuais)
+  if (character.archetypes.length > 0) {
+    const newGAMax = calculateTotalGA(character.archetypes, newAttributes);
+    const newPPMax = calculateTotalPP(
+      character.archetypes,
+      newAttributes.essencia
+    );
+    const newPVMax = calculateTotalPV(newGAMax);
+
+    const gaMaxDiff = newGAMax - character.combat.guard.max;
+    const ppMaxDiff = newPPMax - character.combat.pp.max;
+    const pvMaxDiff = newPVMax - character.combat.vitality.max;
+
+    updates.combat = {
+      ...character.combat,
+      guard: {
+        ...character.combat.guard,
+        max: newGAMax,
+        // Ajustar current proporcionalmente (não exceder max)
+        current: Math.min(
+          Math.max(0, character.combat.guard.current + gaMaxDiff),
+          newGAMax
+        ),
+      },
+      pp: {
+        ...character.combat.pp,
+        max: newPPMax,
+        current: Math.min(
+          Math.max(0, character.combat.pp.current + ppMaxDiff),
+          newPPMax
+        ),
+      },
+      vitality: {
+        ...character.combat.vitality,
+        max: newPVMax,
+        current: Math.min(
+          Math.max(0, character.combat.vitality.current + pvMaxDiff),
+          newPVMax
+        ),
+      },
+    };
+  }
 
   // Handle Mente-specific retroactive updates
   if (attribute === 'mente') {

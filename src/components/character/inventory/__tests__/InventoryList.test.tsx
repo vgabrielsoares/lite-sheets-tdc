@@ -14,7 +14,7 @@ import type { InventoryItem } from '@/types/inventory';
 const createItem = (overrides: Partial<InventoryItem> = {}): InventoryItem => ({
   id: `item-${Math.random().toString(36).substring(7)}`,
   name: 'Test Item',
-  category: 'diversos',
+  category: 'miscelanea',
   quantity: 1,
   weight: 2,
   value: 10,
@@ -78,7 +78,7 @@ describe('InventoryList', () => {
       render(<InventoryList items={items} onUpdate={mockOnUpdate} />);
 
       // 6 + 2 = 8
-      expect(screen.getByText('8 peso')).toBeInTheDocument();
+      expect(screen.getByText('8 espaço')).toBeInTheDocument();
     });
   });
 

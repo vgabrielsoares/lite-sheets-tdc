@@ -1,353 +1,399 @@
 /**
- * Testes para DiceRollHistory component
+ * Testes para DiceRollHistory (v0.0.2)
+ *
+ * Testa o componente de histórico de rolagens com os novos tipos:
+ * - DicePoolResult (rolagens de skill com sucessos)
+ * - DamageDiceRollResult (rolagens de dano)
+ * - CustomDiceResult (rolagens customizadas)
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import '@testing-library/jest-dom';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import { ThemeProvider } from '@mui/material/styles';
 import { DiceRollHistory } from '../DiceRollHistory';
-import * as diceRollerUtils from '@/utils/diceRoller';
-import type { DiceRollResult } from '@/utils/diceRoller';
+import { lightTheme } from '@/theme';
+import {
+  globalDiceHistory,
+  type DamageDiceRollResult,
+  type CustomDiceResult,
+} from '@/utils/diceRoller';
+import type { DicePoolResult } from '@/types';
 
-// Mock do módulo diceRoller
-let mockRolls: DiceRollResult[] = [];
+// ============================================================================
+// Test Wrapper
+// ============================================================================
 
-jest.mock('@/utils/diceRoller', () => ({
-  ...jest.requireActual('@/utils/diceRoller'),
-  globalDiceHistory: {
-    add: jest.fn(),
-    getAll: jest.fn(() => mockRolls),
-    clear: jest.fn(() => {
-      mockRolls = [];
-    }),
-    get size() {
-      return mockRolls.length;
-    },
-  },
-}));
+const renderWithTheme = (ui: React.ReactElement) => {
+  return render(<ThemeProvider theme={lightTheme}>{ui}</ThemeProvider>);
+};
+
+// ============================================================================
+// Mock Data Factories
+// ============================================================================
+
+const createMockDicePoolResult = (
+  overrides: Partial<DicePoolResult> = {}
+): DicePoolResult => ({
+  formula: '3d6',
+  dice: [
+    { value: 6, dieSize: 'd6', isSuccess: true, isCancellation: false },
+    { value: 3, dieSize: 'd6', isSuccess: false, isCancellation: false },
+    { value: 1, dieSize: 'd6', isSuccess: false, isCancellation: true },
+  ],
+  rolls: [6, 3, 1],
+  dieSize: 'd6',
+  diceCount: 3,
+  successes: 1,
+  cancellations: 1,
+  netSuccesses: 0,
+  timestamp: new Date(),
+  isPenaltyRoll: false,
+  diceModifier: 0,
+  ...overrides,
+});
+
+const createMockDamageDiceRollResult = (
+  overrides: Partial<DamageDiceRollResult> = {}
+): DamageDiceRollResult => ({
+  formula: '2d6+3',
+  rolls: [4, 5],
+  diceType: 6,
+  diceCount: 2,
+  modifier: 3,
+  baseResult: 9,
+  finalResult: 12,
+  timestamp: new Date(),
+  isDamageRoll: true,
+  isCritical: false,
+  ...overrides,
+});
+
+const createMockCustomDiceResult = (
+  overrides: Partial<CustomDiceResult> = {}
+): CustomDiceResult => ({
+  formula: '1d20+5',
+  rolls: [15],
+  diceType: 20,
+  diceCount: 1,
+  modifier: 5,
+  total: 20,
+  summed: true,
+  timestamp: new Date(),
+  ...overrides,
+});
+
+// ============================================================================
+// Test Suites
+// ============================================================================
 
 describe('DiceRollHistory', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockRolls = []; // Reset mock rolls before each test
-    // Restore default mock implementation
-    (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockImplementation(
-      () => mockRolls
-    );
+    // Limpa histórico antes de cada teste
+    globalDiceHistory.clear();
   });
-
-  const mockRoll1: DiceRollResult = {
-    formula: '1d20+5',
-    rolls: [15],
-    diceType: 20,
-    diceCount: 1,
-    modifier: 5,
-    baseResult: 15,
-    finalResult: 20,
-    timestamp: new Date('2024-12-08T10:30:00'),
-    rollType: 'normal',
-    context: 'Teste de Acrobacia',
-  };
-
-  const mockRoll2: DiceRollResult = {
-    formula: '2d6+3',
-    rolls: [4, 5],
-    diceType: 6,
-    diceCount: 2,
-    modifier: 3,
-    baseResult: 9,
-    finalResult: 12,
-    timestamp: new Date('2024-12-08T10:31:00'),
-    rollType: 'normal',
-    context: 'Dano de Espada',
-  };
-
-  const mockRoll3Critical: DiceRollResult = {
-    formula: '1d20+3',
-    rolls: [20],
-    diceType: 20,
-    diceCount: 1,
-    modifier: 3,
-    baseResult: 20,
-    finalResult: 23,
-    timestamp: new Date('2024-12-08T10:32:00'),
-    rollType: 'normal',
-    isCritical: true,
-    context: 'Ataque',
-  };
 
   describe('Estado Vazio', () => {
     it('deve exibir mensagem quando não há rolagens', () => {
-      render(<DiceRollHistory />);
+      renderWithTheme(<DiceRollHistory />);
 
       expect(screen.getByText(/nenhuma rolagem ainda/i)).toBeInTheDocument();
-      expect(
-        screen.getByText(/role os dados para começar/i)
-      ).toBeInTheDocument();
     });
 
     it('não deve exibir botão de limpar quando vazio', () => {
-      render(<DiceRollHistory />);
+      renderWithTheme(<DiceRollHistory />);
 
-      expect(
-        screen.queryByRole('button', { name: /limpar tudo/i })
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/limpar tudo/i)).not.toBeInTheDocument();
     });
   });
 
-  describe('Exibição de Histórico', () => {
-    it('deve exibir rolagens no histórico', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-        mockRoll2,
-      ]);
-
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/teste de acrobacia/i)).toBeInTheDocument();
-        expect(screen.getByText(/dano de espada/i)).toBeInTheDocument();
+  describe('Exibição de Histórico - Pool Results', () => {
+    it('deve exibir rolagem de pool com contexto', () => {
+      const mockRoll = createMockDicePoolResult({
+        context: 'Teste de Acrobacia',
+        netSuccesses: 2,
+        successes: 2,
+        cancellations: 0,
       });
+      globalDiceHistory.add(mockRoll);
+
+      renderWithTheme(<DiceRollHistory />);
+
+      // Verifica contexto
+      expect(screen.getByText(/teste de acrobacia/i)).toBeInTheDocument();
+      // Verifica resultado (2 sucessos)
+      expect(screen.getByText(/2✶/)).toBeInTheDocument();
     });
 
-    it('deve exibir fórmula e resultado de cada rolagem', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-      ]);
-
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/1d20\+5/)).toBeInTheDocument();
-        expect(screen.getByText('20')).toBeInTheDocument();
+    it('deve exibir rolagem de pool sem contexto', () => {
+      const mockRoll = createMockDicePoolResult({
+        formula: '4d8',
+        netSuccesses: 3,
       });
+      globalDiceHistory.add(mockRoll);
+
+      renderWithTheme(<DiceRollHistory />);
+
+      expect(screen.getByText('4d8')).toBeInTheDocument();
+      expect(screen.getByText(/3✶/)).toBeInTheDocument();
     });
 
-    it('deve exibir timestamp formatado', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-      ]);
-
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        // Timestamp deve estar presente (formato HH:MM:SS)
-        expect(screen.getByText(/\d{2}:\d{2}:\d{2}/)).toBeInTheDocument();
+    it('deve exibir 0 sucessos com cor de erro', () => {
+      const mockRoll = createMockDicePoolResult({
+        netSuccesses: 0,
+        successes: 1,
+        cancellations: 1,
       });
+      globalDiceHistory.add(mockRoll);
+
+      renderWithTheme(<DiceRollHistory />);
+
+      // Chip com 0✶ deve ter cor error
+      const chip = screen.getByText(/0✶/).closest('.MuiChip-root');
+      expect(chip).toHaveClass('MuiChip-colorError');
     });
 
-    it('deve exibir contador de rolagens', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-        mockRoll2,
-      ]);
-
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/histórico \(2\)/i)).toBeInTheDocument();
+    it('deve exibir rolagem com penalidade', () => {
+      const mockRoll = createMockDicePoolResult({
+        isPenaltyRoll: true,
+        context: 'Atributo 0',
       });
-    });
-  });
+      globalDiceHistory.add(mockRoll);
 
-  describe('Críticos e Falhas', () => {
-    it('deve destacar rolagem crítica', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll3Critical,
-      ]);
+      renderWithTheme(<DiceRollHistory />);
 
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        // Deve exibir chip com resultado em warning (dourado)
-        const chip = screen.getByText('23');
-        expect(chip).toBeInTheDocument();
-      });
+      expect(screen.getByText(/penalidade/i)).toBeInTheDocument();
     });
 
-    it('deve destacar rolagem de falha crítica', async () => {
-      const mockFailure: DiceRollResult = {
-        ...mockRoll1,
-        rolls: [1],
-        baseResult: 1,
-        finalResult: 6,
-        isCriticalFailure: true,
-      };
-
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockFailure,
-      ]);
-
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        // Deve exibir chip com resultado em error (vermelho)
-        const chip = screen.getByText('6');
-        expect(chip).toBeInTheDocument();
+    it('deve exibir sucessos altos com cor de sucesso', () => {
+      const mockRoll = createMockDicePoolResult({
+        netSuccesses: 4,
+        successes: 4,
+        cancellations: 0,
       });
+      globalDiceHistory.add(mockRoll);
+
+      renderWithTheme(<DiceRollHistory />);
+
+      const chip = screen.getByText(/4✶/).closest('.MuiChip-root');
+      expect(chip).toHaveClass('MuiChip-colorSuccess');
     });
   });
 
-  describe('Expansão de Detalhes', () => {
-    it('deve permitir expandir detalhes quando expandable é true', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-      ]);
-
-      const user = userEvent.setup();
-      render(<DiceRollHistory expandable={true} />);
-
-      await waitFor(() => {
-        expect(screen.getByLabelText(/expandir detalhes/i)).toBeInTheDocument();
+  describe('Exibição de Histórico - Damage Results', () => {
+    it('deve exibir rolagem de dano', () => {
+      const mockRoll = createMockDamageDiceRollResult({
+        formula: '3d8+2',
+        finalResult: 18,
       });
+      globalDiceHistory.add(mockRoll);
 
-      const expandButton = screen.getByLabelText(/expandir detalhes/i);
-      await user.click(expandButton);
+      renderWithTheme(<DiceRollHistory />);
 
-      await waitFor(() => {
-        expect(screen.getByText(/resultado final/i)).toBeInTheDocument();
-      });
+      expect(screen.getByText('3d8+2')).toBeInTheDocument();
+      expect(screen.getByText('18')).toBeInTheDocument();
     });
 
-    it('não deve exibir botão de expandir quando expandable é false', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-      ]);
-
-      render(<DiceRollHistory expandable={false} />);
-
-      await waitFor(() => {
-        expect(
-          screen.queryByLabelText(/expandir detalhes/i)
-        ).not.toBeInTheDocument();
+    it('deve exibir rolagem de dano crítico', () => {
+      const mockRoll = createMockDamageDiceRollResult({
+        formula: '2d6 MAXIMIZADO',
+        finalResult: 12,
+        isCritical: true,
       });
+      globalDiceHistory.add(mockRoll);
+
+      renderWithTheme(<DiceRollHistory />);
+
+      expect(screen.getByText(/maximizado/i)).toBeInTheDocument();
+      // Critical damage should have success color
+      const chip = screen.getByText('12').closest('.MuiChip-root');
+      expect(chip).toHaveClass('MuiChip-colorSuccess');
     });
 
-    it('deve alternar expansão ao clicar', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-      ]);
-
-      const user = userEvent.setup();
-      render(<DiceRollHistory expandable={true} />);
-
-      await waitFor(() => {
-        expect(screen.getByLabelText(/expandir detalhes/i)).toBeInTheDocument();
+    it('deve exibir dano com contexto', () => {
+      const mockRoll = createMockDamageDiceRollResult({
+        context: 'Espada Longa',
+        finalResult: 10,
       });
+      globalDiceHistory.add(mockRoll);
 
-      const expandButton = screen.getByLabelText(/expandir detalhes/i);
+      renderWithTheme(<DiceRollHistory />);
 
-      // Expandir
-      await user.click(expandButton);
-      await waitFor(() => {
-        expect(screen.getByText(/resultado final/i)).toBeInTheDocument();
-      });
-
-      // Recolher
-      const collapseButton = screen.getByLabelText(/recolher detalhes/i);
-      await user.click(collapseButton);
-      await waitFor(() => {
-        expect(screen.queryByText(/resultado final/i)).not.toBeInTheDocument();
-      });
+      expect(screen.getByText(/espada longa/i)).toBeInTheDocument();
     });
   });
 
-  describe('Limpar Histórico', () => {
-    it('deve exibir botão de limpar quando há rolagens', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-      ]);
-
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /limpar todo o histórico/i })
-        ).toBeInTheDocument();
+  describe('Exibição de Histórico - Custom Results', () => {
+    it('deve exibir rolagem customizada', () => {
+      const mockRoll = createMockCustomDiceResult({
+        formula: '1d20+5',
+        total: 18,
       });
+      globalDiceHistory.add(mockRoll);
+
+      renderWithTheme(<DiceRollHistory />);
+
+      expect(screen.getByText('1d20+5')).toBeInTheDocument();
+      expect(screen.getByText('18')).toBeInTheDocument();
     });
 
-    it('deve limpar histórico ao clicar em limpar', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-        mockRoll2,
-      ]);
-
-      const user = userEvent.setup();
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/teste de acrobacia/i)).toBeInTheDocument();
+    it('deve exibir rolagem customizada com contexto', () => {
+      const mockRoll = createMockCustomDiceResult({
+        context: 'Rolagem Livre',
+        total: 25,
       });
+      globalDiceHistory.add(mockRoll);
 
-      const clearButton = screen.getByRole('button', {
-        name: /limpar todo o histórico/i,
-      });
-      await user.click(clearButton);
+      renderWithTheme(<DiceRollHistory />);
 
-      expect(diceRollerUtils.globalDiceHistory.clear).toHaveBeenCalled();
+      expect(screen.getByText(/rolagem livre/i)).toBeInTheDocument();
     });
+  });
 
-    it('deve chamar callback onClear quando fornecido', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-      ]);
-
-      const onClearMock = jest.fn();
-      const user = userEvent.setup();
-      render(<DiceRollHistory onClear={onClearMock} />);
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /limpar todo o histórico/i })
-        ).toBeInTheDocument();
+  describe('Timestamp', () => {
+    it('deve exibir timestamp formatado', () => {
+      const mockDate = new Date('2024-01-15T14:30:45');
+      const mockRoll = createMockDicePoolResult({
+        timestamp: mockDate,
       });
+      globalDiceHistory.add(mockRoll);
 
-      const clearButton = screen.getByRole('button', {
-        name: /limpar todo o histórico/i,
-      });
-      await user.click(clearButton);
+      renderWithTheme(<DiceRollHistory />);
 
-      expect(onClearMock).toHaveBeenCalled();
+      // Verifica formato HH:MM:SS
+      expect(screen.getByText(/14:30:45/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Contador de Rolagens', () => {
+    it('deve exibir contador correto', () => {
+      globalDiceHistory.add(createMockDicePoolResult());
+      globalDiceHistory.add(createMockDamageDiceRollResult());
+      globalDiceHistory.add(createMockCustomDiceResult());
+
+      renderWithTheme(<DiceRollHistory />);
+
+      expect(screen.getByText(/histórico \(3\)/i)).toBeInTheDocument();
     });
   });
 
   describe('Limite de Entradas', () => {
-    it('deve respeitar maxEntries', async () => {
-      const manyRolls = Array.from({ length: 10 }, (_, i) => ({
-        ...mockRoll1,
-        timestamp: new Date(`2024-12-08T10:${30 + i}:00`),
-        context: `Rolagem ${i + 1}`,
-      }));
+    it('deve respeitar maxEntries', () => {
+      // Adiciona 10 rolagens
+      for (let i = 0; i < 10; i++) {
+        globalDiceHistory.add(
+          createMockDicePoolResult({ context: `Rolagem ${i}` })
+        );
+      }
 
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue(
-        manyRolls
-      );
+      renderWithTheme(<DiceRollHistory maxEntries={5} />);
 
-      render(<DiceRollHistory maxEntries={5} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/histórico \(5\)/i)).toBeInTheDocument();
-      });
+      // Só deve exibir as 5 mais recentes
+      expect(screen.getByText(/histórico \(5\)/i)).toBeInTheDocument();
     });
 
-    it('deve exibir indicador quando há mais rolagens que o limite', async () => {
-      const manyRolls = Array.from({ length: 10 }, (_, i) => ({
-        ...mockRoll1,
-        timestamp: new Date(`2024-12-08T10:${30 + i}:00`),
-      }));
+    it('deve exibir indicador quando há mais rolagens do que exibido', () => {
+      // Adiciona 10 rolagens
+      for (let i = 0; i < 10; i++) {
+        globalDiceHistory.add(createMockDicePoolResult());
+      }
 
-      // Update mockRolls so that size getter returns correct value
-      mockRolls = manyRolls;
+      renderWithTheme(<DiceRollHistory maxEntries={5} />);
 
-      render(<DiceRollHistory maxEntries={5} />);
+      expect(
+        screen.getByText(/mostrando últimas 5 de 10 rolagens/i)
+      ).toBeInTheDocument();
+    });
+  });
 
-      await waitFor(() => {
-        expect(
-          screen.getByText(/mostrando últimas 5 de 10 rolagens/i)
-        ).toBeInTheDocument();
+  describe('Expansão de Detalhes', () => {
+    it('deve mostrar botão de expandir quando expandable é true', () => {
+      globalDiceHistory.add(createMockDicePoolResult());
+
+      renderWithTheme(<DiceRollHistory expandable={true} />);
+
+      expect(
+        screen.getByRole('button', { name: /expandir detalhes/i })
+      ).toBeInTheDocument();
+    });
+
+    it('não deve mostrar botão de expandir quando expandable é false', () => {
+      globalDiceHistory.add(createMockDicePoolResult());
+
+      renderWithTheme(<DiceRollHistory expandable={false} />);
+
+      expect(
+        screen.queryByRole('button', { name: /expandir detalhes/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it('deve alternar expansão ao clicar', () => {
+      globalDiceHistory.add(createMockDicePoolResult());
+
+      renderWithTheme(<DiceRollHistory expandable={true} />);
+
+      const expandButton = screen.getByRole('button', {
+        name: /expandir detalhes/i,
       });
+
+      // Expande
+      fireEvent.click(expandButton);
+      expect(
+        screen.getByRole('button', { name: /recolher detalhes/i })
+      ).toBeInTheDocument();
+
+      // Recolhe
+      fireEvent.click(
+        screen.getByRole('button', { name: /recolher detalhes/i })
+      );
+      expect(
+        screen.getByRole('button', { name: /expandir detalhes/i })
+      ).toBeInTheDocument();
+    });
+
+    it('deve expandir detalhes ao clicar no item', () => {
+      globalDiceHistory.add(createMockDicePoolResult({ context: 'Teste' }));
+
+      renderWithTheme(<DiceRollHistory expandable={true} />);
+
+      // Clica no item da lista
+      const listItem = screen.getByText(/teste/i).closest('div[role="button"]');
+      if (listItem) {
+        fireEvent.click(listItem);
+      }
+
+      expect(
+        screen.getByRole('button', { name: /recolher detalhes/i })
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('Limpar Histórico', () => {
+    it('deve limpar histórico ao clicar em limpar', () => {
+      globalDiceHistory.add(createMockDicePoolResult());
+      globalDiceHistory.add(createMockDamageDiceRollResult());
+
+      const onClear = jest.fn();
+      renderWithTheme(<DiceRollHistory onClear={onClear} />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /limpar todo o histórico/i })
+      );
+
+      expect(screen.getByText(/nenhuma rolagem ainda/i)).toBeInTheDocument();
+      expect(onClear).toHaveBeenCalled();
+    });
+
+    it('deve chamar callback onClear', () => {
+      globalDiceHistory.add(createMockDicePoolResult());
+
+      const onClear = jest.fn();
+      renderWithTheme(<DiceRollHistory onClear={onClear} />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /limpar todo o histórico/i })
+      );
+
+      expect(onClear).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -360,76 +406,56 @@ describe('DiceRollHistory', () => {
       jest.useRealTimers();
     });
 
-    it('deve atualizar histórico automaticamente', async () => {
-      render(<DiceRollHistory />);
+    it('deve atualizar histórico automaticamente', () => {
+      renderWithTheme(<DiceRollHistory />);
 
-      // Initial state should be empty
+      // Inicialmente vazio
       expect(screen.getByText(/nenhuma rolagem ainda/i)).toBeInTheDocument();
 
-      // Simular adição de rolagem
-      mockRolls = [mockRoll1];
-
-      // Avançar 1 segundo (tempo do polling)
-      jest.advanceTimersByTime(1000);
-
-      // Deve atualizar com a nova rolagem
-      await waitFor(() => {
-        expect(
-          screen.queryByText(/nenhuma rolagem ainda/i)
-        ).not.toBeInTheDocument();
+      // Adiciona rolagem após render
+      act(() => {
+        globalDiceHistory.add(
+          createMockDicePoolResult({ context: 'Nova Rolagem' })
+        );
       });
-    });
-  });
 
-  describe('Contexto', () => {
-    it('deve exibir contexto quando presente', async () => {
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        mockRoll1,
-      ]);
-
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/teste de acrobacia/i)).toBeInTheDocument();
+      // Avança o timer de polling
+      act(() => {
+        jest.advanceTimersByTime(1000);
       });
-    });
 
-    it('deve funcionar sem contexto', async () => {
-      const rollWithoutContext: DiceRollResult = {
-        ...mockRoll1,
-        context: undefined,
-      };
-
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue([
-        rollWithoutContext,
-      ]);
-
-      render(<DiceRollHistory />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/1d20\+5/)).toBeInTheDocument();
-      });
+      // Agora deve mostrar a rolagem
+      expect(screen.getByText(/nova rolagem/i)).toBeInTheDocument();
     });
   });
 
   describe('Scroll', () => {
-    it('deve permitir scroll quando há muitas rolagens', async () => {
-      const manyRolls = Array.from({ length: 20 }, (_, i) => ({
-        ...mockRoll1,
-        timestamp: new Date(`2024-12-08T10:${30 + i}:00`),
-        context: `Rolagem ${i + 1}`,
-      }));
+    it('deve renderizar lista com scroll para muitas entradas', () => {
+      // Adiciona muitas rolagens
+      for (let i = 0; i < 20; i++) {
+        globalDiceHistory.add(createMockDicePoolResult());
+      }
 
-      (diceRollerUtils.globalDiceHistory.getAll as jest.Mock).mockReturnValue(
-        manyRolls
+      renderWithTheme(<DiceRollHistory maxEntries={20} />);
+
+      // Lista deve estar presente
+      expect(screen.getByRole('list')).toBeInTheDocument();
+    });
+  });
+
+  describe('Tipos Mistos', () => {
+    it('deve exibir histórico com múltiplos tipos de rolagem', () => {
+      globalDiceHistory.add(createMockDicePoolResult({ context: 'Pool' }));
+      globalDiceHistory.add(
+        createMockDamageDiceRollResult({ context: 'Dano' })
       );
+      globalDiceHistory.add(createMockCustomDiceResult({ context: 'Custom' }));
 
-      const { container } = render(<DiceRollHistory maxEntries={20} />);
+      renderWithTheme(<DiceRollHistory />);
 
-      await waitFor(() => {
-        const list = container.querySelector('[class*="MuiList"]');
-        expect(list).toHaveStyle({ maxHeight: '400px', overflowY: 'auto' });
-      });
+      expect(screen.getByText(/pool/i)).toBeInTheDocument();
+      expect(screen.getByText(/dano/i)).toBeInTheDocument();
+      expect(screen.getByText(/custom/i)).toBeInTheDocument();
     });
   });
 });

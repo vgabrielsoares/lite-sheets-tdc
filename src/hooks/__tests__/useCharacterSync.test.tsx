@@ -27,6 +27,7 @@ jest.mock('@/services/characterService', () => ({
     create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    ensureUnarmedAttack: jest.fn((c: unknown) => c),
   },
 }));
 

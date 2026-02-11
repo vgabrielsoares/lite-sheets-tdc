@@ -29,7 +29,6 @@ describe('skillUses constants', () => {
         'estrategia',
         'furtividade',
         'historia',
-        'iniciativa',
         'instrucao',
         'intimidacao',
         'investigacao',

@@ -19,7 +19,7 @@ const createItem = (
 ): InventoryItem => ({
   id: crypto.randomUUID(),
   name: 'Test Item',
-  category: 'diversos',
+  category: 'miscelanea',
   quantity,
   weight,
   value: 0,
@@ -58,11 +58,11 @@ describe('CarryCapacityDisplay', () => {
       expect(screen.getByText('Capacidade de Carga')).toBeInTheDocument();
     });
 
-    it('deve exibir o peso atual e capacidade máxima', () => {
+    it('deve exibir o espaço atual e capacidade máxima', () => {
       render(<CarryCapacityDisplay character={baseCharacter} />);
 
-      // Força 1 padrão = 5 + 5 = 10 de capacidade
-      expect(screen.getByText(/Peso Atual/)).toBeInTheDocument();
+      // Corpo 1 padrão = 5 + 5 = 10 de capacidade
+      expect(screen.getByText(/Espaço Atual/)).toBeInTheDocument();
       expect(screen.getByText(/0 \/ 10/)).toBeInTheDocument();
     });
 
@@ -80,12 +80,12 @@ describe('CarryCapacityDisplay', () => {
   });
 
   describe('Cálculos de capacidade', () => {
-    it('deve calcular capacidade baseada em Força', () => {
+    it('deve calcular capacidade baseada em Corpo', () => {
       const character: Character = {
         ...baseCharacter,
         attributes: {
           ...baseCharacter.attributes,
-          forca: 3, // 5 + (3 × 5) = 20
+          corpo: 3, // 5 + (3 × 5) = 20
         },
       };
 
@@ -238,7 +238,7 @@ describe('CarryCapacityDisplay', () => {
         ...baseCharacter,
         attributes: {
           ...baseCharacter.attributes,
-          forca: 2, // 5 + (2 × 5) = 15
+          corpo: 2, // 5 + (2 × 5) = 15
         },
       };
 
@@ -247,17 +247,25 @@ describe('CarryCapacityDisplay', () => {
       expect(screen.getByText('15')).toBeInTheDocument();
     });
 
-    it('deve exibir capacidade de empurrar (2× capacidade)', () => {
-      render(<CarryCapacityDisplay character={baseCharacter} showDetails />);
+    it('deve exibir capacidade de empurrar (10 × Corpo, mín. 5)', () => {
+      const character: Character = {
+        ...baseCharacter,
+        attributes: {
+          ...baseCharacter.attributes,
+          corpo: 2, // Push = 10 × 2 = 20
+        },
+      };
 
-      // Capacidade 10, empurrar 20
+      render(<CarryCapacityDisplay character={character} showDetails />);
+
+      // Corpo 2, empurrar = 10 × 2 = 20
       expect(screen.getByText('20')).toBeInTheDocument();
     });
 
-    it('deve exibir capacidade de levantar (0.5× capacidade)', () => {
+    it('deve exibir capacidade de levantar (5 × Corpo, mín. 2)', () => {
       render(<CarryCapacityDisplay character={baseCharacter} showDetails />);
 
-      // Capacidade 10, levantar 5
+      // Corpo 1, levantar = 5 × 1 = 5
       expect(screen.getByText('5')).toBeInTheDocument();
     });
   });
@@ -299,7 +307,7 @@ describe('CarryCapacityDisplay', () => {
         size: 'pequeno', // -2 de capacidade
         attributes: {
           ...baseCharacter.attributes,
-          forca: 2, // Base: 15, com modificador: 13
+          corpo: 2, // Base: 15, com modificador: 13
         },
       };
 
@@ -314,7 +322,7 @@ describe('CarryCapacityDisplay', () => {
         size: 'grande', // +2 de capacidade
         attributes: {
           ...baseCharacter.attributes,
-          forca: 2, // Base: 15, com modificador: 17
+          corpo: 2, // Base: 15, com modificador: 17
         },
       };
 
