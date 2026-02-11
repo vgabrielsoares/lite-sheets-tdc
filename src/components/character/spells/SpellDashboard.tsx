@@ -19,23 +19,27 @@ import {
   IconButton,
   Tooltip,
   Chip,
+  Switch,
+  FormControlLabel,
+  LinearProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Info as InfoIcon,
+  AutoFixHigh as SpellPointsIcon,
+  Casino as CasinoIcon,
 } from '@mui/icons-material';
 import { uuidv4 } from '@/utils/uuid';
-import type { Character, AttributeName, Modifier } from '@/types';
+import type { Character, Modifier } from '@/types';
 import type {
   SpellcastingSkillName,
   SpellcastingAbility,
 } from '@/types/spells';
-import { DEFAULT_SKILL_USES } from '@/constants/skillUses';
 import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
 import { calculatePPPerRound } from '@/utils/calculations';
-import { SPELL_CIRCLE_PP_COST } from '@/constants/spells';
+import { SPELL_CIRCLE_PF_COST, CHANNEL_MANA_LABELS } from '@/constants/spells';
 import { EditableNumber } from '@/components/shared';
 
 export interface SpellDashboardProps {
@@ -95,17 +99,21 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
   const [formAttribute, setFormAttribute] = useState<
     'corpo' | 'influencia' | 'essencia' | 'instinto'
   >('essencia');
-  const [formDcBonus, setFormDcBonus] = useState(0);
-  const [formAttackBonus, setFormAttackBonus] = useState(0);
+  const [formCastingBonus, setFormCastingBonus] = useState(0);
 
   // Dados de feitiços
   const spellcasting = character.spellcasting || {
+    isCaster: false,
+    castingSkill: undefined,
+    spellPoints: { current: 0, max: 0 },
     knownSpells: [],
     maxKnownSpells: 0,
     knownSpellsModifiers: 0,
     spellcastingAbilities: [],
     masteredMatrices: [],
   };
+
+  const isCaster = spellcasting.isCaster ?? false;
 
   // PP por rodada (calculado dinamicamente)
   // Fórmula: Nível + Presença + Modificadores
@@ -203,40 +211,29 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
   );
 
   /**
-   * Calcula ND e Bônus de Ataque para uma habilidade de conjuração
+   * Calcula o pool de dados para um teste de conjuração.
+   * Pool = Atributo + modificador da habilidade + bônus de teste de conjuração
    */
-  const calculateSpellStats = useCallback(
+  const calculateCastingPool = useCallback(
     (ability: SpellcastingAbility) => {
       const attributeValue = character.attributes[ability.attribute];
       const skillModifier = calculateSpellcastingModifier(ability.skill);
+      const totalDice = attributeValue + skillModifier + ability.castingBonus;
 
-      const spellDC = 12 + attributeValue + skillModifier + ability.dcBonus;
-      const spellAttackBonus =
-        attributeValue + skillModifier + ability.attackBonus;
-
-      // Criar tooltips explicativos
-      const dcBreakdown = [
-        `ND = 12 (base) + ${attributeValue} (${ATTRIBUTE_LABELS[ability.attribute]}) + ${skillModifier} (mod. ${SKILL_LABELS[ability.skill]})`,
-        ability.dcBonus !== 0 ? ` + ${ability.dcBonus} (bônus adicional)` : '',
-      ]
-        .filter(Boolean)
-        .join('');
-
-      const attackBreakdown = [
-        `Ataque = ${attributeValue} (${ATTRIBUTE_LABELS[ability.attribute]}) + ${skillModifier} (mod. ${SKILL_LABELS[ability.skill]})`,
-        ability.attackBonus !== 0
-          ? ` + ${ability.attackBonus} (bônus adicional)`
+      const breakdown = [
+        `${attributeValue}d (${ATTRIBUTE_LABELS[ability.attribute]})`,
+        `${skillModifier >= 0 ? '+' : ''}${skillModifier}d (mod. ${SKILL_LABELS[ability.skill]})`,
+        ability.castingBonus !== 0
+          ? `${ability.castingBonus >= 0 ? '+' : ''}${ability.castingBonus}d (bônus)`
           : '',
       ]
         .filter(Boolean)
-        .join('');
+        .join(' ');
 
       return {
-        spellDC,
-        spellAttackBonus,
+        totalDice: Math.max(0, totalDice),
         skillModifier,
-        dcBreakdown,
-        attackBreakdown,
+        breakdown,
       };
     },
     [character.attributes, calculateSpellcastingModifier]
@@ -246,8 +243,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
   const handleOpenAddDialog = () => {
     setFormSkill('arcano');
     setFormAttribute('essencia');
-    setFormDcBonus(0);
-    setFormAttackBonus(0);
+    setFormCastingBonus(0);
     setAddDialogOpen(true);
   };
 
@@ -255,8 +251,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
     setSelectedAbility(ability);
     setFormSkill(ability.skill);
     setFormAttribute(ability.attribute);
-    setFormDcBonus(ability.dcBonus);
-    setFormAttackBonus(ability.attackBonus);
+    setFormCastingBonus(ability.castingBonus);
     setEditDialogOpen(true);
   };
 
@@ -265,8 +260,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
       id: uuidv4(),
       skill: formSkill,
       attribute: formAttribute,
-      dcBonus: formDcBonus,
-      attackBonus: formAttackBonus,
+      castingBonus: formCastingBonus,
     };
 
     onUpdate({
@@ -294,8 +288,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                 ...a,
                 skill: formSkill,
                 attribute: formAttribute,
-                dcBonus: formDcBonus,
-                attackBonus: formAttackBonus,
+                castingBonus: formCastingBonus,
               }
             : a
         ),
@@ -341,24 +334,58 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
     [spellcasting, onUpdate]
   );
 
-  // Tooltip de custos de PP
-  const ppCostTooltip = useMemo(() => {
-    return (
-      <Box sx={{ p: 1 }}>
-        <Typography
-          variant="caption"
-          sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}
-        >
-          Custo de PP por Círculo:
-        </Typography>
-        {Object.entries(SPELL_CIRCLE_PP_COST).map(([circle, cost]) => (
-          <Typography key={circle} variant="caption" sx={{ display: 'block' }}>
-            {circle}º círculo: <strong>{cost} PP</strong>
-          </Typography>
-        ))}
-      </Box>
-    );
-  }, []);
+  // ─── Handlers de Conjurador / PF ─────────────────────────────
+
+  /** Toggle de conjurador — habilita/desabilita o sistema de PF */
+  const handleToggleCaster = useCallback(
+    (checked: boolean) => {
+      onUpdate({
+        spellcasting: {
+          ...spellcasting,
+          isCaster: checked,
+          spellPoints: checked
+            ? { current: 0, max: 0 }
+            : { current: 0, max: 0 },
+        },
+      });
+    },
+    [spellcasting, onUpdate]
+  );
+
+  /** Atualiza PF atual */
+  const handleUpdateSpellPointsCurrent = useCallback(
+    (value: number) => {
+      const newValue = Math.max(0, value);
+      onUpdate({
+        spellcasting: {
+          ...spellcasting,
+          spellPoints: {
+            ...spellcasting.spellPoints,
+            current: newValue,
+          },
+        },
+      });
+    },
+    [spellcasting, onUpdate]
+  );
+
+  /** Atualiza PF máximo */
+  const handleUpdateSpellPointsMax = useCallback(
+    (value: number) => {
+      onUpdate({
+        spellcasting: {
+          ...spellcasting,
+          spellPoints: {
+            ...spellcasting.spellPoints,
+            max: Math.max(0, value),
+          },
+        },
+      });
+    },
+    [spellcasting, onUpdate]
+  );
+
+  // ─── Tooltips ─────────────────────────────────────────────────
 
   // Tooltip de PP por Rodada
   const ppPerRoundTooltip = useMemo(() => {
@@ -396,6 +423,222 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
       </Typography>
 
       <Stack spacing={3}>
+        {/* Toggle de Conjurador */}
+        {!isCaster ? (
+          /* Não-conjurador: card proeminente com explicação */
+          <Card
+            elevation={0}
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              transition: 'border-color 0.3s ease-in-out',
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Stack spacing={1}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={false}
+                      onChange={(e) => handleToggleCaster(e.target.checked)}
+                      color="secondary"
+                    />
+                  }
+                  label={
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      Conjurador
+                    </Typography>
+                  }
+                />
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                >
+                  Ative o toggle acima para habilitar o sistema de Pontos de
+                  Feitiço (PF) e recursos de conjuração.
+                </Typography>
+              </Stack>
+            </CardContent>
+          </Card>
+        ) : (
+          /* Conjurador ativo: toggle discreto inline */
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={true}
+                  onChange={(e) => handleToggleCaster(e.target.checked)}
+                  color="secondary"
+                  size="small"
+                />
+              }
+              label={
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Conjurador
+                </Typography>
+              }
+            />
+          </Box>
+        )}
+
+        {/* PF Compacto — apenas para conjuradores */}
+        {isCaster && (
+          <Card
+            elevation={0}
+            sx={{ border: '1px solid', borderColor: 'secondary.main' }}
+          >
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+              <Stack spacing={1.5}>
+                {/* Header */}
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <SpellPointsIcon color="secondary" fontSize="small" />
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 600, color: 'secondary.main' }}
+                    >
+                      Pontos de Feitiço (PF)
+                    </Typography>
+                  </Stack>
+                  <Tooltip
+                    title={
+                      <Box sx={{ p: 0.5 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontWeight: 600,
+                            display: 'block',
+                            mb: 0.5,
+                          }}
+                        >
+                          Custo de PF por Círculo:
+                        </Typography>
+                        {Object.entries(SPELL_CIRCLE_PF_COST).map(
+                          ([circle, cost]) => (
+                            <Typography
+                              key={circle}
+                              variant="caption"
+                              sx={{ display: 'block' }}
+                            >
+                              {circle}º: <strong>{cost} PF</strong>
+                            </Typography>
+                          )
+                        )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: 'block',
+                            mt: 0.5,
+                            fontWeight: 600,
+                          }}
+                        >
+                          Canalizar Mana:
+                        </Typography>
+                        {Object.entries(CHANNEL_MANA_LABELS).map(
+                          ([actions, label]) => (
+                            <Typography
+                              key={actions}
+                              variant="caption"
+                              sx={{ display: 'block' }}
+                            >
+                              {label}
+                            </Typography>
+                          )
+                        )}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: 'block',
+                            mt: 0.5,
+                            fontStyle: 'italic',
+                            color: 'warning.main',
+                          }}
+                        >
+                          Gastar PF também gasta PP.
+                        </Typography>
+                      </Box>
+                    }
+                    arrow
+                  >
+                    <InfoIcon
+                      sx={{
+                        fontSize: 16,
+                        color: 'text.secondary',
+                        cursor: 'help',
+                      }}
+                    />
+                  </Tooltip>
+                </Stack>
+
+                {/* PF Current / Max + Progress bar */}
+                <Stack
+                  direction="row"
+                  spacing={1.5}
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <Box sx={{ textAlign: 'center', minWidth: 60 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'text.secondary', display: 'block' }}
+                    >
+                      Atual
+                    </Typography>
+                    <EditableNumber
+                      value={spellcasting.spellPoints?.current ?? 0}
+                      onChange={handleUpdateSpellPointsCurrent}
+                      label=""
+                    />
+                  </Box>
+                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                    /
+                  </Typography>
+                  <Box sx={{ textAlign: 'center', minWidth: 60 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'text.secondary', display: 'block' }}
+                    >
+                      Máximo
+                    </Typography>
+                    <EditableNumber
+                      value={spellcasting.spellPoints?.max ?? 0}
+                      onChange={handleUpdateSpellPointsMax}
+                      label=""
+                    />
+                  </Box>
+                </Stack>
+
+                <LinearProgress
+                  color="secondary"
+                  variant="determinate"
+                  value={
+                    (spellcasting.spellPoints?.max ?? 0) > 0
+                      ? Math.min(
+                          100,
+                          Math.floor(
+                            ((spellcasting.spellPoints?.current ?? 0) /
+                              (spellcasting.spellPoints?.max ?? 1)) *
+                              100
+                          )
+                        )
+                      : 0
+                  }
+                  sx={{ height: 6, borderRadius: 999 }}
+                />
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
         {/* Cards informativos centralizados */}
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
@@ -500,28 +743,16 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
             sx={{ border: '1px solid', borderColor: 'divider', maxWidth: 200 }}
           >
             <CardContent sx={{ p: 2, textAlign: 'center' }}>
-              <Tooltip title={ppCostTooltip} arrow>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 0.5,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'text.secondary',
-                      textTransform: 'uppercase',
-                      fontSize: '0.7rem',
-                    }}
-                  >
-                    PP Atuais
-                  </Typography>
-                  <InfoIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                </Box>
-              </Tooltip>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  textTransform: 'uppercase',
+                  fontSize: '0.7rem',
+                }}
+              >
+                PP Atuais
+              </Typography>
               <Box
                 sx={{
                   display: 'flex',
@@ -602,7 +833,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
           ) : (
             <Stack spacing={2}>
               {spellcasting.spellcastingAbilities.map((ability) => {
-                const stats = calculateSpellStats(ability);
+                const pool = calculateCastingPool(ability);
                 return (
                   <Card
                     key={ability.id}
@@ -615,7 +846,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'flex-start',
-                          mb: 2,
+                          mb: 1.5,
                         }}
                       >
                         <Box>
@@ -637,6 +868,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                           <IconButton
                             size="small"
                             onClick={() => handleOpenEditDialog(ability)}
+                            aria-label="Editar habilidade de conjuração"
                           >
                             <EditIcon fontSize="small" />
                           </IconButton>
@@ -644,76 +876,44 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                             size="small"
                             onClick={() => handleDeleteAbility(ability.id)}
                             color="error"
+                            aria-label="Remover habilidade de conjuração"
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Box>
                       </Box>
 
-                      <Stack
-                        direction="row"
-                        spacing={3}
-                        justifyContent="center"
-                      >
-                        <Tooltip
-                          title={stats.dcBreakdown}
-                          arrow
-                          placement="top"
+                      {/* Teste de Conjuração — pool de dados */}
+                      <Tooltip title={pool.breakdown} arrow placement="top">
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 1.5,
+                            cursor: 'help',
+                            p: 1,
+                            borderRadius: 1,
+                            bgcolor: 'action.hover',
+                          }}
                         >
-                          <Box sx={{ textAlign: 'center', cursor: 'help' }}>
+                          <CasinoIcon color="primary" />
+                          <Box sx={{ textAlign: 'center' }}>
                             <Typography
                               variant="caption"
                               sx={{ color: 'text.secondary', display: 'block' }}
                             >
-                              ND (Nível de Dificuldade)
+                              Teste de Conjuração
                             </Typography>
                             <Typography
                               variant="h4"
                               sx={{ fontWeight: 700, color: 'primary.main' }}
                             >
-                              {stats.spellDC}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{ color: 'text.secondary' }}
-                            >
-                              12 + {character.attributes[ability.attribute]} +{' '}
-                              {stats.skillModifier}
-                              {ability.dcBonus !== 0 && ` + ${ability.dcBonus}`}
+                              {pool.totalDice}d
                             </Typography>
                           </Box>
-                        </Tooltip>
-
-                        <Tooltip
-                          title={stats.attackBreakdown}
-                          arrow
-                          placement="top"
-                        >
-                          <Box sx={{ textAlign: 'center', cursor: 'help' }}>
-                            <Typography
-                              variant="caption"
-                              sx={{ color: 'text.secondary', display: 'block' }}
-                            >
-                              Bônus de Ataque
-                            </Typography>
-                            <Typography
-                              variant="h4"
-                              sx={{ fontWeight: 700, color: 'success.main' }}
-                            >
-                              +{stats.spellAttackBonus}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{ color: 'text.secondary' }}
-                            >
-                              {character.attributes[ability.attribute]} +{' '}
-                              {stats.skillModifier}
-                              {ability.attackBonus !== 0 &&
-                                ` + ${ability.attackBonus}`}
-                            </Typography>
-                          </Box>
-                        </Tooltip>
-                      </Stack>
+                        </Box>
+                      </Tooltip>
                     </CardContent>
                   </Card>
                 );
@@ -772,30 +972,19 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
               </Select>
             </FormControl>
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Box sx={{ flex: 1 }}>
-                <EditableNumber
-                  value={formDcBonus}
-                  onChange={setFormDcBonus}
-                  label="Bônus ND"
-                />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <EditableNumber
-                  value={formAttackBonus}
-                  onChange={setFormAttackBonus}
-                  label="Bônus Ataque"
-                />
-              </Box>
-            </Box>
+            <EditableNumber
+              value={formCastingBonus}
+              onChange={setFormCastingBonus}
+              label="Bônus de Teste de Conjuração (+d)"
+            />
 
             <Typography
               variant="caption"
               sx={{ color: 'text.secondary', fontStyle: 'italic' }}
             >
-              O modificador da habilidade será calculado automaticamente usando
-              o modificador do uso "Conjurar Feitiço" (se existir) ou o
-              modificador geral da habilidade.
+              O pool de dados será: Atributo + modificador da habilidade +
+              bônus. O modificador usa "Conjurar Feitiço" (se existir) ou o
+              modificador geral.
             </Typography>
           </Stack>
         </DialogContent>
@@ -856,22 +1045,11 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
               </Select>
             </FormControl>
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Box sx={{ flex: 1 }}>
-                <EditableNumber
-                  value={formDcBonus}
-                  onChange={setFormDcBonus}
-                  label="Bônus ND"
-                />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <EditableNumber
-                  value={formAttackBonus}
-                  onChange={setFormAttackBonus}
-                  label="Bônus Ataque"
-                />
-              </Box>
-            </Box>
+            <EditableNumber
+              value={formCastingBonus}
+              onChange={setFormCastingBonus}
+              label="Bônus de Teste de Conjuração (+d)"
+            />
           </Stack>
         </DialogContent>
         <DialogActions>
