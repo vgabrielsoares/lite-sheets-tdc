@@ -79,14 +79,19 @@ export const DEFAULT_PP_CURRENT = 2;
 export const DEFAULT_PP_TEMPORARY = 0;
 
 /**
- * Nível inicial do personagem
+ * Nível inicial do personagem.
+ * Personagens começam no nível 0 e sobem para o nível 1 escolhendo um arquétipo.
+ * Isso garante que o primeiro nível já inclua uma escolha de arquétipo.
  */
-export const DEFAULT_CHARACTER_LEVEL = 1;
+export const DEFAULT_CHARACTER_LEVEL = 0;
 
 /**
- * Experiência (XP) inicial
+ * Experiência (XP) inicial.
+ * Começa com 15 XP — exatamente o necessário para subir do nível 0 para o 1,
+ * garantindo que o jogador possa imediatamente subir de nível e escolher seu
+ * primeiro arquétipo ao criar a ficha.
  */
-export const DEFAULT_XP = 0;
+export const DEFAULT_XP = 15;
 
 /**
  * Valor padrão de todos os atributos no nível 1
