@@ -164,7 +164,7 @@ describe('useCharacterCreation', () => {
       expect(characters[0].name).toBe('Gimli');
     });
 
-    it('deve criar personagem com valores padrão de nível 1', async () => {
+    it('deve criar personagem com valores padrão de nível 0', async () => {
       const { result, store } = renderHookWithProviders();
 
       await act(async () => {
@@ -175,7 +175,7 @@ describe('useCharacterCreation', () => {
       const character = Object.values(state.characters.entities)[0];
 
       // Verificar valores padrão básicos
-      expect(character.level).toBe(1);
+      expect(character.level).toBe(0);
       expect(character.combat.guard.max).toBe(15);
       expect(character.combat.guard.current).toBe(15);
       expect(character.combat.pp.max).toBe(2);

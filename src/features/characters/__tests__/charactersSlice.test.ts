@@ -90,6 +90,7 @@ const mockCharacter: Character = {
     tools: [],
     other: [],
   },
+  proficiencyPurchases: [],
   languages: ['comum'],
   extraLanguagesModifier: 0,
   combat: {
@@ -165,6 +166,7 @@ const mockCharacter: Character = {
     organizations: [],
   },
   levelProgression: [],
+  levelHistory: [],
   notes: [],
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',

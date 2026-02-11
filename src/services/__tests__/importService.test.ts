@@ -225,9 +225,9 @@ describe('importService', () => {
       );
     });
 
-    it('deve rejeitar personagem com nível inválido', async () => {
+    it('deve rejeitar personagem com nível negativo', async () => {
       const mockChar = createMockCharacter();
-      mockChar.level = 0; // Nível inválido
+      mockChar.level = -1; // Nível negativo
 
       const exportedData = {
         version: EXPORT_VERSION,
