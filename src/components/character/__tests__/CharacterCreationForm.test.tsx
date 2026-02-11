@@ -252,7 +252,7 @@ describe('CharacterCreationForm', () => {
       const backButton = screen.getByRole('button', { name: /Voltar/i });
       fireEvent.click(backButton);
 
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockPush).toHaveBeenCalledWith('/characters');
     });
 
     it('deve navegar de volta ao clicar em Cancelar', () => {
@@ -261,7 +261,7 @@ describe('CharacterCreationForm', () => {
       const cancelButton = screen.getByRole('button', { name: /Cancelar/i });
       fireEvent.click(cancelButton);
 
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockPush).toHaveBeenCalledWith('/characters');
     });
 
     it('deve chamar onBack customizado quando fornecido', () => {
