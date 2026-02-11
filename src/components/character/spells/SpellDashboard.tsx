@@ -39,7 +39,11 @@ import type {
 } from '@/types/spells';
 import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
 import { calculatePPPerRound } from '@/utils/calculations';
-import { SPELL_CIRCLE_PF_COST, CHANNEL_MANA_LABELS } from '@/constants/spells';
+import {
+  SPELL_CIRCLE_PF_COST,
+  CHANNEL_MANA_LABELS,
+  CHANNEL_MANA_PF_GENERATION,
+} from '@/constants/spells';
 import { EditableNumber } from '@/components/shared';
 
 export interface SpellDashboardProps {
@@ -369,20 +373,69 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
     [spellcasting, onUpdate]
   );
 
-  /** Atualiza PF máximo */
-  const handleUpdateSpellPointsMax = useCallback(
-    (value: number) => {
+  /**
+   * Gasto rápido de PF por círculo de feitiço.
+   * Gastar PF também gasta PP no mesmo valor.
+   * 1º Círculo: 0 PF, mas exige PP ≥ 1.
+   */
+  const handleCastSpellByCircle = useCallback(
+    (circle: number) => {
+      const cost =
+        SPELL_CIRCLE_PF_COST[circle as keyof typeof SPELL_CIRCLE_PF_COST] ?? 0;
+      const pp = character.combat?.pp;
+      const pf = spellcasting.spellPoints;
+
+      if (!pp || pp.current <= 0) return; // Esgotado
+      if (cost > 0 && pf.current < cost) return; // PF insuficiente
+      if (cost > 0 && pp.current < cost) return; // PP insuficiente
+
+      const updates: Partial<Character> = {};
+
+      if (cost > 0) {
+        updates.spellcasting = {
+          ...spellcasting,
+          spellPoints: {
+            ...pf,
+            current: Math.max(0, pf.current - cost),
+          },
+        };
+        updates.combat = {
+          ...character.combat,
+          pp: {
+            ...pp,
+            current: Math.max(0, pp.current - cost),
+          },
+        };
+      }
+      // 1º Círculo: 0 PF, PP ≥ 1 já verificado
+
+      if (Object.keys(updates).length > 0) {
+        onUpdate(updates);
+      }
+    },
+    [character.combat, spellcasting, onUpdate]
+  );
+
+  /**
+   * Canalizar Mana — gera PF sem gastar PP
+   * ▶ = 1 PF, ▶▶ = 2 PF, ▶▶▶ = 4 PF
+   */
+  const handleChannelMana = useCallback(
+    (actions: 1 | 2 | 3) => {
+      const pfToGenerate = CHANNEL_MANA_PF_GENERATION[actions];
+      const pf = spellcasting.spellPoints;
+
       onUpdate({
         spellcasting: {
           ...spellcasting,
           spellPoints: {
-            ...spellcasting.spellPoints,
-            max: Math.max(0, value),
+            ...pf,
+            current: Math.min(maxPP, pf.current + pfToGenerate),
           },
         },
       });
     },
-    [spellcasting, onUpdate]
+    [spellcasting, onUpdate, maxPP]
   );
 
   // ─── Tooltips ─────────────────────────────────────────────────
@@ -487,39 +540,60 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
           </Box>
         )}
 
-        {/* PF Compacto — apenas para conjuradores */}
-        {isCaster && (
-          <Card
-            elevation={0}
-            sx={{ border: '1px solid', borderColor: 'secondary.main' }}
-          >
-            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-              <Stack spacing={1.5}>
-                {/* Header */}
+        {/* PF Compacto + Cards informativos — todos em linha */}
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          justifyContent="center"
+          alignItems="stretch"
+        >
+          {/* Pontos de Feitiço (PF) — apenas para conjuradores */}
+          {isCaster && (
+            <Card
+              elevation={0}
+              sx={{
+                border: '1px solid',
+                borderColor: 'secondary.main',
+                flex: 1,
+                maxWidth: { sm: 280 },
+                display: 'flex',
+              }}
+            >
+              <CardContent
+                sx={{
+                  p: 2,
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  width: '100%',
+                }}
+              >
                 <Stack
                   direction="row"
                   alignItems="center"
-                  justifyContent="space-between"
+                  justifyContent="center"
+                  spacing={0.5}
+                  sx={{ mb: 0.5 }}
                 >
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <SpellPointsIcon color="secondary" fontSize="small" />
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, color: 'secondary.main' }}
-                    >
-                      Pontos de Feitiço (PF)
-                    </Typography>
-                  </Stack>
+                  <SpellPointsIcon color="secondary" sx={{ fontSize: 16 }} />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'secondary.main',
+                      textTransform: 'uppercase',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Pontos de Feitiço (PF)
+                  </Typography>
                   <Tooltip
                     title={
                       <Box sx={{ p: 0.5 }}>
                         <Typography
                           variant="caption"
-                          sx={{
-                            fontWeight: 600,
-                            display: 'block',
-                            mb: 0.5,
-                          }}
+                          sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}
                         >
                           Custo de PF por Círculo:
                         </Typography>
@@ -531,27 +605,6 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                               sx={{ display: 'block' }}
                             >
                               {circle}º: <strong>{cost} PF</strong>
-                            </Typography>
-                          )
-                        )}
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            display: 'block',
-                            mt: 0.5,
-                            fontWeight: 600,
-                          }}
-                        >
-                          Canalizar Mana:
-                        </Typography>
-                        {Object.entries(CHANNEL_MANA_LABELS).map(
-                          ([actions, label]) => (
-                            <Typography
-                              key={actions}
-                              variant="caption"
-                              sx={{ display: 'block' }}
-                            >
-                              {label}
                             </Typography>
                           )
                         )}
@@ -572,7 +625,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                   >
                     <InfoIcon
                       sx={{
-                        fontSize: 16,
+                        fontSize: 14,
                         color: 'text.secondary',
                         cursor: 'help',
                       }}
@@ -580,77 +633,79 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                   </Tooltip>
                 </Stack>
 
-                {/* PF Current / Max + Progress bar */}
                 <Stack
                   direction="row"
-                  spacing={1.5}
+                  spacing={1}
                   alignItems="center"
                   justifyContent="center"
+                  sx={{ mt: 1 }}
                 >
-                  <Box sx={{ textAlign: 'center', minWidth: 60 }}>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: 'text.secondary', display: 'block' }}
-                    >
-                      Atual
-                    </Typography>
+                  <Box sx={{ flex: 1, maxWidth: 80 }}>
                     <EditableNumber
                       value={spellcasting.spellPoints?.current ?? 0}
                       onChange={handleUpdateSpellPointsCurrent}
-                      label=""
+                      label="Atual"
                     />
                   </Box>
-                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                    /
-                  </Typography>
-                  <Box sx={{ textAlign: 'center', minWidth: 60 }}>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: 'text.secondary', display: 'block' }}
-                    >
-                      Máximo
-                    </Typography>
-                    <EditableNumber
-                      value={spellcasting.spellPoints?.max ?? 0}
-                      onChange={handleUpdateSpellPointsMax}
-                      label=""
-                    />
-                  </Box>
+                  <Tooltip title="PF Máximo = PP Máximo" arrow>
+                    <Box sx={{ flex: 1, maxWidth: 80, textAlign: 'center' }}>
+                      <Typography
+                        variant="h5"
+                        sx={{ fontWeight: 600, color: 'secondary.main' }}
+                      >
+                        {maxPP}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: 'text.secondary', fontSize: '0.65rem' }}
+                      >
+                        Máx (= PP)
+                      </Typography>
+                    </Box>
+                  </Tooltip>
                 </Stack>
 
                 <LinearProgress
                   color="secondary"
                   variant="determinate"
                   value={
-                    (spellcasting.spellPoints?.max ?? 0) > 0
+                    maxPP > 0
                       ? Math.min(
                           100,
                           Math.floor(
-                            ((spellcasting.spellPoints?.current ?? 0) /
-                              (spellcasting.spellPoints?.max ?? 1)) *
+                            ((spellcasting.spellPoints?.current ?? 0) / maxPP) *
                               100
                           )
                         )
                       : 0
                   }
-                  sx={{ height: 6, borderRadius: 999 }}
+                  sx={{ height: 6, borderRadius: 999, mt: 1.5 }}
                 />
-              </Stack>
-            </CardContent>
-          </Card>
-        )}
-        {/* Cards informativos centralizados */}
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          justifyContent="center"
-        >
+              </CardContent>
+            </Card>
+          )}
+
           {/* Feitiços Conhecidos */}
           <Card
             elevation={0}
-            sx={{ border: '1px solid', borderColor: 'divider', maxWidth: 280 }}
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              flex: 1,
+              maxWidth: { sm: 280 },
+              display: 'flex',
+            }}
           >
-            <CardContent sx={{ p: 2, textAlign: 'center' }}>
+            <CardContent
+              sx={{
+                p: 2,
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
               <Typography
                 variant="caption"
                 sx={{
@@ -706,9 +761,24 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
           {/* PP por Rodada */}
           <Card
             elevation={0}
-            sx={{ border: '1px solid', borderColor: 'divider', maxWidth: 200 }}
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              flex: 1,
+              maxWidth: { sm: 200 },
+              display: 'flex',
+            }}
           >
-            <CardContent sx={{ p: 2, textAlign: 'center' }}>
+            <CardContent
+              sx={{
+                p: 2,
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
               <Tooltip title={ppPerRoundTooltip} arrow>
                 <Box
                   sx={{
@@ -740,9 +810,24 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
           {/* PP Atuais */}
           <Card
             elevation={0}
-            sx={{ border: '1px solid', borderColor: 'divider', maxWidth: 200 }}
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              flex: 1,
+              maxWidth: { sm: 200 },
+              display: 'flex',
+            }}
           >
-            <CardContent sx={{ p: 2, textAlign: 'center' }}>
+            <CardContent
+              sx={{
+                p: 2,
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
               <Typography
                 variant="caption"
                 sx={{
@@ -780,6 +865,160 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
             </CardContent>
           </Card>
         </Stack>
+
+        {/* Tabela de Custos por Círculo — Issue 6.4 */}
+        <Card variant="outlined" sx={{ borderColor: 'divider' }}>
+          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+              Custo por Círculo de Feitiço
+            </Typography>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+                gap: 1,
+              }}
+            >
+              {Object.entries(SPELL_CIRCLE_PF_COST).map(([circle, cost]) => {
+                const circleNum = Number(circle);
+                const pp = character.combat?.pp;
+                const pf = spellcasting.spellPoints;
+                const ppExhausted = !pp || pp.current <= 0;
+                const pfInsufficient = cost > 0 && pf.current < cost;
+                const ppInsufficient = cost > 0 && pp && pp.current < cost;
+                const disabled =
+                  ppExhausted || pfInsufficient || !!ppInsufficient;
+
+                return (
+                  <Tooltip
+                    key={circle}
+                    title={
+                      ppExhausted
+                        ? 'PP esgotado — não pode conjurar'
+                        : pfInsufficient
+                          ? `PF insuficiente (necessário: ${cost})`
+                          : ppInsufficient
+                            ? `PP insuficiente (necessário: ${cost})`
+                            : cost === 0
+                              ? 'Custa 0 PF (requer PP ≥ 1)'
+                              : `Gasta ${cost} PF e ${cost} PP`
+                    }
+                  >
+                    <span>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        disabled={disabled}
+                        onClick={() => handleCastSpellByCircle(circleNum)}
+                        sx={{
+                          width: '100%',
+                          flexDirection: 'column',
+                          py: 0.5,
+                          lineHeight: 1.2,
+                          minWidth: 0,
+                          borderColor: disabled
+                            ? 'action.disabled'
+                            : 'secondary.main',
+                          color: disabled
+                            ? 'action.disabled'
+                            : 'secondary.main',
+                          '&:hover': {
+                            borderColor: 'secondary.dark',
+                            bgcolor: 'secondary.main',
+                            color: 'secondary.contrastText',
+                          },
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 700, fontSize: '0.75rem' }}
+                        >
+                          {circleNum}º
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontSize: '0.65rem', opacity: 0.8 }}
+                        >
+                          {cost} PF
+                        </Typography>
+                      </Button>
+                    </span>
+                  </Tooltip>
+                );
+              })}
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Canalizar Mana — Issue 6.5 */}
+        <Card variant="outlined" sx={{ borderColor: 'divider' }}>
+          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 1.5,
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Canalizar Mana
+              </Typography>
+              <Tooltip title="Gera PF gastando ações no turno. Não gasta PP.">
+                <InfoIcon
+                  fontSize="small"
+                  sx={{ color: 'text.secondary', cursor: 'help' }}
+                />
+              </Tooltip>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              {([1, 2, 3] as const).map((actions) => {
+                const pfGen = CHANNEL_MANA_PF_GENERATION[actions];
+                const label = CHANNEL_MANA_LABELS[actions];
+                const pfFull = spellcasting.spellPoints.current >= maxPP;
+
+                return (
+                  <Tooltip
+                    key={actions}
+                    title={
+                      pfFull
+                        ? 'PF já está no máximo'
+                        : `Gera ${pfGen} PF (${actions} ação${actions > 1 ? 'ões' : ''})`
+                    }
+                  >
+                    <span style={{ flex: 1 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        disabled={pfFull}
+                        onClick={() => handleChannelMana(actions)}
+                        sx={{
+                          width: '100%',
+                          flexDirection: 'column',
+                          py: 1,
+                          borderColor: pfFull ? 'action.disabled' : 'info.main',
+                          color: pfFull ? 'action.disabled' : 'info.main',
+                          '&:hover': {
+                            borderColor: 'info.dark',
+                            bgcolor: 'info.main',
+                            color: 'info.contrastText',
+                          },
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 700, fontSize: '0.8rem' }}
+                        >
+                          {label}
+                        </Typography>
+                      </Button>
+                    </span>
+                  </Tooltip>
+                );
+              })}
+            </Stack>
+          </CardContent>
+        </Card>
 
         {/* Habilidades de Conjuração Cadastradas */}
         <Box>

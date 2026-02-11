@@ -17,7 +17,6 @@ import {
   BasicStats,
   CompactGuardVitality,
   CompactPowerPoints,
-  CompactSpellPoints,
   CompactDefenseTest,
   MovementDisplay,
   SensesDisplay,
@@ -273,44 +272,16 @@ export const MainTab = React.memo(function MainTab({
             onOpenDetails={onOpenHP}
           />
 
-          {/* Pontos de Poder (Compacto) */}
+          {/* Potencial Energético (PP + PF compacto) */}
           <CompactPowerPoints
             pp={character.combat.pp}
-            onChange={(pp) =>
-              onUpdate({
-                combat: {
-                  ...character.combat,
-                  pp,
-                },
-              })
-            }
             onOpenDetails={onOpenPP}
+            spellPoints={
+              character.spellcasting?.isCaster
+                ? (character.spellcasting.spellPoints ?? { current: 0, max: 0 })
+                : undefined
+            }
           />
-
-          {/* Pontos de Feitiço — apenas para conjuradores */}
-          {character.spellcasting?.isCaster && (
-            <CompactSpellPoints
-              spellPoints={
-                character.spellcasting.spellPoints ?? { current: 0, max: 0 }
-              }
-              onChange={(spellPoints) =>
-                onUpdate({
-                  spellcasting: {
-                    ...(character.spellcasting || {
-                      isCaster: true,
-                      spellPoints: { current: 0, max: 0 },
-                      knownSpells: [],
-                      maxKnownSpells: 0,
-                      knownSpellsModifiers: 0,
-                      spellcastingAbilities: [],
-                      masteredMatrices: [],
-                    }),
-                    spellPoints,
-                  },
-                })
-              }
-            />
-          )}
         </Box>
 
         {/* Defesa e Deslocamento lado a lado */}

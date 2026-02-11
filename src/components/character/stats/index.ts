@@ -20,6 +20,12 @@ export type { CompactPowerPointsProps } from './CompactPowerPoints';
 export { CompactSpellPoints } from './CompactSpellPoints';
 export type { CompactSpellPointsProps } from './CompactSpellPoints';
 
+export { SpellPointsDisplay } from './SpellPointsDisplay';
+export type { SpellPointsDisplayProps } from './SpellPointsDisplay';
+
+export { PowerPointsDisplay } from './PowerPointsDisplay';
+export type { PowerPointsDisplayProps } from './PowerPointsDisplay';
+
 export { CompactResourcePoints } from './CompactResourcePoints';
 export type {
   CompactResourcePointsProps,
