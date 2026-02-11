@@ -10,9 +10,11 @@ import {
   selectCharacterById,
   loadCharacterById,
   updateCharacter,
+  levelUp,
   clearError,
 } from '@/features/characters/charactersSlice';
-import type { Character } from '@/types';
+import type { Character, ArchetypeName } from '@/types';
+import type { LevelUpSpecialGain } from '@/utils/levelUpCalculations';
 
 interface CharacterDetailClientProps {
   characterId: string;
@@ -127,6 +129,26 @@ export default function CharacterDetailClient({
     [loadedCharacter, dispatch, showError]
   );
 
+  /**
+   * Sobe o personagem de nível (Level Up)
+   * Dispatcha a action síncrona que modifica o Redux state.
+   * O middleware de IndexedDB sync persiste automaticamente.
+   */
+  const handleLevelUp = useCallback(
+    (archetypeName: ArchetypeName, specialGains: LevelUpSpecialGain[]) => {
+      if (!loadedCharacter) return;
+
+      dispatch(
+        levelUp({
+          characterId: loadedCharacter.id,
+          archetypeName,
+          specialGains,
+        })
+      );
+    },
+    [loadedCharacter, dispatch]
+  );
+
   // Loading state
   if (!loadedCharacter && (loading || !loadAttempted)) {
     return (
@@ -169,6 +191,10 @@ export default function CharacterDetailClient({
   }
 
   return (
-    <CharacterSheet character={loadedCharacter!} onUpdate={handleUpdate} />
+    <CharacterSheet
+      character={loadedCharacter!}
+      onUpdate={handleUpdate}
+      onLevelUp={handleLevelUp}
+    />
   );
 }
