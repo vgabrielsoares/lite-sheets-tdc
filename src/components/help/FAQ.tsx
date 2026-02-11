@@ -56,8 +56,8 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'Como editar informações da ficha?',
     answer: [
       'Clique em qualquer campo para editá-lo diretamente.',
-      'Campos numéricos (PV, PP, Atributos) podem ser editados com um clique ou duplo-clique.',
-      'Campos complexos (Linhagem, Origem, Defesa) abrem uma sidebar lateral com detalhes.',
+      'Campos numéricos (GA, PV, PP, Atributos) podem ser editados com um clique ou duplo-clique.',
+      'Campos complexos (Linhagem, Origem) abrem uma sidebar lateral com detalhes.',
       'Todas as alterações são salvas automaticamente.',
     ],
     category: 'Edição',
@@ -67,11 +67,12 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'O que são valores padrão de nível 1?',
     answer: [
       'Ao criar uma ficha, ela inicia com:',
-      '• 15 PV máximo e atual',
+      '• GA 15 (Guarda máxima e atual)',
+      '• PV 5 (Vitalidade = GA/3)',
       '• 2 PP máximo e atual',
       '• Todos os atributos em 1',
       '• Proficiência com Armas Simples',
-      '• Idioma Comum + idiomas iguais ao atributo Mente',
+      '• Idioma Comum + (Mente - 1) idiomas adicionais',
       '• Inventário com Mochila, Cartão do Banco e 10 PO$',
     ],
     category: 'Edição',
@@ -80,7 +81,7 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'Como funcionam os idiomas conhecidos?',
     answer:
-      'Todo personagem conhece Comum por padrão. Você pode adicionar idiomas adicionais igual ao valor do atributo Mente. Se aumentar Mente, pode adicionar mais idiomas retroativamente.',
+      'Todo personagem conhece Comum por padrão. Você pode adicionar idiomas adicionais igual ao valor de Mente - 1 (mínimo 0). Se aumentar Mente, pode adicionar mais idiomas retroativamente.',
     category: 'Edição',
     tags: ['idiomas', 'mente'],
   },
@@ -128,20 +129,20 @@ const FAQ_ITEMS: FAQItem[] = [
     tags: ['modificador', 'proficiência'],
   },
   {
-    question: 'Como funciona a Defesa?',
+    question: 'Como funciona a Guarda (GA)?',
     answer:
-      'Defesa = 15 + Agilidade + outros bônus. Você pode adicionar bônus de Linhagem, Origem, equipamentos e outros efeitos clicando no campo Defesa.',
+      'GA (Guarda) é uma proteção que absorve dano antes da Vitalidade (PV). GA base = 15 + bônus de arquétipo por nível. PV = GA máxima / 3 (arredondado para baixo). Dano atinge GA primeiro; quando GA chega a 0, o excedente vai para PV.',
     category: 'Cálculos',
-    tags: ['defesa', 'agilidade'],
+    tags: ['guarda', 'ga', 'vitalidade', 'pv'],
   },
   {
-    question: 'O que são PV e PP temporários?',
+    question: 'O que são GA e PP temporários?',
     answer: [
-      'PV Temporários: pontos de vida extras que absorvem dano primeiro. Não se acumulam, sempre use o maior valor.',
-      'PP Temporários: pontos de poder extras. Funcionam igual aos PV temporários.',
+      'GA Temporários: pontos de guarda extras que absorvem dano primeiro. Não se acumulam, sempre use o maior valor.',
+      'PP Temporários: pontos de poder extras. Funcionam igual aos GA temporários.',
     ],
     category: 'Cálculos',
-    tags: ['pv', 'pp', 'temporário'],
+    tags: ['ga', 'pp', 'temporário'],
   },
 
   // Categoria: Exportação e Backup
