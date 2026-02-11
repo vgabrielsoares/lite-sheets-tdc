@@ -1,187 +1,259 @@
+/**
+ * CompactPowerPoints - Exibição compacta de PP (Pontos de Poder) + PF (Pontos de Feitiço)
+ *
+ * v0.0.2: Segue o mesmo padrão visual do CompactGuardVitality:
+ * - Sem botões de gastar/recuperar (interação via sidebar)
+ * - Valores atuais/máximos à direita da barra
+ * - Clicável para abrir sidebar de detalhes
+ * - Título "Potencial Energético" com tooltip
+ * - PF máximo = PP máximo automaticamente
+ */
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import {
-  Box,
   Card,
   CardContent,
+  Box,
   Typography,
-  Button,
-  TextField,
   Stack,
-  LinearProgress,
-  Chip,
   Tooltip,
+  useTheme,
 } from '@mui/material';
-import BoltIcon from '@mui/icons-material/Bolt';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import InfoIcon from '@mui/icons-material/Info';
 import type { PowerPoints } from '@/types/combat';
-import { applyDeltaToPP } from '@/utils';
+import type { SpellPoints } from '@/types/spells';
 
 export interface CompactPowerPointsProps {
+  /** Pontos de Poder */
   pp: PowerPoints;
-  onChange: (pp: PowerPoints) => void;
+  /** Callback para abrir detalhes na sidebar */
   onOpenDetails?: () => void;
+  /** PF para exibição compacta (apenas barra, sem botões). Mostrado apenas para conjuradores. */
+  spellPoints?: SpellPoints;
 }
 
 /**
- * CompactPowerPoints - Exibição compacta de Pontos de Poder com Gastar/Recuperar
- *
- * v0.0.2: Usa padrão de input numérico + botões Gastar/Recuperar
- * em vez de botões +/-.
- * - Gasto subtrai de PP temporários primeiro, depois dos atuais
- * - Recuperação adiciona aos PP atuais (cap em max)
+ * Componente compacto para exibir PP e PF na aba principal.
+ * Segue o padrão visual do CompactGuardVitality (Saúde).
  */
 export const CompactPowerPoints = React.memo(function CompactPowerPoints({
   pp,
-  onChange,
   onOpenDetails,
+  spellPoints,
 }: CompactPowerPointsProps) {
-  const [spendValue, setSpendValue] = useState('');
-  const [recoverValue, setRecoverValue] = useState('');
-
-  const handleSpend = useCallback(() => {
-    const amount = parseInt(spendValue, 10);
-    if (!isNaN(amount) && amount > 0) {
-      onChange(applyDeltaToPP(pp, -amount));
-      setSpendValue('');
-    }
-  }, [spendValue, pp, onChange]);
-
-  const handleRecover = useCallback(() => {
-    const amount = parseInt(recoverValue, 10);
-    if (!isNaN(amount) && amount > 0) {
-      onChange(applyDeltaToPP(pp, amount));
-      setRecoverValue('');
-    }
-  }, [recoverValue, pp, onChange]);
+  const theme = useTheme();
 
   const effectiveMax = pp.max + (pp.temporary ?? 0);
-  const percent =
-    effectiveMax > 0
-      ? Math.min(100, Math.floor((pp.current / effectiveMax) * 100))
+  const ppPercent =
+    effectiveMax > 0 ? Math.min(100, (pp.current / effectiveMax) * 100) : 0;
+  const ppTempValue = pp.temporary ?? 0;
+  const ppTempPercent =
+    ppTempValue > 0 && effectiveMax > 0
+      ? Math.min(100 - ppPercent, (ppTempValue / effectiveMax) * 100)
       : 0;
+
+  // PF max é sempre sincronizado com PP max (incluindo modificadores)
+  const pfMax = spellPoints ? pp.max : 0;
+  const pfCurrent = spellPoints?.current ?? 0;
+  const pfPercent = pfMax > 0 ? Math.min(100, (pfCurrent / pfMax) * 100) : 0;
 
   return (
     <Card
       variant="outlined"
-      onClick={onOpenDetails}
       sx={{
         cursor: onOpenDetails ? 'pointer' : 'default',
+        transition: 'all 0.2s ease-in-out',
+        borderColor: onOpenDetails ? 'primary.main' : 'divider',
+        '&:hover': onOpenDetails
+          ? {
+              boxShadow: 2,
+              transform: 'translateY(-1px)',
+            }
+          : {},
       }}
+      onClick={onOpenDetails}
+      role={onOpenDetails ? 'button' : undefined}
+      tabIndex={onOpenDetails ? 0 : undefined}
+      onKeyDown={
+        onOpenDetails
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpenDetails();
+              }
+            }
+          : undefined
+      }
+      aria-label="Potencial Energético"
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        {/* Header */}
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{ mb: 1 }}
-        >
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <BoltIcon color="info" />
+        <Stack spacing={1.5}>
+          {/* Título */}
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
             <Typography variant="subtitle2" fontWeight="bold">
-              Pontos de Poder (PP)
+              Potencial Energético
             </Typography>
+            {ppTempValue > 0 && (
+              <Typography variant="caption" color="info.main" fontWeight="bold">
+                +{ppTempValue} temp
+              </Typography>
+            )}
+            {onOpenDetails && (
+              <Tooltip title="Ver detalhes de PP e PF">
+                <InfoIcon fontSize="small" color="action" />
+              </Tooltip>
+            )}
           </Stack>
-          {(pp.temporary ?? 0) > 0 && (
-            <Chip
-              label={`+${pp.temporary} temp`}
-              size="small"
-              color="info"
-              variant="outlined"
-              sx={{ fontWeight: 600 }}
-            />
+
+          {/* PP (Pontos de Poder) */}
+          <Box>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ mb: 0.5 }}
+            >
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    bgcolor: 'info.main',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: 'info.contrastText',
+                      fontSize: '0.6rem',
+                      fontWeight: 900,
+                      lineHeight: 1,
+                    }}
+                  >
+                    ⚡
+                  </Typography>
+                </Box>
+                <Typography variant="body2" fontWeight="medium">
+                  PP
+                </Typography>
+              </Stack>
+              <Typography variant="body2" fontWeight="bold">
+                {pp.current}/{pp.max}
+                {ppTempValue > 0 && (
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="info.main"
+                    sx={{ ml: 0.5, fontWeight: 'bold' }}
+                  >
+                    (+{ppTempValue})
+                  </Typography>
+                )}
+              </Typography>
+            </Stack>
+            {/* Barra segmentada: PP principal + PP temporário */}
+            <Box
+              sx={{
+                position: 'relative',
+                height: 6,
+                borderRadius: 3,
+                bgcolor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255,255,255,0.08)'
+                    : 'rgba(0,0,0,0.08)',
+                overflow: 'hidden',
+              }}
+            >
+              {/* PP principal */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  height: '100%',
+                  width: `${Math.min(ppPercent, 100)}%`,
+                  bgcolor: 'info.main',
+                  borderRadius: 3,
+                  transition: 'width 0.3s ease-in-out',
+                }}
+              />
+              {/* PP temporário */}
+              {ppTempPercent > 0 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: `${Math.min(ppPercent, 100)}%`,
+                    top: 0,
+                    height: '100%',
+                    width: `${ppTempPercent}%`,
+                    bgcolor: 'info.light',
+                    borderRadius: 3,
+                    transition: 'width 0.3s ease-in-out',
+                    opacity: 0.7,
+                  }}
+                />
+              )}
+            </Box>
+          </Box>
+
+          {/* PF (Pontos de Feitiço) — apenas para conjuradores */}
+          {spellPoints && (
+            <Box>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mb: 0.5 }}
+              >
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <AutoFixHighIcon
+                    fontSize="small"
+                    sx={{ color: theme.palette.secondary.main, fontSize: 16 }}
+                  />
+                  <Typography variant="body2" fontWeight="medium">
+                    PF
+                  </Typography>
+                </Stack>
+                <Typography variant="body2" fontWeight="bold">
+                  {pfCurrent}/{pfMax}
+                </Typography>
+              </Stack>
+              <Box
+                sx={{
+                  position: 'relative',
+                  height: 6,
+                  borderRadius: 3,
+                  bgcolor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.08)'
+                      : 'rgba(0,0,0,0.08)',
+                  overflow: 'hidden',
+                }}
+              >
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    height: '100%',
+                    width: `${Math.min(pfPercent, 100)}%`,
+                    bgcolor: 'secondary.main',
+                    borderRadius: 3,
+                    transition: 'width 0.3s ease-in-out',
+                  }}
+                />
+              </Box>
+            </Box>
           )}
-        </Stack>
-
-        {/* Current/Max */}
-        <Typography
-          variant="h4"
-          textAlign="center"
-          sx={{ fontWeight: 'bold', mb: 0.5 }}
-        >
-          {pp.current}
-          <Typography component="span" variant="h6" color="text.secondary">
-            {' '}
-            / {pp.max}
-          </Typography>
-        </Typography>
-
-        {/* Progress bar */}
-        <LinearProgress
-          color="info"
-          variant="determinate"
-          value={percent}
-          sx={{ height: 8, borderRadius: 999, mb: 1.5 }}
-        />
-
-        {/* Gastar / Recuperar */}
-        <Stack spacing={1} onClick={(e) => e.stopPropagation()}>
-          {/* Gastar */}
-          <Stack direction="row" spacing={1} alignItems="center">
-            <TextField
-              size="small"
-              type="number"
-              placeholder="Qtd"
-              value={spendValue}
-              onChange={(e) => setSpendValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSpend();
-              }}
-              inputProps={{
-                min: 1,
-                style: { textAlign: 'center' },
-                'aria-label': 'Quantidade para gastar PP',
-              }}
-              sx={{ width: 80 }}
-            />
-            <Button
-              size="small"
-              variant="outlined"
-              color="error"
-              onClick={handleSpend}
-              disabled={
-                !spendValue || parseInt(spendValue, 10) <= 0 || pp.current <= 0
-              }
-              sx={{ textTransform: 'none', flex: 1 }}
-            >
-              Gastar
-            </Button>
-          </Stack>
-
-          {/* Recuperar */}
-          <Stack direction="row" spacing={1} alignItems="center">
-            <TextField
-              size="small"
-              type="number"
-              placeholder="Qtd"
-              value={recoverValue}
-              onChange={(e) => setRecoverValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleRecover();
-              }}
-              inputProps={{
-                min: 1,
-                style: { textAlign: 'center' },
-                'aria-label': 'Quantidade para recuperar PP',
-              }}
-              sx={{ width: 80 }}
-            />
-            <Button
-              size="small"
-              variant="outlined"
-              color="success"
-              onClick={handleRecover}
-              disabled={
-                !recoverValue ||
-                parseInt(recoverValue, 10) <= 0 ||
-                pp.current >= pp.max
-              }
-              sx={{ textTransform: 'none', flex: 1 }}
-            >
-              Recuperar
-            </Button>
-          </Stack>
         </Stack>
       </CardContent>
     </Card>
