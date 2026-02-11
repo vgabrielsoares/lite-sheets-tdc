@@ -12,8 +12,8 @@ import type {
   VulnerabilityDie as VulnerabilityDieType,
 } from '@/types/combat';
 import {
-  CompactPowerPoints,
-  CompactSpellPoints,
+  PowerPointsDisplay,
+  SpellPointsDisplay,
   GuardVitalityDisplay,
 } from '../stats';
 import {
@@ -251,9 +251,19 @@ export const CombatTab = React.memo(function CombatTab({
             onOpenDetails={onOpenHP}
           />
 
-          {/* Pontos de Poder */}
-          <Box sx={{ mt: 2 }}>
-            <CompactPowerPoints
+          {/* PP e PF lado a lado (PF apenas para conjuradores) */}
+          <Box
+            sx={{
+              mt: 2,
+              display: 'grid',
+              gridTemplateColumns: character.spellcasting?.isCaster
+                ? { xs: '1fr', md: '1fr 1fr' }
+                : '1fr',
+              gap: 2,
+            }}
+          >
+            {/* Pontos de Poder */}
+            <PowerPointsDisplay
               pp={character.combat.pp}
               onChange={(pp) =>
                 onUpdate({
@@ -265,15 +275,15 @@ export const CombatTab = React.memo(function CombatTab({
               }
               onOpenDetails={onOpenPP}
             />
-          </Box>
 
-          {/* Pontos de Feitiço — apenas para conjuradores */}
-          {character.spellcasting?.isCaster && (
-            <Box sx={{ mt: 2 }}>
-              <CompactSpellPoints
-                spellPoints={
-                  character.spellcasting.spellPoints ?? { current: 0, max: 0 }
-                }
+            {/* Pontos de Feitiço — apenas para conjuradores */}
+            {character.spellcasting?.isCaster && (
+              <SpellPointsDisplay
+                spellPoints={{
+                  current: character.spellcasting.spellPoints?.current ?? 0,
+                  max: character.combat.pp.max, // PF max = PP max sempre
+                }}
+                pp={character.combat.pp}
                 onChange={(spellPoints) =>
                   onUpdate({
                     spellcasting: {
@@ -290,9 +300,18 @@ export const CombatTab = React.memo(function CombatTab({
                     },
                   })
                 }
+                onPPChange={(pp) =>
+                  onUpdate({
+                    combat: {
+                      ...character.combat,
+                      pp,
+                    },
+                  })
+                }
+                onOpenDetails={onOpenPP}
               />
-            </Box>
-          )}
+            )}
+          </Box>
         </Box>
 
         <Divider />
