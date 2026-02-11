@@ -169,8 +169,8 @@ export function ClassForm({
       errors.push('Máximo de 2 arquétipos por classe');
     }
 
-    if (level < 1) {
-      errors.push('Nível deve ser pelo menos 1');
+    if (level < 0) {
+      errors.push('Nível não pode ser negativo');
     }
 
     if (level > maxAvailableLevel) {

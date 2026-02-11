@@ -74,8 +74,12 @@ export function ClassesDisplay({
 
   // Verificar se pode adicionar mais classes
   const canAddClass = useMemo(() => {
-    return classes.length < MAX_CLASSES && availableClassLevels > 0;
-  }, [classes.length, availableClassLevels]);
+    return (
+      characterLevel >= 3 &&
+      classes.length < MAX_CLASSES &&
+      availableClassLevels > 0
+    );
+  }, [characterLevel, classes.length, availableClassLevels]);
 
   // Handler para adicionar nova classe
   const handleAddClick = useCallback(() => {
@@ -192,7 +196,14 @@ export function ClassesDisplay({
       </Typography>
 
       {/* Lista de classes ou estado vazio */}
-      {classes.length === 0 ? (
+      {characterLevel < 3 ? (
+        <Alert severity="info">
+          <Typography variant="body2">
+            <strong>Classes são desbloqueadas no nível 3.</strong> Continue
+            progredindo para desbloquear esta funcionalidade!
+          </Typography>
+        </Alert>
+      ) : classes.length === 0 ? (
         <Alert severity="info">
           <Typography variant="body2">
             <strong>Nenhuma classe adicionada.</strong> Classes são
