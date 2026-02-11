@@ -24,7 +24,7 @@ import { SpellDashboard, SpellList, SpellLearningCalculator } from '../spells';
 import {
   SPELL_CIRCLES,
   SPELL_MATRICES,
-  SPELL_CIRCLE_PP_COST,
+  SPELL_CIRCLE_PF_COST,
 } from '@/constants/spells';
 import { useNotifications } from '@/hooks/useNotifications';
 
@@ -142,10 +142,7 @@ export const SpellsTab = React.memo(function SpellsTab({
 
     onUpdate({
       spellcasting: {
-        maxKnownSpells: character.spellcasting.maxKnownSpells,
-        knownSpellsModifiers: character.spellcasting.knownSpellsModifiers,
-        spellcastingAbilities: character.spellcasting.spellcastingAbilities,
-        masteredMatrices: character.spellcasting.masteredMatrices,
+        ...character.spellcasting,
         knownSpells: updatedSpells,
       },
     });
@@ -209,10 +206,7 @@ export const SpellsTab = React.memo(function SpellsTab({
 
     onUpdate({
       spellcasting: {
-        maxKnownSpells: character.spellcasting.maxKnownSpells,
-        knownSpellsModifiers: character.spellcasting.knownSpellsModifiers,
-        spellcastingAbilities: character.spellcasting.spellcastingAbilities,
-        masteredMatrices: character.spellcasting.masteredMatrices,
+        ...character.spellcasting,
         knownSpells: updatedSpells,
       },
     });
@@ -253,10 +247,7 @@ export const SpellsTab = React.memo(function SpellsTab({
 
       onUpdate({
         spellcasting: {
-          maxKnownSpells: character.spellcasting.maxKnownSpells,
-          knownSpellsModifiers: character.spellcasting.knownSpellsModifiers,
-          spellcastingAbilities: character.spellcasting.spellcastingAbilities,
-          masteredMatrices: character.spellcasting.masteredMatrices,
+          ...character.spellcasting,
           knownSpells: updatedSpells,
         },
       });
@@ -369,7 +360,7 @@ export const SpellsTab = React.memo(function SpellsTab({
               >
                 {SPELL_CIRCLES.map((circle) => (
                   <MenuItem key={circle} value={circle}>
-                    {getCircleLabel(circle)} - {SPELL_CIRCLE_PP_COST[circle]} PP
+                    {getCircleLabel(circle)} - {SPELL_CIRCLE_PF_COST[circle]} PF
                   </MenuItem>
                 ))}
               </Select>

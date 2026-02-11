@@ -11,7 +11,11 @@ import type {
   CombatPenalties,
   VulnerabilityDie as VulnerabilityDieType,
 } from '@/types/combat';
-import { CompactPowerPoints, GuardVitalityDisplay } from '../stats';
+import {
+  CompactPowerPoints,
+  CompactSpellPoints,
+  GuardVitalityDisplay,
+} from '../stats';
 import {
   ActionEconomy,
   AttacksDisplay,
@@ -262,6 +266,33 @@ export const CombatTab = React.memo(function CombatTab({
               onOpenDetails={onOpenPP}
             />
           </Box>
+
+          {/* Pontos de Feitiço — apenas para conjuradores */}
+          {character.spellcasting?.isCaster && (
+            <Box sx={{ mt: 2 }}>
+              <CompactSpellPoints
+                spellPoints={
+                  character.spellcasting.spellPoints ?? { current: 0, max: 0 }
+                }
+                onChange={(spellPoints) =>
+                  onUpdate({
+                    spellcasting: {
+                      ...(character.spellcasting || {
+                        isCaster: true,
+                        spellPoints: { current: 0, max: 0 },
+                        knownSpells: [],
+                        maxKnownSpells: 0,
+                        knownSpellsModifiers: 0,
+                        spellcastingAbilities: [],
+                        masteredMatrices: [],
+                      }),
+                      spellPoints,
+                    },
+                  })
+                }
+              />
+            </Box>
+          )}
         </Box>
 
         <Divider />

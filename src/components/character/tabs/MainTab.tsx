@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { Box, Stack } from '@mui/material';
 import type {
   Character,
+  ArchetypeName,
   AttributeName,
   SkillName,
   ProficiencyLevel,
@@ -11,10 +12,12 @@ import type {
   Craft,
   LanguageName,
 } from '@/types';
+import type { LevelUpSpecialGain } from '@/utils/levelUpCalculations';
 import {
   BasicStats,
   CompactGuardVitality,
   CompactPowerPoints,
+  CompactSpellPoints,
   CompactDefenseTest,
   MovementDisplay,
   SensesDisplay,
@@ -139,6 +142,14 @@ export interface MainTabProps {
    * Callback para alterar ofício selecionado
    */
   onSelectedCraftChange?: (skillName: SkillName, craftId: string) => void;
+
+  /**
+   * Callback para confirmar level up (arquétipo + ganhos especiais)
+   */
+  onLevelUp?: (
+    archetypeName: ArchetypeName,
+    specialGains: LevelUpSpecialGain[]
+  ) => void;
 }
 
 /**
@@ -183,6 +194,7 @@ export const MainTab = React.memo(function MainTab({
   onUpdateCraft,
   onRemoveCraft,
   onSelectedCraftChange,
+  onLevelUp,
 }: MainTabProps) {
   // Calcular se personagem está sobrecarregado
   const carryCapacity = calculateCarryCapacity(character.attributes.corpo);
@@ -241,6 +253,7 @@ export const MainTab = React.memo(function MainTab({
             onOpenLineage={onOpenLineage}
             onOpenOrigin={onOpenOrigin}
             onOpenSize={onOpenSize}
+            onLevelUp={onLevelUp}
           />
         </Box>
 
@@ -273,6 +286,31 @@ export const MainTab = React.memo(function MainTab({
             }
             onOpenDetails={onOpenPP}
           />
+
+          {/* Pontos de Feitiço — apenas para conjuradores */}
+          {character.spellcasting?.isCaster && (
+            <CompactSpellPoints
+              spellPoints={
+                character.spellcasting.spellPoints ?? { current: 0, max: 0 }
+              }
+              onChange={(spellPoints) =>
+                onUpdate({
+                  spellcasting: {
+                    ...(character.spellcasting || {
+                      isCaster: true,
+                      spellPoints: { current: 0, max: 0 },
+                      knownSpells: [],
+                      maxKnownSpells: 0,
+                      knownSpellsModifiers: 0,
+                      spellcastingAbilities: [],
+                      masteredMatrices: [],
+                    }),
+                    spellPoints,
+                  },
+                })
+              }
+            />
+          )}
         </Box>
 
         {/* Defesa e Deslocamento lado a lado */}
