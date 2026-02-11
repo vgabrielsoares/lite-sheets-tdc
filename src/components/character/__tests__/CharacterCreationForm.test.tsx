@@ -87,10 +87,10 @@ describe('CharacterCreationForm', () => {
       );
 
       expect(
-        screen.getByText(/Valores padrão de nível 1:/i)
+        screen.getByText(/Valores padrão de nível 0:/i)
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/PV: 15 \(máximo e atual\)/i)
+        screen.getByText(/GA: 15 \| PV: 5 \(máximo e atual\)/i)
       ).toBeInTheDocument();
     });
 
@@ -100,7 +100,7 @@ describe('CharacterCreationForm', () => {
       );
 
       expect(
-        screen.queryByText(/Valores padrão de nível 1:/i)
+        screen.queryByText(/Valores padrão de nível 0:/i)
       ).not.toBeInTheDocument();
     });
   });
