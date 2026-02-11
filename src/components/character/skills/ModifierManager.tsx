@@ -3,8 +3,8 @@
 /**
  * InlineModifiers - Componente simplificado para exibir e editar modificadores inline
  *
- * Exibe duas colunas simples: modificador de dados (+/-d20) e modificador numérico (+/-)
- * Interface minimalista em uma única linha, sem formulários complexos.
+ * Exibe um campo simples para o modificador de dados (+Xd / -Xd).
+ * No sistema v0.0.2, não existem modificadores numéricos — apenas modificadores de dados.
  */
 
 import React from 'react';
@@ -14,10 +14,8 @@ import type { Modifier } from '@/types';
 export interface InlineModifiersProps {
   /** Modificador de dados atual */
   diceModifier: number;
-  /** Modificador numérico atual */
-  numericModifier: number;
-  /** Callback quando modificadores são atualizados */
-  onUpdate: (diceModifier: number, numericModifier: number) => void;
+  /** Callback quando modificador é atualizado */
+  onUpdate: (diceModifier: number) => void;
   /** Se deve desabilitar edição */
   disabled?: boolean;
 }
@@ -27,7 +25,6 @@ export interface InlineModifiersProps {
  */
 export function InlineModifiers({
   diceModifier,
-  numericModifier,
   onUpdate,
   disabled = false,
 }: InlineModifiersProps) {
@@ -40,27 +37,27 @@ export function InlineModifiers({
         minWidth: 'fit-content',
       }}
     >
-      {/* Modificador de Dados */}
-      <Tooltip title="Modificador de Dados: adiciona ou remove d20s da rolagem">
+      {/* Modificador de Dados (+Xd / -Xd) */}
+      <Tooltip title="Modificador de Dados: adiciona ou remove dados da rolagem (+1d, +2d, -1d, etc.)">
         <TextField
           type="number"
           value={diceModifier}
           onChange={(e) => {
             const newDice = parseInt(e.target.value) || 0;
-            onUpdate(newDice, numericModifier);
+            onUpdate(newDice);
           }}
           disabled={disabled}
           size="small"
           sx={{
             width: 75,
             '& .MuiInputBase-root': {
-              height: '40px', // Mesma altura dos Select
+              height: '40px',
             },
             '& input': {
               textAlign: 'center',
               fontWeight: 600,
               fontSize: '0.9rem',
-              py: 0.75, // Mesmo padding dos Select
+              py: 0.75,
               color:
                 diceModifier > 0
                   ? 'success.main'
@@ -75,49 +72,7 @@ export function InlineModifiers({
                 variant="caption"
                 sx={{ mr: 0.3, color: 'text.secondary', fontSize: '0.65rem' }}
               >
-                d20
-              </Typography>
-            ),
-          }}
-        />
-      </Tooltip>
-
-      {/* Modificador Numérico */}
-      <Tooltip title="Modificador Numérico: adicionado ao total da rolagem">
-        <TextField
-          type="number"
-          value={numericModifier}
-          onChange={(e) => {
-            const newNumeric = parseInt(e.target.value) || 0;
-            onUpdate(diceModifier, newNumeric);
-          }}
-          disabled={disabled}
-          size="small"
-          sx={{
-            width: 75,
-            '& .MuiInputBase-root': {
-              height: '40px', // Mesma altura dos Select
-            },
-            '& input': {
-              textAlign: 'center',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              py: 0.75, // Mesmo padding dos Select
-              color:
-                numericModifier > 0
-                  ? 'success.main'
-                  : numericModifier < 0
-                    ? 'error.main'
-                    : 'text.primary',
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <Typography
-                variant="caption"
-                sx={{ mr: 0.3, color: 'text.secondary', fontSize: '0.65rem' }}
-              >
-                +
+                d
               </Typography>
             ),
           }}
@@ -154,7 +109,7 @@ export function extractNumericModifier(modifiers: Modifier[] = []): number {
  */
 export function buildModifiersArray(
   diceModifier: number,
-  numericModifier: number
+  numericModifier: number = 0
 ): Modifier[] {
   const modifiers: Modifier[] = [];
 

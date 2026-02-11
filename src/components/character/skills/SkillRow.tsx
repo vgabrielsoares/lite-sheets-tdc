@@ -66,7 +66,6 @@ import { calculateSkillRoll, calculateSignatureAbilityBonus } from '@/utils';
 import {
   InlineModifiers,
   extractDiceModifier,
-  extractNumericModifier,
   buildModifiersArray,
 } from './ModifierManager';
 import { SkillRollButton } from './SkillRollButton';
@@ -569,10 +568,6 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
               isSorteSkill && luck
                 ? luck.diceModifier || 0
                 : extractDiceModifier(skill.modifiers);
-            const numericModifier =
-              isSorteSkill && luck
-                ? luck.numericModifier || 0
-                : extractNumericModifier(skill.modifiers);
 
             return (
               <>
@@ -591,26 +586,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
                     />
                   </Tooltip>
                 )}
-                {numericModifier !== 0 && (
-                  <Tooltip title="Modificador numérico" enterDelay={150}>
-                    <Chip
-                      label={
-                        numericModifier > 0
-                          ? `+${numericModifier}`
-                          : numericModifier
-                      }
-                      size="small"
-                      color={numericModifier > 0 ? 'success' : 'error'}
-                      variant="outlined"
-                      sx={{
-                        fontWeight: 500,
-                        minWidth: 36,
-                        fontSize: '0.75rem',
-                      }}
-                    />
-                  </Tooltip>
-                )}
-                {diceModifier === 0 && numericModifier === 0 && (
+                {diceModifier === 0 && (
                   <Typography
                     variant="caption"
                     color="text.disabled"
