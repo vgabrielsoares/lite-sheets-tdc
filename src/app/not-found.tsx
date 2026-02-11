@@ -44,7 +44,7 @@ export default function NotFound() {
       // Para outras rotas 404, redirecionar para home após 2 segundos
       console.log('Rota não encontrada, redirecionando para home em 2s');
       const timeout = setTimeout(() => {
-        router.replace('/');
+        router.replace('/characters');
       }, 2000);
 
       return () => clearTimeout(timeout);

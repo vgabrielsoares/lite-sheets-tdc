@@ -240,9 +240,9 @@ describe('Fluxo de Criação de Personagem (Integração)', () => {
     const cancelButton = screen.getByRole('button', { name: /cancelar/i });
     fireEvent.click(cancelButton);
 
-    // Assert - Deve ter navegado para home
+    // Assert - Deve ter navegado para lista de fichas
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockPush).toHaveBeenCalledWith('/characters');
     });
 
     // Assert - Não deve ter salvo no IndexedDB

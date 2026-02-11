@@ -1961,11 +1961,9 @@ export function SkillUsageSidebar({
                             {onUpdateCraft && (
                               <InlineModifiers
                                 diceModifier={craft.diceModifier}
-                                numericModifier={craft.numericModifier}
-                                onUpdate={(dice, numeric) => {
+                                onUpdate={(dice) => {
                                   onUpdateCraft(craft.id, {
                                     diceModifier: dice,
-                                    numericModifier: numeric,
                                   });
                                 }}
                               />

@@ -124,9 +124,8 @@ export function CraftForm({
     onClose();
   };
 
-  const handleModifiersUpdate = (dice: number, numeric: number) => {
+  const handleModifiersUpdate = (dice: number) => {
     setDiceModifier(dice);
-    setNumericModifier(numeric);
   };
 
   return (
@@ -211,7 +210,6 @@ export function CraftForm({
             </Typography>
             <InlineModifiers
               diceModifier={diceModifier}
-              numericModifier={numericModifier}
               onUpdate={handleModifiersUpdate}
             />
           </Box>

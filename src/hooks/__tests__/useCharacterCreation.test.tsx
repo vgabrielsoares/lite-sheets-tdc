@@ -229,7 +229,7 @@ describe('useCharacterCreation', () => {
         result.current.cancel();
       });
 
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockPush).toHaveBeenCalledWith('/characters');
     });
   });
 

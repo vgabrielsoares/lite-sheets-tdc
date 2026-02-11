@@ -9,3 +9,4 @@ export { default as FAQ } from './FAQ';
 export { default as KeyboardShortcuts } from './KeyboardShortcuts';
 export { default as ExportImportGuide } from './ExportImportGuide';
 export { default as DiceRollingGuide } from './DiceRollingGuide';
+export { default as RulesReference } from './RulesReference';

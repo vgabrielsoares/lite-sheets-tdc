@@ -67,3 +67,12 @@ export * from './progression';
 
 // Compra de Proficiências
 export * from './proficiencyPurchases';
+
+// Símbolos do Sistema
+export * from './symbols';
+
+// Passos de Dados
+export * from './diceSteps';
+
+// Versão do Sistema
+export * from './version';

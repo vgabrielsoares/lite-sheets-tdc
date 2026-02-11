@@ -113,7 +113,7 @@ describe('CharacterSheet', () => {
       const backLink = screen.getByText('Fichas');
       fireEvent.click(backLink);
 
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockPush).toHaveBeenCalledWith('/characters');
     });
 
     it('deve alternar entre abas corretamente', () => {

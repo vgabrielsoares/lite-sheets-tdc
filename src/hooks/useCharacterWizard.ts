@@ -532,7 +532,7 @@ export function useCharacterWizard(): UseCharacterWizardReturn {
    * Cancelar e voltar para a lista de personagens
    */
   const cancel = useCallback(() => {
-    router.push('/');
+    router.push('/characters');
   }, [router]);
 
   return {

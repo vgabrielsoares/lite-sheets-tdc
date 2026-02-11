@@ -156,7 +156,7 @@ export function useCharacterCreation(): UseCharacterCreationReturn {
    * Cancela a criação e volta para a listagem
    */
   const cancel = useCallback(() => {
-    router.push('/');
+    router.push('/characters');
   }, [router]);
 
   return {
