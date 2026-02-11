@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -19,6 +19,10 @@ import CategoryIcon from '@mui/icons-material/Category';
 import type { Character, ArchetypeName } from '@/types';
 import { EditableText, EditableNumber } from '@/components/shared';
 import { ARCHETYPE_LABELS } from '@/constants/archetypes';
+import { canLevelUp, getXPForNextLevel } from '@/constants/progression';
+import LevelUpModal from '@/components/character/LevelUpModal';
+import type { LevelUpSpecialGain } from '@/utils/levelUpCalculations';
+import { LevelUpIndicator } from '@/components/character/LevelUpIndicator';
 
 /**
  * Cor do chip baseada no arquétipo (mesmo padrão da aba de arquétipos)
@@ -67,6 +71,14 @@ export interface BasicStatsProps {
    * Callback para abrir sidebar de tamanho
    */
   onOpenSize?: () => void;
+
+  /**
+   * Callback para confirmar level up (arquétipo + ganhos especiais)
+   */
+  onLevelUp?: (
+    archetypeName: ArchetypeName,
+    specialGains: LevelUpSpecialGain[]
+  ) => void;
 }
 
 /**
@@ -101,7 +113,73 @@ export const BasicStats = React.memo(function BasicStats({
   onOpenLineage,
   onOpenOrigin,
   onOpenSize,
+  onLevelUp,
 }: BasicStatsProps) {
+  const [levelUpModalOpen, setLevelUpModalOpen] = useState(false);
+
+  // Total de níveis distribuídos em arquétipos
+  const totalArchetypeLevels = useMemo(
+    () =>
+      (character.archetypes ?? []).reduce(
+        (sum, arch) => sum + (arch.level ?? 0),
+        0
+      ),
+    [character.archetypes]
+  );
+
+  // Nível mínimo = max(0, total de níveis de arquétipos)
+  const minLevel = useMemo(
+    () => Math.max(0, totalArchetypeLevels),
+    [totalArchetypeLevels]
+  );
+
+  // Verifica se o personagem pode subir de nível
+  const isReadyToLevelUp = useMemo(
+    () => canLevelUp(character.experience.current, character.level),
+    [character.experience.current, character.level]
+  );
+
+  // XP necessário para o próximo nível (auto-calculado)
+  const xpForNextLevel = useMemo(
+    () => getXPForNextLevel(character.level),
+    [character.level]
+  );
+
+  /**
+   * Handler para mudança manual de nível.
+   * Se o nível aumenta e onLevelUp existe, abre o LevelUpModal.
+   * Se o nível diminui, aplica diretamente (respeitando o mínimo).
+   */
+  const handleLevelChange = useCallback(
+    (newLevel: number) => {
+      if (newLevel > character.level && onLevelUp) {
+        // Abre o modal de level up ao invés de mudar diretamente
+        setLevelUpModalOpen(true);
+      } else if (newLevel < character.level) {
+        // Permite reduzir se não violar mínimo de arquétipos
+        onUpdate({ level: Math.max(newLevel, minLevel) });
+      }
+      // Se newLevel === character.level, não faz nada
+    },
+    [character.level, onLevelUp, onUpdate, minLevel]
+  );
+
+  const handleOpenLevelUp = useCallback(() => {
+    setLevelUpModalOpen(true);
+  }, []);
+
+  const handleCloseLevelUp = useCallback(() => {
+    setLevelUpModalOpen(false);
+  }, []);
+
+  const handleConfirmLevelUp = useCallback(
+    (archetypeName: ArchetypeName, specialGains: LevelUpSpecialGain[]) => {
+      onLevelUp?.(archetypeName, specialGains);
+      setLevelUpModalOpen(false);
+    },
+    [onLevelUp]
+  );
+
   return (
     <Card>
       <CardContent>
@@ -268,16 +346,25 @@ export const BasicStats = React.memo(function BasicStats({
             </Box>
             <EditableNumber
               value={character.level}
-              onChange={(level) => onUpdate({ level })}
+              onChange={handleLevelChange}
               variant="h4"
-              min={1}
+              min={minLevel}
               max={30}
               validate={(value) => {
-                if (value < 1) return 'Nível mínimo: 1';
+                if (value < minLevel) return `Nível mínimo: ${minLevel}`;
                 if (value > 30) return 'Nível máximo: 30';
                 return null;
               }}
             />
+            {/* Botão de Level Up com pulso/brilho */}
+            {isReadyToLevelUp && onLevelUp && (
+              <LevelUpIndicator
+                currentXP={character.experience.current}
+                level={character.level}
+                onLevelUp={handleOpenLevelUp}
+                compact
+              />
+            )}
           </Box>
 
           {/* Experiência (XP) */}
@@ -296,7 +383,9 @@ export const BasicStats = React.memo(function BasicStats({
                 Experiência (XP)
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}
+            >
               <EditableNumber
                 value={character.experience.current}
                 onChange={(current) =>
@@ -304,6 +393,7 @@ export const BasicStats = React.memo(function BasicStats({
                     experience: {
                       ...character.experience,
                       current,
+                      toNextLevel: xpForNextLevel,
                     },
                   })
                 }
@@ -313,21 +403,20 @@ export const BasicStats = React.memo(function BasicStats({
               <Typography variant="body2" color="text.secondary">
                 /
               </Typography>
-              <EditableNumber
-                value={character.experience.toNextLevel ?? 50}
-                onChange={(toNextLevel) =>
-                  onUpdate({
-                    experience: {
-                      ...character.experience,
-                      toNextLevel,
-                    },
-                  })
-                }
+              <Typography
                 variant="h6"
-                min={1}
-                max={999999}
-              />
+                color="text.secondary"
+                title="XP necessário para o próximo nível (calculado automaticamente)"
+              >
+                {xpForNextLevel}
+              </Typography>
             </Box>
+            {/* XP Progress Bar + Level Up Indicator */}
+            <LevelUpIndicator
+              currentXP={character.experience.current}
+              level={character.level}
+              onLevelUp={onLevelUp ? handleOpenLevelUp : undefined}
+            />
           </Box>
         </Box>
 
@@ -365,6 +454,14 @@ export const BasicStats = React.memo(function BasicStats({
           </Box>
         )}
       </CardContent>
+
+      {/* Modal de Level Up */}
+      <LevelUpModal
+        open={levelUpModalOpen}
+        onClose={handleCloseLevelUp}
+        character={character}
+        onConfirm={handleConfirmLevelUp}
+      />
     </Card>
   );
 });
