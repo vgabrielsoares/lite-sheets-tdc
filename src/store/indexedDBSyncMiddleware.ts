@@ -82,6 +82,25 @@ export const indexedDBSyncMiddleware: Middleware<{}, RootState> =
           break;
         }
 
+        case 'characters/updateSignatureAbility':
+        case 'characters/addCraft':
+        case 'characters/updateCraft':
+        case 'characters/removeCraft':
+        case 'characters/levelUp': {
+          // Ações síncronas que modificam um personagem — persistir no IndexedDB
+          const payload = action.payload as { characterId: string };
+          const charId = payload.characterId;
+          const state = store.getState();
+          const updatedChar = state.characters.entities[charId];
+          if (updatedChar) {
+            await characterService.update(charId, updatedChar);
+            console.log(
+              `✅ Personagem ${charId} sincronizado com IndexedDB (${action.type})`
+            );
+          }
+          break;
+        }
+
         // As ações fulfilled dos thunks NÃO precisam de sync, pois
         // os thunks já salvaram no IndexedDB antes de retornar
         case 'characters/addCharacter/fulfilled':
