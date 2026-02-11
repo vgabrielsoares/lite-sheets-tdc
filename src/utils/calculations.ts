@@ -744,3 +744,83 @@ export function calculateCraftModifier(
   const multiplier = getCraftMultiplier(level);
   return attributeValue * multiplier + otherModifiers;
 }
+
+// ─── Cálculos de Arquétipo / Progressão ─────────────────────
+
+import type { Archetype, ArchetypeName } from '@/types/character';
+import type { Attributes } from '@/types/attributes';
+import {
+  ARCHETYPE_GA_ATTRIBUTE,
+  ARCHETYPE_PP_BASE_PER_LEVEL,
+} from '@/constants/archetypes';
+
+/**
+ * Calcula GA máximo total baseado nos arquétipos do personagem.
+ * Fórmula: 15 (base) + Σ(valor_atributo_do_arquétipo × níveis_nesse_arquétipo) + modificadores
+ *
+ * @param archetypes - Lista de arquétipos do personagem com seus níveis
+ * @param attributes - Atributos atuais do personagem
+ * @param otherModifiers - Bônus/penalidades adicionais (itens, efeitos, etc.)
+ * @returns GA máximo total
+ *
+ * @example
+ * // Combatente nível 3, Corpo=3: 15 + (3 × 3) = 24
+ * calculateTotalGA([{ name: 'combatente', level: 3, features: [] }], { corpo: 3, ... }, 0);
+ */
+export function calculateTotalGA(
+  archetypes: Archetype[],
+  attributes: Attributes,
+  otherModifiers: number = 0
+): number {
+  const BASE_GA = 15;
+  let gaFromArchetypes = 0;
+
+  for (const archetype of archetypes) {
+    const attrKey = ARCHETYPE_GA_ATTRIBUTE[archetype.name];
+    const attrValue = attributes[attrKey] ?? 0;
+    gaFromArchetypes += attrValue * archetype.level;
+  }
+
+  return BASE_GA + gaFromArchetypes + otherModifiers;
+}
+
+/**
+ * Calcula PP máximo total baseado nos arquétipos do personagem.
+ * Fórmula: 2 (base) + Σ((base_pp_arquétipo + Essência) × níveis_nesse_arquétipo) + modificadores
+ *
+ * @param archetypes - Lista de arquétipos do personagem com seus níveis
+ * @param essencia - Valor do atributo Essência
+ * @param otherModifiers - Bônus/penalidades adicionais
+ * @returns PP máximo total
+ *
+ * @example
+ * // Feiticeiro nível 3, Essência=2: 2 + (5+2) × 3 = 23
+ * calculateTotalPP([{ name: 'feiticeiro', level: 3, features: [] }], 2, 0);
+ */
+export function calculateTotalPP(
+  archetypes: Archetype[],
+  essencia: number,
+  otherModifiers: number = 0
+): number {
+  const BASE_PP = 2;
+  let ppFromArchetypes = 0;
+
+  for (const archetype of archetypes) {
+    const basePP = ARCHETYPE_PP_BASE_PER_LEVEL[archetype.name] ?? 0;
+    ppFromArchetypes += (basePP + essencia) * archetype.level;
+  }
+
+  return BASE_PP + ppFromArchetypes + otherModifiers;
+}
+
+/**
+ * Calcula PV máximo baseado na GA total.
+ * Reutiliza calculateVitality(gaMax) existente.
+ * Fórmula: floor(GA_max / 3)
+ *
+ * @param gaMax - GA máximo calculado
+ * @returns PV máximo
+ */
+export function calculateTotalPV(gaMax: number): number {
+  return calculateVitality(gaMax);
+}

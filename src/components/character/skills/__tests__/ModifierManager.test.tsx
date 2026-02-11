@@ -21,104 +21,52 @@ describe('InlineModifiers', () => {
 
   describe('Renderização', () => {
     it('deve renderizar com valores iniciais', () => {
-      render(
-        <InlineModifiers
-          diceModifier={0}
-          numericModifier={0}
-          onUpdate={mockOnUpdate}
-        />
-      );
+      render(<InlineModifiers diceModifier={0} onUpdate={mockOnUpdate} />);
 
-      // Deve haver dois inputs numéricos
+      // Deve haver um input numérico (apenas modificador de dados)
       const inputs = screen.getAllByRole('spinbutton');
-      expect(inputs).toHaveLength(2);
+      expect(inputs).toHaveLength(1);
     });
 
-    it('deve exibir valores de modificadores corretamente', () => {
-      render(
-        <InlineModifiers
-          diceModifier={2}
-          numericModifier={5}
-          onUpdate={mockOnUpdate}
-        />
-      );
+    it('deve exibir valor de modificador de dados corretamente', () => {
+      render(<InlineModifiers diceModifier={2} onUpdate={mockOnUpdate} />);
 
       const inputs = screen.getAllByRole('spinbutton');
-      expect(inputs[0]).toHaveValue(2); // dice modifier
-      expect(inputs[1]).toHaveValue(5); // numeric modifier
+      expect(inputs[0]).toHaveValue(2);
     });
 
     it('deve exibir valores negativos', () => {
-      render(
-        <InlineModifiers
-          diceModifier={-1}
-          numericModifier={-3}
-          onUpdate={mockOnUpdate}
-        />
-      );
+      render(<InlineModifiers diceModifier={-1} onUpdate={mockOnUpdate} />);
 
       const inputs = screen.getAllByRole('spinbutton');
       expect(inputs[0]).toHaveValue(-1);
-      expect(inputs[1]).toHaveValue(-3);
     });
   });
 
   describe('Interações', () => {
     it('deve chamar onUpdate quando dice modifier muda', () => {
-      render(
-        <InlineModifiers
-          diceModifier={0}
-          numericModifier={5}
-          onUpdate={mockOnUpdate}
-        />
-      );
+      render(<InlineModifiers diceModifier={0} onUpdate={mockOnUpdate} />);
 
       const inputs = screen.getAllByRole('spinbutton');
       fireEvent.change(inputs[0], { target: { value: '2' } });
 
-      expect(mockOnUpdate).toHaveBeenCalledWith(2, 5);
-    });
-
-    it('deve chamar onUpdate quando numeric modifier muda', () => {
-      render(
-        <InlineModifiers
-          diceModifier={1}
-          numericModifier={0}
-          onUpdate={mockOnUpdate}
-        />
-      );
-
-      const inputs = screen.getAllByRole('spinbutton');
-      fireEvent.change(inputs[1], { target: { value: '3' } });
-
-      expect(mockOnUpdate).toHaveBeenCalledWith(1, 3);
+      expect(mockOnUpdate).toHaveBeenCalledWith(2);
     });
 
     it('deve tratar valores inválidos como zero', () => {
-      render(
-        <InlineModifiers
-          diceModifier={0}
-          numericModifier={0}
-          onUpdate={mockOnUpdate}
-        />
-      );
+      render(<InlineModifiers diceModifier={0} onUpdate={mockOnUpdate} />);
 
       const inputs = screen.getAllByRole('spinbutton');
       fireEvent.change(inputs[0], { target: { value: 'abc' } });
 
-      expect(mockOnUpdate).toHaveBeenCalledWith(0, 0);
+      expect(mockOnUpdate).toHaveBeenCalledWith(0);
     });
   });
 
   describe('Desabilitado', () => {
     it('deve desabilitar inputs quando disabled=true', () => {
       render(
-        <InlineModifiers
-          diceModifier={0}
-          numericModifier={0}
-          onUpdate={mockOnUpdate}
-          disabled
-        />
+        <InlineModifiers diceModifier={0} onUpdate={mockOnUpdate} disabled />
       );
 
       const inputs = screen.getAllByRole('spinbutton');

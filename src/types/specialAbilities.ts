@@ -36,7 +36,7 @@ export const SPECIAL_ABILITY_SOURCE_LABELS: Record<
 > = {
   origem: 'Origem',
   linhagem: 'Linhagem',
-  arquetipo: 'Arquétipo',
+  arquetipo: 'Característica de Arquétipo',
   classe: 'Classe',
   poder: 'Poder de Arquétipo',
   talento: 'Talento',

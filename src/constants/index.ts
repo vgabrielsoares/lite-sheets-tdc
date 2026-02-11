@@ -61,3 +61,9 @@ export * from './resources';
 
 // Inventário (Categorias de Itens)
 export * from './inventory';
+
+// Progressão (XP, Level Up)
+export * from './progression';
+
+// Compra de Proficiências
+export * from './proficiencyPurchases';

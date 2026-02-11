@@ -36,6 +36,9 @@ describe('SpellLearningCalculator', () => {
         },
       },
       spellcasting: {
+        isCaster: true,
+        castingSkill: 'arcano',
+        spellPoints: { current: 0, max: 0 },
         knownSpells: [
           {
             spellId: 'spell-1',
@@ -189,6 +192,9 @@ describe('SpellLearningCalculator', () => {
     it('deve aplicar modificador +0 se for o primeiro feitiço', async () => {
       const character = createMockCharacter({
         spellcasting: {
+          isCaster: true,
+          castingSkill: 'arcano',
+          spellPoints: { current: 0, max: 0 },
           knownSpells: [],
           maxKnownSpells: 10,
           knownSpellsModifiers: 0,

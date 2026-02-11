@@ -57,7 +57,6 @@ import { SkillRollButton } from '@/components/character/skills/SkillRollButton';
 import {
   InlineModifiers,
   extractDiceModifier,
-  extractNumericModifier,
   buildModifiersArray,
 } from '@/components/character/skills/ModifierManager';
 import type {
@@ -500,10 +499,9 @@ export function SkillUsageSidebar({
    */
   const handleUpdateDefaultUseModifiers = (
     useName: string,
-    diceModifier: number,
-    numericModifier: number
+    diceModifier: number
   ) => {
-    const newModifiers = buildModifiersArray(diceModifier, numericModifier);
+    const newModifiers = buildModifiersArray(diceModifier);
     const newOverrides = {
       ...localDefaultModifiers,
       [useName]: newModifiers,
@@ -584,11 +582,8 @@ export function SkillUsageSidebar({
             </Typography>
             <InlineModifiers
               diceModifier={extractDiceModifier(editingUse.modifiers || [])}
-              numericModifier={extractNumericModifier(
-                editingUse.modifiers || []
-              )}
-              onUpdate={(dice, numeric) => {
-                const newModifiers = buildModifiersArray(dice, numeric);
+              onUpdate={(dice) => {
+                const newModifiers = buildModifiersArray(dice);
                 setEditingUse({ ...editingUse, modifiers: newModifiers });
               }}
             />
@@ -660,7 +655,7 @@ export function SkillUsageSidebar({
     const profPenalty = hasProficiencyPenalty ? PROFICIENCY_DICE_PENALTY : 0;
     const diceModifiers = baseDiceModifiers + profPenalty;
 
-    // Para atributo 0, rollD20 espera 0 e trata internamente como 2d20 (pega menor)
+    // Para atributo 0, rola 2d e pega o menor resultado
     // Para outros atributos, passa o valor direto
     const finalDiceCount = attributeValue + diceModifiers;
     const takeLowest = attributeValue === 0;
@@ -793,30 +788,17 @@ export function SkillUsageSidebar({
                 )}
 
                 {/* Modificadores inline - exibição compacta */}
-                {(extractDiceModifier(use.modifiers) !== 0 ||
-                  extractNumericModifier(use.modifiers) !== 0) && (
+                {extractDiceModifier(use.modifiers) !== 0 && (
                   <Box
                     sx={{ display: 'flex', gap: 0.5, minWidth: 'fit-content' }}
                   >
                     {extractDiceModifier(use.modifiers) !== 0 && (
                       <Chip
-                        label={`${extractDiceModifier(use.modifiers) >= 0 ? '+' : ''}${extractDiceModifier(use.modifiers)}d20`}
+                        label={`${extractDiceModifier(use.modifiers) >= 0 ? '+' : ''}${extractDiceModifier(use.modifiers)}d`}
                         size="small"
                         variant="outlined"
                         color={
                           extractDiceModifier(use.modifiers) > 0
-                            ? 'success'
-                            : 'error'
-                        }
-                      />
-                    )}
-                    {extractNumericModifier(use.modifiers) !== 0 && (
-                      <Chip
-                        label={`${extractNumericModifier(use.modifiers) >= 0 ? '+' : ''}${extractNumericModifier(use.modifiers)}`}
-                        size="small"
-                        variant="outlined"
-                        color={
-                          extractNumericModifier(use.modifiers) > 0
                             ? 'success'
                             : 'error'
                         }
@@ -982,7 +964,7 @@ export function SkillUsageSidebar({
       : 0;
     const diceModifiers = baseDiceModifiers + defaultUseProfPenalty;
 
-    // Para atributo 0, rollD20 espera 0 e trata internamente como 2d20 (pega menor)
+    // Para atributo 0, rola 2d e pega o menor resultado
     // Para outros atributos, passa o valor direto
     const finalDiceCount = attributeValue + diceModifiers;
     const takeLowest = attributeValue === 0;
@@ -993,9 +975,7 @@ export function SkillUsageSidebar({
     );
 
     const isCustomAttribute = customAttribute !== undefined;
-    const hasCustomModifiers =
-      extractDiceModifier(customModifiers) !== 0 ||
-      extractNumericModifier(customModifiers) !== 0;
+    const hasCustomModifiers = extractDiceModifier(customModifiers) !== 0;
 
     return (
       <Box
@@ -1182,23 +1162,11 @@ export function SkillUsageSidebar({
                   >
                     {extractDiceModifier(customModifiers) !== 0 && (
                       <Chip
-                        label={`${extractDiceModifier(customModifiers) >= 0 ? '+' : ''}${extractDiceModifier(customModifiers)}d20`}
+                        label={`${extractDiceModifier(customModifiers) >= 0 ? '+' : ''}${extractDiceModifier(customModifiers)}d`}
                         size="small"
                         variant="outlined"
                         color={
                           extractDiceModifier(customModifiers) > 0
-                            ? 'success'
-                            : 'error'
-                        }
-                      />
-                    )}
-                    {extractNumericModifier(customModifiers) !== 0 && (
-                      <Chip
-                        label={`${extractNumericModifier(customModifiers) >= 0 ? '+' : ''}${extractNumericModifier(customModifiers)}`}
-                        size="small"
-                        variant="outlined"
-                        color={
-                          extractNumericModifier(customModifiers) > 0
                             ? 'success'
                             : 'error'
                         }
@@ -1345,13 +1313,8 @@ export function SkillUsageSidebar({
                   </Typography>
                   <InlineModifiers
                     diceModifier={extractDiceModifier(customModifiers)}
-                    numericModifier={extractNumericModifier(customModifiers)}
-                    onUpdate={(dice, numeric) =>
-                      handleUpdateDefaultUseModifiers(
-                        defaultUse.name,
-                        dice,
-                        numeric
-                      )
+                    onUpdate={(dice) =>
+                      handleUpdateDefaultUseModifiers(defaultUse.name, dice)
                     }
                     disabled={false}
                   />
@@ -1665,15 +1628,8 @@ export function SkillUsageSidebar({
                   >
                     {PROFICIENCY_LEVEL_LIST.map((level) => (
                       <MenuItem key={level} value={level}>
-                        {SKILL_PROFICIENCY_LABELS[level]} (×
-                        {level === 'leigo'
-                          ? '0'
-                          : level === 'adepto'
-                            ? '1'
-                            : level === 'versado'
-                              ? '2'
-                              : '3'}
-                        )
+                        {SKILL_PROFICIENCY_LABELS[level]} (
+                        {getSkillDieSize(level)})
                       </MenuItem>
                     ))}
                   </Select>
@@ -1767,9 +1723,8 @@ export function SkillUsageSidebar({
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2 }}>
             <InlineModifiers
               diceModifier={extractDiceModifier(skill.modifiers)}
-              numericModifier={extractNumericModifier(skill.modifiers)}
-              onUpdate={(dice, numeric) => {
-                const newModifiers = buildModifiersArray(dice, numeric);
+              onUpdate={(dice) => {
+                const newModifiers = buildModifiersArray(dice);
                 if (onUpdateSkillModifiers) {
                   onUpdateSkillModifiers(skill.name, newModifiers);
                 }
@@ -1779,18 +1734,10 @@ export function SkillUsageSidebar({
               {extractDiceModifier(skill.modifiers) !== 0 && (
                 <>
                   {extractDiceModifier(skill.modifiers) > 0 ? '+' : ''}
-                  {extractDiceModifier(skill.modifiers)}d20
-                  {extractNumericModifier(skill.modifiers) !== 0 ? ', ' : ''}
-                </>
-              )}
-              {extractNumericModifier(skill.modifiers) !== 0 && (
-                <>
-                  {extractNumericModifier(skill.modifiers) > 0 ? '+' : ''}
-                  {extractNumericModifier(skill.modifiers)} numérico
+                  {extractDiceModifier(skill.modifiers)}d
                 </>
               )}
               {extractDiceModifier(skill.modifiers) === 0 &&
-                extractNumericModifier(skill.modifiers) === 0 &&
                 'Nenhum modificador aplicado'}
             </Typography>
           </Box>

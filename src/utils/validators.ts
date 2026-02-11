@@ -102,7 +102,7 @@ export function isValidCharacterLevel(
   if (!Number.isInteger(level)) {
     return false;
   }
-  if (level < 1) {
+  if (level < 0) {
     return false;
   }
   if (!allowEpic && level > 15) {
@@ -414,7 +414,7 @@ export function isValidClassLevels(
   if (!Array.isArray(classLevels)) {
     return false;
   }
-  if (!Number.isInteger(characterLevel) || characterLevel < 1) {
+  if (!Number.isInteger(characterLevel) || characterLevel < 0) {
     return false;
   }
 

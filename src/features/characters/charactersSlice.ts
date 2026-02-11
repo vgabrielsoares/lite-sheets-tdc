@@ -7,12 +7,17 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { Character } from '@/types';
+import type { ArchetypeName } from '@/types/character';
 import { characterService } from '@/services/characterService';
 import {
   needsMigration,
   migrateCharacterV1toV2,
   ensureCombatFields,
 } from '@/utils/characterMigration';
+import {
+  applyLevelUp,
+  type LevelUpSpecialGain,
+} from '@/utils/levelUpCalculations';
 
 /**
  * Estado da slice de personagens
@@ -354,6 +359,32 @@ const charactersSlice = createSlice({
     },
 
     /**
+     * Sobe o personagem de nível (Level Up)
+     *
+     * Aplica todos os ganhos do level up: nível, arquétipo, GA, PP, PV, XP,
+     * habilidades especiais, e progressão.
+     */
+    levelUp: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        archetypeName: ArchetypeName;
+        specialGains?: LevelUpSpecialGain[];
+      }>
+    ) => {
+      const { characterId, archetypeName, specialGains } = action.payload;
+      const character = state.entities[characterId];
+
+      if (!character) {
+        state.error = `Personagem com ID ${characterId} não encontrado`;
+        return;
+      }
+
+      applyLevelUp(character, archetypeName, specialGains ?? []);
+      state.error = null;
+    },
+
+    /**
      * Remove um ofício do personagem
      */
     removeCraft: (
@@ -527,6 +558,7 @@ export const {
   clearError,
   setCharacters,
   updateSignatureAbility,
+  levelUp,
   addCraft,
   updateCraft,
   removeCraft,

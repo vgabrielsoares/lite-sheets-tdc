@@ -64,8 +64,8 @@ describe('CharacterService', () => {
       );
     });
 
-    it('deve falhar ao criar personagem com nível inválido', async () => {
-      const invalidChar = createMockCharacter({ level: 0 });
+    it('deve falhar ao criar personagem com nível negativo', async () => {
+      const invalidChar = createMockCharacter({ level: -1 });
 
       await expect(characterService.create(invalidChar)).rejects.toThrow(
         CharacterServiceError
@@ -184,11 +184,11 @@ describe('CharacterService', () => {
       ).rejects.toThrow(CharacterServiceError);
     });
 
-    it('deve falhar ao atualizar nível para inválido', async () => {
+    it('deve falhar ao atualizar nível para negativo', async () => {
       const created = await characterService.create(createMockCharacter());
 
       await expect(
-        characterService.update(created.id, { level: 0 })
+        characterService.update(created.id, { level: -1 })
       ).rejects.toThrow(CharacterServiceError);
     });
   });

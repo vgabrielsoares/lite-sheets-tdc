@@ -171,6 +171,8 @@ export type {
   SpellComponent,
   Spell,
   KnownSpell,
+  SpellPoints,
+  SpellcastingSkillName,
   SpellcastingAbility,
   SpellcastingData,
 } from './spells';
@@ -238,6 +240,7 @@ export type {
   PhysicalDescription,
   CharacterDefiners,
   LevelProgression,
+  LevelHistoryEntry,
   Experience,
   Character,
 } from './character';

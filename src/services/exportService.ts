@@ -67,7 +67,7 @@ function validateCharacterForExport(character: Character): void {
     );
   }
 
-  if (typeof character.level !== 'number' || character.level < 1) {
+  if (typeof character.level !== 'number' || character.level < 0) {
     throw new ExportServiceError(
       'Personagem inválido: nível inválido',
       'INVALID_CHARACTER_LEVEL'

@@ -57,9 +57,9 @@ describe('SpellCard', () => {
       expect(screen.getByText('3º círculo')).toBeInTheDocument();
     });
 
-    it('deve exibir o custo em PP correto', () => {
+    it('deve exibir o custo em PF correto', () => {
       renderComponent();
-      expect(screen.getByText('3 PP')).toBeInTheDocument();
+      expect(screen.getByText('3 PF')).toBeInTheDocument();
     });
 
     it('deve exibir a matriz', () => {
@@ -105,23 +105,23 @@ describe('SpellCard', () => {
     });
   });
 
-  describe('Custos de PP por círculo', () => {
-    it('deve exibir 0 PP para 1º círculo', () => {
+  describe('Custos de PF por círculo', () => {
+    it('deve exibir 0 PF para 1º círculo', () => {
       const spell = { ...mockSpell, circle: 1 as const };
       renderComponent(spell);
-      expect(screen.getByText('0 PP')).toBeInTheDocument();
+      expect(screen.getByText('0 PF')).toBeInTheDocument();
     });
 
-    it('deve exibir 7 PP para 5º círculo', () => {
+    it('deve exibir 7 PF para 5º círculo', () => {
       const spell = { ...mockSpell, circle: 5 as const };
       renderComponent(spell);
-      expect(screen.getByText('7 PP')).toBeInTheDocument();
+      expect(screen.getByText('7 PF')).toBeInTheDocument();
     });
 
-    it('deve exibir 15 PP para 8º círculo', () => {
+    it('deve exibir 20 PF para 8º círculo', () => {
       const spell = { ...mockSpell, circle: 8 as const };
       renderComponent(spell);
-      expect(screen.getByText('15 PP')).toBeInTheDocument();
+      expect(screen.getByText('20 PF')).toBeInTheDocument();
     });
   });
 

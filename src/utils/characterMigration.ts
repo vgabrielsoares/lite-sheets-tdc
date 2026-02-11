@@ -401,6 +401,7 @@ function migrateCombat(combat: unknown): unknown {
 
 /**
  * Migra dados de conjuração que referenciam atributos antigos
+ * e converte dcBonus/attackBonus para castingBonus (v0.0.2)
  */
 function migrateSpellcasting(spellcasting: unknown): unknown {
   if (!spellcasting || typeof spellcasting !== 'object') return spellcasting;
@@ -410,12 +411,27 @@ function migrateSpellcasting(spellcasting: unknown): unknown {
     return {
       ...sc,
       spellcastingAbilities: sc.spellcastingAbilities.map(
-        (ability: Record<string, unknown>) => ({
-          ...ability,
-          attribute: ability.attribute
-            ? migrateAttributeName(ability.attribute as string)
-            : ability.attribute,
-        })
+        (ability: Record<string, unknown>) => {
+          const migrated: Record<string, unknown> = {
+            ...ability,
+            attribute: ability.attribute
+              ? migrateAttributeName(ability.attribute as string)
+              : ability.attribute,
+          };
+
+          // Migrate dcBonus/attackBonus → castingBonus
+          if (
+            migrated.castingBonus === undefined &&
+            (migrated.dcBonus !== undefined ||
+              migrated.attackBonus !== undefined)
+          ) {
+            migrated.castingBonus = 0;
+            delete migrated.dcBonus;
+            delete migrated.attackBonus;
+          }
+
+          return migrated;
+        }
       ),
     };
   }
@@ -494,6 +510,11 @@ export function migrateCharacterV1toV2(oldCharacter: any): any {
   // Garante campo specialAbilities
   if (!Array.isArray(migrated.specialAbilities)) {
     migrated.specialAbilities = [];
+  }
+
+  // Garante campo proficiencyPurchases
+  if (!Array.isArray(migrated.proficiencyPurchases)) {
+    migrated.proficiencyPurchases = [];
   }
 
   return migrated;

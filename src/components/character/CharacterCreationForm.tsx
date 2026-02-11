@@ -34,7 +34,7 @@ export interface CharacterCreationFormProps {
  * Formulário reutilizável que permite criar uma nova ficha de personagem
  * solicitando apenas informações básicas (nome do personagem e jogador).
  *
- * O personagem é criado com todos os valores padrão de nível 1 conforme
+ * O personagem é criado com todos os valores padrão de nível 0 conforme
  * as regras do RPG Tabuleiro do Caos.
  *
  * **Funcionalidades:**
@@ -122,7 +122,8 @@ export default function CharacterCreationForm({
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
           Informe o nome do personagem para criar uma ficha com os valores
-          padrão de nível 1. Você poderá editar todos os campos depois.
+          padrão de nível 0 com XP suficiente para subir ao nível 1. Você poderá
+          editar todos os campos depois.
         </Typography>
 
         {error && (
@@ -198,12 +199,14 @@ export default function CharacterCreationForm({
         {showDefaultValuesInfo && (
           <Alert severity="info" sx={{ mt: 4 }}>
             <Typography variant="body2" fontWeight="bold" gutterBottom>
-              Valores padrão de nível 1:
+              Valores padrão de nível 0:
             </Typography>
             <Typography variant="caption" component="div">
-              • PV: 15 (máximo e atual)
+              • GA: 15 | PV: 5 (máximo e atual)
               <br />
               • PP: 2 (máximo e atual)
+              <br />
+              • XP: 15 (pronto para subir ao nível 1)
               <br />
               • Atributos: todos em 1
               <br />

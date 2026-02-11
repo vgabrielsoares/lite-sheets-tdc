@@ -17,6 +17,9 @@ export type { CompactHealthPointsProps } from './CompactHealthPoints';
 export { CompactPowerPoints } from './CompactPowerPoints';
 export type { CompactPowerPointsProps } from './CompactPowerPoints';
 
+export { CompactSpellPoints } from './CompactSpellPoints';
+export type { CompactSpellPointsProps } from './CompactSpellPoints';
+
 export { CompactResourcePoints } from './CompactResourcePoints';
 export type {
   CompactResourcePointsProps,

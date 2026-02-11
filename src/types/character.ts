@@ -23,6 +23,7 @@ import type { Inventory } from './inventory';
 import type { SpellcastingData } from './spells';
 import type { ResourceDie } from './resources';
 import type { SpecialAbility } from './specialAbilities';
+import type { ProficiencyPurchaseRecord } from '@/constants/proficiencyPurchases';
 
 /**
  * Arquétipos disponíveis no sistema
@@ -360,6 +361,25 @@ export interface LevelProgression {
 }
 
 /**
+ * Registro histórico de cada level up realizado.
+ * Rastreia qual arquétipo foi escolhido e o ganho obtido em cada nível.
+ */
+export interface LevelHistoryEntry {
+  /** Nível do personagem ao fazer o level up */
+  level: number;
+  /** Arquétipo escolhido para este nível */
+  archetype: ArchetypeName;
+  /** Tipo de ganho recebido neste nível */
+  gainType: 'caracteristica' | 'poder_ou_talento' | 'competencia';
+  /** Nome do ganho (poder, talento, competência ou característica escolhida) */
+  gainName?: string;
+  /** Descrição do ganho */
+  gainDescription?: string;
+  /** Timestamp de quando o level up foi feito */
+  timestamp: string;
+}
+
+/**
  * Experiência (XP)
  */
 export interface Experience {
@@ -444,6 +464,8 @@ export interface Character extends BaseEntity {
   extraLanguagesModifier: number;
   /** Proficiências */
   proficiencies: Proficiencies;
+  /** Proficiências compradas com pontos de atributo */
+  proficiencyPurchases: ProficiencyPurchaseRecord[];
 
   // Sorte e Ofícios
   /** Nível de sorte */
@@ -488,6 +510,8 @@ export interface Character extends BaseEntity {
   // Progressão
   /** Progressão por nível */
   levelProgression: LevelProgression[];
+  /** Histórico de level ups realizados */
+  levelHistory: LevelHistoryEntry[];
 
   // Anotações
   /** Anotações do jogador */

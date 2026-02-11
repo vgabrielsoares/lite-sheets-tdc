@@ -1,7 +1,7 @@
 /**
  * Testes unitários para characterFactory
  *
- * Testa a criação de personagens com valores padrão de nível 1
+ * Testa a criação de personagens com valores padrão de nível 0
  * conforme regras do Tabuleiro do Caos RPG
  */
 
@@ -85,16 +85,16 @@ describe('characterFactory', () => {
     });
 
     describe('Nível e Experiência', () => {
-      it('deve começar no nível 1', () => {
-        expect(character.level).toBe(1);
+      it('deve começar no nível 0', () => {
+        expect(character.level).toBe(0);
       });
 
-      it('deve começar com 0 XP', () => {
-        expect(character.experience.current).toBe(0);
+      it('deve começar com 15 XP (pronto para nível 1)', () => {
+        expect(character.experience.current).toBe(15);
       });
 
       it('deve ter XP para próximo nível definido', () => {
-        expect(character.experience.toNextLevel).toBe(50);
+        expect(character.experience.toNextLevel).toBe(15);
       });
     });
 
@@ -459,14 +459,9 @@ describe('characterFactory', () => {
         expect(character.levelProgression).toHaveLength(15);
       });
 
-      it('apenas nível 1 deve estar alcançado', () => {
-        character.levelProgression.forEach((prog, index) => {
-          if (index === 0) {
-            expect(prog.achieved).toBe(true);
-            expect(prog.level).toBe(1);
-          } else {
-            expect(prog.achieved).toBe(false);
-          }
+      it('nenhum nível deve estar alcançado (personagem começa nível 0)', () => {
+        character.levelProgression.forEach((prog) => {
+          expect(prog.achieved).toBe(false);
         });
       });
 

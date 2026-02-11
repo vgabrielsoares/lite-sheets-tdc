@@ -239,8 +239,15 @@ describe('SkillRow', () => {
   it('deve exibir modificador negativo com sinal correto', () => {
     const weakSkill: Skill = {
       ...mockSkill,
-      proficiencyLevel: 'leigo', // x0 = modificador 0
-      modifiers: [{ name: 'Ferimento', type: 'penalidade', value: -3 }],
+      proficiencyLevel: 'leigo',
+      modifiers: [
+        {
+          name: 'Ferimento',
+          type: 'penalidade',
+          value: -3,
+          affectsDice: true,
+        },
+      ],
     };
 
     render(
@@ -253,8 +260,8 @@ describe('SkillRow', () => {
       />
     );
 
-    // Leigo (x0) = 0, - 3 (ferimento) = -3
-    const modifiers = screen.getAllByText('-3');
+    // Exibe chip de modificador de dados -3d
+    const modifiers = screen.getAllByText('-3d');
     expect(modifiers.length).toBeGreaterThan(0);
   });
 });

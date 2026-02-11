@@ -92,7 +92,8 @@ describe('isValidAttributeName', () => {
 });
 
 describe('isValidCharacterLevel', () => {
-  it('should accept valid character levels (1-15)', () => {
+  it('should accept valid character levels (0-15)', () => {
+    expect(isValidCharacterLevel(0)).toBe(true);
     expect(isValidCharacterLevel(1)).toBe(true);
     expect(isValidCharacterLevel(5)).toBe(true);
     expect(isValidCharacterLevel(10)).toBe(true);
@@ -110,9 +111,9 @@ describe('isValidCharacterLevel', () => {
     expect(isValidCharacterLevel(20, false)).toBe(false);
   });
 
-  it('should reject level 0 or negative', () => {
-    expect(isValidCharacterLevel(0)).toBe(false);
+  it('should reject negative levels', () => {
     expect(isValidCharacterLevel(-1)).toBe(false);
+    expect(isValidCharacterLevel(-5)).toBe(false);
   });
 
   it('should reject levels above 30 even in epic mode', () => {

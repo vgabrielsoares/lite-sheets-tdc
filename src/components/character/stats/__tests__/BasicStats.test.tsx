@@ -84,9 +84,10 @@ describe('BasicStats', () => {
       />
     );
 
-    // XP is now displayed as two editable numbers separated by "/"
+    // XP current is editable, toNextLevel is auto-calculated from level
     expect(screen.getByText('1000')).toBeInTheDocument();
-    expect(screen.getByText('2000')).toBeInTheDocument();
+    // toNextLevel is now auto-calculated: level 5 → getXPForNextLevel(5) = 650
+    expect(screen.getByText('650')).toBeInTheDocument();
     expect(screen.getByText('/')).toBeInTheDocument();
   });
 

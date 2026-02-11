@@ -403,8 +403,8 @@ function createDefaultPhysicalDescription(): PhysicalDescription {
  */
 function createDefaultExperience(): Experience {
   return {
-    current: 0,
-    toNextLevel: 50, // XP necessário para nível 2
+    current: 15, // Começa com 15 XP (suficiente para subir ao nível 1)
+    toNextLevel: 15, // XP necessário para nível 0→1
   };
 }
 
@@ -419,7 +419,7 @@ function createDefaultLevelProgression(): LevelProgression[] {
     progression.push({
       level: i,
       gains: [],
-      achieved: i === 1, // Apenas nível 1 já alcançado
+      achieved: false, // Nenhum nível alcançado (personagem começa nível 0)
     });
   }
 
@@ -436,7 +436,7 @@ interface CreateCharacterParams {
 }
 
 /**
- * Cria um personagem com valores padrão de nível 1
+ * Cria um personagem com valores padrão de nível 0
  *
  * Valores aplicados automaticamente conforme regras do RPG:
  * - 15 PV máximo e atual, 0 temporário
@@ -471,8 +471,8 @@ export function createDefaultCharacter(
     concept: params.concept,
     conceptExpanded: undefined,
 
-    // Nível e Experiência
-    level: 1,
+    // Nível e Experiência (começa em 0, sobe ao 1 escolhendo um arquétipo)
+    level: 0,
     experience: createDefaultExperience(),
 
     // Origem e Linhagem (vazios, preenchidos manualmente no MVP 1)
@@ -508,6 +508,7 @@ export function createDefaultCharacter(
       tools: [],
       other: [],
     },
+    proficiencyPurchases: [], // Proficiências compradas com pontos de atributo
 
     // Sorte e Ofícios
     luck: {
@@ -543,6 +544,7 @@ export function createDefaultCharacter(
 
     // Progressão
     levelProgression: createDefaultLevelProgression(),
+    levelHistory: [],
 
     // Anotações
     notes: [],

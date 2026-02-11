@@ -52,6 +52,7 @@ import NoteIcon from '@mui/icons-material/Note';
 import { useRouter } from 'next/navigation';
 import type {
   Character,
+  ArchetypeName,
   AttributeName,
   SkillName,
   SkillUse,
@@ -63,6 +64,7 @@ import type {
 import type { InventoryItem } from '@/types/inventory';
 import type { PowerPoints } from '@/types/combat';
 import type { KnownSpell } from '@/types/spells';
+import type { LevelUpSpecialGain } from '@/utils/levelUpCalculations';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
 
@@ -111,12 +113,10 @@ import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 import { ItemDetailsSidebar } from './inventory/ItemDetailsSidebar';
 import { SpellDetailsSidebar } from './spells/SpellDetailsSidebar';
 import { ConceptSidebar } from './sidebars/ConceptSidebar';
+import { handleAttributeChange } from '@/utils/attributeUpdates';
 import { NoteViewSidebar } from './sidebars/NoteViewSidebar';
 import { TableOfContents, TOCSection } from '@/components/shared';
-import {
-  calculateArchetypeHPBreakdown,
-  calculateArchetypePPBreakdown,
-} from './archetypes';
+import { calculateArchetypePPBreakdown } from './archetypes';
 import { exportCharacter } from '@/services/exportService';
 import { useNotifications } from '@/hooks/useNotifications';
 
@@ -130,6 +130,14 @@ export interface CharacterSheetProps {
    * Callback para atualizar o personagem
    */
   onUpdate: (updates: Partial<Character>) => void;
+
+  /**
+   * Callback para subir de nível o personagem (dispatch Redux levelUp action)
+   */
+  onLevelUp?: (
+    archetypeName: ArchetypeName,
+    specialGains: LevelUpSpecialGain[]
+  ) => void;
 }
 
 /**
@@ -155,7 +163,11 @@ export interface CharacterSheetProps {
  * />
  * ```
  */
-export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
+export function CharacterSheet({
+  character,
+  onUpdate,
+  onLevelUp,
+}: CharacterSheetProps) {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -756,14 +768,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   /**
    * Handler para atualizar um atributo do personagem
+   * Recalcula GA/PP/PV automaticamente quando atributos mudam
    */
   const handleUpdateAttribute = (attribute: AttributeName, value: number) => {
-    onUpdate({
-      attributes: {
-        ...character.attributes,
-        [attribute]: value,
-      },
-    });
+    const updates = handleAttributeChange(character, attribute, value);
+    onUpdate(updates);
   };
 
   /**
@@ -1039,6 +1048,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onUpdateCraft: handleUpdateCraft,
       onRemoveCraft: handleRemoveCraft,
       onSelectedCraftChange: handleSelectedCraftChange,
+      onLevelUp,
     };
 
     switch (currentTab) {

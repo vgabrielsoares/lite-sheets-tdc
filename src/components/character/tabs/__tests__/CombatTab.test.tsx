@@ -89,8 +89,8 @@ describe('CombatTab', () => {
       );
 
       expect(screen.getByText('Limite de PP/Rodada')).toBeInTheDocument();
-      // Level 1 + Essência 1 = 2
-      expect(screen.getByText('Nível +1')).toBeInTheDocument();
+      // Level 0 + Essência 1 = 1
+      expect(screen.getByText('Nível +0')).toBeInTheDocument();
       expect(screen.getByText('Essência +1')).toBeInTheDocument();
     });
 

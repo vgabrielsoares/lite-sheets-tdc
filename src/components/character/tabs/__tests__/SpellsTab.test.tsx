@@ -80,6 +80,9 @@ describe('SpellsTab', () => {
         },
       },
       spellcasting: {
+        isCaster: true,
+        castingSkill: 'arcano',
+        spellPoints: { current: 0, max: 0 },
         knownSpells: mockSpells,
         maxKnownSpells: 10,
         knownSpellsModifiers: 0,
@@ -277,6 +280,9 @@ describe('SpellsTab', () => {
     const characterWithoutSpells: Character = {
       ...mockCharacter,
       spellcasting: {
+        isCaster: true,
+        castingSkill: 'arcano',
+        spellPoints: { current: 0, max: 0 },
         knownSpells: [],
         maxKnownSpells: 10,
         knownSpellsModifiers: 0,
