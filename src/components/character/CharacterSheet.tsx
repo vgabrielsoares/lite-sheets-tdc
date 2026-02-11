@@ -1297,6 +1297,24 @@ export function CharacterSheet({
                 character.attributes.essencia
               )}
               basePP={2}
+              isCaster={character.spellcasting?.isCaster}
+              spellPoints={character.spellcasting?.spellPoints}
+              onSpellPointsChange={(spellPoints) =>
+                onUpdate({
+                  spellcasting: {
+                    ...(character.spellcasting || {
+                      isCaster: true,
+                      spellPoints: { current: 0, max: 0 },
+                      knownSpells: [],
+                      maxKnownSpells: 0,
+                      knownSpellsModifiers: 0,
+                      spellcastingAbilities: [],
+                      masteredMatrices: [],
+                    }),
+                    spellPoints,
+                  },
+                })
+              }
             />
           )}
 
@@ -1477,6 +1495,24 @@ export function CharacterSheet({
             character.attributes.essencia
           )}
           basePP={2}
+          isCaster={character.spellcasting?.isCaster}
+          spellPoints={character.spellcasting?.spellPoints}
+          onSpellPointsChange={(spellPoints) =>
+            onUpdate({
+              spellcasting: {
+                ...(character.spellcasting || {
+                  isCaster: true,
+                  spellPoints: { current: 0, max: 0 },
+                  knownSpells: [],
+                  maxKnownSpells: 0,
+                  knownSpellsModifiers: 0,
+                  spellcastingAbilities: [],
+                  masteredMatrices: [],
+                }),
+                spellPoints,
+              },
+            })
+          }
         />
       )}
 
