@@ -14,7 +14,7 @@ import { Delete as DeleteIcon } from '@mui/icons-material';
 import type { KnownSpell } from '@/types/spells';
 import {
   SPELL_MATRIX_LABELS,
-  SPELL_CIRCLE_PP_COST,
+  SPELL_CIRCLE_PF_COST,
   SPELL_COMPONENT_ABBREVIATIONS,
   SPELLCASTING_SKILL_LABELS,
   SPELL_MATRIX_COLORS,
@@ -41,7 +41,7 @@ export interface SpellCardProps {
  * Clique no card para abrir detalhes/edição
  */
 export function SpellCard({ spell, onClick, onDelete }: SpellCardProps) {
-  const ppCost = SPELL_CIRCLE_PP_COST[spell.circle];
+  const pfCost = SPELL_CIRCLE_PF_COST[spell.circle];
   const matrixLabel = SPELL_MATRIX_LABELS[spell.matrix];
   const skillLabel =
     SPELLCASTING_SKILL_LABELS[
@@ -127,12 +127,12 @@ export function SpellCard({ spell, onClick, onDelete }: SpellCardProps) {
                 alignItems: 'center',
               }}
             >
-              {/* Custo PP */}
-              <Tooltip title="Custo em PP" arrow>
+              {/* Custo PF */}
+              <Tooltip title="Custo em PF" arrow>
                 <Chip
-                  label={`${ppCost} PP`}
+                  label={`${pfCost} PF`}
                   size="small"
-                  color="info"
+                  color="secondary"
                   sx={{ fontSize: '0.65rem', height: 18 }}
                 />
               </Tooltip>

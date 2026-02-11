@@ -28,6 +28,12 @@ import {
 } from '@mui/material';
 import { uuidv4 } from '@/utils/uuid';
 import type { InventoryItem, ItemCategory } from '@/types/inventory';
+import type { DiceType } from '@/types/common';
+import {
+  DURABILITY_DIE_OPTIONS,
+  createItemDurability,
+} from '@/utils/durabilityCalculations';
+import { ITEM_CATEGORIES, DEFAULT_ITEM_CATEGORY } from '@/constants/inventory';
 
 // ============================================================================
 // Tipos e Interfaces
@@ -64,6 +70,10 @@ interface ItemFormData {
   equipped: boolean;
   /** Flag para indicar item sem peso (peso null) */
   isWeightless: boolean;
+  /** Habilitar durabilidade */
+  hasDurability: boolean;
+  /** Dado máximo de durabilidade */
+  durabilityDie: DiceType;
 }
 
 // ============================================================================
@@ -71,31 +81,19 @@ interface ItemFormData {
 // ============================================================================
 
 /**
- * Categorias de item disponíveis
- */
-const ITEM_CATEGORIES: { value: ItemCategory; label: string }[] = [
-  { value: 'arma', label: 'Arma' },
-  { value: 'armadura', label: 'Armadura' },
-  { value: 'escudo', label: 'Escudo' },
-  { value: 'ferramenta', label: 'Ferramenta' },
-  { value: 'consumivel', label: 'Consumível' },
-  { value: 'material', label: 'Material' },
-  { value: 'magico', label: 'Mágico' },
-  { value: 'diversos', label: 'Diversos' },
-];
-
-/**
  * Dados iniciais do formulário (novo item)
  */
 const INITIAL_FORM_DATA: ItemFormData = {
   name: '',
   description: '',
-  category: 'diversos',
+  category: DEFAULT_ITEM_CATEGORY,
   quantity: 1,
   weight: 0,
   value: 0,
   equipped: false,
   isWeightless: false,
+  hasDurability: false,
+  durabilityDie: 'd8',
 };
 
 // ============================================================================
@@ -116,6 +114,8 @@ function itemToFormData(item: InventoryItem): ItemFormData {
     value: item.value,
     equipped: item.equipped,
     isWeightless,
+    hasDurability: !!item.durability,
+    durabilityDie: item.durability?.maxDie ?? 'd8',
   };
 }
 
@@ -124,8 +124,24 @@ function itemToFormData(item: InventoryItem): ItemFormData {
  */
 function formDataToItem(
   formData: ItemFormData,
-  existingId?: string
+  existingId?: string,
+  existingDurability?: InventoryItem['durability']
 ): InventoryItem {
+  // Determinar durabilidade
+  let durability: InventoryItem['durability'] = undefined;
+  if (formData.hasDurability) {
+    if (
+      existingDurability &&
+      existingDurability.maxDie === formData.durabilityDie
+    ) {
+      // Preservar estado atual se o dado máximo não mudou
+      durability = existingDurability;
+    } else {
+      // Criar nova durabilidade (reset)
+      durability = createItemDurability(formData.durabilityDie);
+    }
+  }
+
   return {
     id: existingId ?? uuidv4(),
     name: formData.name.trim(),
@@ -136,6 +152,7 @@ function formDataToItem(
     weight: formData.isWeightless ? null : Math.floor(formData.weight ?? 0),
     value: Math.max(0, formData.value),
     equipped: formData.equipped,
+    durability,
   };
 }
 
@@ -229,7 +246,7 @@ export function AddItemDialog({
       return;
     }
 
-    const item = formDataToItem(formData, editItem?.id);
+    const item = formDataToItem(formData, editItem?.id, editItem?.durability);
     onSave(item);
     onClose();
   }, [formData, editItem, onSave, onClose]);
@@ -330,7 +347,7 @@ export function AddItemDialog({
             />
 
             <TextField
-              label="Peso Unitário"
+              label="Espaço Unitário"
               type="number"
               value={formData.weight ?? 0}
               onChange={handleFieldChange('weight')}
@@ -338,12 +355,12 @@ export function AddItemDialog({
               disabled={formData.isWeightless}
               helperText={
                 formData.isWeightless
-                  ? 'Item sem peso'
+                  ? 'Item sem espaço'
                   : 'Valores negativos aumentam capacidade'
               }
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end">peso</InputAdornment>
+                  <InputAdornment position="end">espaço</InputAdornment>
                 ),
               }}
               inputProps={{
@@ -371,7 +388,7 @@ export function AddItemDialog({
                 }}
               />
             }
-            label="Item Sem Peso"
+            label="Item Sem Espaço"
           />
           <Typography
             variant="caption"
@@ -379,7 +396,7 @@ export function AddItemDialog({
             display="block"
             sx={{ mt: -1 }}
           >
-            Itens sem peso não contam para capacidade de carga (ex: Mochila,
+            Itens sem espaço não contam para capacidade de carga (ex: Mochila,
             Cartão do Banco)
           </Typography>
 
@@ -427,6 +444,63 @@ export function AddItemDialog({
               Itens equipados são marcados visualmente na lista
             </Typography>
           </Box>
+
+          {/* Durabilidade */}
+          <Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.hasDurability}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      hasDurability: e.target.checked,
+                    }))
+                  }
+                  color="warning"
+                  inputProps={{
+                    'aria-label': 'Habilitar durabilidade para este item',
+                  }}
+                />
+              }
+              label="Tem Durabilidade"
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+            >
+              Itens com durabilidade usam um dado que pode diminuir com o uso
+            </Typography>
+          </Box>
+
+          {formData.hasDurability && (
+            <FormControl fullWidth>
+              <InputLabel id="durability-die-label">
+                Dado de Durabilidade
+              </InputLabel>
+              <Select
+                labelId="durability-die-label"
+                value={formData.durabilityDie}
+                label="Dado de Durabilidade"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    durabilityDie: e.target.value as DiceType,
+                  }))
+                }
+                inputProps={{
+                  'aria-label': 'Dado máximo de durabilidade',
+                }}
+              >
+                {DURABILITY_DIE_OPTIONS.map((die) => (
+                  <MenuItem key={die} value={die}>
+                    {die}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           {/* Erro geral */}
           {error &&

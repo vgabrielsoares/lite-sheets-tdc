@@ -29,9 +29,9 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'Como criar minha primeira ficha de personagem?',
     answer: [
-      'Na página inicial, clique no botão "Nova Ficha" ou no card "Criar sua primeira ficha".',
-      'Digite o nome do personagem e clique em "Criar Ficha".',
-      'A ficha será criada com valores padrão de nível 1 conforme as regras do Tabuleiro do Caos RPG.',
+      'Na página inicial, clique no botão "Nova Ficha".',
+      'Você pode criar uma ficha em branco (com valores padrão de nível 1) ou usar o wizard de criação passo a passo.',
+      'A ficha será criada conforme as regras do Tabuleiro do Caos RPG (livro v0.1.7).',
     ],
     category: 'Primeiros Passos',
     tags: ['criação', 'início'],
@@ -56,8 +56,8 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'Como editar informações da ficha?',
     answer: [
       'Clique em qualquer campo para editá-lo diretamente.',
-      'Campos numéricos (PV, PP, Atributos) podem ser editados com um clique ou duplo-clique.',
-      'Campos complexos (Linhagem, Origem, Defesa) abrem uma sidebar lateral com detalhes.',
+      'Campos numéricos (GA, PV, PP, Atributos) podem ser editados com um clique ou duplo-clique.',
+      'Campos complexos (Linhagem, Origem) abrem uma sidebar lateral com detalhes.',
       'Todas as alterações são salvas automaticamente.',
     ],
     category: 'Edição',
@@ -67,39 +67,73 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'O que são valores padrão de nível 1?',
     answer: [
       'Ao criar uma ficha, ela inicia com:',
-      '• 15 PV máximo e atual',
+      '• GA 15 (Guarda máxima e atual)',
+      '• PV = teto(GA máxima / 3)',
       '• 2 PP máximo e atual',
-      '• Todos os atributos em 1',
+      '• Todos os 6 atributos em 1 (Agilidade, Corpo, Influência, Mente, Essência, Instinto)',
+      '• +2 pontos de atributo para distribuir (máximo 3 em um atributo)',
       '• Proficiência com Armas Simples',
-      '• Idioma Comum + idiomas iguais ao atributo Mente',
+      '• Idioma Comum + (Mente - 1) idiomas adicionais (mínimo 0)',
+      '• 3 + Mente habilidades proficientes',
+      '• Habilidade de Assinatura (+1d em 1 habilidade escolhida)',
       '• Inventário com Mochila, Cartão do Banco e 10 PO$',
     ],
     category: 'Edição',
     tags: ['nível 1', 'padrão'],
   },
   {
+    question: 'Quais são os 6 atributos do sistema?',
+    answer: [
+      'Os atributos do Tabuleiro do Caos RPG são:',
+      '• Agilidade (Agi) — Destreza, reflexos, coordenação, rapidez',
+      '• Corpo (Cor) — Capacidades físicas, saúde, força, resistência',
+      '• Influência (Inf) — Habilidades sociais, carisma',
+      '• Mente (Men) — Inteligência, raciocínio, conhecimentos',
+      '• Essência (Ess) — Capacidades mágicas, potencial energético',
+      '• Instinto (Ins) — Sentidos, instintos naturais',
+      '',
+      'Categorias: Físico (Agi, Cor), Mental (Inf, Men), Espiritual (Ess, Ins).',
+      'Valores de 0 a 5. Com atributo 0, rola 2d e usa o menor.',
+    ],
+    category: 'Edição',
+    tags: ['atributos', 'categorias'],
+  },
+  {
     question: 'Como funcionam os idiomas conhecidos?',
     answer:
-      'Todo personagem conhece Comum por padrão. Você pode adicionar idiomas adicionais igual ao valor do atributo Mente. Se aumentar Mente, pode adicionar mais idiomas retroativamente.',
+      'Todo personagem conhece Comum por padrão. Você pode adicionar idiomas adicionais igual ao valor de Mente - 1 (mínimo 0). Se aumentar Mente, pode adicionar mais idiomas retroativamente.',
     category: 'Edição',
     tags: ['idiomas', 'mente'],
   },
   {
     question: 'O que é a Habilidade de Assinatura?',
     answer:
-      'É uma habilidade especial do personagem. Ganha bônus igual ao nível do personagem (ou nível ÷ 3 para habilidades de combate, mínimo 1). Você escolhe qual habilidade é sua assinatura.',
+      'É uma habilidade especial do personagem que ganha dados extras ao rolar: +1d (nível 1-5), +2d (nível 6-10), +3d (nível 11-15). Você escolhe qual habilidade é sua assinatura. Não há distinção entre habilidades de combate e não-combate.',
     category: 'Edição',
     tags: ['assinatura', 'bônus'],
   },
 
   // Categoria: Sistema de Rolagem
   {
-    question: 'Como rolar dados?',
+    question: 'Como funciona o sistema de rolagem?',
+    answer: [
+      'O sistema usa pool de dados com contagem de sucessos (✶):',
+      '• Role X dados, onde X = valor do atributo + modificadores de dados.',
+      '• O tamanho do dado depende do grau de proficiência: Leigo (d6), Adepto (d8), Versado (d10), Mestre (d12).',
+      '• Resultados ≥ 6 = 1 sucesso (✶). Resultados = 1 cancelam 1 sucesso.',
+      '• Mínimo de 0✶. Máximo de 8 dados por teste.',
+      '• Todos os modificadores são +Xd ou -Xd (nunca numéricos).',
+    ],
+    category: 'Rolagem',
+    tags: ['dados', 'rolagem', 'sucessos'],
+  },
+  {
+    question: 'Como rolar dados na interface?',
     answer: [
       'Use o botão de rolagem ao lado das habilidades.',
-      'Clique simples: abre configuração completa de rolagem.',
+      'Clique simples: abre configuração com opção de adicionar bônus (+Xd) ou penalidade (-Xd) temporários.',
       'Duplo-clique: faz rolagem rápida com resultado em modal temporário.',
-      'Você pode ajustar vantagem/desvantagem e modificadores extras.',
+      'Também há rolagem customizada para dados fora do sistema de resolução (dano, recursos, etc.).',
     ],
     category: 'Rolagem',
     tags: ['dados', 'rolagem', 'teste'],
@@ -107,7 +141,7 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'O que acontece quando atributo é 0?',
     answer:
-      'Quando um atributo está em 0, você rola 2d20 e escolhe o MENOR resultado (mecânica de desvantagem severa).',
+      'Quando um atributo está em 0, você rola 2 dados do grau da habilidade e usa o MENOR resultado para contagem de sucessos. Penalidades que reduzem dados abaixo de 0 também rolam 2d e usam o menor.',
     category: 'Rolagem',
     tags: ['atributo zero', 'penalidade'],
   },
@@ -119,29 +153,76 @@ const FAQ_ITEMS: FAQItem[] = [
     tags: ['histórico', 'rolagens'],
   },
 
-  // Categoria: Cálculos e Regras
+  // Categoria: Combate
   {
-    question: 'Como é calculado o modificador de habilidades?',
-    answer:
-      'Modificador = Atributo-chave × Grau de Proficiência. Graus: Leigo (×0), Adepto (×1), Versado (×2), Mestre (×3). Exemplo: Mente 3 e Versado = 3 × 2 = +6.',
-    category: 'Cálculos',
-    tags: ['modificador', 'proficiência'],
-  },
-  {
-    question: 'Como funciona a Defesa?',
-    answer:
-      'Defesa = 15 + Agilidade + outros bônus. Você pode adicionar bônus de Linhagem, Origem, equipamentos e outros efeitos clicando no campo Defesa.',
-    category: 'Cálculos',
-    tags: ['defesa', 'agilidade'],
-  },
-  {
-    question: 'O que são PV e PP temporários?',
+    question: 'Como funciona o sistema de saúde (GA/PV)?',
     answer: [
-      'PV Temporários: pontos de vida extras que absorvem dano primeiro. Não se acumulam, sempre use o maior valor.',
-      'PP Temporários: pontos de poder extras. Funcionam igual aos PV temporários.',
+      '• GA (Guarda): Proteção que absorve dano. Funciona como um escudo. Base: 15 + bônus de arquétipo.',
+      '• PV (Vitalidade): Saúde real do personagem. PV = teto(GA máxima / 3).',
+      '• Dano atinge GA primeiro. Quando GA = 0, excedente vai para PV.',
+      '• PV = 0: Ferimento Crítico (não morte imediata).',
+      '• Receber dano na GA não significa ser ferido, mas ter as defesas desgastadas.',
     ],
-    category: 'Cálculos',
-    tags: ['pv', 'pp', 'temporário'],
+    category: 'Combate',
+    tags: ['guarda', 'vitalidade', 'dano', 'ga', 'pv'],
+  },
+  {
+    question: 'Como funciona a economia de ações em combate?',
+    answer: [
+      '• Turno Rápido: 2 ações (▶▶) — age primeiro na rodada.',
+      '• Turno Lento: 3 ações (▶▶▶) — age depois dos turnos rápidos.',
+      '• Cada criatura tem 1 reação (↩) por rodada.',
+      '• Ações livres (∆) não custam recursos.',
+      '• Defesa é um teste ativo (não um valor fixo).',
+    ],
+    category: 'Combate',
+    tags: ['ações', 'turno', 'combate'],
+  },
+  {
+    question: 'O que é o Dado de Vulnerabilidade?',
+    answer:
+      'A vulnerabilidade é uma condição aplicada por golpes críticos. Ela é representada por um dado que regride: d20 → d12 → d10 → d8 → d6 → d4. Os efeitos mecânicos são aplicados automaticamente na ficha.',
+    category: 'Combate',
+    tags: ['vulnerabilidade', 'crítico'],
+  },
+
+  // Categoria: Progressão
+  {
+    question: 'Como funciona o Level Up?',
+    answer: [
+      'O personagem sobe de nível ao acumular XP suficiente (consulte a tabela de XP na seção de ajuda).',
+      'Ao subir de nível, você pode:',
+      '• Escolher um arquétipo para avançar.',
+      '• Ganhar bônus de GA, PP e outras melhorias do arquétipo/classe.',
+      '• Investir em novos atributos (até o máximo de 5, ou 6 com linhagem).',
+    ],
+    category: 'Progressão',
+    tags: ['level up', 'xp', 'arquétipo'],
+  },
+  {
+    question: 'O que são Arquétipos e Classes?',
+    answer: [
+      '• Arquétipos: Principal forma de progresso. 6 opções: Acadêmico, Acólito, Combatente, Feiticeiro, Ladino, Natural.',
+      '• Classes: Especializações compostas por combinações de 1 ou 2 arquétipos.',
+      '• Cada personagem pode ter até 3 classes.',
+      '• A soma dos níveis de classes = nível do personagem.',
+    ],
+    category: 'Progressão',
+    tags: ['arquétipo', 'classe', 'progressão'],
+  },
+
+  // Categoria: Feitiços e Magia
+  {
+    question: 'Como funciona o sistema de feitiços?',
+    answer: [
+      '• Habilite "Conjurador" na aba de feitiços para acessar Pontos de Feitiço (PF).',
+      '• PF são usados para conjurar feitiços. Gastar PF também gasta PP no mesmo valor.',
+      '• Custos por círculo: 1º=0 PF, 2º=1, 3º=3, 4º=5, 5º=7, 6º=9, 7º=15, 8º=20.',
+      '• Não é possível conjurar com 0 PP.',
+      '• Habilidades de conjuração: Arcano, Natureza ou Religião.',
+    ],
+    category: 'Feitiços',
+    tags: ['feitiços', 'pf', 'magia', 'conjuração'],
   },
 
   // Categoria: Exportação e Backup
@@ -162,9 +243,10 @@ const FAQ_ITEMS: FAQItem[] = [
       'Na página "Minhas Fichas", clique em "Importar Ficha".',
       'Selecione o arquivo JSON da ficha.',
       'A ficha será importada e adicionada à sua lista.',
+      'Fichas de versões anteriores são migradas automaticamente para o formato atual.',
     ],
     category: 'Backup',
-    tags: ['importação', 'restauração'],
+    tags: ['importação', 'restauração', 'migração'],
   },
   {
     question: 'Perco meus dados se limpar o navegador?',

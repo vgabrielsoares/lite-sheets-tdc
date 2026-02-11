@@ -27,7 +27,8 @@ const createMockCharacter = (overrides: Partial<Character> = {}): Character => {
       name: 'Soldado',
     } as any,
     combat: {
-      hp: { current: 45, max: 50, temporary: 0 },
+      guard: { current: 45, max: 50 },
+      vitality: { current: 16, max: 16 },
       pp: { current: 8, max: 10, temporary: 0 },
     } as any,
     ...overrides,
@@ -85,11 +86,18 @@ describe('CharacterCard', () => {
     expect(screen.queryByText('Soldado')).not.toBeInTheDocument();
   });
 
+  it('deve renderizar GA atual/máximo', () => {
+    const character = createMockCharacter();
+    render(<CharacterCard character={character} />);
+    expect(screen.getByText(/GA:/)).toBeInTheDocument();
+    expect(screen.getByText(/45\/50/)).toBeInTheDocument();
+  });
+
   it('deve renderizar PV atual/máximo', () => {
     const character = createMockCharacter();
     render(<CharacterCard character={character} />);
     expect(screen.getByText(/PV:/)).toBeInTheDocument();
-    expect(screen.getByText(/45\/50/)).toBeInTheDocument();
+    expect(screen.getByText(/16\/16/)).toBeInTheDocument();
   });
 
   it('deve renderizar PP atual/máximo', () => {

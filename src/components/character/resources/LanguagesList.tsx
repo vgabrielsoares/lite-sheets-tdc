@@ -86,14 +86,6 @@ export function LanguagesList({
 
   return (
     <Box>
-      <Typography
-        variant="h6"
-        gutterBottom
-        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-      >
-        <TranslateIcon /> Idiomas e Alfabetos
-      </Typography>
-
       <Card variant="outlined">
         <CardContent>
           {/* Informações */}

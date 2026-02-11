@@ -277,11 +277,21 @@ export default function CharacterCard({
             <Typography variant="body2" color="text.secondary">
               <Box
                 component="span"
+                sx={{ fontWeight: 600, color: 'primary.main' }}
+              >
+                GA:
+              </Box>{' '}
+              {character.combat.guard?.current ?? 0}/
+              {character.combat.guard?.max ?? 0}
+              {' | '}
+              <Box
+                component="span"
                 sx={{ fontWeight: 600, color: 'error.main' }}
               >
                 PV:
               </Box>{' '}
-              {character.combat.hp.current}/{character.combat.hp.max}
+              {character.combat.vitality?.current ?? 0}/
+              {character.combat.vitality?.max ?? 0}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               <Box

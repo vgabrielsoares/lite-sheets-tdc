@@ -32,7 +32,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={defaultDyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -44,12 +44,12 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={defaultDyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
 
-      // Com constituicao=1: max = 2 + 1 = 3
+      // Com corpo=1: max = 2 + 1 = 3
       expect(screen.getByText('0 / 3')).toBeInTheDocument();
     });
 
@@ -57,7 +57,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={defaultDyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -69,7 +69,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={defaultDyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -79,20 +79,20 @@ describe('DyingRounds', () => {
   });
 
   describe('Max Rounds Calculation', () => {
-    it('should calculate max rounds as 2 + Constituição', () => {
+    it('should calculate max rounds as 2 + Corpo', () => {
       const testCases = [
-        { constituicao: 0, expected: 2 },
-        { constituicao: 1, expected: 3 },
-        { constituicao: 2, expected: 4 },
-        { constituicao: 3, expected: 5 },
-        { constituicao: 5, expected: 7 },
+        { corpo: 0, expected: 2 },
+        { corpo: 1, expected: 3 },
+        { corpo: 2, expected: 4 },
+        { corpo: 3, expected: 5 },
+        { corpo: 5, expected: 7 },
       ];
 
-      testCases.forEach(({ constituicao, expected }) => {
+      testCases.forEach(({ corpo, expected }) => {
         const { unmount } = renderWithTheme(
           <DyingRounds
             dyingState={defaultDyingState}
-            constituicao={constituicao}
+            corpo={corpo}
             onChange={mockOnChange}
           />
         );
@@ -111,7 +111,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingStateWithModifiers}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -132,7 +132,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -151,7 +151,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -169,7 +169,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -184,7 +184,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={defaultDyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -208,7 +208,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -232,7 +232,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -256,7 +256,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -280,7 +280,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -304,7 +304,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );
@@ -325,7 +325,7 @@ describe('DyingRounds', () => {
       renderWithTheme(
         <DyingRounds
           dyingState={dyingState}
-          constituicao={1}
+          corpo={1}
           onChange={mockOnChange}
         />
       );

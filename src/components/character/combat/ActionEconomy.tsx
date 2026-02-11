@@ -26,22 +26,25 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
-  FlashOn as MajorActionIcon,
-  Speed as MinorActionIcon,
-  Shield as DefensiveReactionIcon,
+  PlayArrow as ActionIcon,
   Reply as ReactionIcon,
   AllInclusive as FreeActionIcon,
-  PlayArrow as StartTurnIcon,
+  RestartAlt as ResetIcon,
   Settings as SettingsIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
   Close as CloseIcon,
+  BoltOutlined as FastTurnIcon,
+  HourglassBottom as SlowTurnIcon,
 } from '@mui/icons-material';
 import type {
   ActionEconomy as ActionEconomyType,
   ExtraAction,
+  TurnType,
 } from '@/types/combat';
 
 // Contador simples para IDs (evita hidratação mismatch)
@@ -56,25 +59,37 @@ export interface ActionEconomyProps {
 
 /** Tipos de ação extra disponíveis */
 const EXTRA_ACTION_TYPES = [
-  { value: 'maior', label: 'Ação Maior', icon: MajorActionIcon },
-  { value: 'menor', label: 'Ação Menor', icon: MinorActionIcon },
-  { value: 'reacao', label: 'Reação', icon: ReactionIcon },
-  {
-    value: 'reacao-defensiva',
-    label: 'Reação Defensiva',
-    icon: DefensiveReactionIcon,
+  { value: 'acao' as const, label: 'Ação (▶)', icon: ActionIcon },
+  { value: 'reacao' as const, label: 'Reação (↩)', icon: ReactionIcon },
+];
+
+/** Configuração do tipo de turno */
+const TURN_TYPE_CONFIG: Record<
+  TurnType,
+  { label: string; actionCount: number; description: string; symbol: string }
+> = {
+  rapido: {
+    label: 'Turno Rápido',
+    actionCount: 2,
+    description: 'Age primeiro — 2 ações (▶▶)',
+    symbol: '▶▶',
   },
-] as const;
+  lento: {
+    label: 'Turno Lento',
+    actionCount: 3,
+    description: 'Age depois — 3 ações (▶▶▶)',
+    symbol: '▶▶▶',
+  },
+};
 
 /**
  * Componente que gerencia a Economia de Ações em combate
  *
- * O sistema Tabuleiro do Caos usa:
- * - 1 Ação Maior por turno
- * - 2 Ações Menores por turno
- * - 1 Reação por rodada
- * - 1 Reação Defensiva por rodada
- * - Ações Livres ilimitadas (apenas informativo)
+ * O sistema Tabuleiro do Caos v0.0.2 usa:
+ * - Turno Rápido (▶▶): 2 ações, age primeiro
+ * - Turno Lento (▶▶▶): 3 ações, age depois de inimigos rápidos
+ * - 1 Reação (↩) por rodada
+ * - Ações Livres (∆) ilimitadas
  * - Ações extras podem ser adicionadas por habilidades especiais
  *
  * @example
@@ -89,24 +104,59 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
   const theme = useTheme();
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [newActionType, setNewActionType] =
-    useState<ExtraAction['type']>('menor');
+    useState<ExtraAction['type']>('acao');
   const [newActionSource, setNewActionSource] = useState('');
 
-  // Normalizar extraActions para garantir que é um array
+  // Normalizar campos para garantir segurança contra dados parciais
   const extraActions = actionEconomy.extraActions ?? [];
+  const turnType = actionEconomy.turnType ?? 'rapido';
+  const turnConfig = TURN_TYPE_CONFIG[turnType];
+  const actions =
+    actionEconomy.actions ??
+    Array.from({ length: turnConfig.actionCount }, () => true);
+  const reaction = actionEconomy.reaction ?? true;
 
   /**
-   * Alterna o estado de uma ação específica
+   * Altera o tipo de turno e ajusta o array de ações
    */
-  const toggleAction = useCallback(
-    (actionKey: keyof Omit<ActionEconomyType, 'extraActions'>) => {
+  const handleTurnTypeChange = useCallback(
+    (_event: React.MouseEvent<HTMLElement>, newTurnType: TurnType | null) => {
+      if (!newTurnType) return;
+      const newActionCount = TURN_TYPE_CONFIG[newTurnType].actionCount;
+      const newActions = Array.from({ length: newActionCount }, () => true);
       onChange({
         ...actionEconomy,
-        [actionKey]: !actionEconomy[actionKey],
+        turnType: newTurnType,
+        actions: newActions,
       });
     },
     [actionEconomy, onChange]
   );
+
+  /**
+   * Alterna o estado de uma ação no index dado
+   */
+  const toggleAction = useCallback(
+    (index: number) => {
+      const newActions = [...actions];
+      newActions[index] = !newActions[index];
+      onChange({
+        ...actionEconomy,
+        actions: newActions,
+      });
+    },
+    [actionEconomy, actions, onChange]
+  );
+
+  /**
+   * Alterna o estado da reação
+   */
+  const toggleReaction = useCallback(() => {
+    onChange({
+      ...actionEconomy,
+      reaction: !reaction,
+    });
+  }, [actionEconomy, reaction, onChange]);
 
   /**
    * Alterna o estado de uma ação extra
@@ -162,61 +212,48 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
 
   /**
    * Reseta todas as ações para o início do turno
-   * Cada personagem tem 1 turno por rodada, então reseta tudo
    */
   const resetTurn = useCallback(() => {
+    const actionCount = TURN_TYPE_CONFIG[turnType].actionCount;
     onChange({
-      majorAction: true,
-      minorAction1: true,
-      minorAction2: true,
+      ...actionEconomy,
+      actions: Array.from({ length: actionCount }, () => true),
       reaction: true,
-      defensiveReaction: true,
       extraActions: extraActions.map((action) => ({
         ...action,
         available: true,
       })),
     });
-  }, [extraActions, onChange]);
+  }, [actionEconomy, turnType, extraActions, onChange]);
 
   // Contagem de ações disponíveis
-  const baseActionCount =
-    (actionEconomy.majorAction ? 1 : 0) +
-    (actionEconomy.minorAction1 ? 1 : 0) +
-    (actionEconomy.minorAction2 ? 1 : 0);
+  const baseActionsAvailable = actions.filter(Boolean).length;
+  const baseActionsTotal = actions.length;
 
   const extraTurnActionsAvailable = extraActions.filter(
-    (a) => (a.type === 'maior' || a.type === 'menor') && a.available
+    (a) => a.type === 'acao' && a.available
   ).length;
-
   const extraTurnActionsTotal = extraActions.filter(
-    (a) => a.type === 'maior' || a.type === 'menor'
+    (a) => a.type === 'acao'
   ).length;
-
-  const baseReactionCount =
-    (actionEconomy.reaction ? 1 : 0) +
-    (actionEconomy.defensiveReaction ? 1 : 0);
 
   const extraReactionsAvailable = extraActions.filter(
-    (a) => (a.type === 'reacao' || a.type === 'reacao-defensiva') && a.available
+    (a) => a.type === 'reacao' && a.available
   ).length;
-
   const extraReactionsTotal = extraActions.filter(
-    (a) => a.type === 'reacao' || a.type === 'reacao-defensiva'
+    (a) => a.type === 'reacao'
   ).length;
 
-  const totalTurnActions = baseActionCount + extraTurnActionsAvailable;
-  const maxTurnActions = 3 + extraTurnActionsTotal;
+  const totalActionsAvailable =
+    baseActionsAvailable + extraTurnActionsAvailable;
+  const totalActionsMax = baseActionsTotal + extraTurnActionsTotal;
 
-  const totalReactions = baseReactionCount + extraReactionsAvailable;
-  const maxReactions = 2 + extraReactionsTotal;
+  const totalReactionsAvailable = (reaction ? 1 : 0) + extraReactionsAvailable;
+  const totalReactionsMax = 1 + extraReactionsTotal;
 
   // Filtrar ações extras por tipo
-  const extraTurnActions = extraActions.filter(
-    (a) => a.type === 'maior' || a.type === 'menor'
-  );
-  const extraReactionActions = extraActions.filter(
-    (a) => a.type === 'reacao' || a.type === 'reacao-defensiva'
-  );
+  const extraTurnActions = extraActions.filter((a) => a.type === 'acao');
+  const extraReactionActions = extraActions.filter((a) => a.type === 'reacao');
 
   return (
     <Card
@@ -228,6 +265,7 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
       }}
     >
       <CardContent>
+        {/* Cabeçalho */}
         <Box
           sx={{
             display: 'flex',
@@ -252,150 +290,144 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
           </Box>
           <Stack direction="row" spacing={1}>
             <Chip
-              label={`${totalTurnActions}/${maxTurnActions} Turno`}
+              label={`${totalActionsAvailable}/${totalActionsMax} ▶`}
               size="small"
-              color={totalTurnActions === 0 ? 'default' : 'success'}
-              variant={totalTurnActions === 0 ? 'outlined' : 'filled'}
+              color={totalActionsAvailable === 0 ? 'default' : 'success'}
+              variant={totalActionsAvailable === 0 ? 'outlined' : 'filled'}
             />
             <Chip
-              label={`${totalReactions}/${maxReactions} Reações`}
+              label={`${totalReactionsAvailable}/${totalReactionsMax} ↩`}
               size="small"
-              color={totalReactions === 0 ? 'default' : 'info'}
-              variant={totalReactions === 0 ? 'outlined' : 'filled'}
+              color={totalReactionsAvailable === 0 ? 'default' : 'info'}
+              variant={totalReactionsAvailable === 0 ? 'outlined' : 'filled'}
             />
           </Stack>
         </Box>
 
-        {/* Ações de Turno */}
+        {/* Seletor de Tipo de Turno */}
         <Box sx={{ mb: 2 }}>
           <Typography
             variant="caption"
             color="text.secondary"
             sx={{ display: 'block', mb: 1 }}
           >
-            Ações de Turno
+            Tipo de Turno
+          </Typography>
+          <ToggleButtonGroup
+            value={turnType}
+            exclusive
+            onChange={handleTurnTypeChange}
+            size="small"
+            fullWidth
+            aria-label="Tipo de turno"
+          >
+            <ToggleButton value="rapido" aria-label="Turno Rápido">
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <FastTurnIcon fontSize="small" />
+                <Typography variant="body2" fontWeight="bold">
+                  Rápido ▶▶
+                </Typography>
+              </Stack>
+            </ToggleButton>
+            <ToggleButton value="lento" aria-label="Turno Lento">
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <SlowTurnIcon fontSize="small" />
+                <Typography variant="body2" fontWeight="bold">
+                  Lento ▶▶▶
+                </Typography>
+              </Stack>
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', mt: 0.5 }}
+          >
+            {turnConfig.description}
+          </Typography>
+        </Box>
+
+        {/* Ações de Turno (▶) */}
+        <Box sx={{ mb: 2 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', mb: 1 }}
+          >
+            Ações (▶)
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            {/* Ação Maior */}
-            <ActionButton
-              label="Ação Maior"
-              available={actionEconomy.majorAction}
-              icon={<MajorActionIcon />}
-              color={theme.palette.warning.main}
-              onClick={() => toggleAction('majorAction')}
-              tooltip="Ação Maior - Principal ação do turno"
-            />
-
-            {/* Ações Menores */}
-            <ActionButton
-              label="Menor 1"
-              available={actionEconomy.minorAction1}
-              icon={<MinorActionIcon />}
-              color={theme.palette.success.main}
-              onClick={() => toggleAction('minorAction1')}
-              tooltip="Ação Menor 1 - Ação rápida"
-            />
-            <ActionButton
-              label="Menor 2"
-              available={actionEconomy.minorAction2}
-              icon={<MinorActionIcon />}
-              color={theme.palette.success.main}
-              onClick={() => toggleAction('minorAction2')}
-              tooltip="Ação Menor 2 - Ação rápida"
-            />
+            {actions.map((available, index) => (
+              <ActionButton
+                key={`action-${index}`}
+                label={`${index + 1}`}
+                available={available}
+                icon={<ActionIcon />}
+                color={theme.palette.warning.main}
+                onClick={() => toggleAction(index)}
+                tooltip={`Ação ${index + 1} — Clique para ${available ? 'usar' : 'recuperar'}`}
+              />
+            ))}
 
             {/* Ações extras de turno */}
-            {extraTurnActions.map((action) => {
-              const actionInfo = EXTRA_ACTION_TYPES.find(
-                (t) => t.value === action.type
-              );
-              const ActionIcon = actionInfo?.icon ?? MajorActionIcon;
-              const color =
-                action.type === 'maior'
-                  ? theme.palette.warning.main
-                  : theme.palette.success.main;
-
-              return (
-                <ActionButton
-                  key={action.id}
-                  label={action.source}
-                  available={action.available}
-                  icon={<ActionIcon />}
-                  color={color}
-                  onClick={() => toggleExtraAction(action.id)}
-                  tooltip={`${actionInfo?.label ?? 'Ação'} extra - ${action.source}`}
-                  isExtra
-                />
-              );
-            })}
+            {extraTurnActions.map((action) => (
+              <ActionButton
+                key={action.id}
+                label={action.source}
+                available={action.available}
+                icon={<ActionIcon />}
+                color={theme.palette.warning.main}
+                onClick={() => toggleExtraAction(action.id)}
+                tooltip={`Ação extra (▶) — ${action.source}`}
+                isExtra
+              />
+            ))}
           </Stack>
         </Box>
 
-        {/* Reações */}
+        {/* Reação (↩) */}
         <Box sx={{ mb: 2 }}>
           <Typography
             variant="caption"
             color="text.secondary"
             sx={{ display: 'block', mb: 1 }}
           >
-            Reações (por Rodada)
+            Reação (↩) — 1 por rodada
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            {/* Reação */}
             <ActionButton
-              label="Reação"
-              available={actionEconomy.reaction}
+              label="↩ Reação"
+              available={reaction}
               icon={<ReactionIcon />}
               color={theme.palette.info.main}
-              onClick={() => toggleAction('reaction')}
-              tooltip="Reação - Resposta a eventos"
-            />
-
-            {/* Reação Defensiva */}
-            <ActionButton
-              label="Defensiva"
-              available={actionEconomy.defensiveReaction}
-              icon={<DefensiveReactionIcon />}
-              color={theme.palette.primary.main}
-              onClick={() => toggleAction('defensiveReaction')}
-              tooltip="Reação Defensiva - Resposta defensiva"
+              onClick={toggleReaction}
+              tooltip={`Reação — Clique para ${reaction ? 'usar' : 'recuperar'}`}
             />
 
             {/* Ações extras de reação */}
-            {extraReactionActions.map((action) => {
-              const actionInfo = EXTRA_ACTION_TYPES.find(
-                (t) => t.value === action.type
-              );
-              const ActionIcon = actionInfo?.icon ?? ReactionIcon;
-              const color =
-                action.type === 'reacao'
-                  ? theme.palette.info.main
-                  : theme.palette.primary.main;
-
-              return (
-                <ActionButton
-                  key={action.id}
-                  label={action.source}
-                  available={action.available}
-                  icon={<ActionIcon />}
-                  color={color}
-                  onClick={() => toggleExtraAction(action.id)}
-                  tooltip={`${actionInfo?.label ?? 'Reação'} extra - ${action.source}`}
-                  isExtra
-                />
-              );
-            })}
+            {extraReactionActions.map((action) => (
+              <ActionButton
+                key={action.id}
+                label={action.source}
+                available={action.available}
+                icon={<ReactionIcon />}
+                color={theme.palette.info.main}
+                onClick={() => toggleExtraAction(action.id)}
+                tooltip={`Reação extra (↩) — ${action.source}`}
+                isExtra
+              />
+            ))}
           </Stack>
         </Box>
 
-        {/* Ações Livres - Informativo */}
+        {/* Ações Livres (∆) - Informativo */}
         <Box sx={{ mb: 2 }}>
           <Typography
             variant="caption"
             color="text.secondary"
             sx={{ display: 'block', mb: 1 }}
           >
-            Ações Livres
+            Ações Livres (∆)
           </Typography>
           <Chip
             icon={<FreeActionIcon fontSize="small" />}
@@ -412,11 +444,11 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
             size="small"
             variant="outlined"
             color="primary"
-            startIcon={<StartTurnIcon />}
+            startIcon={<ResetIcon />}
             onClick={resetTurn}
             fullWidth
           >
-            Novo Turno
+            Reset Turno
           </Button>
         </Box>
       </CardContent>
@@ -505,7 +537,7 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
                 const actionInfo = EXTRA_ACTION_TYPES.find(
                   (t) => t.value === action.type
                 );
-                const ActionIcon = actionInfo?.icon ?? MajorActionIcon;
+                const ExtraIcon = actionInfo?.icon ?? ActionIcon;
 
                 return (
                   <ListItem
@@ -517,7 +549,7 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
                     }}
                   >
                     <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
-                      <ActionIcon fontSize="small" color="action" />
+                      <ExtraIcon fontSize="small" color="action" />
                     </Box>
                     <ListItemText
                       primary={action.source}
@@ -582,9 +614,7 @@ function ActionButton({
   const theme = useTheme();
 
   return (
-    <Tooltip
-      title={`${tooltip} - Clique para ${available ? 'usar' : 'recuperar'}`}
-    >
+    <Tooltip title={tooltip}>
       <Box
         onClick={onClick}
         sx={{
@@ -650,13 +680,11 @@ function ActionButton({
 
 /**
  * Valores padrão para economia de ações
- * Todas as ações disponíveis no início
+ * Turno Rápido com todas as ações disponíveis
  */
 export const DEFAULT_ACTION_ECONOMY: ActionEconomyType = {
-  majorAction: true,
-  minorAction1: true,
-  minorAction2: true,
+  turnType: 'rapido',
+  actions: [true, true],
   reaction: true,
-  defensiveReaction: true,
   extraActions: [],
 };

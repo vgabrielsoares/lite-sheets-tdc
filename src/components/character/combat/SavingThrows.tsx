@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -9,20 +9,33 @@ import {
   Tooltip,
   Chip,
   Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
 } from '@mui/material';
 import {
   Psychology as MindIcon,
   Speed as ReflexIcon,
   FitnessCenter as StrengthIcon,
   Favorite as VigorIcon,
+  AutoFixHigh as AutoFixHighIcon,
+  Casino as CasinoIcon,
 } from '@mui/icons-material';
 import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName } from '@/types/skills';
-import type { ProficiencyLevel, Modifier } from '@/types/common';
+import type { ProficiencyLevel, Modifier, DieSize } from '@/types/common';
 import type { SavingThrowType, CombatPenalties } from '@/types/combat';
-import { SKILL_PROFICIENCY_LEVELS } from '@/constants/skills';
+import type { DicePoolResult } from '@/types';
+import { getSkillDieSize } from '@/constants/skills';
 import { ATTRIBUTE_LABELS } from '@/constants/attributes';
 import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
+import { rollSkillTest, globalDiceHistory } from '@/utils/diceRoller';
+import { DiceRollResult } from '@/components/shared/DiceRollResult';
+import type { DicePenaltyMap } from '@/utils/conditionEffects';
+import { getDicePenaltyForAttribute } from '@/utils/conditionEffects';
 
 export interface SavingThrowsProps {
   /** Atributos do personagem */
@@ -33,8 +46,10 @@ export interface SavingThrowsProps {
   characterLevel: number;
   /** Habilidade de assinatura do personagem */
   signatureSkill?: SkillName;
-  /** Penalidades de combate (opcional, para aplicar -1d20 por sucesso) */
+  /** Penalidades de combate (opcional, para aplicar -Xd por sucesso) */
   penalties?: CombatPenalties;
+  /** Penalidades de dados de condições ativas (opcional) */
+  conditionPenalties?: DicePenaltyMap;
 }
 
 /**
@@ -53,15 +68,17 @@ interface SavingThrowInfo {
 }
 
 /**
- * Resultado do cálculo de um teste de resistência
+ * Resultado do cálculo de um teste de resistência (pool de dados v0.0.2)
  */
 interface SavingThrowCalculation {
-  /** Modificador numérico total */
-  modifier: number;
   /** Quantidade de dados a rolar */
   diceCount: number;
-  /** Se deve escolher o menor (rolagem com penalidade de dados) */
-  takeLowest: boolean;
+  /** Tamanho do dado (d6/d8/d10/d12) */
+  dieSize: DieSize;
+  /** Se deve escolher o menor (rolagem com penalidade extrema) */
+  isPenaltyRoll: boolean;
+  /** Fórmula legível (ex: "3d8", "2d6 (menor)") */
+  formula: string;
 }
 
 /**
@@ -91,20 +108,31 @@ const SAVING_THROWS: SavingThrowInfo[] = [
       'O Reflexo é testado contra efeitos que requerem velocidade, equilíbrio ágil e rápido tempo de reação.',
   },
   {
+    type: 'sintonia',
+    skill: 'sintonia',
+    attribute: 'essencia',
+    resistUse: 'Resistir',
+    label: 'Sintonia',
+    icon: <AutoFixHighIcon />,
+    color: '#2196F3', // azul
+    description:
+      'A Sintonia é testada contra efeitos que interferem na energia do personagem, evitando corrupções e distorções da alma.',
+  },
+  {
     type: 'tenacidade',
     skill: 'tenacidade',
-    attribute: 'forca',
+    attribute: 'corpo',
     resistUse: 'Resistir',
     label: 'Tenacidade',
     icon: <StrengthIcon />,
     color: '#afac00ff', // amarelo
     description:
-      'A Tenacidade é testada contra efeitos que requerem força muscular, de equilíbrio e de resistência.',
+      'A Tenacidade é testada contra efeitos que requerem força do corpo, de equilíbrio e de resistência.',
   },
   {
     type: 'vigor',
     skill: 'vigor',
-    attribute: 'constituicao',
+    attribute: 'corpo',
     resistUse: 'Resistir',
     label: 'Vigor',
     icon: <VigorIcon />,
@@ -125,15 +153,16 @@ const PROFICIENCY_LABELS: Record<ProficiencyLevel, string> = {
 };
 
 /**
- * Componente que exibe os 4 testes de resistência do personagem
+ * Componente que exibe os 5 testes de resistência do personagem
  *
  * Os testes de resistência são:
- * - Determinação (Presença) - Resistência mental
- * - Reflexo (Agilidade) - Reação a perigos
- * - Tenacidade (Força) - Resistência física
- * - Vigor (Constituição) - Resistência a doenças/venenos
+ * - Determinação (Mente) - Resistência mental, força de vontade
+ * - Reflexo (Agilidade) - Velocidade, equilíbrio ágil, reação
+ * - Sintonia (Essência) - Interferência energética, corrupção
+ * - Tenacidade (Corpo) - Força muscular, equilíbrio, resistência
+ * - Vigor (Corpo) - Saúde, integridade física
  *
- * Cada teste usa o sistema de habilidades existente para calcular o modificador.
+ * Cada teste usa o sistema de pool de dados v0.0.2.
  *
  * @example
  * ```tsx
@@ -151,7 +180,44 @@ export function SavingThrows({
   characterLevel,
   signatureSkill,
   penalties,
+  conditionPenalties,
 }: SavingThrowsProps) {
+  // Estado do diálogo de rolagem
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedThrow, setSelectedThrow] = useState<SavingThrowInfo | null>(
+    null
+  );
+  const [rollResult, setRollResult] = useState<DicePoolResult | null>(null);
+  const [tempDiceModifier, setTempDiceModifier] = useState(0);
+
+  /** Abre o diálogo de rolagem para um teste de resistência */
+  const handleCardClick = useCallback((info: SavingThrowInfo) => {
+    setSelectedThrow(info);
+    setRollResult(null);
+    setTempDiceModifier(0);
+    setDialogOpen(true);
+  }, []);
+
+  /** Fecha o diálogo */
+  const handleCloseDialog = useCallback(() => {
+    setDialogOpen(false);
+  }, []);
+
+  /** Executa a rolagem */
+  const handleRoll = useCallback(() => {
+    if (!selectedThrow) return;
+    const calc = calculateSavingThrow(selectedThrow);
+    const baseDice = calc.isPenaltyRoll ? 0 : calc.diceCount;
+    const result = rollSkillTest(
+      baseDice,
+      calc.dieSize,
+      tempDiceModifier,
+      `Teste de ${selectedThrow.label}`
+    );
+    globalDiceHistory.add(result);
+    setRollResult(result);
+  }, [selectedThrow, tempDiceModifier]);
+
   /**
    * Calcula o modificador total de um teste de resistência usando o uso específico
    * (ex: "Resistir" ou "Resistir Mentalmente")
@@ -164,7 +230,13 @@ export function SavingThrows({
   ): SavingThrowCalculation => {
     const skill = skills[info.skill];
     if (!skill) {
-      return { modifier: 0, diceCount: 1, takeLowest: false };
+      const dieSize = 'd6' as DieSize;
+      return {
+        diceCount: 2,
+        dieSize,
+        isPenaltyRoll: true,
+        formula: `2${dieSize} (menor)`,
+      };
     }
 
     const attributeValue = attributes[info.attribute];
@@ -180,13 +252,7 @@ export function SavingThrows({
       ...useModifiers,
     ];
 
-    // Separa modificadores de dados dos numéricos
-    const valueModifiers = allModifiers.filter((mod) => !mod.affectsDice);
-    const diceModifiers = allModifiers.filter(
-      (mod) => mod.affectsDice === true
-    );
-
-    // Calcula modificador numérico usando apenas valueModifiers
+    // Calcula a pool de dados usando o sistema v0.0.2
     const calculation = calculateSkillTotalModifier(
       info.skill,
       info.attribute,
@@ -194,229 +260,324 @@ export function SavingThrows({
       skill.proficiencyLevel,
       isSignature,
       characterLevel,
-      valueModifiers
+      allModifiers
     );
 
-    // Calcula quantidade de dados: atributo + modificadores de dados
-    const diceModifiersTotal = diceModifiers.reduce(
-      (sum, mod) => sum + (mod.value || 0),
-      0
-    );
-
-    // Aplica penalidade de combate se existir (-1d20 por sucesso)
+    // Aplica penalidade de combate se existir (-Xd por sucesso do oponente)
     const combatPenalty = penalties?.savingThrowPenalties[info.type] ?? 0;
+    // Aplica penalidades de condições ativas (por atributo + 'todos')
+    const conditionPenalty = conditionPenalties
+      ? getDicePenaltyForAttribute(conditionPenalties, info.attribute)
+      : 0;
+    const effectiveTotalDice =
+      calculation.totalDice + combatPenalty + conditionPenalty;
 
-    const effectiveDiceCount =
-      attributeValue + diceModifiersTotal + combatPenalty;
+    const dieSize = calculation.dieSize;
 
-    // Se effectiveDiceCount <= 0, rola 2 - effectiveDiceCount dados e pega o menor
-    let diceCount: number;
-    let takeLowest: boolean;
-
-    if (effectiveDiceCount <= 0) {
-      diceCount = 2 - effectiveDiceCount; // 0 -> 2d20, -1 -> 3d20, etc
-      takeLowest = true;
-    } else {
-      diceCount = effectiveDiceCount;
-      takeLowest = false;
+    // Se effectiveTotalDice <= 0, rola 2d e usa o menor
+    if (effectiveTotalDice <= 0) {
+      return {
+        diceCount: 2,
+        dieSize,
+        isPenaltyRoll: true,
+        formula: `2${dieSize} (menor)`,
+      };
     }
 
+    const diceCount = Math.min(effectiveTotalDice, 8);
     return {
-      modifier: calculation.totalModifier,
       diceCount,
-      takeLowest,
+      dieSize,
+      isPenaltyRoll: false,
+      formula: `${diceCount}${dieSize}`,
     };
   };
 
   /**
-   * Formata o modificador com sinal
-   */
-  const formatModifier = (value: number): string => {
-    if (value >= 0) return `+${value}`;
-    return `${value}`;
-  };
-
-  /**
-   * Obtém a descrição da rolagem
+   * Obtém a descrição da rolagem (pool de dados v0.0.2)
    */
   const getRollDescription = (calc: SavingThrowCalculation): string => {
-    const modifierStr = formatModifier(calc.modifier);
-    const prefix = calc.takeLowest ? '-' : '';
-    return `${prefix}${calc.diceCount}d20${modifierStr}`;
+    return calc.formula;
   };
 
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Typography
-          variant="h6"
-          component="h3"
-          gutterBottom
-          color="text.secondary"
-        >
-          Testes de Resistência
-        </Typography>
+    <>
+      <Card variant="outlined">
+        <CardContent>
+          <Typography
+            variant="h6"
+            component="h3"
+            gutterBottom
+            color="text.secondary"
+          >
+            Testes de Resistência
+          </Typography>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
-            gap: 2,
-          }}
-        >
-          {SAVING_THROWS.map((info) => {
-            const skill = skills[info.skill];
-            const calc = calculateSavingThrow(info);
-            const proficiency = skill?.proficiencyLevel || 'leigo';
-            const attributeValue = attributes[info.attribute];
-            const isSignature = signatureSkill === info.skill;
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr 1fr',
+                sm: 'repeat(3, 1fr)',
+                md: 'repeat(5, 1fr)',
+              },
+              gap: 2,
+            }}
+          >
+            {SAVING_THROWS.map((info) => {
+              const skill = skills[info.skill];
+              const calc = calculateSavingThrow(info);
+              const proficiency = skill?.proficiencyLevel || 'leigo';
+              const isSignature = signatureSkill === info.skill;
 
-            return (
-              <Tooltip
-                key={info.type}
-                title={
-                  <Box>
-                    <Typography variant="body2" fontWeight="bold">
-                      {info.label}
-                    </Typography>
-                    <Typography variant="caption" display="block">
-                      {info.description}
-                    </Typography>
+              return (
+                <Tooltip
+                  key={info.type}
+                  title={`Clique para rolar ${info.label}`}
+                  arrow
+                  placement="top"
+                >
+                  <Card
+                    variant="outlined"
+                    onClick={() => handleCardClick(info)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleCardClick(info);
+                      }
+                    }}
+                    aria-label={`Rolar teste de ${info.label}: ${getRollDescription(calc)}`}
+                    sx={{
+                      textAlign: 'center',
+                      p: 1.5,
+                      cursor: 'pointer',
+                      borderColor: info.color,
+                      borderWidth: 2,
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 4px 12px ${info.color}40`,
+                      },
+                    }}
+                  >
+                    {/* Ícone */}
+                    <Box
+                      sx={{
+                        color: info.color,
+                        mb: 0.5,
+                        '& svg': { fontSize: '1.5rem' },
+                      }}
+                    >
+                      {info.icon}
+                    </Box>
+
+                    {/* Nome */}
                     <Typography
                       variant="caption"
-                      display="block"
-                      sx={{ mt: 1 }}
+                      component="div"
+                      fontWeight="medium"
+                      sx={{ mb: 0.5 }}
                     >
-                      Atributo: {ATTRIBUTE_LABELS[info.attribute]} (
-                      {attributeValue})
+                      {info.label}
                     </Typography>
-                    <Typography variant="caption" display="block">
-                      Proficiência: {PROFICIENCY_LABELS[proficiency]} (×
-                      {SKILL_PROFICIENCY_LEVELS[proficiency]})
+
+                    {/* Fórmula da pool de dados */}
+                    <Typography
+                      variant="h5"
+                      component="div"
+                      fontWeight="bold"
+                      sx={{ color: info.color }}
+                    >
+                      {calc.diceCount}
+                      {calc.dieSize}
                     </Typography>
-                    <Typography variant="caption" display="block">
-                      Uso: {info.resistUse}
-                    </Typography>
-                    <Typography variant="caption" display="block">
-                      Rolagem: {getRollDescription(calc)}
-                    </Typography>
-                    {isSignature && (
-                      <Typography
-                        variant="caption"
-                        display="block"
-                        color="warning.main"
-                      >
-                        ⭐ Habilidade de Assinatura
-                      </Typography>
-                    )}
-                  </Box>
-                }
-                arrow
-                placement="top"
-              >
-                <Card
-                  variant="outlined"
-                  sx={{
-                    textAlign: 'center',
-                    p: 1.5,
-                    cursor: 'help',
-                    borderColor: info.color,
-                    borderWidth: 2,
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: `0 4px 12px ${info.color}40`,
-                    },
-                  }}
-                >
-                  {/* Ícone */}
-                  <Box
-                    sx={{
-                      color: info.color,
-                      mb: 0.5,
-                      '& svg': { fontSize: '1.5rem' },
-                    }}
-                  >
-                    {info.icon}
-                  </Box>
 
-                  {/* Nome */}
-                  <Typography
-                    variant="caption"
-                    component="div"
-                    fontWeight="medium"
-                    sx={{ mb: 0.5 }}
-                  >
-                    {info.label}
-                  </Typography>
-
-                  {/* Modificador */}
-                  <Typography
-                    variant="h5"
-                    component="div"
-                    fontWeight="bold"
-                    sx={{ color: info.color }}
-                  >
-                    {formatModifier(calc.modifier)}
-                  </Typography>
-
-                  {/* Dados - vermelho se takeLowest */}
-                  <Typography
-                    variant="caption"
-                    component="div"
-                    sx={{
-                      color: calc.takeLowest ? 'error.main' : 'text.secondary',
-                      fontWeight: calc.takeLowest ? 'bold' : 'normal',
-                    }}
-                  >
-                    {calc.takeLowest ? '-' : ''}
-                    {calc.diceCount}d20
-                  </Typography>
-
-                  {/* Badges */}
-                  <Stack
-                    direction="row"
-                    spacing={0.5}
-                    justifyContent="center"
-                    sx={{ mt: 0.5 }}
-                  >
-                    {/* Proficiência */}
-                    <Chip
-                      label={PROFICIENCY_LABELS[proficiency][0]}
-                      size="small"
+                    {/* Indicador de penalidade */}
+                    <Typography
+                      variant="caption"
+                      component="div"
                       sx={{
-                        height: 18,
-                        fontSize: '0.65rem',
-                        bgcolor:
-                          proficiency === 'leigo'
-                            ? 'action.disabledBackground'
-                            : 'primary.main',
-                        color:
-                          proficiency === 'leigo'
-                            ? 'text.disabled'
-                            : 'primary.contrastText',
+                        color: calc.isPenaltyRoll
+                          ? 'error.main'
+                          : 'text.secondary',
+                        fontWeight: calc.isPenaltyRoll ? 'bold' : 'normal',
                       }}
-                    />
-                    {/* Assinatura */}
-                    {isSignature && (
+                    >
+                      {calc.isPenaltyRoll
+                        ? '(menor)'
+                        : getRollDescription(calc)}
+                    </Typography>
+
+                    {/* Badges */}
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      justifyContent="center"
+                      sx={{ mt: 0.5 }}
+                    >
+                      {/* Proficiência */}
                       <Chip
-                        label="⭐"
+                        label={PROFICIENCY_LABELS[proficiency][0]}
                         size="small"
                         sx={{
                           height: 18,
                           fontSize: '0.65rem',
-                          bgcolor: 'warning.main',
-                          color: 'warning.contrastText',
+                          bgcolor:
+                            proficiency === 'leigo'
+                              ? 'action.disabledBackground'
+                              : 'primary.main',
+                          color:
+                            proficiency === 'leigo'
+                              ? 'text.disabled'
+                              : 'primary.contrastText',
                         }}
+                      />
+                      {/* Assinatura */}
+                      {isSignature && (
+                        <Chip
+                          label="⭐"
+                          size="small"
+                          sx={{
+                            height: 18,
+                            fontSize: '0.65rem',
+                            bgcolor: 'warning.main',
+                            color: 'warning.contrastText',
+                          }}
+                        />
+                      )}
+                    </Stack>
+                  </Card>
+                </Tooltip>
+              );
+            })}
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Diálogo de Rolagem de Teste de Resistência */}
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        {selectedThrow &&
+          (() => {
+            const calc = calculateSavingThrow(selectedThrow);
+            const skill = skills[selectedThrow.skill];
+            const proficiency = skill?.proficiencyLevel || 'leigo';
+            const attributeValue = attributes[selectedThrow.attribute];
+            const isSignature = signatureSkill === selectedThrow.skill;
+
+            return (
+              <>
+                <DialogTitle>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <CasinoIcon color="primary" />
+                    <Typography variant="h6">
+                      Teste de {selectedThrow.label}
+                    </Typography>
+                  </Stack>
+                </DialogTitle>
+                <DialogContent>
+                  <Stack spacing={2}>
+                    {/* Descrição */}
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedThrow.description}
+                    </Typography>
+
+                    {/* Configuração da rolagem */}
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      useFlexGap
+                    >
+                      <Chip
+                        label={`${ATTRIBUTE_LABELS[selectedThrow.attribute]}: ${attributeValue}`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                      <Chip
+                        label={`${PROFICIENCY_LABELS[proficiency]} (${getSkillDieSize(proficiency)})`}
+                        size="small"
+                        color="secondary"
+                        variant="outlined"
+                      />
+                      <Chip
+                        label={`Pool: ${calc.formula}`}
+                        size="small"
+                        color="info"
+                        variant="outlined"
+                      />
+                      {isSignature && (
+                        <Chip
+                          label="⭐ Assinatura"
+                          size="small"
+                          color="warning"
+                          variant="filled"
+                        />
+                      )}
+                      {calc.isPenaltyRoll && (
+                        <Chip
+                          label="Penalidade: menor resultado"
+                          size="small"
+                          color="error"
+                          variant="filled"
+                        />
+                      )}
+                    </Stack>
+
+                    {/* Modificador temporário */}
+                    <TextField
+                      label="Modificador temporário (±d)"
+                      type="number"
+                      size="small"
+                      value={tempDiceModifier}
+                      onChange={(e) =>
+                        setTempDiceModifier(parseInt(e.target.value, 10) || 0)
+                      }
+                      inputProps={{
+                        'aria-label': 'Modificador temporário de dados',
+                      }}
+                      helperText="Adicione ou remova dados temporariamente"
+                      fullWidth
+                    />
+
+                    {/* Botão de rolagem */}
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleRoll}
+                      startIcon={<CasinoIcon />}
+                      fullWidth
+                      size="large"
+                    >
+                      Rolar {calc.formula}
+                      {tempDiceModifier !== 0 &&
+                        ` (${tempDiceModifier > 0 ? '+' : ''}${tempDiceModifier}d)`}
+                    </Button>
+
+                    {/* Resultado */}
+                    {rollResult && (
+                      <DiceRollResult
+                        result={rollResult}
+                        animate
+                        showBreakdown
                       />
                     )}
                   </Stack>
-                </Card>
-              </Tooltip>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleCloseDialog}>Fechar</Button>
+                </DialogActions>
+              </>
             );
-          })}
-        </Box>
-      </CardContent>
-    </Card>
+          })()}
+      </Dialog>
+    </>
   );
 }

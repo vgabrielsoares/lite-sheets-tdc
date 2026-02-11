@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Box, Typography, Stack, Divider } from '@mui/material';
+import { Box, Typography, Stack, Divider, Alert, Chip } from '@mui/material';
 import type { Character, Resistances, SkillName } from '@/types';
 import type {
   Attack,
@@ -9,23 +9,36 @@ import type {
   PPLimit as PPLimitType,
   ActionEconomy as ActionEconomyType,
   CombatPenalties,
+  VulnerabilityDie as VulnerabilityDieType,
 } from '@/types/combat';
-import { CompactHealthPoints, CompactPowerPoints } from '../stats';
+import {
+  PowerPointsDisplay,
+  SpellPointsDisplay,
+  GuardVitalityDisplay,
+} from '../stats';
 import {
   ActionEconomy,
   AttacksDisplay,
+  CombatActionsReference,
+  CombatConditions,
+  DefenseTest,
   DyingRounds,
-  MissPenalties,
   PPLimit,
   ResistancesDisplay,
   SavingThrows,
+  VulnerabilityDie,
 } from '../combat';
-import { getSizeModifiers } from '@/constants/lineage';
-import { calculateDefense } from '@/utils/calculations';
+import { createDefaultCombatPenalties } from '@/utils/combatPenalties';
 import {
-  createDefaultCombatPenalties,
-  type CombatPenaltiesState,
-} from '@/utils/combatPenalties';
+  calculateConditionDicePenalties,
+  hasActivePenalties,
+  formatPenaltySummary,
+  type DicePenaltyMap,
+} from '@/utils/conditionEffects';
+import {
+  shouldConditionBeActive,
+  type ConditionId,
+} from '@/constants/conditions';
 
 export interface CombatTabProps {
   /** Dados do personagem */
@@ -36,7 +49,7 @@ export interface CombatTabProps {
   onOpenHP?: () => void;
   /** Callback para abrir detalhes de PP */
   onOpenPP?: () => void;
-  /** Callback para abrir detalhes de Defesa */
+  /** @deprecated v0.0.2: Defesa agora é teste ativo, não tem sidebar */
   onOpenDefense?: () => void;
   /** Callback para abrir detalhes do Limite de PP */
   onOpenPPLimit?: () => void;
@@ -79,10 +92,6 @@ export const CombatTab = React.memo(function CombatTab({
   onOpenDefense,
   onOpenPPLimit,
 }: CombatTabProps) {
-  // Obter modificador de defesa pelo tamanho
-  const sizeModifiers = getSizeModifiers(character.size);
-  const sizeDefenseBonus = sizeModifiers.defense;
-
   /**
    * Encontra qual habilidade é atualmente a assinatura
    * Verifica tanto o campo signatureSkill quanto o flag isSignature nas skills
@@ -100,6 +109,34 @@ export const CombatTab = React.memo(function CombatTab({
   }, [character.skills, character.signatureSkill]);
 
   /**
+   * Calcula penalidades de dados das condições ativas (manuais + automáticas)
+   */
+  const conditionDicePenalties = useMemo((): DicePenaltyMap => {
+    const AUTO_IDS: ConditionId[] = ['avariado', 'machucado', 'esgotado'];
+    const state = {
+      gaCurrent: character.combat.guard.current,
+      gaMax: character.combat.guard.max,
+      pvCurrent: character.combat.vitality.current,
+      pvMax: character.combat.vitality.max,
+      ppCurrent: character.combat.pp.current,
+    };
+    const activeAutoIds = AUTO_IDS.filter((id) =>
+      shouldConditionBeActive(id, state)
+    );
+    return calculateConditionDicePenalties(
+      character.combat.conditions,
+      activeAutoIds
+    );
+  }, [
+    character.combat.conditions,
+    character.combat.guard.current,
+    character.combat.guard.max,
+    character.combat.vitality.current,
+    character.combat.vitality.max,
+    character.combat.pp.current,
+  ]);
+
+  /**
    * Handler para atualizar estado morrendo
    */
   const handleDyingStateChange = (dyingState: DyingState) => {
@@ -112,7 +149,8 @@ export const CombatTab = React.memo(function CombatTab({
           ? dyingState.currentRounds >= dyingState.maxRounds
             ? 'morto'
             : 'morrendo'
-          : character.combat.hp.current > 0
+          : character.combat.guard.current > 0 ||
+              character.combat.vitality.current > 0
             ? 'normal'
             : 'inconsciente',
       },
@@ -167,49 +205,6 @@ export const CombatTab = React.memo(function CombatTab({
     });
   };
 
-  /**
-   * Handler para atualizar penalidades de combate
-   */
-  const handlePenaltiesChange = (penalties: CombatPenaltiesState) => {
-    onUpdate({
-      combat: {
-        ...character.combat,
-        penalties,
-      },
-    });
-  };
-
-  /**
-   * Calcula a defesa base (sem penalidades de erro)
-   * Soma todos os bônus: tamanho, armadura, escudo, outros
-   * Aplica o limite de agilidade da armadura se houver
-   */
-  const baseDefense = useMemo(() => {
-    const agilidade = character.attributes.agilidade;
-    const maxAgilityBonus = character.combat.defense.maxAgilityBonus;
-
-    // Aplica o limite de agilidade da armadura se houver
-    const effectiveAgilityBonus =
-      maxAgilityBonus !== undefined
-        ? Math.min(agilidade, maxAgilityBonus)
-        : agilidade;
-
-    const otherBonusesTotal = character.combat.defense.otherBonuses.reduce(
-      (sum, mod) => sum + mod.value,
-      0
-    );
-    const totalBonuses =
-      sizeDefenseBonus +
-      character.combat.defense.armorBonus +
-      character.combat.defense.shieldBonus +
-      otherBonusesTotal;
-    return calculateDefense(effectiveAgilityBonus, totalBonuses);
-  }, [
-    character.attributes.agilidade,
-    sizeDefenseBonus,
-    character.combat.defense,
-  ]);
-
   return (
     <Box>
       {/* Header da seção */}
@@ -233,36 +228,42 @@ export const CombatTab = React.memo(function CombatTab({
           >
             Recursos Vitais
           </Typography>
+
+          {/* Guarda (GA) e Vitalidade (PV) */}
+          <GuardVitalityDisplay
+            guard={character.combat.guard}
+            vitality={character.combat.vitality}
+            onChange={(guard, vitality) =>
+              onUpdate({
+                combat: {
+                  ...character.combat,
+                  guard,
+                  vitality,
+                  state:
+                    vitality.current <= 0
+                      ? 'morrendo'
+                      : guard.current <= 0
+                        ? 'inconsciente'
+                        : 'normal',
+                },
+              })
+            }
+            onOpenDetails={onOpenHP}
+          />
+
+          {/* PP e PF lado a lado (PF apenas para conjuradores) */}
           <Box
             sx={{
+              mt: 2,
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+              gridTemplateColumns: character.spellcasting?.isCaster
+                ? { xs: '1fr', md: '1fr 1fr' }
+                : '1fr',
               gap: 2,
             }}
           >
-            {/* Pontos de Vida */}
-            <CompactHealthPoints
-              hp={character.combat.hp}
-              onChange={(hp) =>
-                onUpdate({
-                  combat: {
-                    ...character.combat,
-                    hp,
-                    // Atualizar estado baseado em HP
-                    state:
-                      hp.current <= 0
-                        ? character.combat.dyingState.isDying
-                          ? 'morrendo'
-                          : 'inconsciente'
-                        : 'normal',
-                  },
-                })
-              }
-              onOpenDetails={onOpenHP}
-            />
-
             {/* Pontos de Poder */}
-            <CompactPowerPoints
+            <PowerPointsDisplay
               pp={character.combat.pp}
               onChange={(pp) =>
                 onUpdate({
@@ -274,6 +275,42 @@ export const CombatTab = React.memo(function CombatTab({
               }
               onOpenDetails={onOpenPP}
             />
+
+            {/* Pontos de Feitiço — apenas para conjuradores */}
+            {character.spellcasting?.isCaster && (
+              <SpellPointsDisplay
+                spellPoints={{
+                  current: character.spellcasting.spellPoints?.current ?? 0,
+                  max: character.combat.pp.max, // PF max = PP max sempre
+                }}
+                pp={character.combat.pp}
+                onChange={(spellPoints) =>
+                  onUpdate({
+                    spellcasting: {
+                      ...(character.spellcasting || {
+                        isCaster: true,
+                        spellPoints: { current: 0, max: 0 },
+                        knownSpells: [],
+                        maxKnownSpells: 0,
+                        knownSpellsModifiers: 0,
+                        spellcastingAbilities: [],
+                        masteredMatrices: [],
+                      }),
+                      spellPoints,
+                    },
+                  })
+                }
+                onPPChange={(pp) =>
+                  onUpdate({
+                    combat: {
+                      ...character.combat,
+                      pp,
+                    },
+                  })
+                }
+                onOpenDetails={onOpenPP}
+              />
+            )}
           </Box>
         </Box>
 
@@ -293,19 +330,21 @@ export const CombatTab = React.memo(function CombatTab({
             actionEconomy={character.combat.actionEconomy}
             onChange={handleActionEconomyChange}
           />
+          <Box sx={{ mt: 2 }}>
+            <CombatActionsReference />
+          </Box>
         </Box>
 
         <Divider />
 
-        {/* Seção 3: Defesa (com penalidades de erro - Issue 5.6) */}
+        {/* Seção 3: Teste de Defesa Ativo (v0.0.2 — substitui defesa fixa) */}
         <Box id="section-defense">
-          <MissPenalties
-            penalties={
-              character.combat.penalties ?? createDefaultCombatPenalties()
-            }
-            baseDefense={baseDefense}
-            onChange={handlePenaltiesChange}
-            onOpenDetails={onOpenDefense}
+          <DefenseTest
+            attributes={character.attributes}
+            skills={character.skills}
+            characterLevel={character.level}
+            signatureSkill={currentSignatureSkill}
+            conditionPenalties={conditionDicePenalties}
           />
         </Box>
 
@@ -321,6 +360,7 @@ export const CombatTab = React.memo(function CombatTab({
             penalties={
               character.combat.penalties ?? createDefaultCombatPenalties()
             }
+            conditionPenalties={conditionDicePenalties}
           />
         </Box>
 
@@ -354,22 +394,77 @@ export const CombatTab = React.memo(function CombatTab({
               gap: 2,
             }}
           >
+            {/* Dado de Vulnerabilidade */}
+            <VulnerabilityDie
+              vulnerabilityDie={character.combat.vulnerabilityDie}
+              onChange={(vulnerabilityDie) =>
+                onUpdate({
+                  combat: {
+                    ...character.combat,
+                    vulnerabilityDie,
+                  },
+                })
+              }
+            />
+
             {/* Rodadas Morrendo */}
             <DyingRounds
               dyingState={character.combat.dyingState}
-              constituicao={character.attributes.constituicao}
+              corpo={character.attributes.corpo}
               onChange={handleDyingStateChange}
             />
 
             {/* Limite de PP por Rodada */}
             <PPLimit
               characterLevel={character.level}
-              presenca={character.attributes.presenca}
+              essencia={character.attributes.essencia}
               ppLimit={character.combat.ppLimit}
               onChange={handlePPLimitChange}
               onOpenDetails={onOpenPPLimit}
             />
+
+            {/* Condições Ativas */}
+            <CombatConditions
+              conditions={character.combat.conditions}
+              onChange={(conditions) =>
+                onUpdate({
+                  combat: {
+                    ...character.combat,
+                    conditions,
+                  },
+                })
+              }
+              gaCurrent={character.combat.guard.current}
+              gaMax={character.combat.guard.max}
+              pvCurrent={character.combat.vitality.current}
+              pvMax={character.combat.vitality.max}
+              ppCurrent={character.combat.pp.current}
+            />
           </Box>
+
+          {/* Resumo de penalidades de condições */}
+          {hasActivePenalties(conditionDicePenalties) && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              <Typography
+                variant="subtitle2"
+                fontWeight="bold"
+                sx={{ mb: 0.5 }}
+              >
+                Penalidades de condições ativas:
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {formatPenaltySummary(conditionDicePenalties).map((text) => (
+                  <Chip
+                    key={text}
+                    label={text}
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                  />
+                ))}
+              </Stack>
+            </Alert>
+          )}
         </Box>
 
         <Divider />

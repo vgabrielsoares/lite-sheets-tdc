@@ -130,24 +130,47 @@ export type SpellcastingSkillName =
 
 /**
  * Habilidade de conjuração cadastrada do personagem
+ *
+ * v0.0.2: ND/Bônus de Ataque removidos. Substituídos por castingBonus
+ * (bônus de dados adicionais ao teste de conjuração, formato +Xd/-Xd).
  */
 export interface SpellcastingAbility {
   /** ID único da habilidade de conjuração */
   id: string;
   /** Habilidade usada para conjuração */
   skill: SpellcastingSkillName;
-  /** Atributo usado para cálculos (padrão: Presença) */
-  attribute: 'presenca' | 'influencia' | 'constituicao';
-  /** Modificador especial adicional ao ND */
-  dcBonus: number;
-  /** Modificador especial adicional ao bônus de ataque */
-  attackBonus: number;
+  /** Atributo usado para cálculos (padrão: Essência) */
+  attribute: 'essencia' | 'influencia' | 'corpo' | 'instinto';
+  /** Bônus de dados ao teste de conjuração (+Xd/-Xd) */
+  castingBonus: number;
+}
+
+/**
+ * Pontos de Feitiço (PF) — recurso exclusivo de conjuradores
+ *
+ * PF são análogos a PP, mas específicos para conjuração.
+ * Gastar PF também gasta PP no mesmo valor.
+ * Não é possível conjurar com 0 PP, mesmo tendo PF.
+ * Em combate: PF começa em 0, gera 1 PF/turno.
+ * Fora de combate: PF = metade do nível de conjurador (mínimo 1).
+ */
+export interface SpellPoints {
+  /** PF atual */
+  current: number;
+  /** PF máximo (variável: depende da geração em combate) */
+  max: number;
 }
 
 /**
  * Dados completos de conjuração do personagem
  */
 export interface SpellcastingData {
+  /** Se o personagem é um conjurador (toggle booleano) */
+  isCaster: boolean;
+  /** Habilidade de conjuração principal: Arcano, Natureza ou Religião */
+  castingSkill?: SpellType;
+  /** Pontos de Feitiço (PF) — apenas para conjuradores */
+  spellPoints: SpellPoints;
   /** Feitiços conhecidos */
   knownSpells: KnownSpell[];
   /** Número máximo de feitiços conhecidos (base) */

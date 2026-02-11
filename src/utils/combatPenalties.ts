@@ -1,16 +1,14 @@
 /**
  * Combat Penalties - Funções utilitárias para sistema de penalidades de combate
  *
- * Este arquivo implementa a lógica do sistema de penalidades por erros em combate:
+ * v0.0.2 Mudanças:
+ * - Penalidade de defesa: @deprecated (defesa fixa não existe mais)
+ * - Penalidades de testes de resistência: agora em -Xd (dados), não -1d20
  *
- * 1. Penalidade de Defesa:
- *    - Quando um ataque erra uma criatura, sua Defesa diminui em -1
- *    - Mínimo de 15 de defesa
- *    - Reseta quando um ataque acerta ou no início da próxima rodada
- *
- * 2. Penalidade de Testes de Resistência:
- *    - Quando passa em um teste que mitiga todo o efeito, sofre -1d20 naquele teste
- *    - Cada tipo de resistência (Determinação, Reflexo, Tenacidade, Vigor) é rastreado separadamente
+ * Sistema v0.0.2:
+ * 1. Penalidade de Testes de Resistência:
+ *    - Quando passa em um teste que mitiga todo o efeito, sofre -1d naquele teste
+ *    - Cada tipo de resistência é rastreado separadamente
  *    - Reseta quando falha no teste ou no início da próxima rodada
  */
 
@@ -23,17 +21,17 @@ import type { SavingThrowType, CombatPenalties } from '@/types/combat';
 export type CombatPenaltiesState = CombatPenalties;
 
 /**
- * Valor mínimo da defesa (não pode cair abaixo de 15)
+ * @deprecated Defesa fixa não existe mais em v0.0.2. Mantido para compatibilidade.
  */
 export const MIN_DEFENSE = 15;
 
 /**
- * Valor da penalidade por erro de ataque contra defesa
+ * @deprecated Defesa fixa não existe mais em v0.0.2. Mantido para compatibilidade.
  */
 export const DEFENSE_PENALTY_PER_MISS = -1;
 
 /**
- * Valor da penalidade por sucesso em teste de resistência (em dados)
+ * Valor da penalidade por sucesso em teste de resistência (em dados, -Xd)
  */
 export const SAVING_THROW_DICE_PENALTY_PER_SUCCESS = -1;
 
@@ -46,6 +44,7 @@ export function createDefaultCombatPenalties(): CombatPenaltiesState {
     savingThrowPenalties: {
       determinacao: 0,
       reflexo: 0,
+      sintonia: 0,
       tenacidade: 0,
       vigor: 0,
     },
@@ -53,11 +52,8 @@ export function createDefaultCombatPenalties(): CombatPenaltiesState {
 }
 
 /**
+ * @deprecated Defesa fixa não existe mais em v0.0.2.
  * Aplica penalidade na defesa quando um ataque erra
- *
- * @param currentPenalty - Penalidade atual
- * @param baseDefense - Defesa base (para verificar limite mínimo)
- * @returns Nova penalidade
  */
 export function applyDefensePenalty(
   currentPenalty: number,
@@ -76,9 +72,7 @@ export function applyDefensePenalty(
 }
 
 /**
- * Reseta a penalidade de defesa (quando um ataque acerta ou no início do turno)
- *
- * @returns Penalidade zerada
+ * @deprecated Defesa fixa não existe mais em v0.0.2.
  */
 export function resetDefensePenalty(): number {
   return 0;
@@ -129,11 +123,7 @@ export function resetAllPenalties(): CombatPenaltiesState {
 }
 
 /**
- * Calcula a defesa efetiva com a penalidade aplicada
- *
- * @param baseDefense - Defesa base sem penalidades
- * @param penalty - Penalidade atual
- * @returns Defesa efetiva (mínimo 15)
+ * @deprecated Defesa fixa não existe mais em v0.0.2.
  */
 export function calculateEffectiveDefense(
   baseDefense: number,
@@ -163,6 +153,7 @@ export function hasAnyPenalty(penalties: CombatPenaltiesState): boolean {
 export const SAVING_THROW_LABELS: Record<SavingThrowType, string> = {
   determinacao: 'Determinação',
   reflexo: 'Reflexo',
+  sintonia: 'Sintonia',
   tenacidade: 'Tenacidade',
   vigor: 'Vigor',
 };
@@ -173,6 +164,7 @@ export const SAVING_THROW_LABELS: Record<SavingThrowType, string> = {
 export const SAVING_THROW_COLORS: Record<SavingThrowType, string> = {
   determinacao: '#9C27B0', // Roxo
   reflexo: '#4CAF50', // Verde
+  sintonia: '#2196F3', // Azul
   tenacidade: '#FFC107', // Amarelo
   vigor: '#F44336', // Vermelho
 };

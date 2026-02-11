@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { Alert, Box, Paper, Stack, Typography, useTheme } from '@mui/material';
-import FavoriteIcon from '@mui/icons-material/Favorite';
+import ShieldIcon from '@mui/icons-material/Shield';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ArchetypeCard from './ArchetypeCard';
@@ -11,8 +11,8 @@ import { Attributes } from '@/types/attributes';
 import {
   ARCHETYPE_LIST,
   ARCHETYPE_LABELS,
-  ARCHETYPE_HP_PER_LEVEL,
-  ARCHETYPE_PP_PER_LEVEL,
+  ARCHETYPE_GA_ATTRIBUTE,
+  ARCHETYPE_PP_BASE_PER_LEVEL,
 } from '@/constants/archetypes';
 
 /**
@@ -38,65 +38,98 @@ interface ArchetypeDisplayProps {
   archetypes: Archetype[];
   /** Nível total do personagem */
   characterLevel: number;
-  /** Atributos do personagem (para calcular PV/PP) */
+  /** Atributos do personagem (para calcular GA/PP) */
   attributes: Attributes;
-  /** Callback quando um arquétipo é alterado */
-  onArchetypeChange: (archetypes: Archetype[]) => void;
-  /** Se a edição está desabilitada */
-  disabled?: boolean;
 }
 
 /**
- * Calcula o PV total ganho por arquétipos
+ * Calcula o GA total ganho por arquétipos
  *
- * PV = Σ(nível_arquétipo × (PV_base_arquétipo + Constituição))
+ * GA = Σ(nível_arquétipo × atributo_relevante_do_arquétipo)
+ * Cada arquétipo usa um atributo diferente para calcular GA.
+ */
+export function calculateArchetypeGA(
+  archetypes: Archetype[],
+  attributes: Attributes
+): number {
+  return archetypes.reduce((total, arch) => {
+    const attrKey = ARCHETYPE_GA_ATTRIBUTE[arch.name];
+    const attrValue = attrKey ? attributes[attrKey] : 0;
+    return total + arch.level * attrValue;
+  }, 0);
+}
+
+/**
+ * @deprecated Usar calculateArchetypeGA que usa o atributo correto por arquétipo
  */
 export function calculateArchetypeHP(
   archetypes: Archetype[],
   constituicao: number
 ): number {
-  return archetypes.reduce((total, arch) => {
-    const baseHP = ARCHETYPE_HP_PER_LEVEL[arch.name] ?? 0;
-    return total + arch.level * (baseHP + constituicao);
-  }, 0);
+  return calculateArchetypeGA(archetypes, {
+    agilidade: constituicao,
+    corpo: constituicao,
+    influencia: constituicao,
+    mente: constituicao,
+    essencia: constituicao,
+    instinto: constituicao,
+  } as Attributes);
 }
 
 /**
  * Calcula o PP total ganho por arquétipos
  *
- * PP = Σ(nível_arquétipo × (PP_base_arquétipo + Presença))
+ * PP = Σ(nível_arquétipo × (PP_base_arquétipo + Essência))
  */
 export function calculateArchetypePP(
   archetypes: Archetype[],
-  presenca: number
+  essencia: number
 ): number {
   return archetypes.reduce((total, arch) => {
-    const basePP = ARCHETYPE_PP_PER_LEVEL[arch.name] ?? 0;
-    return total + arch.level * (basePP + presenca);
+    const basePP = ARCHETYPE_PP_BASE_PER_LEVEL[arch.name] ?? 0;
+    return total + arch.level * (basePP + essencia);
   }, 0);
 }
 
 /**
- * Calcula o breakdown detalhado de PV por arquétipo
+ * Calcula o breakdown detalhado de GA por arquétipo
+ */
+export function calculateArchetypeGABreakdown(
+  archetypes: Archetype[],
+  attributes: Attributes
+): ArchetypeResourceBreakdown[] {
+  return archetypes
+    .filter((arch) => arch.level > 0)
+    .map((arch) => {
+      const attrKey = ARCHETYPE_GA_ATTRIBUTE[arch.name];
+      const attrValue = attrKey ? attributes[attrKey] : 0;
+      const total = arch.level * attrValue;
+      return {
+        name: arch.name,
+        label: ARCHETYPE_LABELS[arch.name],
+        level: arch.level,
+        basePerLevel: 0,
+        attributeBonus: attrValue,
+        total,
+      };
+    });
+}
+
+/**
+ * @deprecated Usar calculateArchetypeGABreakdown
  */
 export function calculateArchetypeHPBreakdown(
   archetypes: Archetype[],
   constituicao: number
 ): ArchetypeResourceBreakdown[] {
-  return archetypes
-    .filter((arch) => arch.level > 0)
-    .map((arch) => {
-      const basePerLevel = ARCHETYPE_HP_PER_LEVEL[arch.name] ?? 0;
-      const total = arch.level * (basePerLevel + constituicao);
-      return {
-        name: arch.name,
-        label: ARCHETYPE_LABELS[arch.name],
-        level: arch.level,
-        basePerLevel,
-        attributeBonus: constituicao,
-        total,
-      };
-    });
+  return calculateArchetypeGABreakdown(archetypes, {
+    agilidade: constituicao,
+    corpo: constituicao,
+    influencia: constituicao,
+    mente: constituicao,
+    essencia: constituicao,
+    instinto: constituicao,
+  } as Attributes);
 }
 
 /**
@@ -104,33 +137,33 @@ export function calculateArchetypeHPBreakdown(
  */
 export function calculateArchetypePPBreakdown(
   archetypes: Archetype[],
-  presenca: number
+  essencia: number
 ): ArchetypeResourceBreakdown[] {
   return archetypes
     .filter((arch) => arch.level > 0)
     .map((arch) => {
-      const basePerLevel = ARCHETYPE_PP_PER_LEVEL[arch.name] ?? 0;
-      const total = arch.level * (basePerLevel + presenca);
+      const basePP = ARCHETYPE_PP_BASE_PER_LEVEL[arch.name] ?? 0;
+      const total = arch.level * (basePP + essencia);
       return {
         name: arch.name,
         label: ARCHETYPE_LABELS[arch.name],
         level: arch.level,
-        basePerLevel,
-        attributeBonus: presenca,
+        basePerLevel: basePP,
+        attributeBonus: essencia,
         total,
       };
     });
 }
 
 /**
- * ArchetypeDisplay - Exibe todos os arquétipos e permite distribuir níveis
+ * ArchetypeDisplay - Exibe todos os arquétipos (somente leitura)
+ *
+ * Níveis de arquétipo são gerenciados exclusivamente pelo LevelUpModal.
  */
 export default function ArchetypeDisplay({
   archetypes,
   characterLevel,
   attributes,
-  onArchetypeChange,
-  disabled = false,
 }: ArchetypeDisplayProps) {
   const theme = useTheme();
 
@@ -161,43 +194,18 @@ export default function ArchetypeDisplay({
   // Níveis disponíveis para distribuir
   const availableLevels = characterLevel - totalDistributedLevels;
 
-  // Calcular PV e PP totais baseados nos arquétipos
-  const totalHP = useMemo(
-    () => calculateArchetypeHP(archetypes, attributes.constituicao),
-    [archetypes, attributes.constituicao]
+  // Calcular GA e PP totais baseados nos arquétipos
+  const totalGA = useMemo(
+    () => calculateArchetypeGA(archetypes, attributes),
+    [archetypes, attributes]
   );
 
   const totalPP = useMemo(
-    () => calculateArchetypePP(archetypes, attributes.presenca),
-    [archetypes, attributes.presenca]
+    () => calculateArchetypePP(archetypes, attributes.essencia),
+    [archetypes, attributes.essencia]
   );
 
-  // Handler para mudança de nível em um arquétipo
-  const handleLevelChange = (name: ArchetypeName, newLevel: number) => {
-    const updatedArchetypes = ARCHETYPE_LIST.map((archName) => {
-      const currentArch = archetypes.find((a) => a.name === archName);
-      if (archName === name) {
-        return {
-          name: archName,
-          level: newLevel,
-          features: currentArch?.features ?? [],
-        };
-      }
-      return currentArch ?? { name: archName, level: 0, features: [] };
-    }).filter((arch) => arch.level > 0);
-
-    // Se o novo nível for 0, não incluir o arquétipo
-    if (newLevel === 0) {
-      onArchetypeChange(updatedArchetypes);
-    } else {
-      // Verificar se já existe, senão adicionar
-      const existingIndex = updatedArchetypes.findIndex((a) => a.name === name);
-      if (existingIndex === -1) {
-        updatedArchetypes.push({ name, level: newLevel, features: [] });
-      }
-      onArchetypeChange(updatedArchetypes);
-    }
-  };
+  // Handler removed — archetype levels are managed exclusively via LevelUpModal
 
   return (
     <Box>
@@ -229,24 +237,24 @@ export default function ArchetypeDisplay({
             </Stack>
             <Typography
               variant="body1"
-              color={availableLevels > 0 ? 'success.main' : 'text.secondary'}
+              color={availableLevels > 0 ? 'warning.main' : 'text.secondary'}
               fontWeight="medium"
             >
               {availableLevels > 0
-                ? `${availableLevels} nível(is) para distribuir`
+                ? `${availableLevels} nível(is) pendente(s)`
                 : 'Todos os níveis distribuídos'}
             </Typography>
           </Stack>
 
-          {/* PV e PP calculados */}
+          {/* GA e PP calculados */}
           <Stack direction="row" spacing={3}>
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <FavoriteIcon sx={{ color: 'error.main' }} />
+              <ShieldIcon sx={{ color: 'primary.main' }} />
               <Typography variant="body1" fontWeight="medium">
-                +{totalHP} PV
+                +{totalGA} GA
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                (base + CON)
+                (atributo)
               </Typography>
             </Stack>
             <Stack direction="row" spacing={0.5} alignItems="center">
@@ -255,18 +263,18 @@ export default function ArchetypeDisplay({
                 +{totalPP} PP
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                (base + PRE)
+                (base + ESS)
               </Typography>
             </Stack>
           </Stack>
         </Stack>
       </Paper>
 
-      {/* Alerta se houver níveis para distribuir */}
+      {/* Alerta se houver níveis pendentes */}
       {availableLevels > 0 && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Você tem <strong>{availableLevels}</strong> nível(is) para distribuir
-          entre os arquétipos. Clique nos botões + para adicionar níveis.
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Você tem <strong>{availableLevels}</strong> nível(is) pendente(s).
+          Suba de nível pela aba Principal para distribuir nos arquétipos.
         </Alert>
       )}
 
@@ -274,7 +282,7 @@ export default function ArchetypeDisplay({
       {availableLevels < 0 && (
         <Alert severity="error" sx={{ mb: 3 }}>
           Você distribuiu <strong>{Math.abs(availableLevels)}</strong> nível(is)
-          a mais do que o permitido! Remova níveis dos arquétipos.
+          a mais do que o permitido! Ajuste os arquétipos.
         </Alert>
       )}
 
@@ -291,14 +299,7 @@ export default function ArchetypeDisplay({
         }}
       >
         {ARCHETYPE_LIST.map((name) => (
-          <ArchetypeCard
-            key={name}
-            name={name}
-            level={archetypeLevels[name]}
-            availableLevels={availableLevels}
-            onLevelChange={handleLevelChange}
-            disabled={disabled}
-          />
+          <ArchetypeCard key={name} name={name} level={archetypeLevels[name]} />
         ))}
       </Box>
 

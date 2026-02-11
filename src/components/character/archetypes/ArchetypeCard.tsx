@@ -5,20 +5,17 @@ import {
   Card,
   CardContent,
   Chip,
-  IconButton,
   Stack,
   Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
-import FavoriteIcon from '@mui/icons-material/Favorite';
+import ShieldIcon from '@mui/icons-material/Shield';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SchoolIcon from '@mui/icons-material/School';
 import ChurchIcon from '@mui/icons-material/Church';
-import ShieldIcon from '@mui/icons-material/Shield';
+import CombatShieldIcon from '@mui/icons-material/Shield';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import NatureIcon from '@mui/icons-material/Nature';
@@ -26,23 +23,18 @@ import { ArchetypeName } from '@/types/character';
 import {
   ARCHETYPE_LABELS,
   ARCHETYPE_DESCRIPTIONS,
-  ARCHETYPE_HP_PER_LEVEL,
-  ARCHETYPE_PP_PER_LEVEL,
+  ARCHETYPE_PP_BASE_PER_LEVEL,
   ARCHETYPE_IS_SPELLCASTER,
   ARCHETYPE_ATTRIBUTE_DESCRIPTION,
+  ARCHETYPE_GA_ATTRIBUTE,
 } from '@/constants/archetypes';
+import { ATTRIBUTE_LABELS } from '@/constants/attributes';
 
 interface ArchetypeCardProps {
   /** Nome do arquétipo */
   name: ArchetypeName;
   /** Nível atual no arquétipo */
   level: number;
-  /** Níveis ainda disponíveis para distribuir */
-  availableLevels: number;
-  /** Callback quando o nível é alterado */
-  onLevelChange: (name: ArchetypeName, newLevel: number) => void;
-  /** Se a edição está desabilitada */
-  disabled?: boolean;
 }
 
 /**
@@ -90,40 +82,21 @@ const getArchetypeColor = (name: ArchetypeName): string => {
 };
 
 /**
- * ArchetypeCard - Componente para exibir um arquétipo individual
+ * ArchetypeCard - Componente para exibir um arquétipo individual (somente leitura)
  *
- * Exibe o nome, descrição, PV/PP por nível e permite ajustar o nível.
+ * Exibe o nome, descrição, GA/PP por nível do arquétipo.
+ * Níveis de arquétipo são alterados apenas via LevelUpModal.
  */
-export default function ArchetypeCard({
-  name,
-  level,
-  availableLevels,
-  onLevelChange,
-  disabled = false,
-}: ArchetypeCardProps) {
+export default function ArchetypeCard({ name, level }: ArchetypeCardProps) {
   const theme = useTheme();
   const label = ARCHETYPE_LABELS[name];
   const description = ARCHETYPE_DESCRIPTIONS[name];
-  const hpPerLevel = ARCHETYPE_HP_PER_LEVEL[name];
-  const ppPerLevel = ARCHETYPE_PP_PER_LEVEL[name];
+  const ppBasePerLevel = ARCHETYPE_PP_BASE_PER_LEVEL[name];
+  const gaAttribute = ARCHETYPE_GA_ATTRIBUTE[name];
+  const gaAttributeLabel = ATTRIBUTE_LABELS[gaAttribute];
   const isSpellcaster = ARCHETYPE_IS_SPELLCASTER[name];
   const attributeDescription = ARCHETYPE_ATTRIBUTE_DESCRIPTION[name];
   const archetypeColor = getArchetypeColor(name);
-
-  const canIncrease = availableLevels > 0 && !disabled;
-  const canDecrease = level > 0 && !disabled;
-
-  const handleIncrease = () => {
-    if (canIncrease) {
-      onLevelChange(name, level + 1);
-    }
-  };
-
-  const handleDecrease = () => {
-    if (canDecrease) {
-      onLevelChange(name, level - 1);
-    }
-  };
 
   return (
     <Card
@@ -135,11 +108,6 @@ export default function ArchetypeCard({
         borderLeft: `4px solid ${archetypeColor}`,
         opacity: level === 0 ? 0.7 : 1,
         transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          transform: level > 0 || canIncrease ? 'translateY(-2px)' : 'none',
-          boxShadow:
-            level > 0 || canIncrease ? theme.shadows[4] : theme.shadows[1],
-        },
       }}
     >
       {/* Badge de nível */}
@@ -205,33 +173,33 @@ export default function ArchetypeCard({
           )}
         </Stack>
 
-        {/* PV e PP por nível - Centralizado */}
+        {/* GA e PP por nível */}
         <Stack
           direction="row"
           spacing={3}
-          mb={2}
+          mb={1}
           justifyContent="center"
           alignItems="center"
         >
-          <Tooltip title="PV ganho por nível (+Constituição)">
+          <Tooltip title={`GA ganho por nível = ${gaAttributeLabel}`}>
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <FavoriteIcon sx={{ fontSize: 18, color: 'error.main' }} />
-              <Typography variant="body1" fontWeight="bold">
-                +{hpPerLevel}
+              <ShieldIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+              <Typography variant="body2" fontWeight="bold">
+                +{gaAttributeLabel}
               </Typography>
             </Stack>
           </Tooltip>
-          <Tooltip title="PP ganho por nível (+Presença)">
+          <Tooltip title={`PP ganho por nível = ${ppBasePerLevel} + Essência`}>
             <Stack direction="row" spacing={0.5} alignItems="center">
               <FlashOnIcon sx={{ fontSize: 18, color: 'info.main' }} />
-              <Typography variant="body1" fontWeight="bold">
-                +{ppPerLevel}
+              <Typography variant="body2" fontWeight="bold">
+                +{ppBasePerLevel} + ESS
               </Typography>
             </Stack>
           </Tooltip>
         </Stack>
 
-        {/* Controles de nível */}
+        {/* Nível (somente leitura) */}
         <Stack
           direction="row"
           spacing={1}
@@ -243,15 +211,9 @@ export default function ArchetypeCard({
             borderColor: 'divider',
           }}
         >
-          <IconButton
-            size="small"
-            onClick={handleDecrease}
-            disabled={!canDecrease}
-            aria-label={`Remover nível de ${label}`}
-            sx={{ color: canDecrease ? 'error.main' : 'grey.400' }}
-          >
-            <RemoveCircleIcon />
-          </IconButton>
+          <Typography variant="caption" color="text.secondary">
+            Nível
+          </Typography>
           <Typography
             variant="h6"
             fontWeight="bold"
@@ -259,15 +221,6 @@ export default function ArchetypeCard({
           >
             {level}
           </Typography>
-          <IconButton
-            size="small"
-            onClick={handleIncrease}
-            disabled={!canIncrease}
-            aria-label={`Adicionar nível de ${label}`}
-            sx={{ color: canIncrease ? 'success.main' : 'grey.400' }}
-          >
-            <AddCircleIcon />
-          </IconButton>
         </Stack>
       </CardContent>
     </Card>

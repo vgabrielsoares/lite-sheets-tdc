@@ -3,30 +3,69 @@
  *
  * Todos os personagens dos jogadores começam no nível 1 com estes valores base,
  * antes de aplicar modificadores de origem, linhagem e arquétipo.
+ *
+ * v0.0.2: HP único → GA (Guarda) + PV (Vitalidade). Defesa fixa removida.
  */
 
 import { DEFAULT_LANGUAGE } from './languages';
 import { DEFAULT_WEAPON_PROFICIENCY } from './proficiencies';
 import { ATTRIBUTE_DEFAULT } from './attributes';
 
+// ─── Guarda (GA) ─────────────────────────────────────────────────────
+
 /**
- * Pontos de Vida (PV) base no nível 1
+ * Guarda (GA) base no nível 1
+ * Base: 15 (antes de bônus de arquétipo)
+ */
+export const DEFAULT_GA_MAX = 15;
+
+/**
+ * Guarda (GA) atual inicial (igual ao máximo)
+ */
+export const DEFAULT_GA_CURRENT = 15;
+
+// ─── Vitalidade (PV) ────────────────────────────────────────────────
+
+/**
+ * Calcula PV máximo baseado na GA máxima
+ * Fórmula: floor(GA_max / 3)
+ *
+ * @param gaMax - Guarda máxima do personagem
+ * @returns PV máximo
+ */
+export const calculateVitalityMax = (gaMax: number): number => {
+  return Math.floor(gaMax / 3);
+};
+
+/**
+ * PV máximo padrão no nível 1
+ * Fórmula: floor(15 / 3) = 5
+ */
+export const DEFAULT_PV_MAX = calculateVitalityMax(DEFAULT_GA_MAX);
+
+/**
+ * PV atual inicial (igual ao máximo)
+ */
+export const DEFAULT_PV_CURRENT = DEFAULT_PV_MAX;
+
+// ─── HP (deprecado) ─────────────────────────────────────────────────
+
+/**
+ * @deprecated Substituído por DEFAULT_GA_MAX em v0.0.2
  */
 export const DEFAULT_HP_MAX = 15;
 
 /**
- * Pontos de Vida (PV) atual inicial (igual ao máximo)
+ * @deprecated Substituído por DEFAULT_GA_CURRENT em v0.0.2
  */
 export const DEFAULT_HP_CURRENT = 15;
 
 /**
- * Pontos de Vida (PV) temporários inicial
+ * @deprecated HP temporário não existe mais separadamente em v0.0.2
  */
 export const DEFAULT_HP_TEMPORARY = 0;
 
-/**
- * Pontos de Poder (PP) base no nível 1
- */
+// ─── Pontos de Poder (PP) ───────────────────────────────────────────
 export const DEFAULT_PP_MAX = 2;
 
 /**
@@ -40,14 +79,19 @@ export const DEFAULT_PP_CURRENT = 2;
 export const DEFAULT_PP_TEMPORARY = 0;
 
 /**
- * Nível inicial do personagem
+ * Nível inicial do personagem.
+ * Personagens começam no nível 0 e sobem para o nível 1 escolhendo um arquétipo.
+ * Isso garante que o primeiro nível já inclua uma escolha de arquétipo.
  */
-export const DEFAULT_CHARACTER_LEVEL = 1;
+export const DEFAULT_CHARACTER_LEVEL = 0;
 
 /**
- * Experiência (XP) inicial
+ * Experiência (XP) inicial.
+ * Começa com 15 XP — exatamente o necessário para subir do nível 0 para o 1,
+ * garantindo que o jogador possa imediatamente subir de nível e escolher seu
+ * primeiro arquétipo ao criar a ficha.
  */
-export const DEFAULT_XP = 0;
+export const DEFAULT_XP = 15;
 
 /**
  * Valor padrão de todos os atributos no nível 1
@@ -103,8 +147,8 @@ export const DEFAULT_STARTING_MONEY = 10;
 export const DEFAULT_STARTING_CURRENCY = 'po' as const;
 
 /**
- * Defesa base (antes de adicionar Agilidade e outros modificadores)
- * Fórmula: 15 + Agilidade + outros bônus
+ * @deprecated Defesa fixa não existe mais em v0.0.2. Defesa agora é teste ativo.
+ * Mantido para compatibilidade com dados salvos.
  */
 export const DEFAULT_BASE_DEFENSE = 15;
 
@@ -121,14 +165,14 @@ export const DEFAULT_SIZE = 'medio' as const;
 
 /**
  * Rodadas máximas no estado Morrendo no nível 1
- * Fórmula: 2 + Constituição + outros modificadores
+ * Fórmula: 2 + Corpo + outros modificadores
  */
 export const DEFAULT_DYING_ROUNDS_BASE = 2;
 
 /**
  * Limite de PP por rodada no nível 1
- * Fórmula: Nível + Presença + outros modificadores
- * No nível 1: 1 + Presença
+ * Fórmula: Nível + Essência + outros modificadores
+ * No nível 1: 1 + Essência
  */
 export const DEFAULT_PP_PER_ROUND_BASE = 1;
 
@@ -156,8 +200,8 @@ export const calculateSkillProficiencies = (menteValue: number): number => {
 };
 
 /**
- * Cálculo de Defesa
- * Fórmula: 15 + Agilidade + outros bônus
+ * @deprecated Defesa fixa não existe mais em v0.0.2. Usar teste de defesa ativo.
+ * Mantido para compatibilidade.
  */
 export const calculateDefense = (
   agilidadeValue: number,
@@ -168,35 +212,40 @@ export const calculateDefense = (
 
 /**
  * Cálculo de rodadas máximas no estado Morrendo
- * Fórmula: 2 + Constituição + outros modificadores
+ * Fórmula: 2 + Corpo + outros modificadores
  */
 export const calculateDyingRounds = (
-  constituicaoValue: number,
+  corpoValue: number,
   otherModifiers: number = 0
 ): number => {
-  return DEFAULT_DYING_ROUNDS_BASE + constituicaoValue + otherModifiers;
+  return DEFAULT_DYING_ROUNDS_BASE + corpoValue + otherModifiers;
 };
 
 /**
  * Cálculo de limite de PP por rodada
- * Fórmula: Nível + Presença + outros modificadores
+ * Fórmula: Nível + Essência + outros modificadores
  */
 export const calculatePPPerRound = (
   characterLevel: number,
-  presencaValue: number,
+  essenciaValue: number,
   otherModifiers: number = 0
 ): number => {
-  return characterLevel + presencaValue + otherModifiers;
+  return characterLevel + essenciaValue + otherModifiers;
 };
 
 /**
- * Recuperação de PV durante descanso (ação Dormir)
- * Fórmula: Nível × Constituição + outros modificadores
+ * Recuperação de GA durante descanso (ação Dormir)
+ * Fórmula: Nível × Corpo + outros modificadores
  */
-export const calculateRestHPRecovery = (
+export const calculateRestGARecovery = (
   characterLevel: number,
-  constituicaoValue: number,
+  corpoValue: number,
   otherModifiers: number = 0
 ): number => {
-  return characterLevel * constituicaoValue + otherModifiers;
+  return characterLevel * corpoValue + otherModifiers;
 };
+
+/**
+ * @deprecated Substituído por calculateRestGARecovery em v0.0.2
+ */
+export const calculateRestHPRecovery = calculateRestGARecovery;

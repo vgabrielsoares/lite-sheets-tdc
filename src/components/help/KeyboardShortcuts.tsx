@@ -63,7 +63,7 @@ const SHORTCUTS: Shortcut[] = [
   },
   {
     keys: ['Duplo Clique'],
-    description: 'Ativar edição direta em valores de PV/PP',
+    description: 'Ativar edição direta em valores de GA/PV/PP',
     context: 'Edição',
   },
 

@@ -22,8 +22,8 @@ import { calculateMaxDyingRounds } from '@/utils';
 export interface DyingRoundsProps {
   /** Estado de morte do personagem */
   dyingState: DyingState;
-  /** Valor do atributo Constituição */
-  constituicao: number;
+  /** Valor do atributo Corpo */
+  corpo: number;
   /** Callback quando o estado de morrendo muda */
   onChange: (dyingState: DyingState) => void;
 }
@@ -37,7 +37,7 @@ export interface DyingRoundsProps {
  * - Controles +/- para ajustar rodadas
  * - Botão de reset
  *
- * Fórmula: 2 + Constituição + Outros Modificadores
+ * Fórmula: 2 + Corpo + Outros Modificadores
  *
  * Conforme regras do Tabuleiro do Caos RPG:
  * - Quando PV chega a 0, personagem entra em estado "Morrendo"
@@ -48,16 +48,12 @@ export interface DyingRoundsProps {
  * ```tsx
  * <DyingRounds
  *   dyingState={character.combat.dyingState}
- *   constituicao={character.attributes.constituicao}
+ *   corpo={character.attributes.corpo}
  *   onChange={(dyingState) => updateCombat({ dyingState })}
  * />
  * ```
  */
-export function DyingRounds({
-  dyingState,
-  constituicao,
-  onChange,
-}: DyingRoundsProps) {
+export function DyingRounds({ dyingState, corpo, onChange }: DyingRoundsProps) {
   // Estado local para edição do modificador
   const [isEditingModifier, setIsEditingModifier] = useState(false);
   const [modifierInput, setModifierInput] = useState('');
@@ -66,10 +62,7 @@ export function DyingRounds({
   const otherModifiers = dyingState.otherModifiers ?? 0;
 
   // Calcular rodadas máximas usando a fórmula centralizada
-  const calculatedMaxRounds = calculateMaxDyingRounds(
-    constituicao,
-    otherModifiers
-  );
+  const calculatedMaxRounds = calculateMaxDyingRounds(corpo, otherModifiers);
 
   // Atualiza maxRounds se diferente do calculado
   const effectiveMaxRounds = calculatedMaxRounds;
@@ -159,7 +152,7 @@ export function DyingRounds({
   const handleConfirmModifier = useCallback(() => {
     const value = parseInt(modifierInput, 10);
     if (!isNaN(value)) {
-      const newMaxRounds = calculateMaxDyingRounds(constituicao, value);
+      const newMaxRounds = calculateMaxDyingRounds(corpo, value);
       onChange({
         ...dyingState,
         otherModifiers: value,
@@ -167,7 +160,7 @@ export function DyingRounds({
       });
     }
     setIsEditingModifier(false);
-  }, [modifierInput, constituicao, dyingState, onChange]);
+  }, [modifierInput, corpo, dyingState, onChange]);
 
   /**
    * Cancela edição do modificador
@@ -181,7 +174,7 @@ export function DyingRounds({
   const tooltipLines = [
     'Rodadas Máximas no Estado Morrendo:',
     '• Base: 2',
-    `• Constituição: +${constituicao}`,
+    `• Corpo: +${corpo}`,
   ];
   if (otherModifiers !== 0) {
     tooltipLines.push(

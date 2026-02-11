@@ -106,7 +106,7 @@ export function CarryCapacityDisplay({
 
   // Calcular capacidade de carga
   const carryingCapacity = useMemo(() => {
-    const forca = character.attributes?.forca ?? 1;
+    const corpo = character.attributes?.corpo ?? 1;
     const items = character.inventory?.items ?? [];
     const currency = character.inventory?.currency ?? {
       physical: { cobre: 0, ouro: 0, platina: 0 },
@@ -114,7 +114,7 @@ export function CarryCapacityDisplay({
     };
 
     return generateCarryingCapacity(
-      forca,
+      corpo,
       size,
       items,
       currency,
@@ -197,7 +197,7 @@ export function CarryCapacityDisplay({
             sx={{ mb: 0.5 }}
           >
             <Typography variant="body2" color="text.secondary">
-              Peso Atual
+              Espaço Atual
             </Typography>
             <Typography variant="body2" fontWeight="medium">
               {carryingCapacity.currentWeight} / {carryingCapacity.total}
@@ -295,7 +295,7 @@ export function CarryCapacityDisplay({
               {/* Capacidade de Empurrar */}
               <Grid size={{ xs: 6 }}>
                 <Tooltip
-                  title="Peso máximo que pode empurrar (2× capacidade)"
+                  title="Espaço máximo que pode empurrar (10 × Corpo, mín. 5)"
                   arrow
                 >
                   <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -319,7 +319,7 @@ export function CarryCapacityDisplay({
               {/* Capacidade de Levantar */}
               <Grid size={{ xs: 6 }}>
                 <Tooltip
-                  title="Peso máximo que pode levantar (0.5× capacidade)"
+                  title="Espaço máximo que pode levantar (5 × Corpo, mín. 2)"
                   arrow
                 >
                   <Stack direction="row" alignItems="center" spacing={0.5}>

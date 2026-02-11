@@ -98,7 +98,7 @@ export function SignatureAbility({
         <Typography variant={compact ? 'subtitle1' : 'h6'} fontWeight="bold">
           Habilidade de Assinatura
         </Typography>
-        <Tooltip title="Uma habilidade escolhida que recebe bônus especial igual ao nível do personagem (ou nível÷3 para habilidades de combate)">
+        <Tooltip title="Uma habilidade escolhida que recebe dados bônus: +1d (Nv 1-5), +2d (Nv 6-10), +3d (Nv 11-15)">
           <InfoIcon fontSize="small" color="action" />
         </Tooltip>
       </Box>
@@ -108,13 +108,7 @@ export function SignatureAbility({
         <Alert severity="success" icon={<StarIcon />} sx={{ mb: 2 }}>
           <Typography variant="body2">
             <strong>{SKILL_LABELS[currentSignature]}</strong> recebe{' '}
-            <strong>+{currentBonus}</strong> de bônus
-            {isCombatSkill && (
-              <>
-                {' '}
-                (habilidade de combate: {characterLevel}÷3 = {currentBonus})
-              </>
-            )}
+            <strong>+{currentBonus}d</strong> de bônus
           </Typography>
         </Alert>
       )}
@@ -208,19 +202,13 @@ export function SignatureAbility({
             </Typography>
             <Typography variant="body2" component="ul" sx={{ pl: 2, m: 0 }}>
               <li>
-                <strong>Habilidades não-combate:</strong> Bônus = Nível do
-                personagem
+                Nível 1-5: <strong>+1d</strong>
               </li>
               <li>
-                <strong>Habilidades de combate</strong>{' '}
-                <Chip
-                  icon={<SwordsIcon />}
-                  label="Combate"
-                  size="small"
-                  color="error"
-                  sx={{ height: 16, ml: 0.5 }}
-                />
-                : Bônus = Nível ÷ 3 (mínimo 1, arredondar para baixo)
+                Nível 6-10: <strong>+2d</strong>
+              </li>
+              <li>
+                Nível 11-15: <strong>+3d</strong>
               </li>
             </Typography>
             <Typography variant="body2" sx={{ mt: 1 }}>

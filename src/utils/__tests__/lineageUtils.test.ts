@@ -130,7 +130,7 @@ describe('lineageUtils', () => {
       lineage.name = 'Elfo';
       lineage.attributeModifiers = [
         { attribute: 'agilidade', value: 2 },
-        { attribute: 'constituicao', value: -1 },
+        { attribute: 'corpo', value: -1 },
       ];
 
       expect(lineage.attributeModifiers).toHaveLength(2);
@@ -139,7 +139,7 @@ describe('lineageUtils', () => {
         value: 2,
       });
       expect(lineage.attributeModifiers[1]).toEqual({
-        attribute: 'constituicao',
+        attribute: 'corpo',
         value: -1,
       });
     });

@@ -1,20 +1,20 @@
 /**
  * Constantes relacionadas aos Atributos do personagem
  *
- * Os seis atributos principais do Tabuleiro do Caos RPG:
- * - Agilidade
- * - Constituição
- * - Força
- * - Influência
- * - Mente
- * - Presença
+ * Os seis atributos principais do Tabuleiro do Caos RPG (livro v0.1.7):
+ * - Agilidade (Agi)
+ * - Corpo (Cor)
+ * - Influência (Inf)
+ * - Mente (Men)
+ * - Essência (Ess)
+ * - Instinto (Ins)
  */
 
 import { AttributeName } from '@/types';
 
 /**
  * Valor mínimo padrão para atributos
- * Atributos com valor 0 rolam 2d20 e escolhem o MENOR resultado
+ * Atributos com valor 0 rolam 2d6 e escolhem o MENOR resultado
  */
 export const ATTRIBUTE_MIN = 0;
 
@@ -36,21 +36,21 @@ export const ATTRIBUTE_MAX_LEVEL_1 = 3;
 export const ATTRIBUTE_DEFAULT = 1;
 
 /**
- * Descrições completas de cada atributo
+ * Descrições completas de cada atributo (conforme livro v0.1.7)
  */
 export const ATTRIBUTE_DESCRIPTIONS: Record<AttributeName, string> = {
   agilidade:
     'A agilidade mede a destreza manual e física, reflexos, coordenação motora, flexibilidade e rapidez de uma criatura.',
-  constituicao:
-    'A constituição mede a composição física de uma criatura, sua saúde, vitalidade, resistência a venenos e doenças.',
-  forca:
-    'A força mede o poder muscular, capacidade de carga e força bruta de uma criatura.',
+  corpo:
+    'O corpo mede as capacidades físicas de uma criatura, sua saúde, força e resistência.',
   influencia:
-    'A influência diz respeito a capacidades sociais, carisma, persuasão e a presença social de uma criatura.',
+    'A influência diz respeito às habilidades sociais de uma criatura e seu carisma.',
   mente:
     'A mente mede a capacidade intelectual, raciocínio lógico, memória e conhecimentos de uma criatura.',
-  presenca:
-    'A presença diz respeito aos sentidos naturais, capacidades mágicas e resiliência mental de uma criatura.',
+  essencia:
+    'A Essência diz respeito às capacidades mágicas e potencial energético de uma criatura.',
+  instinto:
+    'O Instinto diz respeito aos sentidos e instintos naturais de uma criatura.',
 };
 
 /**
@@ -58,11 +58,11 @@ export const ATTRIBUTE_DESCRIPTIONS: Record<AttributeName, string> = {
  */
 export const ATTRIBUTE_LABELS: Record<AttributeName, string> = {
   agilidade: 'Agilidade',
-  constituicao: 'Constituição',
-  forca: 'Força',
+  corpo: 'Corpo',
   influencia: 'Influência',
   mente: 'Mente',
-  presenca: 'Presença',
+  essencia: 'Essência',
+  instinto: 'Instinto',
 };
 
 /**
@@ -70,11 +70,11 @@ export const ATTRIBUTE_LABELS: Record<AttributeName, string> = {
  */
 export const ATTRIBUTE_ABBREVIATIONS: Record<AttributeName, string> = {
   agilidade: 'AGI',
-  constituicao: 'CON',
-  forca: 'FOR',
+  corpo: 'COR',
   influencia: 'INF',
   mente: 'MEN',
-  presenca: 'PRE',
+  essencia: 'ESS',
+  instinto: 'INS',
 };
 
 /**
@@ -82,30 +82,27 @@ export const ATTRIBUTE_ABBREVIATIONS: Record<AttributeName, string> = {
  */
 export const ATTRIBUTE_LIST: AttributeName[] = [
   'agilidade',
-  'constituicao',
-  'forca',
+  'corpo',
   'influencia',
   'mente',
-  'presenca',
+  'essencia',
+  'instinto',
 ];
 
 /**
- * Atributos corporais (físicos)
+ * Atributos físicos
  */
-export const PHYSICAL_ATTRIBUTES: AttributeName[] = [
-  'agilidade',
-  'constituicao',
-  'forca',
-];
+export const PHYSICAL_ATTRIBUTES: AttributeName[] = ['agilidade', 'corpo'];
 
 /**
  * Atributos mentais
  */
-export const MENTAL_ATTRIBUTES: AttributeName[] = [
-  'influencia',
-  'mente',
-  'presenca',
-];
+export const MENTAL_ATTRIBUTES: AttributeName[] = ['influencia', 'mente'];
+
+/**
+ * Atributos espirituais
+ */
+export const SPIRITUAL_ATTRIBUTES: AttributeName[] = ['essencia', 'instinto'];
 
 /**
  * Padrões de modificadores de atributos para Linhagem e Origem

@@ -56,6 +56,10 @@ export function countAcquiredProficiencies(
 ): number {
   const skillProficiencies = SKILL_LIST.reduce((count, skillName) => {
     const skill = skills[skillName];
+    // Verifica se a skill existe (pode não existir em fichas antigas)
+    if (!skill) {
+      return count;
+    }
     return skill.proficiencyLevel !== 'leigo' ? count + 1 : count;
   }, 0);
 
@@ -194,7 +198,10 @@ export function countProficienciesByLevel(
 
   SKILL_LIST.forEach((skillName) => {
     const skill = skills[skillName];
-    counts[skill.proficiencyLevel]++;
+    // Verifica se a skill existe (pode não existir em fichas antigas)
+    if (skill) {
+      counts[skill.proficiencyLevel]++;
+    }
   });
 
   return counts;

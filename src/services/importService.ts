@@ -15,6 +15,12 @@ import {
   isValidSkillName,
   isValidProficiencyLevel,
 } from '@/utils/validators';
+import {
+  needsMigration,
+  migrateCharacterV1toV2,
+  ensureCombatFields,
+  CURRENT_SCHEMA_VERSION,
+} from '@/utils/characterMigration';
 
 /**
  * Estrutura de dados exportados em lote
@@ -131,11 +137,11 @@ function validateAttributes(attributes: any, warnings: string[]): void {
 
   const requiredAttributes = [
     'agilidade',
-    'constituicao',
-    'forca',
+    'corpo',
     'influencia',
     'mente',
-    'presenca',
+    'essencia',
+    'instinto',
   ];
 
   for (const attr of requiredAttributes) {
@@ -164,7 +170,11 @@ function validateAttributes(attributes: any, warnings: string[]): void {
 }
 
 /**
- * Valida os pontos de vida (HP) dentro de combat
+ * Valida os pontos de vida dentro de combat
+ *
+ * v0.0.2: Aceita tanto o formato antigo (hp) quanto o novo (guard + vitality).
+ * Se guard e vitality existem, valida esses campos.
+ * Se apenas hp existe (formato antigo), valida hp (migração posterior converterá).
  *
  * @param combat Dados de combate a serem validados
  */
@@ -176,10 +186,42 @@ function validateHealthPoints(combat: any): void {
     );
   }
 
+  // v0.0.2: Check for new guard/vitality format first
+  const guard = combat.guard;
+  const vitality = combat.vitality;
+
+  if (
+    guard &&
+    typeof guard === 'object' &&
+    vitality &&
+    typeof vitality === 'object'
+  ) {
+    // Validate guard (GA)
+    for (const field of ['current', 'max'] as const) {
+      if (typeof guard[field] !== 'number' || guard[field] < 0) {
+        throw new ImportServiceError(
+          `Valor inválido em Guard.${field}: ${guard[field]}`,
+          'INVALID_HP_VALUE'
+        );
+      }
+    }
+    // Validate vitality (PV)
+    for (const field of ['current', 'max'] as const) {
+      if (typeof vitality[field] !== 'number' || vitality[field] < 0) {
+        throw new ImportServiceError(
+          `Valor inválido em Vitality.${field}: ${vitality[field]}`,
+          'INVALID_HP_VALUE'
+        );
+      }
+    }
+    return;
+  }
+
+  // Fallback: validate old hp format (pre-v0.0.2)
   const hp = combat.hp;
   if (!hp || typeof hp !== 'object') {
     throw new ImportServiceError(
-      'Pontos de Vida (HP) inválidos: deve ser um objeto',
+      'Pontos de Vida inválidos: deve ter guard/vitality (v0.0.2) ou hp (legado)',
       'INVALID_HP'
     );
   }
@@ -342,12 +384,28 @@ function validateCharacterData(character: any): string[] {
  * @returns Dados migrados
  */
 function migrateCharacterData(data: Character, fromVersion: string): Character {
-  // Por enquanto, sem migrações necessárias
-  // No futuro, adicionar lógica de migração por versão
-
   console.log(`ℹ️ Migração de versão ${fromVersion} → ${EXPORT_VERSION}`);
 
-  return data;
+  let result = data;
+
+  // Migração de atributos v1 → v2
+  if (needsMigration(data as unknown as Record<string, unknown>)) {
+    console.log('🔄 Aplicando migração de atributos v1 → v2');
+    const migrated = migrateCharacterV1toV2(
+      data as unknown as Record<string, unknown>
+    );
+    result = migrated as unknown as Character;
+  }
+
+  // Garante que campos de combate v0.0.2 existam (guard, vitality, etc.)
+  result = ensureCombatFields(result);
+
+  // Garante que campos de progressão v0.0.2 existam
+  if (!result.levelHistory) {
+    result.levelHistory = [];
+  }
+
+  return result;
 }
 
 /**
@@ -467,9 +525,12 @@ async function importMultipleCharactersFromData(
       const warnings = validateCharacterData(character);
       allWarnings.push(...warnings);
 
-      // Migra dados se necessário
+      // Migra dados se necessário (versão do formato ou schema do personagem)
       let processedCharacter = character;
-      if (data.version !== EXPORT_VERSION) {
+      if (
+        data.version !== EXPORT_VERSION ||
+        needsMigration(character as unknown as Record<string, unknown>)
+      ) {
         processedCharacter = migrateCharacterData(character, data.version);
         wasMigrated = true;
       }
@@ -607,11 +668,14 @@ export async function importCharacter(
     // Valida dados do personagem
     const warnings = validateCharacterData(singleData.character);
 
-    // Migra dados se necessário
+    // Migra dados se necessário (versão do formato ou schema do personagem)
     let character = singleData.character;
     let wasMigrated = false;
 
-    if (singleData.version !== EXPORT_VERSION) {
+    if (
+      singleData.version !== EXPORT_VERSION ||
+      needsMigration(character as unknown as Record<string, unknown>)
+    ) {
       character = migrateCharacterData(character, singleData.version);
       wasMigrated = true;
     }

@@ -23,10 +23,6 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
       expect(SKILL_METADATA.determinacao.isCombatSkill).toBe(true);
     });
 
-    it('deve marcar Iniciativa como habilidade de combate', () => {
-      expect(SKILL_METADATA.iniciativa.isCombatSkill).toBe(true);
-    });
-
     it('deve marcar Luta como habilidade de combate', () => {
       expect(SKILL_METADATA.luta.isCombatSkill).toBe(true);
     });
@@ -51,16 +47,16 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
       expect(SKILL_METADATA.vigor.isCombatSkill).toBe(true);
     });
 
-    it('deve incluir todas as 10 habilidades corretas no array COMBAT_SKILLS', () => {
+    it('deve incluir todas as 11 habilidades corretas no array COMBAT_SKILLS', () => {
       const expectedCombatSkills = [
         'acerto',
         'arcano',
         'determinacao',
-        'iniciativa',
         'luta',
         'natureza',
         'reflexo',
         'religiao',
+        'sintonia',
         'tenacidade',
         'vigor',
       ];
@@ -87,10 +83,6 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
 
     it('deve marcar Furtividade com penalidade de carga', () => {
       expect(SKILL_METADATA.furtividade.hasCargaPenalty).toBe(true);
-    });
-
-    it('deve marcar Iniciativa com penalidade de carga', () => {
-      expect(SKILL_METADATA.iniciativa.hasCargaPenalty).toBe(true);
     });
 
     it('deve marcar Performance com penalidade de carga', () => {
@@ -207,16 +199,16 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
       expect(SKILL_METADATA.determinacao.keyAttribute).toBe('mente');
     });
 
-    it('Luta deve usar Força', () => {
-      expect(SKILL_METADATA.luta.keyAttribute).toBe('forca');
+    it('Luta deve usar Corpo', () => {
+      expect(SKILL_METADATA.luta.keyAttribute).toBe('corpo');
     });
 
-    it('Natureza deve usar Presença', () => {
-      expect(SKILL_METADATA.natureza.keyAttribute).toBe('presenca');
+    it('Natureza deve usar Instinto', () => {
+      expect(SKILL_METADATA.natureza.keyAttribute).toBe('instinto');
     });
 
-    it('Religião deve usar Presença', () => {
-      expect(SKILL_METADATA.religiao.keyAttribute).toBe('presenca');
+    it('Religião deve usar Influência', () => {
+      expect(SKILL_METADATA.religiao.keyAttribute).toBe('influencia');
     });
 
     it('Ofício deve usar Especial', () => {

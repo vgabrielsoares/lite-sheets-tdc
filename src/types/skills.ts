@@ -6,7 +6,7 @@
  */
 
 import type { AttributeName } from './attributes';
-import type { ProficiencyLevel, Modifier } from './common';
+import type { ProficiencyLevel, DieSize, Modifier } from './common';
 
 /**
  * Lista completa das 33 habilidades do sistema
@@ -26,7 +26,6 @@ export const SKILL_LIST = [
   'estrategia',
   'furtividade',
   'historia',
-  'iniciativa',
   'instrucao',
   'intimidacao',
   'investigacao',
@@ -44,6 +43,7 @@ export const SKILL_LIST = [
   'sobrevivencia',
   'sociedade',
   'sorte',
+  'sintonia',
   'tenacidade',
   'vigor',
 ] as const;
@@ -66,9 +66,9 @@ export const SKILL_KEY_ATTRIBUTES: Record<
   acerto: 'agilidade',
   acrobacia: 'agilidade',
   adestramento: 'influencia',
-  arcano: 'mente',
+  arcano: 'essencia',
   arte: 'mente',
-  atletismo: 'constituicao',
+  atletismo: 'corpo',
   conducao: 'agilidade',
   destreza: 'agilidade',
   determinacao: 'mente',
@@ -76,26 +76,26 @@ export const SKILL_KEY_ATTRIBUTES: Record<
   estrategia: 'mente',
   furtividade: 'agilidade',
   historia: 'mente',
-  iniciativa: 'agilidade',
   instrucao: 'mente',
   intimidacao: 'influencia',
   investigacao: 'mente',
-  luta: 'forca',
+  luta: 'corpo',
   medicina: 'mente',
-  natureza: 'presenca',
+  natureza: 'instinto',
   oficio: 'especial',
-  percepcao: 'presenca',
+  percepcao: 'instinto',
   performance: 'influencia',
-  perspicacia: 'presenca',
+  perspicacia: 'instinto',
   persuasao: 'influencia',
-  rastreamento: 'presenca',
+  rastreamento: 'instinto',
   reflexo: 'agilidade',
-  religiao: 'presenca',
+  religiao: 'influencia',
   sobrevivencia: 'mente',
   sociedade: 'influencia',
   sorte: 'especial',
-  tenacidade: 'forca',
-  vigor: 'constituicao',
+  sintonia: 'essencia',
+  tenacidade: 'corpo',
+  vigor: 'corpo',
 } as const;
 
 /**
@@ -105,12 +105,15 @@ export const SKILL_KEY_ATTRIBUTES: Record<
  */
 export const COMBAT_SKILLS: SkillName[] = [
   'acerto',
+  'arcano',
   'determinacao',
-  'iniciativa',
   'luta',
   'natureza',
   'reflexo',
   'religiao',
+  'sintonia',
+  'tenacidade',
+  'vigor',
 ];
 
 /**
@@ -180,36 +183,67 @@ export interface Skill {
 export type Skills = Record<SkillName, Skill>;
 
 /**
- * Resultado do cálculo de modificador de uma habilidade
+ * Resultado do cálculo de pool de dados de uma habilidade (sistema v0.0.2)
+ *
+ * No sistema pool de dados:
+ * - Proficiência determina o tamanho do dado (d6/d8/d10/d12)
+ * - Atributo determina a quantidade base de dados na pool
+ * - Todos os modificadores são em dados (+Xd / -Xd)
+ * - Sem modificadores numéricos em testes de habilidade
  */
-export interface SkillModifierCalculation {
-  /** Valor do atributo-chave */
+export interface SkillPoolCalculation {
+  /** Valor do atributo-chave (quantidade base de dados) */
   attributeValue: number;
-  /** Multiplicador da proficiência (0, 1, 2 ou 3) */
-  proficiencyMultiplier: number;
-  /** Modificador base (atributo × proficiência) */
-  baseModifier: number;
-  /** Bônus de Habilidade de Assinatura (se aplicável) */
-  signatureBonus: number;
-  /** Outros modificadores */
-  otherModifiers: number;
-  /** Modificador total */
-  totalModifier: number;
+  /** Nível de proficiência do personagem na habilidade */
+  proficiencyLevel: ProficiencyLevel;
+  /** Tamanho do dado determinado pelo grau de proficiência */
+  dieSize: DieSize;
+  /** Bônus de Habilidade de Assinatura em dados (+Xd) */
+  signatureDiceBonus: number;
+  /** Outros modificadores de dados (+Xd / -Xd) de efeitos, bônus temporários, etc. */
+  otherDiceModifiers: number;
+  /** Penalidade de carga por excesso de peso (-2d). Negativo quando aplicada. */
+  loadDicePenalty: number;
+  /** Penalidade de armadura em dados (-1d média, -2d pesada). Negativo quando aplicada. */
+  armorDicePenalty: number;
+  /** Penalidade de proficiência em dados (-2d se Leigo em habilidade que requer proficiência). Negativo quando aplicada. */
+  proficiencyDicePenalty: number;
+  /** Penalidade de instrumento em dados (-2d se falta instrumento requerido). Negativo quando aplicada. */
+  instrumentDicePenalty: number;
+  /** Total de modificadores de dados (signatureDiceBonus + otherDiceModifiers + todas as penalidades) */
+  totalDiceModifier: number;
+  /** Total de dados na pool (attributeValue + totalDiceModifier) */
+  totalDice: number;
+  /** Se usa regra de penalidade extrema (2d, menor) — quando totalDice ≤ 0 */
+  isPenaltyRoll: boolean;
 }
 
 /**
- * Fórmula de rolagem de uma habilidade
+ * @deprecated Usar SkillPoolCalculation. Mantido para compatibilidade durante migração.
  */
-export interface SkillRollFormula {
-  /** Quantidade de d20 a rolar */
+export type SkillModifierCalculation = SkillPoolCalculation;
+
+/**
+ * Fórmula de rolagem de pool de dados de uma habilidade (sistema v0.0.2)
+ *
+ * Formato: "Xd[tamanho]" (ex: "3d8", "2d6 (menor)")
+ * Sem modificadores numéricos em testes de habilidade.
+ */
+export interface SkillPoolFormula {
+  /** Quantidade de dados a rolar */
   diceCount: number;
-  /** Se deve escolher o menor resultado (quando atributo = 0) */
-  takeLowest: boolean;
-  /** Modificador total a adicionar */
-  modifier: number;
-  /** Descrição da fórmula (ex: "2d20+4") */
+  /** Tamanho do dado (d6/d8/d10/d12) */
+  dieSize: DieSize;
+  /** Se usa regra de penalidade extrema (2d, menor) */
+  isPenaltyRoll: boolean;
+  /** Fórmula legível (ex: "3d8", "2d6 (menor)") */
   formula: string;
 }
+
+/**
+ * @deprecated Usar SkillPoolFormula. Mantido para compatibilidade durante migração.
+ */
+export type SkillRollFormula = SkillPoolFormula;
 
 /**
  * Descrições das habilidades
@@ -229,7 +263,6 @@ export const SKILL_DESCRIPTIONS: Record<SkillName, string> = {
   estrategia: 'Capacidade de planejar e executar estratégias complexas.',
   furtividade: 'Capacidade de se mover silenciosamente e sem ser detectado.',
   historia: 'Conhecimento sobre eventos históricos e culturas antigas.',
-  iniciativa: 'Velocidade de reação no início do combate.',
   instrucao: 'Repertório de estudo e conhecimento acadêmico.',
   intimidacao: 'Capacidade de ameaçar e intimidar outros.',
   investigacao: 'Capacidade de encontrar pistas e resolver mistérios.',
@@ -247,7 +280,10 @@ export const SKILL_DESCRIPTIONS: Record<SkillName, string> = {
   sobrevivencia: 'Capacidade de sobreviver em ambientes selvagens.',
   sociedade: 'Conhecimento sobre etiqueta, política e estruturas sociais.',
   sorte: 'Favor do destino e capacidade de alterar probabilidades.',
-  tenacidade: 'Resistência física, usada recuperar equilíbrio ou manter a postura.',
+  sintonia:
+    'Resistência a efeitos mágicos e espirituais, conexão com o sobrenatural.',
+  tenacidade:
+    'Resistência física, usada recuperar equilíbrio ou manter a postura.',
   vigor: 'Resistência a doenças, venenos e efeitos físicos.',
 } as const;
 

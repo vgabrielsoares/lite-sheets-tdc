@@ -157,8 +157,8 @@ describe('OrigemSidebar', () => {
         ...createDefaultOrigin(),
         attributeModifiers: [
           { attribute: 'agilidade', value: 1 },
-          { attribute: 'forca', value: 1 },
-          { attribute: 'constituicao', value: -1 },
+          { attribute: 'corpo', value: 1 },
+          { attribute: 'corpo', value: -1 },
         ],
       };
 
@@ -182,7 +182,7 @@ describe('OrigemSidebar', () => {
         ...createDefaultOrigin(),
         attributeModifiers: [
           { attribute: 'agilidade', value: 1 },
-          { attribute: 'forca', value: 1 },
+          { attribute: 'corpo', value: 1 },
         ],
       };
 

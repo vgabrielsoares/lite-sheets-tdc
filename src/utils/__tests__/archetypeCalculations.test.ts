@@ -17,6 +17,10 @@ import {
   ARCHETYPE_GAIN_LEVELS,
   ARCHETYPE_LABELS,
   ARCHETYPE_DESCRIPTIONS,
+  ARCHETYPE_GA_ATTRIBUTE,
+  ARCHETYPE_PP_BASE_PER_LEVEL,
+  ARCHETYPE_INITIAL_SKILLS,
+  ARCHETYPE_INITIAL_PROFICIENCIES,
   type ArchetypeName,
   type ArchetypeLevelGainType,
 } from '@/constants/archetypes';
@@ -187,43 +191,38 @@ describe('archetypeCalculations', () => {
       });
     });
 
-    describe('Níveis com Poder de Arquétipo (2, 4, 6, 8, 9, 11, 13, 14)', () => {
-      [2, 4, 6, 8, 9, 11, 13, 14].forEach((level) => {
-        it(`nível ${level} deve ter ganho de poder`, () => {
-          expect(getGainTypesForLevel(level)).toContain('poder');
+    describe('Níveis com Poder de Arquétipo ou Talento (2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14)', () => {
+      [2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14].forEach((level) => {
+        it(`nível ${level} deve ter ganho de poder_ou_talento`, () => {
+          expect(getGainTypesForLevel(level)).toContain('poder_ou_talento');
         });
       });
     });
 
-    describe('Níveis com Competência (3, 7, 12)', () => {
-      [3, 7, 12].forEach((level) => {
+    describe('Níveis com Competência (5, 10, 15)', () => {
+      [5, 10, 15].forEach((level) => {
         it(`nível ${level} deve ter ganho de competência`, () => {
           expect(getGainTypesForLevel(level)).toContain('competencia');
         });
       });
     });
 
-    describe('Níveis com Aumento de Atributo (4, 8, 13)', () => {
-      [4, 8, 13].forEach((level) => {
-        it(`nível ${level} deve ter ganho de atributo`, () => {
-          expect(getGainTypesForLevel(level)).toContain('atributo');
-        });
-      });
-    });
-
-    describe('Níveis com Grau de Habilidade (5, 9, 14)', () => {
-      [5, 9, 14].forEach((level) => {
-        it(`nível ${level} deve ter ganho de grau de habilidade`, () => {
-          expect(getGainTypesForLevel(level)).toContain('grau_habilidade');
-        });
-      });
-    });
-
-    describe('Níveis com Defesa por Etapa (5, 10, 15)', () => {
+    describe('Níveis 5, 10 e 15 devem ter Competência + Característica', () => {
       [5, 10, 15].forEach((level) => {
-        it(`nível ${level} deve ter ganho de defesa por etapa`, () => {
-          expect(getGainTypesForLevel(level)).toContain('defesa_etapa');
+        it(`nível ${level} deve ter AMBOS competencia e caracteristica`, () => {
+          const types = getGainTypesForLevel(level);
+          expect(types).toContain('competencia');
+          expect(types).toContain('caracteristica');
         });
+      });
+    });
+
+    describe('Não deve haver tipos depreciados', () => {
+      it('nenhum ganho deve ter tipo atributo, grau_habilidade ou defesa_etapa', () => {
+        const allTypes = ARCHETYPE_LEVEL_GAINS.map((g) => g.type);
+        expect(allTypes).not.toContain('atributo');
+        expect(allTypes).not.toContain('grau_habilidade');
+        expect(allTypes).not.toContain('defesa_etapa');
       });
     });
   });
@@ -233,24 +232,18 @@ describe('archetypeCalculations', () => {
       expect(ARCHETYPE_GAIN_LEVELS.caracteristica).toEqual([1, 5, 10, 15]);
     });
 
-    it('deve mapear poder para níveis 2, 4, 6, 8, 9, 11, 13, 14', () => {
-      expect(ARCHETYPE_GAIN_LEVELS.poder).toEqual([2, 4, 6, 8, 9, 11, 13, 14]);
+    it('deve mapear poder_ou_talento para níveis 2-4, 6-9, 11-14', () => {
+      expect(ARCHETYPE_GAIN_LEVELS.poder_ou_talento).toEqual([
+        2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14,
+      ]);
     });
 
-    it('deve mapear competência para níveis 3, 7, 12', () => {
-      expect(ARCHETYPE_GAIN_LEVELS.competencia).toEqual([3, 7, 12]);
+    it('deve mapear competência para níveis 5, 10, 15', () => {
+      expect(ARCHETYPE_GAIN_LEVELS.competencia).toEqual([5, 10, 15]);
     });
 
-    it('deve mapear atributo para níveis 4, 8, 13', () => {
-      expect(ARCHETYPE_GAIN_LEVELS.atributo).toEqual([4, 8, 13]);
-    });
-
-    it('deve mapear grau_habilidade para níveis 5, 9, 14', () => {
-      expect(ARCHETYPE_GAIN_LEVELS.grau_habilidade).toEqual([5, 9, 14]);
-    });
-
-    it('deve mapear defesa_etapa para níveis 5, 10, 15', () => {
-      expect(ARCHETYPE_GAIN_LEVELS.defesa_etapa).toEqual([5, 10, 15]);
+    it('deve ter exatamente 3 tipos de ganho', () => {
+      expect(Object.keys(ARCHETYPE_GAIN_LEVELS)).toHaveLength(3);
     });
   });
 
@@ -363,6 +356,101 @@ describe('archetypeCalculations', () => {
     it('deve retornar 0 quando não há níveis de arquétipo', () => {
       expect(calculateTotalHpFromArchetypes({}, 3)).toBe(0);
       expect(calculateTotalPpFromArchetypes({}, 3)).toBe(0);
+    });
+  });
+
+  describe('ARCHETYPE_GA_ATTRIBUTE (v0.1.7)', () => {
+    it('Acadêmico usa Mente para GA', () => {
+      expect(ARCHETYPE_GA_ATTRIBUTE.academico).toBe('mente');
+    });
+
+    it('Acólito usa Influência para GA', () => {
+      expect(ARCHETYPE_GA_ATTRIBUTE.acolito).toBe('influencia');
+    });
+
+    it('Combatente usa Corpo para GA', () => {
+      expect(ARCHETYPE_GA_ATTRIBUTE.combatente).toBe('corpo');
+    });
+
+    it('Feiticeiro usa Essência para GA', () => {
+      expect(ARCHETYPE_GA_ATTRIBUTE.feiticeiro).toBe('essencia');
+    });
+
+    it('Ladino usa Agilidade para GA', () => {
+      expect(ARCHETYPE_GA_ATTRIBUTE.ladino).toBe('agilidade');
+    });
+
+    it('Natural usa Instinto para GA', () => {
+      expect(ARCHETYPE_GA_ATTRIBUTE.natural).toBe('instinto');
+    });
+
+    it('deve ter mapeamento para todos os 6 arquétipos', () => {
+      ARCHETYPE_LIST.forEach((archetype) => {
+        expect(ARCHETYPE_GA_ATTRIBUTE[archetype]).toBeDefined();
+      });
+    });
+  });
+
+  describe('ARCHETYPE_PP_BASE_PER_LEVEL (v0.1.7)', () => {
+    it('Acadêmico: +4 PP base', () => {
+      expect(ARCHETYPE_PP_BASE_PER_LEVEL.academico).toBe(4);
+    });
+
+    it('Acólito: +3 PP base', () => {
+      expect(ARCHETYPE_PP_BASE_PER_LEVEL.acolito).toBe(3);
+    });
+
+    it('Combatente: +1 PP base', () => {
+      expect(ARCHETYPE_PP_BASE_PER_LEVEL.combatente).toBe(1);
+    });
+
+    it('Feiticeiro: +5 PP base', () => {
+      expect(ARCHETYPE_PP_BASE_PER_LEVEL.feiticeiro).toBe(5);
+    });
+
+    it('Ladino: +2 PP base', () => {
+      expect(ARCHETYPE_PP_BASE_PER_LEVEL.ladino).toBe(2);
+    });
+
+    it('Natural: +3 PP base', () => {
+      expect(ARCHETYPE_PP_BASE_PER_LEVEL.natural).toBe(3);
+    });
+  });
+
+  describe('ARCHETYPE_INITIAL_SKILLS (v0.1.7)', () => {
+    it('deve ter habilidades iniciais para todos os arquétipos', () => {
+      ARCHETYPE_LIST.forEach((archetype) => {
+        expect(ARCHETYPE_INITIAL_SKILLS[archetype]).toBeDefined();
+        expect(ARCHETYPE_INITIAL_SKILLS[archetype].length).toBeGreaterThan(0);
+      });
+    });
+
+    it('Acadêmico: Instrução + 1 à escolha', () => {
+      expect(ARCHETYPE_INITIAL_SKILLS.academico).toEqual([
+        'Instrução',
+        '1 à escolha',
+      ]);
+    });
+
+    it('Combatente: Acerto ou Luta, Reflexo ou Vigor', () => {
+      expect(ARCHETYPE_INITIAL_SKILLS.combatente).toEqual([
+        'Acerto ou Luta',
+        'Reflexo ou Vigor',
+      ]);
+    });
+  });
+
+  describe('ARCHETYPE_INITIAL_PROFICIENCIES (v0.1.7)', () => {
+    it('Combatente: Armas Marciais, Armadura Leve, Maestria em 1 arma', () => {
+      expect(ARCHETYPE_INITIAL_PROFICIENCIES.combatente).toEqual([
+        'Armas Marciais',
+        'Armadura Leve',
+        'Maestria em 1 arma',
+      ]);
+    });
+
+    it('Feiticeiro: nenhuma proficiência', () => {
+      expect(ARCHETYPE_INITIAL_PROFICIENCIES.feiticeiro).toEqual([]);
     });
   });
 });

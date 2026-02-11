@@ -23,7 +23,7 @@ const createMockCharacter = (
 ): Character => {
   const fullSkill: Skill = {
     name: skillName as any,
-    keyAttribute: 'forca',
+    keyAttribute: 'corpo',
     proficiencyLevel: 'versado',
     isSignature: false,
     modifiers: [],
@@ -36,11 +36,11 @@ const createMockCharacter = (
     level,
     attributes: {
       agilidade: attributeValue,
-      constituicao: attributeValue,
-      forca: attributeValue,
+      corpo: attributeValue,
       influencia: attributeValue,
       mente: attributeValue,
-      presenca: attributeValue,
+      essencia: attributeValue,
+      instinto: attributeValue,
     },
     skills: {
       [skillName]: fullSkill,
@@ -114,6 +114,7 @@ const createMockCharacter = (
         savingThrowPenalties: {
           determinacao: 0,
           reflexo: 0,
+          sintonia: 0,
           tenacidade: 0,
           vigor: 0,
         },
@@ -382,7 +383,7 @@ describe('attackCalculations', () => {
   describe('calculateAttackRoll', () => {
     it('deve calcular modificador de ataque sem bônus de assinatura', () => {
       const character = createMockCharacter(5, 3, 'Combate Desarmado', {
-        keyAttribute: 'forca',
+        keyAttribute: 'corpo',
         proficiencyLevel: 'versado',
         isSignature: false,
       });
@@ -400,7 +401,7 @@ describe('attackCalculations', () => {
 
     it('deve aplicar bônus de habilidade de assinatura para habilidade não-combate', () => {
       const character = createMockCharacter(5, 3, 'atletismo', {
-        keyAttribute: 'forca',
+        keyAttribute: 'corpo',
         proficiencyLevel: 'versado',
         isSignature: true,
       });
@@ -408,14 +409,14 @@ describe('attackCalculations', () => {
       const result = calculateAttackRoll(character, 'atletismo', undefined, 0);
 
       // Versado = atributo * 2 = 3 * 2 = 6
-      // Bônus assinatura (não-combate) = level = 5
-      // Total = 6 + 5 = 11
-      expect(result.modifier).toBe(11);
+      // Bônus assinatura (v0.0.2) = Math.min(3, ceil(5/5)) = 1
+      // Total = 6 + 1 = 7
+      expect(result.modifier).toBe(7);
     });
 
-    it('deve aplicar bônus de habilidade de assinatura reduzido para habilidade de combate', () => {
+    it('deve aplicar bônus de assinatura para habilidade de combate (v0.0.2: sem distinção)', () => {
       const character = createMockCharacter(6, 4, 'luta', {
-        keyAttribute: 'forca',
+        keyAttribute: 'corpo',
         proficiencyLevel: 'adepto',
         isSignature: true,
       });
@@ -423,14 +424,14 @@ describe('attackCalculations', () => {
       const result = calculateAttackRoll(character, 'luta', undefined, 0);
 
       // Adepto = atributo * 1 = 4 * 1 = 4
-      // Bônus assinatura (combate) = floor(level / 3) = floor(6 / 3) = 2
+      // Bônus assinatura (v0.0.2) = Math.min(3, ceil(6/5)) = 2
       // Total = 4 + 2 = 6
       expect(result.modifier).toBe(6);
     });
 
-    it('deve garantir bônus mínimo de 1 para habilidade de combate com assinatura', () => {
+    it('deve aplicar bônus mínimo de +1d para assinatura em nível baixo', () => {
       const character = createMockCharacter(2, 2, 'acerto', {
-        keyAttribute: 'forca',
+        keyAttribute: 'corpo',
         proficiencyLevel: 'versado',
         isSignature: true,
       });
@@ -438,14 +439,14 @@ describe('attackCalculations', () => {
       const result = calculateAttackRoll(character, 'acerto', undefined, 0);
 
       // Versado = atributo * 2 = 2 * 2 = 4
-      // Bônus assinatura (combate) = max(1, floor(2 / 3)) = max(1, 0) = 1
+      // Bônus assinatura (v0.0.2) = Math.min(3, ceil(2/5)) = 1
       // Total = 4 + 1 = 5
       expect(result.modifier).toBe(5);
     });
 
     it('deve calcular modificador 0 para habilidade leiga', () => {
       const character = createMockCharacter(10, 5, 'determinacao', {
-        keyAttribute: 'forca',
+        keyAttribute: 'corpo',
         proficiencyLevel: 'leigo',
         isSignature: false,
       });
@@ -463,7 +464,7 @@ describe('attackCalculations', () => {
 
     it('deve aplicar bônus de assinatura mesmo para habilidade leiga', () => {
       const character = createMockCharacter(10, 5, 'luta', {
-        keyAttribute: 'forca',
+        keyAttribute: 'corpo',
         proficiencyLevel: 'leigo',
         isSignature: true, // Assinatura ativa com proficiência leiga
       });
@@ -471,19 +472,19 @@ describe('attackCalculations', () => {
       const result = calculateAttackRoll(character, 'luta', undefined, 0);
 
       // Leigo = atributo * 0 = 5 * 0 = 0
-      // Bônus assinatura (combate) = max(1, floor(10 / 3)) = max(1, 3) = 3
-      // Total = 0 + 3 = 3
-      expect(result.modifier).toBe(3);
+      // Bônus assinatura (v0.0.2) = Math.min(3, ceil(10/5)) = 2
+      // Total = 0 + 2 = 2
+      expect(result.modifier).toBe(2);
     });
 
     it('deve incluir fórmula formatada no resultado', () => {
-      const character = createMockCharacter(6, 3, 'iniciativa', {
-        keyAttribute: 'forca',
+      const character = createMockCharacter(6, 3, 'luta', {
+        keyAttribute: 'corpo',
         proficiencyLevel: 'versado',
         isSignature: true,
       });
 
-      const result = calculateAttackRoll(character, 'iniciativa', undefined, 0);
+      const result = calculateAttackRoll(character, 'luta', undefined, 0);
 
       // Versado = 3 * 2 = 6
       // Bônus assinatura (combate) = floor(6 / 3) = 2

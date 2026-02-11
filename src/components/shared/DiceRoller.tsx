@@ -1,8 +1,12 @@
 /**
  * DiceRoller - Componente de Rolador de Dados
  *
- * Interface visual para rolagem de dados com configurações avançadas,
- * exibição de resultados e histórico de rolagens.
+ * Interface visual para rolagem de dados usando o novo sistema de pool:
+ * - Dados = configura quantidade manualmente ou baseado em atributo
+ * - Tamanho do dado = d6/d8/d10/d12 (por proficiência) ou customizado
+ * - Conta sucessos (✶): resultados ≥ 6
+ * - Resultado = 1 cancela 1 sucesso
+ * - Modo de dano para dados numéricos tradicionais
  */
 
 'use client';
@@ -26,38 +30,42 @@ import CasinoIcon from '@mui/icons-material/Casino';
 import DeleteIcon from '@mui/icons-material/Delete';
 import HistoryIcon from '@mui/icons-material/History';
 import {
-  rollD20,
+  rollDicePool,
   rollDamage,
-  RollType,
+  rollWithPenalty,
   globalDiceHistory,
+  isDicePoolResult,
+  isDamageDiceRollResult,
+  type DamageDiceRollResult,
 } from '@/utils/diceRoller';
+import type { DicePoolResult, DieSize } from '@/types';
 import { DiceRollResult } from './DiceRollResult';
 import { DiceRollHistory } from './DiceRollHistory';
 
 export interface DiceRollerProps {
   /** Pré-preencher número de dados */
   defaultDiceCount?: number;
-  /** Pré-preencher modificador */
-  defaultModifier?: number;
-  /** Pré-preencher tipo de rolagem */
-  defaultRollType?: RollType;
+  /** Tamanho do dado padrão */
+  defaultDieSize?: DieSize;
   /** Contexto da rolagem (ex: "Teste de Acrobacia") */
   context?: string;
   /** Callback quando rolar dados */
-  onRoll?: (result: ReturnType<typeof rollD20>) => void;
+  onRoll?: (result: DicePoolResult | DamageDiceRollResult) => void;
   /** Se deve exibir histórico */
   showHistory?: boolean;
   /** Se deve exibir botões de preset */
   showPresets?: boolean;
 }
 
+/** Tipo de rolagem: teste de pool ou dano */
+type RollMode = 'pool' | 'damage';
+
 /**
  * Componente principal do rolador de dados
  */
 export function DiceRoller({
-  defaultDiceCount = 1,
-  defaultModifier = 0,
-  defaultRollType = 'normal',
+  defaultDiceCount = 2,
+  defaultDieSize = 'd6',
   context,
   onRoll,
   showHistory = true,
@@ -65,29 +73,34 @@ export function DiceRoller({
 }: DiceRollerProps) {
   // Estado do rolador
   const [diceCount, setDiceCount] = useState(defaultDiceCount);
-  const [modifier, setModifier] = useState(defaultModifier);
-  const [rollType, setRollType] = useState<RollType>(defaultRollType);
-  const [lastResult, setLastResult] = useState<ReturnType<
-    typeof rollD20
-  > | null>(null);
+  const [dieSize, setDieSize] = useState<DieSize>(defaultDieSize);
+  const [rollMode, setRollMode] = useState<RollMode>('pool');
+  const [lastResult, setLastResult] = useState<
+    DicePoolResult | DamageDiceRollResult | null
+  >(null);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
 
   // Estado para rolagem de dano
-  const [isDamageMode, setIsDamageMode] = useState(false);
-  const [diceSides, setDiceSides] = useState(6);
+  const [damageDiceSides, setDamageDiceSides] = useState(6);
+  const [damageModifier, setDamageModifier] = useState(0);
 
   /**
    * Executa a rolagem de dados
    */
   const handleRoll = useCallback(() => {
-    let result: ReturnType<typeof rollD20>;
+    let result: DicePoolResult | DamageDiceRollResult;
 
-    if (isDamageMode) {
-      // Rolagem de dano
-      result = rollDamage(diceCount, diceSides, modifier, context) as any;
+    if (rollMode === 'damage') {
+      // Rolagem de dano (soma numérica)
+      result = rollDamage(diceCount, damageDiceSides, damageModifier, context);
     } else {
-      // Rolagem de teste (d20)
-      result = rollD20(diceCount, modifier, rollType, context);
+      // Rolagem de pool com contagem de sucessos
+      if (diceCount <= 0) {
+        // Penalidade: rolar 2d e pegar o menor
+        result = rollWithPenalty(dieSize, context);
+      } else {
+        result = rollDicePool(diceCount, dieSize, context);
+      }
     }
 
     // Adicionar ao histórico global
@@ -100,7 +113,15 @@ export function DiceRoller({
     if (onRoll) {
       onRoll(result);
     }
-  }, [diceCount, modifier, rollType, context, onRoll, isDamageMode, diceSides]);
+  }, [
+    diceCount,
+    dieSize,
+    rollMode,
+    context,
+    onRoll,
+    damageDiceSides,
+    damageModifier,
+  ]);
 
   /**
    * Atalho de teclado: Enter para rolar
@@ -124,24 +145,25 @@ export function DiceRoller({
   /**
    * Presets comuns de rolagem
    */
-  const handlePreset = useCallback((preset: 'attack' | 'damage' | 'save') => {
-    if (preset === 'attack') {
-      setDiceCount(1);
-      setModifier(0);
-      setRollType('normal');
-      setIsDamageMode(false);
-    } else if (preset === 'damage') {
-      setDiceCount(1);
-      setDiceSides(6);
-      setModifier(0);
-      setIsDamageMode(true);
-    } else if (preset === 'save') {
-      setDiceCount(1);
-      setModifier(0);
-      setRollType('normal');
-      setIsDamageMode(false);
-    }
-  }, []);
+  const handlePreset = useCallback(
+    (preset: 'skillTest' | 'damage' | 'saveTest') => {
+      if (preset === 'skillTest') {
+        setDiceCount(2);
+        setDieSize('d6');
+        setRollMode('pool');
+      } else if (preset === 'damage') {
+        setDiceCount(1);
+        setDamageDiceSides(6);
+        setDamageModifier(0);
+        setRollMode('damage');
+      } else if (preset === 'saveTest') {
+        setDiceCount(3);
+        setDieSize('d6');
+        setRollMode('pool');
+      }
+    },
+    []
+  );
 
   return (
     <Paper
@@ -198,14 +220,22 @@ export function DiceRoller({
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Atalhos Rápidos:
             </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               <Button
                 size="small"
                 variant="outlined"
-                onClick={() => handlePreset('attack')}
-                aria-label="Preset de ataque"
+                onClick={() => handlePreset('skillTest')}
+                aria-label="Preset de teste de habilidade"
               >
-                Ataque (d20)
+                Teste (2d6)
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => handlePreset('saveTest')}
+                aria-label="Preset de teste de resistência"
+              >
+                Resistência (3d6)
               </Button>
               <Button
                 size="small"
@@ -213,15 +243,7 @@ export function DiceRoller({
                 onClick={() => handlePreset('damage')}
                 aria-label="Preset de dano"
               >
-                Dano (d6)
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => handlePreset('save')}
-                aria-label="Preset de teste de resistência"
-              >
-                Teste de Resistência
+                Dano (1d6)
               </Button>
             </Stack>
           </Box>
@@ -229,56 +251,98 @@ export function DiceRoller({
 
         <Divider />
 
-        {/* Modo: Teste ou Dano */}
+        {/* Modo: Pool ou Dano */}
         <Box>
           <Typography variant="body2" color="text.secondary" gutterBottom>
             Tipo de Rolagem:
           </Typography>
           <ToggleButtonGroup
-            value={isDamageMode ? 'damage' : 'test'}
+            value={rollMode}
             exclusive
             onChange={(_, newValue) => {
               if (newValue !== null) {
-                setIsDamageMode(newValue === 'damage');
+                setRollMode(newValue as RollMode);
               }
             }}
             fullWidth
             aria-label="Tipo de rolagem"
           >
-            <ToggleButton value="test" aria-label="Teste (d20)">
-              Teste (d20)
+            <ToggleButton
+              value="pool"
+              aria-label="Pool de dados (conta sucessos)"
+            >
+              Pool (Sucessos)
             </ToggleButton>
-            <ToggleButton value="damage" aria-label="Dano (dXX)">
-              Dano (dXX)
+            <ToggleButton value="damage" aria-label="Dano (soma numérica)">
+              Dano (Soma)
             </ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
-        {/* Configuração de Dados */}
-        <Stack direction="row" spacing={2}>
-          <TextField
-            label="Número de Dados"
-            type="number"
-            value={diceCount}
-            onChange={(e) => setDiceCount(parseInt(e.target.value) || 0)}
-            onKeyPress={handleKeyPress}
-            inputProps={{ min: -10, max: 20, step: 1 }}
-            fullWidth
-            aria-label="Número de dados a rolar"
-          />
+        {/* Configuração de Dados - Pool */}
+        {rollMode === 'pool' && (
+          <Stack direction="row" spacing={2}>
+            <TextField
+              label="Número de Dados"
+              type="number"
+              value={diceCount}
+              onChange={(e) => setDiceCount(parseInt(e.target.value) || 0)}
+              onKeyPress={handleKeyPress}
+              inputProps={{ min: -10, max: 20, step: 1 }}
+              fullWidth
+              helperText={
+                diceCount <= 0
+                  ? 'Penalidade: rola 2d e pega o menor'
+                  : `Máximo efetivo: 8 dados`
+              }
+              error={diceCount <= 0}
+              aria-label="Número de dados a rolar"
+            />
 
-          {isDamageMode && (
+            <TextField
+              label="Tamanho do Dado"
+              select
+              value={dieSize}
+              onChange={(e) => setDieSize(e.target.value as DieSize)}
+              onKeyPress={handleKeyPress}
+              fullWidth
+              SelectProps={{ native: true }}
+              aria-label="Tamanho do dado"
+              helperText="Leigo=d6, Adepto=d8, Versado=d10, Mestre=d12"
+            >
+              <option value="d6">d6 (Leigo)</option>
+              <option value="d8">d8 (Adepto)</option>
+              <option value="d10">d10 (Versado)</option>
+              <option value="d12">d12 (Mestre)</option>
+            </TextField>
+          </Stack>
+        )}
+
+        {/* Configuração de Dados - Dano */}
+        {rollMode === 'damage' && (
+          <Stack direction="row" spacing={2}>
+            <TextField
+              label="Número de Dados"
+              type="number"
+              value={diceCount}
+              onChange={(e) => setDiceCount(parseInt(e.target.value) || 0)}
+              onKeyPress={handleKeyPress}
+              inputProps={{ min: 1, max: 20, step: 1 }}
+              fullWidth
+              aria-label="Número de dados a rolar"
+            />
+
             <TextField
               label="Lados do Dado"
-              type="number"
-              value={diceSides}
-              onChange={(e) => setDiceSides(parseInt(e.target.value) || 6)}
-              onKeyPress={handleKeyPress}
-              inputProps={{ min: 2, max: 100, step: 1 }}
-              fullWidth
-              aria-label="Número de lados do dado"
               select
+              value={damageDiceSides}
+              onChange={(e) =>
+                setDamageDiceSides(parseInt(e.target.value) || 6)
+              }
+              onKeyPress={handleKeyPress}
+              fullWidth
               SelectProps={{ native: true }}
+              aria-label="Número de lados do dado"
             >
               <option value={4}>d4</option>
               <option value={6}>d6</option>
@@ -288,47 +352,26 @@ export function DiceRoller({
               <option value={20}>d20</option>
               <option value={100}>d100</option>
             </TextField>
-          )}
 
-          <TextField
-            label="Modificador"
-            type="number"
-            value={modifier}
-            onChange={(e) => setModifier(parseInt(e.target.value) || 0)}
-            onKeyPress={handleKeyPress}
-            inputProps={{ min: -20, max: 20, step: 1 }}
-            fullWidth
-            aria-label="Modificador a adicionar"
-          />
-        </Stack>
-
-        {/* Vantagem/Desvantagem (apenas para testes) */}
-        {!isDamageMode && (
-          <Box>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Vantagem/Desvantagem:
-            </Typography>
-            <ToggleButtonGroup
-              value={rollType}
-              exclusive
-              onChange={(_, newValue) => {
-                if (newValue !== null) {
-                  setRollType(newValue as RollType);
-                }
-              }}
+            <TextField
+              label="Modificador"
+              type="number"
+              value={damageModifier}
+              onChange={(e) => setDamageModifier(parseInt(e.target.value) || 0)}
+              onKeyPress={handleKeyPress}
+              inputProps={{ min: -20, max: 20, step: 1 }}
               fullWidth
-              aria-label="Tipo de vantagem"
-            >
-              <ToggleButton value="disadvantage" aria-label="Desvantagem">
-                Desvantagem
-              </ToggleButton>
-              <ToggleButton value="normal" aria-label="Normal">
-                Normal
-              </ToggleButton>
-              <ToggleButton value="advantage" aria-label="Vantagem">
-                Vantagem
-              </ToggleButton>
-            </ToggleButtonGroup>
+              aria-label="Modificador a adicionar"
+            />
+          </Stack>
+        )}
+
+        {/* Info sobre o sistema de pool */}
+        {rollMode === 'pool' && (
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Resultados ≥ 6 = Sucesso (✶) | Resultado = 1 cancela 1 sucesso
+            </Typography>
           </Box>
         )}
 
@@ -349,7 +392,10 @@ export function DiceRoller({
           }}
           aria-label="Rolar dados"
         >
-          Rolar Dados
+          Rolar{' '}
+          {rollMode === 'pool'
+            ? `${Math.min(Math.max(diceCount, 0), 8)}${dieSize}`
+            : `${diceCount}d${damageDiceSides}${damageModifier !== 0 ? (damageModifier > 0 ? `+${damageModifier}` : damageModifier) : ''}`}
         </Button>
 
         {/* Resultado da Rolagem */}
@@ -376,7 +422,7 @@ export function DiceRoller({
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </Box>
-              <DiceRollResult result={lastResult} />
+              <DiceRollResult result={lastResult} showBreakdown animate />
             </Box>
           </>
         )}

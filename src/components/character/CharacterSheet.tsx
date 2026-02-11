@@ -35,6 +35,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 // Ícones para TOC - Resources
 import HotelIcon from '@mui/icons-material/Hotel';
+import CasinoIcon from '@mui/icons-material/Casino';
 // Ícones para TOC - Inventory
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -51,6 +52,7 @@ import NoteIcon from '@mui/icons-material/Note';
 import { useRouter } from 'next/navigation';
 import type {
   Character,
+  ArchetypeName,
   AttributeName,
   SkillName,
   SkillUse,
@@ -60,8 +62,9 @@ import type {
   Note,
 } from '@/types';
 import type { InventoryItem } from '@/types/inventory';
-import type { HealthPoints, PowerPoints } from '@/types/combat';
+import type { PowerPoints } from '@/types/combat';
 import type { KnownSpell } from '@/types/spells';
+import type { LevelUpSpecialGain } from '@/utils/levelUpCalculations';
 import { TabNavigation, CHARACTER_TABS } from './TabNavigation';
 import type { CharacterTabId } from './TabNavigation';
 
@@ -77,6 +80,11 @@ const ArchetypesTab = lazy(() =>
 );
 const ResourcesTab = lazy(() =>
   import('./tabs/ResourcesTab').then((m) => ({ default: m.ResourcesTab }))
+);
+const SpecialAbilitiesTab = lazy(() =>
+  import('./tabs/SpecialAbilitiesTab').then((m) => ({
+    default: m.SpecialAbilitiesTab,
+  }))
 );
 const InventoryTab = lazy(() =>
   import('./tabs/InventoryTab').then((m) => ({ default: m.InventoryTab }))
@@ -96,20 +104,19 @@ import {
   SizeSidebar,
   AttributeSidebar,
 } from './sidebars';
-import { HPDetailSidebar } from './sidebars/HPDetailSidebar';
+import { GuardVitalitySidebar } from './sidebars/GuardVitalitySidebar';
 import { PPDetailSidebar } from './sidebars/PPDetailSidebar';
-import DefenseSidebar from './sidebars/DefenseSidebar';
+// @deprecated DefenseSidebar — v0.0.2 usa DefenseTest (teste ativo) no CombatTab
+// import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
 import { ItemDetailsSidebar } from './inventory/ItemDetailsSidebar';
 import { SpellDetailsSidebar } from './spells/SpellDetailsSidebar';
 import { ConceptSidebar } from './sidebars/ConceptSidebar';
+import { handleAttributeChange } from '@/utils/attributeUpdates';
 import { NoteViewSidebar } from './sidebars/NoteViewSidebar';
 import { TableOfContents, TOCSection } from '@/components/shared';
-import {
-  calculateArchetypeHPBreakdown,
-  calculateArchetypePPBreakdown,
-} from './archetypes';
+import { calculateArchetypePPBreakdown } from './archetypes';
 import { exportCharacter } from '@/services/exportService';
 import { useNotifications } from '@/hooks/useNotifications';
 
@@ -123,6 +130,14 @@ export interface CharacterSheetProps {
    * Callback para atualizar o personagem
    */
   onUpdate: (updates: Partial<Character>) => void;
+
+  /**
+   * Callback para subir de nível o personagem (dispatch Redux levelUp action)
+   */
+  onLevelUp?: (
+    archetypeName: ArchetypeName,
+    specialGains: LevelUpSpecialGain[]
+  ) => void;
 }
 
 /**
@@ -148,7 +163,11 @@ export interface CharacterSheetProps {
  * />
  * ```
  */
-export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
+export function CharacterSheet({
+  character,
+  onUpdate,
+  onLevelUp,
+}: CharacterSheetProps) {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -322,6 +341,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       ],
       resources: [
         {
+          id: 'section-resource-dice',
+          label: 'Dados de Recurso',
+          icon: <CasinoIcon fontSize="small" />,
+        },
+        {
           id: 'section-proficiencies',
           label: 'Proficiências',
           icon: <BuildIcon fontSize="small" />,
@@ -340,6 +364,13 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           id: 'section-rest',
           label: 'Descanso',
           icon: <HotelIcon fontSize="small" />,
+        },
+      ],
+      specials: [
+        {
+          id: 'section-special-abilities',
+          label: 'Habilidades Especiais',
+          icon: <FlashOnIcon fontSize="small" />,
         },
       ],
       inventory: [
@@ -418,7 +449,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
    * Navega de volta para a lista de fichas
    */
   const handleBackToList = () => {
-    router.push('/');
+    router.push('/characters');
   };
 
   /**
@@ -440,13 +471,6 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
    */
   const handleOpenSizeSidebar = () => {
     setActiveSidebar('size');
-  };
-
-  /**
-   * Abre a sidebar de defesa
-   */
-  const handleOpenDefenseSidebar = () => {
-    setActiveSidebar('defense');
   };
 
   /**
@@ -744,14 +768,11 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
 
   /**
    * Handler para atualizar um atributo do personagem
+   * Recalcula GA/PP/PV automaticamente quando atributos mudam
    */
   const handleUpdateAttribute = (attribute: AttributeName, value: number) => {
-    onUpdate({
-      attributes: {
-        ...character.attributes,
-        [attribute]: value,
-      },
-    });
+    const updates = handleAttributeChange(character, attribute, value);
+    onUpdate(updates);
   };
 
   /**
@@ -1013,7 +1034,6 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onOpenSize: handleOpenSizeSidebar,
       onOpenHP: handleOpenHPSidebar,
       onOpenPP: handleOpenPPSidebar,
-      onOpenDefense: handleOpenDefenseSidebar,
       onOpenMovement: handleOpenMovementSidebar,
       onOpenAttribute: handleOpenAttributeSidebar,
       onOpenSkill: handleOpenSkillSidebar,
@@ -1028,6 +1048,7 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
       onUpdateCraft: handleUpdateCraft,
       onRemoveCraft: handleRemoveCraft,
       onSelectedCraftChange: handleSelectedCraftChange,
+      onLevelUp,
     };
 
     switch (currentTab) {
@@ -1039,6 +1060,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         return <ArchetypesTab {...tabProps} />;
       case 'resources':
         return <ResourcesTab {...tabProps} />;
+      case 'specials':
+        return <SpecialAbilitiesTab {...tabProps} />;
       case 'inventory':
         return <InventoryTab {...tabProps} />;
       case 'spells':
@@ -1243,22 +1266,18 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
             />
           )}
 
-          {/* Sidebar de PV */}
+          {/* Sidebar de GA/PV */}
           {activeSidebar === 'hp' && (
-            <HPDetailSidebar
+            <GuardVitalitySidebar
               open={activeSidebar === 'hp'}
-              hp={character.combat.hp}
-              onChange={(hp: HealthPoints) =>
+              guard={character.combat.guard ?? { current: 0, max: 0 }}
+              vitality={character.combat.vitality ?? { current: 0, max: 0 }}
+              onChange={(guard, vitality) =>
                 onUpdate({
-                  combat: { ...character.combat, hp },
+                  combat: { ...character.combat, guard, vitality },
                 })
               }
               onClose={handleCloseSidebar}
-              archetypeBreakdown={calculateArchetypeHPBreakdown(
-                character.archetypes ?? [],
-                character.attributes.constituicao
-              )}
-              baseHP={15}
             />
           )}
 
@@ -1275,21 +1294,31 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
               onClose={handleCloseSidebar}
               archetypeBreakdown={calculateArchetypePPBreakdown(
                 character.archetypes ?? [],
-                character.attributes.presenca
+                character.attributes.essencia
               )}
               basePP={2}
+              isCaster={character.spellcasting?.isCaster}
+              spellPoints={character.spellcasting?.spellPoints}
+              onSpellPointsChange={(spellPoints) =>
+                onUpdate({
+                  spellcasting: {
+                    ...(character.spellcasting || {
+                      isCaster: true,
+                      spellPoints: { current: 0, max: 0 },
+                      knownSpells: [],
+                      maxKnownSpells: 0,
+                      knownSpellsModifiers: 0,
+                      spellcastingAbilities: [],
+                      masteredMatrices: [],
+                    }),
+                    spellPoints,
+                  },
+                })
+              }
             />
           )}
 
-          {/* Sidebar de Defesa */}
-          {activeSidebar === 'defense' && (
-            <DefenseSidebar
-              open={activeSidebar === 'defense'}
-              character={character}
-              onUpdate={(updated) => onUpdate(updated)}
-              onClose={handleCloseSidebar}
-            />
-          )}
+          {/* Sidebar de Defesa — v0.0.2: defesa é teste ativo em CombatTab */}
 
           {/* Sidebar de Deslocamento */}
           {activeSidebar === 'movement' && (
@@ -1447,24 +1476,8 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
         />
       )}
 
-      {/* Sidebar de PV em modo mobile (overlay) */}
-      {isMobile && activeSidebar === 'hp' && (
-        <HPDetailSidebar
-          open={activeSidebar === 'hp'}
-          hp={character.combat.hp}
-          onChange={(hp: HealthPoints) =>
-            onUpdate({
-              combat: { ...character.combat, hp },
-            })
-          }
-          onClose={handleCloseSidebar}
-          archetypeBreakdown={calculateArchetypeHPBreakdown(
-            character.archetypes ?? [],
-            character.attributes.constituicao
-          )}
-          baseHP={15}
-        />
-      )}
+      {/* Sidebar de GA/PV em modo mobile — v0.0.2: redireciona para aba de combate */}
+      {/* A interação de Sofrer/Recuperar está no CombatTab via GuardVitalityDisplay */}
 
       {/* Sidebar de PP em modo mobile (overlay) */}
       {isMobile && activeSidebar === 'pp' && (
@@ -1479,21 +1492,31 @@ export function CharacterSheet({ character, onUpdate }: CharacterSheetProps) {
           onClose={handleCloseSidebar}
           archetypeBreakdown={calculateArchetypePPBreakdown(
             character.archetypes ?? [],
-            character.attributes.presenca
+            character.attributes.essencia
           )}
           basePP={2}
+          isCaster={character.spellcasting?.isCaster}
+          spellPoints={character.spellcasting?.spellPoints}
+          onSpellPointsChange={(spellPoints) =>
+            onUpdate({
+              spellcasting: {
+                ...(character.spellcasting || {
+                  isCaster: true,
+                  spellPoints: { current: 0, max: 0 },
+                  knownSpells: [],
+                  maxKnownSpells: 0,
+                  knownSpellsModifiers: 0,
+                  spellcastingAbilities: [],
+                  masteredMatrices: [],
+                }),
+                spellPoints,
+              },
+            })
+          }
         />
       )}
 
-      {/* Sidebar de Defesa em modo mobile (overlay) */}
-      {isMobile && activeSidebar === 'defense' && (
-        <DefenseSidebar
-          open={activeSidebar === 'defense'}
-          character={character}
-          onUpdate={(updated) => onUpdate(updated)}
-          onClose={handleCloseSidebar}
-        />
-      )}
+      {/* Sidebar de Defesa em modo mobile — v0.0.2: defesa é teste ativo em CombatTab */}
 
       {/* Sidebar de Deslocamento em modo mobile (overlay) */}
       {isMobile && activeSidebar === 'movement' && (

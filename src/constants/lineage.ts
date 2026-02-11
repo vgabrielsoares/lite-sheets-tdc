@@ -35,24 +35,26 @@ export const SIZE_DESCRIPTIONS: Record<CreatureSize, string> = {
 
 /**
  * Modificadores aplicados pelo tamanho da criatura
- * IMPORTANTE: Baseado na tabela oficial "Tamanho de Personagem" (Regras Básicas)
+ * v0.0.2: Skill modifiers são em dados (+Xd/-Xd), guard/defense é valor fixo para GA
  */
 export interface SizeModifiers {
   /** Alcance (em metros) */
   reach: number;
   /** Modificador de dano corpo-a-corpo (notação de dados ou numérico) */
   meleeDamage: string | number;
-  /** Modificador de defesa */
+  /** @deprecated v0.0.2: Use `guard`. Modificador de Guarda (GA) */
   defense: number;
+  /** Modificador de Guarda (GA) — valor fixo adicionado ao GA_max */
+  guard: number;
   /** Quadrados ocupados (em metros) */
   squaresOccupied: number;
-  /** Modificador de peso carregável */
+  /** Modificador de espaço carregável (v0.0.2: Espaço, não Peso) */
   carryingCapacity: number;
-  /** Modificador de manobras de combate */
+  /** Modificador de manobras de combate (em dados: +Xd/-Xd) */
   combatManeuvers: number;
-  /** Modificador de ND de rastreio */
+  /** Modificador de rastreio (em dados: +Xd/-Xd) */
   trackingDC: number;
-  /** Modificadores de habilidades específicas */
+  /** Modificadores de habilidades (em dados: +Xd/-Xd, v0.0.2) */
   skillModifiers: {
     acrobacia: number;
     atletismo: number;
@@ -63,42 +65,44 @@ export interface SizeModifiers {
 }
 
 /**
- * Tabela completa de modificadores por tamanho
- * Baseado na tabela oficial "Tamanho de Personagem" (Regras Básicas, página aproximada 224)
+ * Tabela completa de modificadores por tamanho (v0.0.2)
+ * Baseado na tabela oficial do Tabuleiro do Caos RPG (livro v0.1.7)
  *
- * IMPORTANTE: Todos os valores seguem a tabela oficial do livro
- * - Dano: -1d4 convertido para -4 (média de 1d4 = 2.5, arredondado para baixo = 2, então -2.5*2 = -5, aproximado para -4)
- * - Capacidade de Carga: ADITIVA (somada à fórmula base: 5 + Força × 5)
+ * v0.0.2: Modificadores de habilidade agora são em DADOS (+Xd/-Xd), não numéricos.
+ * Guard (GA) modifier é valor fixo adicionado/subtraído do GA_max.
+ * Capacidade de carga é em Espaço (aditivo à fórmula base: 5 + Corpo × 5).
  */
 export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
   minusculo: {
     reach: 1,
     meleeDamage: '-1d4',
     defense: 3,
+    guard: 3,
     squaresOccupied: 0.5,
-    carryingCapacity: -5, // ADITIVO
-    combatManeuvers: -3,
-    trackingDC: 5,
+    carryingCapacity: -5,
+    combatManeuvers: -2,
+    trackingDC: -2,
     skillModifiers: {
-      acrobacia: 5,
-      atletismo: -5,
-      furtividade: 5,
-      reflexo: 3,
-      tenacidade: -3,
+      acrobacia: 2,
+      atletismo: -2,
+      furtividade: 2,
+      reflexo: 2,
+      tenacidade: -2,
     },
   },
   pequeno: {
     reach: 1,
     meleeDamage: -1,
-    defense: 1,
+    defense: 2,
+    guard: 2,
     squaresOccupied: 1,
-    carryingCapacity: -2, // ADITIVO
+    carryingCapacity: -2,
     combatManeuvers: -1,
-    trackingDC: 2,
+    trackingDC: -1,
     skillModifiers: {
-      acrobacia: 2,
-      atletismo: -2,
-      furtividade: 2,
+      acrobacia: 1,
+      atletismo: -1,
+      furtividade: 1,
       reflexo: 1,
       tenacidade: -1,
     },
@@ -107,8 +111,9 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
     reach: 1,
     meleeDamage: 0,
     defense: 0,
+    guard: 0,
     squaresOccupied: 1,
-    carryingCapacity: 0, // ADITIVO
+    carryingCapacity: 0,
     combatManeuvers: 0,
     trackingDC: 0,
     skillModifiers: {
@@ -122,15 +127,16 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
   grande: {
     reach: 2,
     meleeDamage: 1,
-    defense: -1,
+    defense: -2,
+    guard: -2,
     squaresOccupied: 2,
-    carryingCapacity: 2, // ADITIVO
+    carryingCapacity: 2,
     combatManeuvers: 1,
-    trackingDC: -2,
+    trackingDC: 1,
     skillModifiers: {
-      acrobacia: -2,
-      atletismo: 2,
-      furtividade: -2,
+      acrobacia: -1,
+      atletismo: 1,
+      furtividade: -1,
       reflexo: -1,
       tenacidade: 1,
     },
@@ -138,15 +144,16 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
   'enorme-1': {
     reach: 3,
     meleeDamage: '+1d4',
-    defense: -2,
+    defense: -3,
+    guard: -3,
     squaresOccupied: 3,
-    carryingCapacity: 5, // ADITIVO
+    carryingCapacity: 5,
     combatManeuvers: 2,
-    trackingDC: -5,
+    trackingDC: 2,
     skillModifiers: {
-      acrobacia: -5,
-      atletismo: 5,
-      furtividade: -5,
+      acrobacia: -2,
+      atletismo: 2,
+      furtividade: -2,
       reflexo: -2,
       tenacidade: 2,
     },
@@ -154,81 +161,86 @@ export const SIZE_MODIFIERS: Record<CreatureSize, SizeModifiers> = {
   'enorme-2': {
     reach: 4,
     meleeDamage: '+1d6',
-    defense: -3,
+    defense: -4,
+    guard: -4,
     squaresOccupied: 4,
-    carryingCapacity: 5, // ADITIVO
-    combatManeuvers: 3,
-    trackingDC: -6,
+    carryingCapacity: 5,
+    combatManeuvers: 2,
+    trackingDC: 2,
     skillModifiers: {
-      acrobacia: -6,
-      atletismo: 6,
-      furtividade: -6,
-      reflexo: -3,
-      tenacidade: 3,
+      acrobacia: -2,
+      atletismo: 2,
+      furtividade: -2,
+      reflexo: -2,
+      tenacidade: 2,
     },
   },
   'enorme-3': {
     reach: 5,
     meleeDamage: '+1d8',
-    defense: -4,
+    defense: -5,
+    guard: -5,
     squaresOccupied: 5,
-    carryingCapacity: 5, // ADITIVO
-    combatManeuvers: 4,
-    trackingDC: -7,
+    carryingCapacity: 5,
+    combatManeuvers: 2,
+    trackingDC: 2,
     skillModifiers: {
-      acrobacia: -7,
-      atletismo: 7,
-      furtividade: -7,
-      reflexo: -4,
-      tenacidade: 4,
+      acrobacia: -2,
+      atletismo: 2,
+      furtividade: -2,
+      reflexo: -2,
+      tenacidade: 2,
     },
   },
   'colossal-1': {
     reach: 6,
     meleeDamage: '+1d10',
-    defense: -5,
+    defense: -6,
+    guard: -6,
     squaresOccupied: 6,
-    carryingCapacity: 10, // ADITIVO
-    combatManeuvers: 5,
-    trackingDC: -8,
+    carryingCapacity: 10,
+    combatManeuvers: 3,
+    trackingDC: 3,
     skillModifiers: {
-      acrobacia: -8,
-      atletismo: 8,
-      furtividade: -8,
-      reflexo: -5,
-      tenacidade: 5,
+      acrobacia: -3,
+      atletismo: 3,
+      furtividade: -3,
+      reflexo: -3,
+      tenacidade: 3,
     },
   },
   'colossal-2': {
     reach: 7,
     meleeDamage: '+1d12',
     defense: -6,
+    guard: -6,
     squaresOccupied: 7,
-    carryingCapacity: 10, // ADITIVO
-    combatManeuvers: 6,
-    trackingDC: -9,
+    carryingCapacity: 10,
+    combatManeuvers: 3,
+    trackingDC: 3,
     skillModifiers: {
-      acrobacia: -9,
-      atletismo: 9,
-      furtividade: -9,
-      reflexo: -6,
-      tenacidade: 6,
+      acrobacia: -3,
+      atletismo: 3,
+      furtividade: -3,
+      reflexo: -3,
+      tenacidade: 3,
     },
   },
   'colossal-3': {
     reach: 8,
     meleeDamage: '+2d8',
-    defense: -7,
+    defense: -6,
+    guard: -6,
     squaresOccupied: 8,
-    carryingCapacity: 10, // ADITIVO
-    combatManeuvers: 7,
-    trackingDC: -10,
+    carryingCapacity: 10,
+    combatManeuvers: 3,
+    trackingDC: 3,
     skillModifiers: {
-      acrobacia: -10,
-      atletismo: 10,
-      furtividade: -10,
-      reflexo: -7,
-      tenacidade: 7,
+      acrobacia: -3,
+      atletismo: 3,
+      furtividade: -3,
+      reflexo: -3,
+      tenacidade: 3,
     },
   },
 } as const;
@@ -258,21 +270,21 @@ export const VISION_RANGES: Record<VisionType, number> = {
  */
 export const KEEN_SENSE_DESCRIPTIONS: Record<SenseType, string> = {
   visao:
-    'Visão aguçada concede vantagem em testes de Percepção que dependem da visão.',
+    'Visão aguçada concede dados extras em testes de Percepção que dependem da visão.',
   olfato:
-    'Olfato aguçado concede vantagem em testes de Percepção que dependem do olfato (Farejar).',
+    'Olfato aguçado concede dados extras em testes de Percepção que dependem do olfato (Farejar).',
   audicao:
-    'Audição aguçada concede vantagem em testes de Percepção que dependem da audição (Ouvir).',
+    'Audição aguçada concede dados extras em testes de Percepção que dependem da audição (Ouvir).',
 } as const;
 
 /**
- * Modificadores de percepção para sentidos aguçados
- * Aplicados aos usos específicos da habilidade Percepção
+ * Modificadores de dados para sentidos aguçados
+ * Aplicados como dados extras (+Xd) nos usos específicos da habilidade Percepção
  */
 export const KEEN_SENSE_MODIFIERS: Record<SenseType, number> = {
-  visao: 5, // +5 em testes de Observar
-  olfato: 5, // +5 em testes de Farejar
-  audicao: 5, // +5 em testes de Ouvir
+  visao: 1, // +1d em testes de Observar
+  olfato: 1, // +1d em testes de Farejar
+  audicao: 1, // +1d em testes de Ouvir
 } as const;
 
 /**

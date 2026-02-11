@@ -42,6 +42,7 @@ import { characterService } from '@/services/characterService';
 // Mock de personagem para testes
 const mockCharacter: Character = {
   id: 'char-1',
+  schemaVersion: 2,
   name: 'Aragorn',
   playerName: 'John Doe',
   level: 1,
@@ -67,16 +68,16 @@ const mockCharacter: Character = {
     movement: { andando: 6, voando: 0, escalando: 0, escavando: 0, nadando: 0 },
     vision: 'normal',
     ancestryTraits: [],
-    attributeModifiers: [{ attribute: 'forca', value: 1 }],
+    attributeModifiers: [{ attribute: 'corpo', value: 1 }],
     description: 'Humanos versáteis',
   },
   attributes: {
     agilidade: 2,
-    constituicao: 2,
-    forca: 3,
+    corpo: 3,
     influencia: 2,
     mente: 1,
-    presenca: 1,
+    essencia: 1,
+    instinto: 1,
   },
   skills: {} as any,
   signatureSkill: 'atletismo',
@@ -89,6 +90,7 @@ const mockCharacter: Character = {
     tools: [],
     other: [],
   },
+  proficiencyPurchases: [],
   languages: ['comum'],
   extraLanguagesModifier: 0,
   combat: {
@@ -126,6 +128,8 @@ const mockCharacter: Character = {
     numericModifier: 0,
   },
   crafts: [],
+  resources: [],
+  specialAbilities: [],
   inventory: {
     items: [],
     carryingCapacity: {
@@ -162,6 +166,7 @@ const mockCharacter: Character = {
     organizations: [],
   },
   levelProgression: [],
+  levelHistory: [],
   notes: [],
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
@@ -303,7 +308,7 @@ describe('charactersSlice', () => {
       const characters = [mockCharacter, mockCharacter2];
       const action = {
         type: loadCharacters.fulfilled.type,
-        payload: characters,
+        payload: { characters, migratedNames: [] },
       };
 
       const actual = charactersReducer(undefined, action);
@@ -500,7 +505,7 @@ describe('charactersSlice', () => {
         id: 'craft-1',
         name: 'Ferreiro',
         level: 2 as const,
-        attributeKey: 'forca' as const,
+        attributeKey: 'corpo' as const,
         diceModifier: 0,
         numericModifier: 2,
         description: 'Trabalha com metal',
@@ -527,7 +532,7 @@ describe('charactersSlice', () => {
                 id: 'craft-1',
                 name: 'Ferreiro',
                 level: 2 as const,
-                attributeKey: 'forca' as const,
+                attributeKey: 'corpo' as const,
                 diceModifier: 0,
                 numericModifier: 0,
               },
@@ -561,7 +566,7 @@ describe('charactersSlice', () => {
                 id: 'craft-1',
                 name: 'Ferreiro',
                 level: 2 as const,
-                attributeKey: 'forca' as const,
+                attributeKey: 'corpo' as const,
                 diceModifier: 0,
                 numericModifier: 0,
               },
@@ -587,7 +592,7 @@ describe('charactersSlice', () => {
             id: 'craft-1',
             name: 'Ferreiro',
             level: 2,
-            attributeKey: 'forca',
+            attributeKey: 'corpo',
             diceModifier: 0,
             numericModifier: 0,
           },

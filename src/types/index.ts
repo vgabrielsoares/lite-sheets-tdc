@@ -10,6 +10,9 @@ export type {
   UUID,
   Timestamp,
   ProficiencyLevel,
+  DieSize,
+  DicePoolDie,
+  DicePoolResult,
   MovementType,
   SenseType,
   KeenSense,
@@ -34,6 +37,8 @@ export type {
 
 export {
   PROFICIENCY_MULTIPLIERS,
+  PROFICIENCY_DIE_MAP,
+  DIE_SIZE_TO_SIDES,
   CURRENCY_SYMBOLS,
   CURRENCY_CONVERSION,
   DIFFICULTY_VALUES,
@@ -68,6 +73,8 @@ export type {
   Skill,
   Skills,
   SkillUse,
+  SkillPoolCalculation,
+  SkillPoolFormula,
   SkillModifierCalculation,
   SkillRollFormula,
   DefaultUseAttributeOverrides,
@@ -85,11 +92,17 @@ export {
 
 // Combat
 export type {
+  GuardPoints,
+  VitalityPoints,
   HealthPoints,
   PowerPoints,
   CombatState,
   DyingState,
+  VulnerabilityDieSize,
+  VulnerabilityDie,
+  TurnType,
   ActionEconomy,
+  ExtraAction,
   ActionType,
   Defense,
   AttackType,
@@ -100,20 +113,30 @@ export type {
   SavingThrow,
   Resistances,
   DamageReductionEntry,
+  ConditionCategory,
   Condition,
   Initiative,
+  CombatPenalties,
   CombatData,
 } from './combat';
 
 export {
+  VULNERABILITY_DIE_STEPS,
+  SAVING_THROW_ATTRIBUTES,
+  SAVING_THROW_SKILLS,
+  DEFAULT_GA_LEVEL_1,
   DEFAULT_HP_LEVEL_1,
   DEFAULT_PP_LEVEL_1,
   BASE_DEFENSE,
   BASE_DYING_ROUNDS,
+  PV_RECOVERY_COST,
 } from './combat';
 
 // Inventory
 export type {
+  DurabilityState,
+  ItemDurability,
+  DurabilityTestResult,
   ItemCategory,
   InventoryItem,
   WeaponProficiencyCategory,
@@ -148,6 +171,8 @@ export type {
   SpellComponent,
   Spell,
   KnownSpell,
+  SpellPoints,
+  SpellcastingSkillName,
   SpellcastingAbility,
   SpellcastingData,
 } from './spells';
@@ -169,6 +194,27 @@ export { DEFAULT_CURRENCY, EMPTY_DENOMINATION } from './currency';
 // Re-export Currency and TotalWealth from currency.ts (canonical source)
 // Note: These are also defined in inventory.ts for backward compatibility
 export type { Currency as CurrencyData } from './currency';
+
+// Resources
+export type {
+  ResourceDieState,
+  ResourceDie,
+  ResourceDieRollResult,
+} from './resources';
+
+export {
+  RESOURCE_DIE_SCALE,
+  RESOURCE_DIE_SIDES,
+  getResourceDieIndex,
+  stepDownResourceDie,
+  stepUpResourceDie,
+  processResourceUse,
+} from './resources';
+
+// Special Abilities
+export type { SpecialAbilitySource, SpecialAbility } from './specialAbilities';
+
+export { SPECIAL_ABILITY_SOURCE_LABELS } from './specialAbilities';
 
 // Character
 export type {
@@ -194,6 +240,7 @@ export type {
   PhysicalDescription,
   CharacterDefiners,
   LevelProgression,
+  LevelHistoryEntry,
   Experience,
   Character,
 } from './character';
@@ -212,3 +259,28 @@ export {
   createEmptyComplementaryTrait,
   createEmptyCompleteTrait,
 } from './traits';
+
+// Wizard (Character Creation)
+export type {
+  WizardStep,
+  WizardStepInfo,
+  AttributeModifier as WizardAttributeModifier,
+  WizardItem,
+  WizardSpecialAbility,
+  WizardOriginState,
+  WizardLineageState,
+  WizardArchetypeState,
+  WizardProficiencyPurchase,
+  WizardState,
+  WizardValidationError,
+} from './wizard';
+
+export {
+  WIZARD_STEPS,
+  WIZARD_STEP_INFO,
+  createInitialWizardState,
+  calculateFinalAttributes,
+  calculateAvailableFreePoints,
+  hasLineagePlus2,
+  getAttributeMaxLimit,
+} from './wizard';

@@ -5,21 +5,7 @@ import { Box, Paper, Typography, Stack, Chip, useTheme } from '@mui/material';
 import { Casino as LuckIcon } from '@mui/icons-material';
 import { EditableNumber } from '@/components/shared';
 import type { LuckLevel } from '@/types';
-
-/**
- * Tabela de rolagens por nível de sorte
- * Conforme especificação do sistema
- */
-const LUCK_ROLL_TABLE: Record<number, string> = {
-  0: '1d20',
-  1: '2d20',
-  2: '2d20+2',
-  3: '3d20+3',
-  4: '3d20+6',
-  5: '4d20+8',
-  6: '4d20+12',
-  7: '5d20+15',
-};
+import { LUCK_LEVELS, MIN_LUCK_LEVEL, MAX_LUCK_LEVEL } from '@/constants';
 
 export interface LuckDisplayProps {
   /**
@@ -71,10 +57,10 @@ export function LuckDisplay({
   const theme = useTheme();
 
   /**
-   * Obtém a rolagem correspondente ao nível de sorte
+   * Obtém a fórmula de rolagem correspondente ao nível de sorte
    */
   const getRollFormula = (level: number): string => {
-    return LUCK_ROLL_TABLE[level] ?? `${level}d20+${level * 3}`;
+    return LUCK_LEVELS[level]?.formula ?? LUCK_LEVELS[MAX_LUCK_LEVEL].formula;
   };
 
   const rollFormula = getRollFormula(luck.level);
@@ -260,7 +246,7 @@ export function LuckDisplay({
             Referência Rápida de Níveis
           </Typography>
           <Stack spacing={0.5} sx={{ mt: 1 }}>
-            {Object.entries(LUCK_ROLL_TABLE).map(([level, formula]) => (
+            {Object.entries(LUCK_LEVELS).map(([level, entry]) => (
               <Box
                 key={level}
                 sx={{
@@ -282,7 +268,7 @@ export function LuckDisplay({
                       : 'text.secondary'
                   }
                 >
-                  {formula}
+                  {entry.formula}
                 </Typography>
               </Box>
             ))}

@@ -6,8 +6,10 @@ export { default as ArchetypeDisplay } from './ArchetypeDisplay';
 export { default as ArchetypeFeatures } from './ArchetypeFeatures';
 export { default as FeatureForm } from './FeatureForm';
 export {
+  calculateArchetypeGA,
   calculateArchetypeHP,
   calculateArchetypePP,
+  calculateArchetypeGABreakdown,
   calculateArchetypeHPBreakdown,
   calculateArchetypePPBreakdown,
 } from './ArchetypeDisplay';

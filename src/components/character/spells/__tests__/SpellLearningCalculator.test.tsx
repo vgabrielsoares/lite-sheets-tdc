@@ -29,13 +29,16 @@ describe('SpellLearningCalculator', () => {
       },
       skills: {
         ...baseCharacter.skills,
-        // Set arcano to 'versado' proficiency (3×2=6 modifier)
+        // Set arcano to 'versado' proficiency (d10 die, totalDice = essencia)
         arcano: {
           ...baseCharacter.skills.arcano,
           proficiencyLevel: 'versado',
         },
       },
       spellcasting: {
+        isCaster: true,
+        castingSkill: 'arcano',
+        spellPoints: { current: 0, max: 0 },
         knownSpells: [
           {
             spellId: 'spell-1',
@@ -58,7 +61,7 @@ describe('SpellLearningCalculator', () => {
           {
             id: 'ability-1',
             skill: 'arcano',
-            attribute: 'presenca',
+            attribute: 'essencia',
             dcBonus: 0,
             attackBonus: 0,
           },
@@ -133,9 +136,9 @@ describe('SpellLearningCalculator', () => {
 
       // Aguardar expansão do componente
       await waitFor(() => {
-        // Mente 3, Arcano versado (3×2=6), 1º círculo, não primeiro feitiço (já tem 2 feitiços)
-        // (3×5) + 6 + 30 = 51%
-        const percentageDisplays = screen.getAllByText('51%');
+        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // (3×5) + 1 + 30 = 46%
+        const percentageDisplays = screen.getAllByText('46%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -147,14 +150,15 @@ describe('SpellLearningCalculator', () => {
       const expandButton = screen.getByLabelText('Expandir');
       fireEvent.click(expandButton);
 
-      // Trocar para Natureza (leigo, modificador 0)
+      // Trocar para Natureza (leigo, instinto=1)
       const skillSelect = screen.getByLabelText('Habilidade de Conjuração');
       fireEvent.mouseDown(skillSelect);
       const listbox = within(screen.getByRole('listbox'));
       fireEvent.click(listbox.getByText(/Natureza/));
 
-      // (3×5) + 0 + 30 = 45%
-      const percentageDisplays = screen.getAllByText('45%');
+      // v0.0.2: modHabilidade = totalDice = instinto(1) + 0 = 1
+      // (3×5) + 1 + 30 = 46%
+      const percentageDisplays = screen.getAllByText('46%');
       expect(percentageDisplays.length).toBeGreaterThan(0);
     });
 
@@ -176,8 +180,9 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(listbox.getByText('2º Círculo'));
 
       await waitFor(() => {
-        // (3×5) + 6 + 10 = 31%
-        const percentageDisplays = screen.getAllByText('31%');
+        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // (3×5) + 1 + 10 = 26%
+        const percentageDisplays = screen.getAllByText('26%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -187,6 +192,9 @@ describe('SpellLearningCalculator', () => {
     it('deve aplicar modificador +0 se for o primeiro feitiço', async () => {
       const character = createMockCharacter({
         spellcasting: {
+          isCaster: true,
+          castingSkill: 'arcano',
+          spellPoints: { current: 0, max: 0 },
           knownSpells: [],
           maxKnownSpells: 10,
           knownSpellsModifiers: 0,
@@ -194,7 +202,7 @@ describe('SpellLearningCalculator', () => {
             {
               id: 'ability-1',
               skill: 'arcano',
-              attribute: 'presenca',
+              attribute: 'essencia',
               dcBonus: 0,
               attackBonus: 0,
             },
@@ -209,9 +217,9 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(expandButton);
 
       await waitFor(() => {
-        // Mente 3, Arcano versado (3×2=6), 1º círculo, primeiro feitiço
-        // (3×5) + 6 + 0 = 21%
-        const percentageDisplays = screen.getAllByText('21%');
+        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // (3×5) + 1 + 0 = 16%
+        const percentageDisplays = screen.getAllByText('16%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -233,8 +241,9 @@ describe('SpellLearningCalculator', () => {
       fireEvent.change(matrizInput, { target: { value: '5' } });
 
       await waitFor(() => {
-        // (3×5) + 6 + 30 + 5 = 56%
-        const percentageDisplays = screen.getAllByText('56%');
+        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // (3×5) + 1 + 30 + 5 = 51%
+        const percentageDisplays = screen.getAllByText('51%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
       });
     });
@@ -249,8 +258,8 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(expandButton);
 
       await waitFor(() => {
-        // (3×5) + 6 + 30 = 51% -> "Bom"
-        expect(screen.getByText('Bom')).toBeInTheDocument();
+        // v0.0.2: (3×5) + 1 + 30 = 46% -> "Moderado"
+        expect(screen.getByText('Moderado')).toBeInTheDocument();
       });
     });
   });
@@ -260,11 +269,11 @@ describe('SpellLearningCalculator', () => {
       const character = createMockCharacter({
         attributes: {
           agilidade: 1,
-          constituicao: 1,
-          forca: 1,
+          corpo: 1,
           influencia: 1,
           mente: 5,
-          presenca: 1,
+          essencia: 1,
+          instinto: 1,
         },
         skills: {
           arcano: {
@@ -283,11 +292,12 @@ describe('SpellLearningCalculator', () => {
       const matrixInput = screen.getByLabelText('Mod. Matriz');
       fireEvent.change(matrixInput, { target: { value: '20' } });
 
-      // (5×5) + 15 + 30 + 20 = 90% (abaixo do limite, mas vamos usar outros mods)
+      // v0.0.2: modHabilidade = totalDice = mente(5) + 0 = 5
+      // (5×5) + 5 + 30 + 20 = 80% (abaixo do limite, mas vamos usar outros mods)
       const otherInput = screen.getByLabelText('Outros Modificadores');
       fireEvent.change(otherInput, { target: { value: '20' } });
 
-      // (5×5) + 15 + 30 + 20 + 20 = 110 -> limitado a 99%
+      // (5×5) + 5 + 30 + 20 + 20 = 100 -> limitado a 99%
       const percentageDisplays = screen.getAllByText('99%');
       expect(percentageDisplays.length).toBeGreaterThan(0);
     });

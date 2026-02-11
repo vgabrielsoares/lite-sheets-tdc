@@ -49,7 +49,7 @@ export function useCharacterSync(): UseCharacterSyncReturn {
   const dispatch = useAppDispatch();
   const isLoading = useAppSelector(selectCharactersLoading);
   const error = useAppSelector(selectCharactersError);
-  const { showError } = useNotifications();
+  const { showError, showInfo } = useNotifications();
 
   // Ref para controlar primeira montagem
   const isInitialLoadRef = useRef(true);
@@ -73,6 +73,14 @@ export function useCharacterSync(): UseCharacterSyncReturn {
 
       dispatch(loadCharacters())
         .unwrap()
+        .then((result) => {
+          if (result.migratedNames.length > 0) {
+            const count = result.migratedNames.length;
+            showInfo(
+              `${count} ficha(s) migrada(s) automaticamente para v0.0.2: ${result.migratedNames.join(', ')}`
+            );
+          }
+        })
         .catch((err) => {
           console.error('Erro ao carregar personagens:', err);
           showError(

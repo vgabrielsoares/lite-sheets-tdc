@@ -63,20 +63,17 @@ interface SenseCardProps {
 const SenseCard: React.FC<SenseCardProps> = ({ sense, keenSenseBonus }) => {
   const tooltipLines = [
     `${sense.useName} (Percepção):`,
-    `• Modificador base: ${sense.baseModifier >= 0 ? '+' : ''}${sense.baseModifier}`,
+    `• Dados base: ${sense.baseDice}${sense.dieSize}`,
   ];
 
   if (keenSenseBonus > 0) {
-    tooltipLines.push(`• Sentido Aguçado: +${keenSenseBonus}`);
+    tooltipLines.push(`• Sentido Aguçado: +${keenSenseBonus}d`);
   }
 
   tooltipLines.push('━━━━━━━━━━━━━━━━━');
-  tooltipLines.push(
-    `Total: ${sense.totalModifier >= 0 ? '+' : ''}${sense.totalModifier}`
-  );
   tooltipLines.push(`Rolagem: ${sense.formula}`);
 
-  if (sense.takeLowest) {
+  if (sense.isPenaltyRoll) {
     tooltipLines.push('⚠️ Escolhe o menor resultado');
   }
 
@@ -113,7 +110,7 @@ const SenseCard: React.FC<SenseCardProps> = ({ sense, keenSenseBonus }) => {
           </Typography>
           {keenSenseBonus > 0 && (
             <Chip
-              label={`+${keenSenseBonus}`}
+              label={`+${keenSenseBonus}d`}
               size="small"
               color="success"
               sx={{
@@ -128,7 +125,7 @@ const SenseCard: React.FC<SenseCardProps> = ({ sense, keenSenseBonus }) => {
           variant="body1"
           sx={{
             fontWeight: 'bold',
-            color: sense.takeLowest ? 'error.main' : 'text.primary',
+            color: sense.isPenaltyRoll ? 'error.main' : 'text.primary',
           }}
         >
           {sense.formula}
@@ -202,7 +199,7 @@ const VisionCard: React.FC<VisionCardProps> = ({ vision }) => {
 export const SensesDisplay: React.FC<SensesDisplayProps> = memo(
   ({ character, onOpenDetails }) => {
     // Calculate encumbrance state
-    const carryCapacity = calculateCarryCapacity(character.attributes.forca);
+    const carryCapacity = calculateCarryCapacity(character.attributes.corpo);
     const currentLoad = character.inventory.items.reduce(
       (total, item) => total + (item.weight || 0) * (item.quantity || 1),
       0

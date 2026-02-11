@@ -49,6 +49,7 @@ import type {
   Attributes,
   Skills,
   Modifier,
+  ArmorType,
 } from '@/types';
 import {
   SKILL_LIST,
@@ -69,6 +70,8 @@ export interface SkillsDisplayProps {
   characterLevel: number;
   /** Se personagem está sobrecarregado */
   isOverloaded: boolean;
+  /** Tipo de armadura equipada (para penalidade de carga). null = sem armadura ou armadura leve */
+  equippedArmorType?: ArmorType | null;
   /** Callback quando atributo-chave é alterado */
   onKeyAttributeChange: (
     skillName: SkillName,
@@ -110,6 +113,8 @@ export interface SkillsDisplayProps {
   skillProficiencyBonusSlots?: number;
   /** Callback quando bônus de slots é alterado */
   onSkillProficiencyBonusSlotsChange?: (bonusSlots: number) => void;
+  /** Penalidades de dados de condições ativas */
+  conditionPenalties?: import('@/utils/conditionEffects').DicePenaltyMap;
 }
 
 /**
@@ -122,6 +127,7 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
     attributes,
     characterLevel,
     isOverloaded,
+    equippedArmorType = null,
     onKeyAttributeChange,
     onProficiencyChange,
     onModifiersChange,
@@ -135,6 +141,7 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
     sizeSkillModifiers,
     skillProficiencyBonusSlots = 0,
     onSkillProficiencyBonusSlotsChange,
+    conditionPenalties,
   }) => {
     // Estados locais
     const [searchQuery, setSearchQuery] = useState('');
@@ -173,7 +180,10 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
 
       SKILL_LIST.forEach((skillName) => {
         const skill = skills[skillName];
-        counts[skill.proficiencyLevel]++;
+        // Verifica se a skill existe (pode não existir em fichas antigas)
+        if (skill) {
+          counts[skill.proficiencyLevel]++;
+        }
       });
 
       return counts;
@@ -183,6 +193,9 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
     const filteredSkills = useMemo(() => {
       return SKILL_LIST.filter((skillName) => {
         const skill = skills[skillName];
+        // Ignora skills que não existem (fichas antigas)
+        if (!skill) return false;
+
         const label = SKILL_LABELS[skillName].toLowerCase();
 
         // Filtro de busca
@@ -284,8 +297,20 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="h6">Habilidades</Typography>
               {isOverloaded && (
-                <Tooltip title="Sobrecarregado: algumas habilidades sofrem penalidade de -5">
+                <Tooltip title="Sobrecarregado: habilidades com penalidade de carga sofrem -2d">
                   <Chip label="Sobrecarregado" size="small" color="warning" />
+                </Tooltip>
+              )}
+              {equippedArmorType && equippedArmorType !== 'leve' && (
+                <Tooltip
+                  title={`Armadura ${equippedArmorType === 'media' ? 'média (-1d)' : 'pesada (-2d)'}: habilidades com penalidade de carga sofrem penalidade`}
+                >
+                  <Chip
+                    label={`Armadura ${equippedArmorType === 'media' ? 'Média' : 'Pesada'}`}
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                  />
                 </Tooltip>
               )}
             </Box>
@@ -520,27 +545,35 @@ export const SkillsDisplay: React.FC<SkillsDisplayProps> = React.memo(
           </Paper>
         ) : (
           <Stack spacing={1}>
-            {filteredSkills.map((skillName) => (
-              <SkillRow
-                key={skillName}
-                skill={skills[skillName]}
-                attributes={attributes}
-                characterLevel={characterLevel}
-                isOverloaded={isOverloaded}
-                onModifiersChange={onModifiersChange}
-                onClick={onSkillClick}
-                crafts={crafts}
-                onSelectedCraftChange={onSelectedCraftChange}
-                luck={luck}
-                onLuckLevelChange={onLuckLevelChange}
-                onLuckModifiersChange={onLuckModifiersChange}
-                sizeSkillModifier={
-                  sizeSkillModifiers?.[
-                    skillName as keyof typeof sizeSkillModifiers
-                  ]
-                }
-              />
-            ))}
+            {filteredSkills.map((skillName) => {
+              const skill = skills[skillName];
+              // Proteção adicional: se skill não existir, não renderiza
+              if (!skill) return null;
+
+              return (
+                <SkillRow
+                  key={skillName}
+                  skill={skill}
+                  attributes={attributes}
+                  characterLevel={characterLevel}
+                  isOverloaded={isOverloaded}
+                  equippedArmorType={equippedArmorType}
+                  onModifiersChange={onModifiersChange}
+                  onClick={onSkillClick}
+                  crafts={crafts}
+                  onSelectedCraftChange={onSelectedCraftChange}
+                  luck={luck}
+                  onLuckLevelChange={onLuckLevelChange}
+                  onLuckModifiersChange={onLuckModifiersChange}
+                  sizeSkillModifier={
+                    sizeSkillModifiers?.[
+                      skillName as keyof typeof sizeSkillModifiers
+                    ]
+                  }
+                  conditionPenalties={conditionPenalties}
+                />
+              );
+            })}
           </Stack>
         )}
       </Box>

@@ -1,8 +1,12 @@
 /**
  * DiceRollResult - Exibição de Resultado de Rolagem
  *
- * Exibe o resultado de uma rolagem de dados com breakdown detalhado,
- * animações e feedback visual para críticos/falhas.
+ * Exibe o resultado de uma rolagem de dados no novo sistema de pool de dados:
+ * - Pool de dados com contagem de sucessos (✶)
+ * - Exibição de dados individuais com status de sucesso/cancelamento
+ * - Sem triunfos/desastres (mecânicas removidas do sistema)
+ *
+ * Também suporta rolagens de dano (soma de dados).
  */
 
 'use client';
@@ -18,22 +22,30 @@ import {
   useTheme,
 } from '@mui/material';
 import { keyframes } from '@mui/system';
-import type { DiceRollResult as DiceRollResultType } from '@/utils/diceRoller';
+import StarIcon from '@mui/icons-material/Star';
+import CancelIcon from '@mui/icons-material/Cancel';
+import type { DicePoolResult } from '@/types';
+import {
+  isDicePoolResult,
+  isDamageDiceRollResult,
+  isCustomDiceResult,
+  type DamageDiceRollResult,
+  type CustomDiceResult,
+  type HistoryEntry,
+} from '@/utils/diceRoller';
 
 export interface DiceRollResultProps {
-  /** Resultado da rolagem */
-  result: DiceRollResultType;
+  /** Resultado da rolagem (pool, dano ou customizado) */
+  result: HistoryEntry;
   /** Se deve exibir animação de entrada */
   animate?: boolean;
   /** Se deve exibir breakdown detalhado */
   showBreakdown?: boolean;
-  /** Nível de Dificuldade (para detectar Triunfos) */
-  nd?: number;
+  /** Número de sucessos necessários (opcional, para feedback visual) */
+  requiredSuccesses?: number;
 }
 
-/**
- * Animação de entrada com bounce
- */
+/** Animação de entrada com bounce */
 const bounceIn = keyframes`
   0% {
     opacity: 0;
@@ -52,87 +64,59 @@ const bounceIn = keyframes`
   }
 `;
 
-/**
- * Animação de pulso para críticos
- */
+/** Animação de pulso para críticos */
 const pulse = keyframes`
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
   }
 `;
 
 /**
- * Componente de exibição de resultado
+ * Exibe o resultado de uma pool de dados (novo sistema v0.0.2)
  */
-export function DiceRollResult({
+function PoolResultDisplay({
   result,
-  animate = true,
-  showBreakdown = true,
-  nd,
-}: DiceRollResultProps) {
+  animate,
+  showBreakdown,
+  requiredSuccesses,
+}: {
+  result: DicePoolResult;
+  animate: boolean;
+  showBreakdown: boolean;
+  requiredSuccesses?: number;
+}) {
   const theme = useTheme();
 
-  /**
-   * Detectar Triunfo: 20 natural E (sem ND OU sucesso com diferença ≤5)
-   * IMPORTANTE: NÃO se aplica a rolagens de dano
-   *
-   * Verifica baseResult, não rolls.some()
-   * - Em dados positivos: baseResult = maior valor (pode ser 20)
-   * - Em dados negativos/atributo 0: baseResult = menor valor (raramente será 20)
-   *
-   * Exemplo que NÃO é Triunfo:
-   * - Atributo 0: rola [20, 5] → baseResult = 5 (menor) → NÃO é Triunfo
-   * - Dados negativos: rola [20, 8, 3] → baseResult = 3 → NÃO é Triunfo
-   */
-  const isTriumph =
-    !result.isDamageRoll &&
-    result.baseResult === 20 &&
-    (!nd || (result.finalResult >= nd && result.finalResult - nd <= 5));
+  const isSuccess =
+    requiredSuccesses !== undefined
+      ? result.netSuccesses >= requiredSuccesses
+      : result.netSuccesses > 0;
 
-  /**
-   * Detectar Desastre: usar propriedade armazenada no resultado
-   * (já calculada durante a rolagem com a lógica correta)
-   */
-  const isDisaster = result.isDisaster ?? false;
+  const hasMultipleSuccesses = result.netSuccesses > 1;
+  const isFailure = result.netSuccesses === 0;
 
-  /**
-   * Determina a cor do resultado baseado em Triunfos/Desastres
-   */
   const getResultColor = () => {
-    if (isTriumph) {
-      return theme.palette.warning.main; // Dourado para Triunfo
-    }
-    if (isDisaster) {
-      return theme.palette.error.main; // Vermelho para Desastre
-    }
-    if (result.isCritical) {
-      return theme.palette.warning.main; // Dourado para crítico (fallback)
-    }
-    if (result.isCriticalFailure) {
-      return theme.palette.error.main; // Vermelho para falha crítica (fallback)
-    }
+    if (isFailure) return theme.palette.error.main;
+    if (hasMultipleSuccesses) return theme.palette.success.main;
     return theme.palette.primary.main;
   };
 
-  /**
-   * Determina a cor de fundo do resultado
-   */
   const getResultBackgroundColor = () => {
-    if (isTriumph || result.isCritical) {
-      return theme.palette.mode === 'dark'
-        ? 'rgba(255, 215, 0, 0.1)'
-        : 'rgba(255, 215, 0, 0.05)';
-    }
-    if (isDisaster || result.isCriticalFailure) {
+    if (isFailure) {
       return theme.palette.mode === 'dark'
         ? 'rgba(211, 47, 47, 0.1)'
         : 'rgba(211, 47, 47, 0.05)';
+    }
+    if (hasMultipleSuccesses) {
+      return theme.palette.mode === 'dark'
+        ? 'rgba(76, 175, 80, 0.1)'
+        : 'rgba(76, 175, 80, 0.05)';
     }
     return theme.palette.mode === 'dark'
       ? 'rgba(212, 175, 55, 0.05)'
@@ -141,17 +125,20 @@ export function DiceRollResult({
 
   return (
     <Paper
-      elevation={result.isCritical ? 8 : 2}
+      elevation={hasMultipleSuccesses ? 8 : 2}
       sx={{
         p: 2,
         backgroundColor: getResultBackgroundColor(),
         borderRadius: 2,
-        animation: animate ? `${bounceIn} 0.5s ease-out` : 'none',
-        ...(result.isCritical && {
-          animation: `${bounceIn} 0.5s ease-out, ${pulse} 2s infinite`,
-          border: `2px solid ${theme.palette.warning.main}`,
+        animation: animate
+          ? hasMultipleSuccesses
+            ? `${bounceIn} 0.5s ease-out, ${pulse} 2s infinite`
+            : `${bounceIn} 0.5s ease-out`
+          : 'none',
+        ...(hasMultipleSuccesses && {
+          border: `2px solid ${theme.palette.success.main}`,
         }),
-        ...(result.isCriticalFailure && {
+        ...(isFailure && {
           border: `2px solid ${theme.palette.error.main}`,
         }),
       }}
@@ -169,49 +156,59 @@ export function DiceRollResult({
 
         <Divider />
 
-        {/* Resultado Final - Grande e Destacado */}
+        {/* Resultado Final - Número de Sucessos */}
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="caption" color="text.secondary" gutterBottom>
-            Resultado Final
+            Sucessos
           </Typography>
-          <Typography
-            variant="h2"
-            component="div"
-            fontWeight="bold"
+          <Box
             sx={{
-              color: getResultColor(),
-              fontSize: { xs: '3rem', sm: '4rem' },
-              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
               my: 1,
-              textShadow: result.isCritical
-                ? `0 0 20px ${theme.palette.warning.main}`
-                : 'none',
             }}
-            aria-label={`Resultado final: ${result.finalResult}`}
           >
-            {result.finalResult}
-          </Typography>
-
-          {/* Tags de Triunfo/Desastre */}
-          {isTriumph && (
-            <Chip
-              label="TRIUNFO!"
-              color="warning"
+            <Typography
+              variant="h2"
+              component="div"
+              fontWeight="bold"
               sx={{
-                fontWeight: 'bold',
-                fontSize: '0.9rem',
-                animation: `${pulse} 2s infinite`,
+                color: getResultColor(),
+                fontSize: { xs: '3rem', sm: '4rem' },
+                lineHeight: 1,
+                textShadow: hasMultipleSuccesses
+                  ? `0 0 20px ${theme.palette.success.main}`
+                  : 'none',
+              }}
+              aria-label={`${result.netSuccesses} sucesso${result.netSuccesses !== 1 ? 's' : ''}`}
+            >
+              {result.netSuccesses}
+            </Typography>
+            <StarIcon
+              sx={{
+                fontSize: { xs: '2rem', sm: '2.5rem' },
+                color: getResultColor(),
               }}
             />
-          )}
-          {isDisaster && (
+          </Box>
+
+          {/* Tags de resultado */}
+          {isFailure && (
             <Chip
-              label="DESASTRE!"
+              label="0✶ FALHA"
               color="error"
-              sx={{
-                fontWeight: 'bold',
-                fontSize: '0.9rem',
-              }}
+              sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}
+            />
+          )}
+          {result.isPenaltyRoll && (
+            <Chip
+              label="2d (menor)"
+              color="warning"
+              variant="outlined"
+              size="small"
+              sx={{ ml: 1 }}
             />
           )}
         </Box>
@@ -229,48 +226,52 @@ export function DiceRollResult({
                   color="text.secondary"
                   gutterBottom
                 >
-                  Dados Rolados ({result.diceCount}d{result.diceType}):
+                  Dados Rolados ({result.diceCount}
+                  {result.dieSize}):
                 </Typography>
                 <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
-                  {result.rolls.map((roll, index) => {
-                    // Destaca o dado escolhido
-                    const isChosenDie =
-                      (result.rollType === 'advantage' ||
-                        result.rollType === 'normal' ||
-                        result.diceCount > 0) &&
-                      roll === result.baseResult;
+                  {result.dice.map((die, index) => {
+                    let backgroundColor = theme.palette.action.hover;
+                    let color = theme.palette.text.primary;
 
-                    const isChosenLowDie =
-                      (result.rollType === 'disadvantage' ||
-                        result.diceCount <= 0) &&
-                      roll === result.baseResult;
+                    if (die.isSuccess) {
+                      backgroundColor = theme.palette.success.main;
+                      color = theme.palette.success.contrastText;
+                    } else if (die.isCancellation) {
+                      backgroundColor = theme.palette.error.main;
+                      color = theme.palette.error.contrastText;
+                    }
 
                     return (
                       <Chip
                         key={index}
-                        label={roll}
+                        label={
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                            }}
+                          >
+                            {die.value}
+                            {die.isSuccess && (
+                              <StarIcon sx={{ fontSize: '0.8rem' }} />
+                            )}
+                            {die.isCancellation && (
+                              <CancelIcon sx={{ fontSize: '0.8rem' }} />
+                            )}
+                          </Box>
+                        }
                         size="small"
                         sx={{
                           fontWeight:
-                            isChosenDie || isChosenLowDie ? 'bold' : 'normal',
-                          backgroundColor:
-                            isChosenDie || isChosenLowDie
-                              ? theme.palette.primary.main
-                              : theme.palette.action.hover,
-                          color:
-                            isChosenDie || isChosenLowDie
-                              ? theme.palette.primary.contrastText
-                              : theme.palette.text.primary,
+                            die.isSuccess || die.isCancellation
+                              ? 'bold'
+                              : 'normal',
+                          backgroundColor,
+                          color,
                           fontSize: '0.875rem',
-                          minWidth: '32px',
-                          ...(roll === 20 && {
-                            backgroundColor: theme.palette.warning.main,
-                            color: theme.palette.warning.contrastText,
-                          }),
-                          ...(roll === 1 && {
-                            backgroundColor: theme.palette.error.main,
-                            color: theme.palette.error.contrastText,
-                          }),
+                          minWidth: '40px',
                         }}
                       />
                     );
@@ -278,44 +279,42 @@ export function DiceRollResult({
                 </Stack>
               </Box>
 
-              {/* Cálculo */}
+              {/* Contagem */}
               <Box>
                 <Typography
                   variant="caption"
                   color="text.secondary"
                   gutterBottom
                 >
-                  Cálculo:
+                  Contagem:
                 </Typography>
                 <Typography variant="body2" fontFamily="monospace">
-                  Valor Base: <strong>{result.baseResult}</strong>
-                  {result.modifier !== 0 && (
+                  <span style={{ color: theme.palette.success.main }}>
+                    {result.successes}✶
+                  </span>
+                  {result.cancellations > 0 && (
                     <>
-                      {' '}
-                      {result.modifier > 0 ? '+' : ''}
-                      {result.modifier} (modificador)
+                      {' - '}
+                      <span style={{ color: theme.palette.error.main }}>
+                        {result.cancellations} cancelado
+                        {result.cancellations !== 1 ? 's' : ''}
+                      </span>
                     </>
                   )}
                   {' = '}
                   <strong style={{ color: getResultColor() }}>
-                    {result.finalResult}
+                    {result.netSuccesses}✶
                   </strong>
                 </Typography>
               </Box>
 
-              {/* Tipo de Rolagem */}
-              {result.rollType !== 'normal' && (
+              {/* Modificador de dados */}
+              {result.diceModifier !== 0 && (
                 <Box>
                   <Chip
-                    label={
-                      result.rollType === 'advantage'
-                        ? 'Com Vantagem'
-                        : 'Com Desvantagem'
-                    }
+                    label={`${result.diceModifier > 0 ? '+' : ''}${result.diceModifier}d`}
                     size="small"
-                    color={
-                      result.rollType === 'advantage' ? 'success' : 'error'
-                    }
+                    color={result.diceModifier > 0 ? 'success' : 'error'}
                     variant="outlined"
                   />
                 </Box>
@@ -350,6 +349,352 @@ export function DiceRollResult({
           </>
         )}
       </Stack>
+    </Paper>
+  );
+}
+
+/**
+ * Exibe o resultado de uma rolagem de dano (soma de dados)
+ */
+function DamageResultDisplay({
+  result,
+  animate,
+  showBreakdown,
+}: {
+  result: DamageDiceRollResult;
+  animate: boolean;
+  showBreakdown: boolean;
+}) {
+  const theme = useTheme();
+
+  const isCritical = result.isCritical ?? false;
+
+  return (
+    <Paper
+      elevation={isCritical ? 8 : 2}
+      sx={{
+        p: 2,
+        backgroundColor:
+          theme.palette.mode === 'dark'
+            ? 'rgba(211, 47, 47, 0.05)'
+            : 'rgba(211, 47, 47, 0.03)',
+        borderRadius: 2,
+        animation: animate ? `${bounceIn} 0.5s ease-out` : 'none',
+        ...(isCritical && {
+          border: `2px solid ${theme.palette.error.main}`,
+          animation: `${bounceIn} 0.5s ease-out, ${pulse} 2s infinite`,
+        }),
+      }}
+    >
+      <Stack spacing={2}>
+        {/* Fórmula */}
+        <Box>
+          <Typography variant="caption" color="text.secondary" gutterBottom>
+            Dano:
+          </Typography>
+          <Typography variant="body1" fontFamily="monospace">
+            {result.formula}
+          </Typography>
+        </Box>
+
+        <Divider />
+
+        {/* Resultado Final */}
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary" gutterBottom>
+            Total de Dano
+          </Typography>
+          <Typography
+            variant="h2"
+            component="div"
+            fontWeight="bold"
+            sx={{
+              color: theme.palette.error.main,
+              fontSize: { xs: '3rem', sm: '4rem' },
+              lineHeight: 1,
+              my: 1,
+            }}
+            aria-label={`Dano: ${result.finalResult}`}
+          >
+            {result.finalResult}
+          </Typography>
+
+          {isCritical && (
+            <Chip
+              label="CRÍTICO!"
+              color="error"
+              sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}
+            />
+          )}
+        </Box>
+
+        {/* Breakdown */}
+        {showBreakdown && (
+          <>
+            <Divider />
+
+            <Stack spacing={1.5}>
+              {/* Dados Rolados */}
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Dados ({result.diceCount}d{result.diceType}):
+                </Typography>
+                <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
+                  {result.rolls.map((roll, index) => (
+                    <Chip
+                      key={index}
+                      label={roll}
+                      size="small"
+                      sx={{
+                        fontWeight:
+                          roll === result.diceType ? 'bold' : 'normal',
+                        backgroundColor:
+                          roll === result.diceType
+                            ? theme.palette.error.main
+                            : theme.palette.action.hover,
+                        color:
+                          roll === result.diceType
+                            ? theme.palette.error.contrastText
+                            : theme.palette.text.primary,
+                        fontSize: '0.875rem',
+                        minWidth: '32px',
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+
+              {/* Cálculo */}
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Cálculo:
+                </Typography>
+                <Typography variant="body2" fontFamily="monospace">
+                  Base: <strong>{result.baseResult}</strong>
+                  {result.modifier !== 0 && (
+                    <>
+                      {' '}
+                      {result.modifier > 0 ? '+' : ''}
+                      {result.modifier}
+                    </>
+                  )}
+                  {' = '}
+                  <strong style={{ color: theme.palette.error.main }}>
+                    {result.finalResult}
+                  </strong>
+                </Typography>
+              </Box>
+
+              {/* Contexto */}
+              {result.context && (
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Contexto:
+                  </Typography>
+                  <Typography variant="body2" fontStyle="italic">
+                    {result.context}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Timestamp */}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ textAlign: 'right' }}
+              >
+                Rolado em:{' '}
+                {new Date(result.timestamp).toLocaleTimeString('pt-BR')}
+              </Typography>
+            </Stack>
+          </>
+        )}
+      </Stack>
+    </Paper>
+  );
+}
+
+/**
+ * Exibe o resultado de uma rolagem customizada
+ */
+function CustomResultDisplay({
+  result,
+  animate,
+  showBreakdown,
+}: {
+  result: CustomDiceResult;
+  animate: boolean;
+  showBreakdown: boolean;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Paper
+      elevation={2}
+      sx={{
+        p: 2,
+        backgroundColor:
+          theme.palette.mode === 'dark'
+            ? 'rgba(212, 175, 55, 0.05)'
+            : 'rgba(94, 44, 4, 0.03)',
+        borderRadius: 2,
+        animation: animate ? `${bounceIn} 0.5s ease-out` : 'none',
+      }}
+    >
+      <Stack spacing={2}>
+        {/* Fórmula */}
+        <Box>
+          <Typography variant="caption" color="text.secondary" gutterBottom>
+            Fórmula:
+          </Typography>
+          <Typography variant="body1" fontFamily="monospace">
+            {result.formula}
+          </Typography>
+        </Box>
+
+        <Divider />
+
+        {/* Resultado */}
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary" gutterBottom>
+            {result.summed ? 'Total' : 'Resultado'}
+          </Typography>
+          <Typography
+            variant="h2"
+            component="div"
+            fontWeight="bold"
+            sx={{
+              color: theme.palette.primary.main,
+              fontSize: { xs: '3rem', sm: '4rem' },
+              lineHeight: 1,
+              my: 1,
+            }}
+          >
+            {result.total}
+          </Typography>
+        </Box>
+
+        {/* Breakdown */}
+        {showBreakdown && (
+          <>
+            <Divider />
+
+            <Stack spacing={1.5}>
+              {/* Dados */}
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Dados ({result.diceCount}d{result.diceType}):
+                </Typography>
+                <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
+                  {result.rolls.map((roll, index) => (
+                    <Chip
+                      key={index}
+                      label={roll}
+                      size="small"
+                      sx={{
+                        fontSize: '0.875rem',
+                        minWidth: '32px',
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+
+              {/* Contexto */}
+              {result.context && (
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Contexto:
+                  </Typography>
+                  <Typography variant="body2" fontStyle="italic">
+                    {result.context}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Timestamp */}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ textAlign: 'right' }}
+              >
+                Rolado em:{' '}
+                {new Date(result.timestamp).toLocaleTimeString('pt-BR')}
+              </Typography>
+            </Stack>
+          </>
+        )}
+      </Stack>
+    </Paper>
+  );
+}
+
+/**
+ * Componente principal de exibição de resultado
+ *
+ * Detecta automaticamente o tipo de resultado e exibe o componente apropriado.
+ */
+export function DiceRollResult({
+  result,
+  animate = true,
+  showBreakdown = true,
+  requiredSuccesses,
+}: DiceRollResultProps) {
+  if (isDicePoolResult(result)) {
+    return (
+      <PoolResultDisplay
+        result={result}
+        animate={animate}
+        showBreakdown={showBreakdown}
+        requiredSuccesses={requiredSuccesses}
+      />
+    );
+  }
+
+  if (isDamageDiceRollResult(result)) {
+    return (
+      <DamageResultDisplay
+        result={result}
+        animate={animate}
+        showBreakdown={showBreakdown}
+      />
+    );
+  }
+
+  if (isCustomDiceResult(result)) {
+    return (
+      <CustomResultDisplay
+        result={result}
+        animate={animate}
+        showBreakdown={showBreakdown}
+      />
+    );
+  }
+
+  // Fallback para tipo desconhecido
+  return (
+    <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
+      <Typography color="error">Tipo de resultado desconhecido</Typography>
     </Paper>
   );
 }

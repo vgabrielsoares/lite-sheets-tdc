@@ -2,8 +2,8 @@
  * Utilitários para cálculos de descanso e recuperação
  *
  * Regras:
- * - Dormir: Nível × Constituição + Modificadores
- * - Relaxar (Meditar): Nível × Presença + Modificadores
+ * - Dormir: Nível × Corpo + Modificadores
+ * - Relaxar (Meditar): Nível × Essência + Modificadores
  * - Total: (Dormir + Relaxar) × Multiplicador de Qualidade
  * - Arredondar para baixo
  */
@@ -71,8 +71,8 @@ export function getQualityMultiplier(quality: RestQuality): number {
  * Resultado do cálculo de recuperação em descanso
  */
 export interface RestRecovery {
-  /** Recuperação de PV (via Dormir) */
-  pvRecovery: number;
+  /** Recuperação de GA (Guarda, via Dormir) */
+  gaRecovery: number;
   /** Recuperação de PP (via Relaxar) */
   ppRecovery: number;
   /** Recuperação base de Dormir (antes do multiplicador) */
@@ -84,43 +84,43 @@ export interface RestRecovery {
 }
 
 /**
- * Calcula recuperação de PV e PP durante um descanso
+ * Calcula recuperação de GA (Guarda) e PP durante um descanso
  *
  * @param level - Nível do personagem
- * @param constitution - Valor do atributo Constituição
- * @param presenca - Valor do atributo Presença
+ * @param corpo - Valor do atributo Corpo
+ * @param essencia - Valor do atributo Essência
  * @param quality - Qualidade do descanso
  * @param useSleep - Se o personagem dormiu (padrão: true)
  * @param useMeditate - Se o personagem relaxou/meditou (padrão: true)
  * @param sleepModifiers - Modificadores adicionais para Dormir (padrão: 0)
  * @param meditateModifiers - Modificadores adicionais para Relaxar (padrão: 0)
- * @returns Objeto com recuperação de PV e PP e detalhes do cálculo
+ * @returns Objeto com recuperação de GA e PP e detalhes do cálculo
  */
 export function calculateRestRecovery(
   level: number,
-  constitution: number,
-  presenca: number,
+  corpo: number,
+  essencia: number,
   quality: RestQuality = 'normal',
   useSleep: boolean = true,
   useMeditate: boolean = true,
   sleepModifiers: number = 0,
   meditateModifiers: number = 0
 ): RestRecovery {
-  // Calcular recuperação base de Dormir (recupera PV)
-  const sleepBase = useSleep ? level * constitution + sleepModifiers : 0;
+  // Calcular recuperação base de Dormir (recupera GA - Guarda)
+  const sleepBase = useSleep ? level * corpo + sleepModifiers : 0;
 
   // Calcular recuperação base de Relaxar/Meditar (recupera PP)
-  const meditateBase = useMeditate ? level * presenca + meditateModifiers : 0;
+  const meditateBase = useMeditate ? level * essencia + meditateModifiers : 0;
 
   // Aplicar multiplicador de qualidade
   const multiplier = getQualityMultiplier(quality);
 
-  // Dormir recupera PV, Relaxar recupera PP (separadamente)
-  const pvRecovery = Math.floor(sleepBase * multiplier);
+  // Dormir recupera GA (Guarda), Relaxar recupera PP (separadamente)
+  const gaRecovery = Math.floor(sleepBase * multiplier);
   const ppRecovery = Math.floor(meditateBase * multiplier);
 
   return {
-    pvRecovery,
+    gaRecovery,
     ppRecovery,
     sleepBase,
     meditateBase,
@@ -133,24 +133,24 @@ export function calculateRestRecovery(
  */
 export function validateRestInputs(
   level: number,
-  constitution: number,
-  presenca: number
+  corpo: number,
+  essencia: number
 ): { valid: boolean; error?: string } {
-  if (level < 1) {
-    return { valid: false, error: 'Nível deve ser maior que 0' };
+  if (level < 0) {
+    return { valid: false, error: 'Nível não pode ser negativo' };
   }
 
-  if (constitution < 0) {
+  if (corpo < 0) {
     return {
       valid: false,
-      error: 'Constituição não pode ser negativa',
+      error: 'Corpo não pode ser negativo',
     };
   }
 
-  if (presenca < 0) {
+  if (essencia < 0) {
     return {
       valid: false,
-      error: 'Presença não pode ser negativa',
+      error: 'Essência não pode ser negativa',
     };
   }
 

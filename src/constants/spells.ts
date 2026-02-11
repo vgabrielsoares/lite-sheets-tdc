@@ -14,6 +14,7 @@ export type SpellCircle = (typeof SPELL_CIRCLES)[number];
 
 /**
  * Custo em PP por círculo de feitiço
+ * @deprecated Use SPELL_CIRCLE_PF_COST para custos em PF (v0.0.2+)
  */
 export const SPELL_CIRCLE_PP_COST: Record<SpellCircle, number> = {
   1: 0,
@@ -22,8 +23,45 @@ export const SPELL_CIRCLE_PP_COST: Record<SpellCircle, number> = {
   4: 5,
   5: 7,
   6: 9,
-  7: 12,
-  8: 15,
+  7: 15,
+  8: 20,
+};
+
+/**
+ * Custo em PF (Pontos de Feitiço) por círculo de feitiço
+ * Gastar PF também gasta PP no mesmo valor.
+ * Não é possível reduzir o custo abaixo de 1 PF, exceto 1º Círculo sem aprimoramentos.
+ * Tabela oficial (livro v0.1.7):
+ * 1º=0, 2º=1, 3º=3, 4º=5, 5º=7, 6º=9, 7º=15, 8º=20
+ */
+export const SPELL_CIRCLE_PF_COST: Record<SpellCircle, number> = {
+  1: 0,
+  2: 1,
+  3: 3,
+  4: 5,
+  5: 7,
+  6: 9,
+  7: 15,
+  8: 20,
+};
+
+/**
+ * Geração de PF pela ação especial "Canalizar Mana"
+ * ▶ = 1 PF, ▶▶ = 2 PF, ▶▶▶ = 4 PF
+ */
+export const CHANNEL_MANA_PF_GENERATION: Record<1 | 2 | 3, number> = {
+  1: 1, // ▶ = 1 PF
+  2: 2, // ▶▶ = 2 PF
+  3: 4, // ▶▶▶ = 4 PF
+};
+
+/**
+ * Labels para a ação Canalizar Mana
+ */
+export const CHANNEL_MANA_LABELS: Record<1 | 2 | 3, string> = {
+  1: '▶ Gera 1 PF',
+  2: '▶▶ Gera 2 PF',
+  3: '▶▶▶ Gera 4 PF',
 };
 
 /**
@@ -189,7 +227,7 @@ export const SPELL_LEARNING_MAX_CHANCE = 99;
 
 /**
  * ND base de feitiços (constante do sistema)
- * Usado na fórmula: 12 + Presença + Habilidade + Bônus
+ * Usado na fórmula: 12 + Essência + Habilidade + Bônus
  */
 export const SPELL_BASE_DC = 12;
 

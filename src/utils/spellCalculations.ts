@@ -16,45 +16,45 @@ import {
 /**
  * Calcula o ND (Nível de Dificuldade) de feitiços
  *
- * Fórmula: 12 + Presença + Modificador da Habilidade + Bônus de ND
+ * Fórmula: 12 + Essência + Modificador da Habilidade + Bônus de ND
  *
- * @param presencaValue - Valor do atributo Presença
+ * @param essenciaValue - Valor do atributo Essência
  * @param skillModifier - Modificador total da habilidade de conjuração (Arcano, Natureza ou Religião)
  * @param dcBonus - Bônus adicional ao ND (padrão: 0)
  * @returns ND calculado
  *
  * @example
- * // Personagem com Presença 3, Arcano +6, sem bônus
+ * // Personagem com Essência 3, Arcano +6, sem bônus
  * calculateSpellDC(3, 6, 0) // retorna 21 (12 + 3 + 6 + 0)
  */
 export function calculateSpellDC(
-  presencaValue: number,
+  essenciaValue: number,
   skillModifier: number,
   dcBonus: number = 0
 ): number {
-  return SPELL_BASE_DC + presencaValue + skillModifier + dcBonus;
+  return SPELL_BASE_DC + essenciaValue + skillModifier + dcBonus;
 }
 
 /**
  * Calcula o Bônus de Ataque de feitiços
  *
- * Fórmula: Presença + Modificador da Habilidade + Bônus de Ataque
+ * Fórmula: Essência + Modificador da Habilidade + Bônus de Ataque
  *
- * @param presencaValue - Valor do atributo Presença
+ * @param essenciaValue - Valor do atributo Essência
  * @param skillModifier - Modificador total da habilidade de conjuração
  * @param attackBonus - Bônus adicional ao ataque (padrão: 0)
  * @returns Bônus de ataque calculado
  *
  * @example
- * // Personagem com Presença 3, Religião +4, sem bônus
+ * // Personagem com Essência 3, Religião +4, sem bônus
  * calculateSpellAttackBonus(3, 4, 0) // retorna 7 (3 + 4 + 0)
  */
 export function calculateSpellAttackBonus(
-  presencaValue: number,
+  essenciaValue: number,
   skillModifier: number,
   attackBonus: number = 0
 ): number {
-  return presencaValue + skillModifier + attackBonus;
+  return essenciaValue + skillModifier + attackBonus;
 }
 
 /**

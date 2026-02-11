@@ -164,7 +164,7 @@ describe('useCharacterCreation', () => {
       expect(characters[0].name).toBe('Gimli');
     });
 
-    it('deve criar personagem com valores padrão de nível 1', async () => {
+    it('deve criar personagem com valores padrão de nível 0', async () => {
       const { result, store } = renderHookWithProviders();
 
       await act(async () => {
@@ -175,19 +175,19 @@ describe('useCharacterCreation', () => {
       const character = Object.values(state.characters.entities)[0];
 
       // Verificar valores padrão básicos
-      expect(character.level).toBe(1);
-      expect(character.combat.hp.max).toBe(15);
-      expect(character.combat.hp.current).toBe(15);
+      expect(character.level).toBe(0);
+      expect(character.combat.guard.max).toBe(15);
+      expect(character.combat.guard.current).toBe(15);
       expect(character.combat.pp.max).toBe(2);
       expect(character.combat.pp.current).toBe(2);
 
       // Verificar atributos
       expect(character.attributes.agilidade).toBe(1);
-      expect(character.attributes.constituicao).toBe(1);
-      expect(character.attributes.forca).toBe(1);
+      expect(character.attributes.corpo).toBe(1);
       expect(character.attributes.influencia).toBe(1);
       expect(character.attributes.mente).toBe(1);
-      expect(character.attributes.presenca).toBe(1);
+      expect(character.attributes.essencia).toBe(1);
+      expect(character.attributes.instinto).toBe(1);
 
       // Verificar idiomas (comum - lowercase como definido em LANGUAGE_LIST)
       expect(character.languages).toContain('comum');
@@ -217,7 +217,7 @@ describe('useCharacterCreation', () => {
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith(
-          expect.stringMatching(/^\/characters\/.+$/)
+          expect.stringMatching(/^\/characters\?id=.+$/)
         );
       });
     });
@@ -229,7 +229,7 @@ describe('useCharacterCreation', () => {
         result.current.cancel();
       });
 
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockPush).toHaveBeenCalledWith('/characters');
     });
   });
 

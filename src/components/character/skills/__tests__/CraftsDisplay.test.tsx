@@ -20,11 +20,11 @@ import type { Craft, AttributeName } from '@/types';
 // Mock de atributos para testes
 const mockAttributes: Record<AttributeName, number> = {
   agilidade: 2,
-  constituicao: 3,
-  forca: 4,
+  corpo: 4,
   influencia: 2,
   mente: 3,
-  presenca: 2,
+  essencia: 2,
+  instinto: 1,
 };
 
 // Mocks de ofícios
@@ -33,7 +33,7 @@ const mockCrafts: Craft[] = [
     id: 'craft-1',
     name: 'Carpintaria',
     level: 3,
-    attributeKey: 'forca',
+    attributeKey: 'corpo',
     diceModifier: 0,
     numericModifier: 2,
     description: 'Trabalho em madeira',
@@ -132,8 +132,8 @@ describe('CraftsDisplay', () => {
         />
       );
 
-      // O componente renderiza o attributeKey direto (ex: "forca")
-      expect(screen.getByText(/forca/i)).toBeInTheDocument();
+      // O componente renderiza o attributeKey direto (ex: "corpo")
+      expect(screen.getByText(/corpo/i)).toBeInTheDocument();
       expect(screen.getByText(/mente/i)).toBeInTheDocument();
     });
   });
@@ -427,7 +427,7 @@ describe('CraftsDisplay', () => {
         />
       );
 
-      // Carpintaria: Força (4) × 2 (nível 3) + 2 (numérico) = 10
+      // Carpintaria: Corpo (4) × 2 (nível 3) + 2 (numérico) = 10
       // O componente exibe o modificador de alguma forma
       // Vamos verificar se os dados estão sendo renderizados
       expect(screen.getByText('Carpintaria')).toBeInTheDocument();

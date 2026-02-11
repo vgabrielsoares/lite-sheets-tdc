@@ -54,8 +54,10 @@ export const ARCHETYPE_DESCRIPTIONS: Record<ArchetypeName, string> = {
 };
 
 /**
+ * @deprecated Substituído por ARCHETYPE_GA_ATTRIBUTE em v0.0.2.
+ * GA por nível agora é baseado no atributo relevante do arquétipo.
  * PV por nível ganho para cada arquétipo
- * Fórmula: Base + Constituição
+ * Fórmula: Base + Corpo
  */
 export const ARCHETYPE_HP_PER_LEVEL: Record<ArchetypeName, number> = {
   combatente: 5,
@@ -67,8 +69,53 @@ export const ARCHETYPE_HP_PER_LEVEL: Record<ArchetypeName, number> = {
 };
 
 /**
+ * Atributo que determina GA ganho por nível de cada arquétipo
+ * Fórmula: GA total = 15 (base) + Σ(valor_atributo × níveis_no_arquétipo)
+ *
+ * | Arquétipo   | Atributo para GA |
+ * |-------------|------------------|
+ * | Acadêmico   | Mente            |
+ * | Acólito     | Influência       |
+ * | Combatente  | Corpo            |
+ * | Feiticeiro  | Essência         |
+ * | Ladino      | Agilidade        |
+ * | Natural     | Instinto         |
+ */
+export const ARCHETYPE_GA_ATTRIBUTE: Record<ArchetypeName, AttributeKey> = {
+  academico: 'mente',
+  acolito: 'influencia',
+  combatente: 'corpo',
+  feiticeiro: 'essencia',
+  ladino: 'agilidade',
+  natural: 'instinto',
+};
+
+/**
+ * Base de PP ganho por nível de cada arquétipo (sem contar Essência)
+ * Fórmula: PP total = 2 (base) + Σ((base_pp + Essência) × níveis_no_arquétipo)
+ *
+ * | Arquétipo   | PP base por nível |
+ * |-------------|-------------------|
+ * | Acadêmico   | +4                |
+ * | Acólito     | +3                |
+ * | Combatente  | +1                |
+ * | Feiticeiro  | +5                |
+ * | Ladino      | +2                |
+ * | Natural     | +3                |
+ */
+export const ARCHETYPE_PP_BASE_PER_LEVEL: Record<ArchetypeName, number> = {
+  academico: 4,
+  acolito: 3,
+  combatente: 1,
+  feiticeiro: 5,
+  ladino: 2,
+  natural: 3,
+};
+
+/**
+ * @deprecated Use ARCHETYPE_PP_BASE_PER_LEVEL + Essência.
  * PP por nível ganho para cada arquétipo
- * Fórmula: Base + Presença
+ * Fórmula: Base + Essência
  * Nota: Valores baseados no contexto do sistema (não especificados nas regras básicas)
  */
 export const ARCHETYPE_PP_PER_LEVEL: Record<ArchetypeName, number> = {
@@ -81,15 +128,41 @@ export const ARCHETYPE_PP_PER_LEVEL: Record<ArchetypeName, number> = {
 };
 
 /**
+ * Habilidades iniciais por arquétipo
+ * Concedidas ao escolher o arquétipo no nível 1
+ */
+export const ARCHETYPE_INITIAL_SKILLS: Record<ArchetypeName, string[]> = {
+  academico: ['Instrução', '1 à escolha'],
+  acolito: ['Religião', 'Determinação'],
+  combatente: ['Acerto ou Luta', 'Reflexo ou Vigor'],
+  feiticeiro: ['Arcano', 'Determinação'],
+  ladino: ['Destreza', 'Reflexo'],
+  natural: ['Natureza', 'Sobrevivência'],
+};
+
+/**
+ * Proficiências iniciais por arquétipo
+ */
+export const ARCHETYPE_INITIAL_PROFICIENCIES: Record<ArchetypeName, string[]> =
+  {
+    academico: ['2 Ferramentas'],
+    acolito: ['Armadura Leve'],
+    combatente: ['Armas Marciais', 'Armadura Leve', 'Maestria em 1 arma'],
+    feiticeiro: [],
+    ladino: ['Instrumentos de Destreza', 'Armadura Leve'],
+    natural: ['Armadura Leve'],
+  };
+
+/**
  * Tipo para atributo
  */
 type AttributeKey =
   | 'agilidade'
-  | 'constituicao'
-  | 'forca'
+  | 'corpo'
   | 'influencia'
   | 'mente'
-  | 'presenca';
+  | 'essencia'
+  | 'instinto';
 
 /**
  * Atributos relevantes por arquétipo
@@ -100,11 +173,11 @@ export const ARCHETYPE_RELEVANT_ATTRIBUTES: Record<
   AttributeKey[]
 > = {
   academico: ['mente'],
-  acolito: ['presenca', 'influencia'],
-  combatente: ['agilidade', 'forca', 'constituicao'], // Agilidade OU Força, + Constituição
-  feiticeiro: ['mente', 'presenca'],
+  acolito: ['essencia', 'influencia'],
+  combatente: ['agilidade', 'corpo'], // Agilidade OU Corpo
+  feiticeiro: ['mente', 'essencia'],
   ladino: ['agilidade'],
-  natural: ['presenca'],
+  natural: ['instinto'],
 };
 
 /**
@@ -112,11 +185,11 @@ export const ARCHETYPE_RELEVANT_ATTRIBUTES: Record<
  */
 export const ARCHETYPE_ATTRIBUTE_DESCRIPTION: Record<ArchetypeName, string> = {
   academico: 'Mente',
-  acolito: 'Presença e Influência',
-  combatente: 'Agilidade ou Força, Constituição',
-  feiticeiro: 'Mente e Presença',
+  acolito: 'Essência e Influência',
+  combatente: 'Agilidade ou Corpo',
+  feiticeiro: 'Mente e Essência',
   ladino: 'Agilidade',
-  natural: 'Presença',
+  natural: 'Instinto',
 };
 
 /**
@@ -126,11 +199,11 @@ export const ARCHETYPE_ATTRIBUTE_DESCRIPTION: Record<ArchetypeName, string> = {
 export const ARCHETYPE_PRIMARY_ATTRIBUTE: Record<ArchetypeName, AttributeKey> =
   {
     academico: 'mente',
-    acolito: 'presenca',
-    combatente: 'constituicao',
-    feiticeiro: 'presenca',
+    acolito: 'essencia',
+    combatente: 'corpo',
+    feiticeiro: 'essencia',
     ladino: 'agilidade',
-    natural: 'presenca',
+    natural: 'instinto',
   };
 
 /**
@@ -147,14 +220,19 @@ export const ARCHETYPE_IS_SPELLCASTER: Record<ArchetypeName, boolean> = {
 
 /**
  * Tipos de ganhos por nível de arquétipo
+ *
+ * Simplificado para 3 tipos:
+ * - caracteristica: Características de Arquétipo (níveis 1, 5, 10, 15)
+ * - poder_ou_talento: Poder de Arquétipo ou Talento (todos os outros níveis: 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14)
+ * - competencia: Competências (níveis múltiplos de 5 do arquétipo: 5, 10, 15)
+ *
+ * Nota: Aumento de Atributo e Grau de Habilidade são Talentos que o jogador
+ * pode escolher em qualquer nível que conceda poder_ou_talento, não ganhos automáticos.
  */
 export type ArchetypeLevelGainType =
   | 'caracteristica' // Características de Arquétipo (níveis 1, 5, 10, 15)
-  | 'poder' // Poderes de Arquétipo (níveis 2, 4, 6, 8, 9, 11, 13, 14)
-  | 'competencia' // Competências/Proficiências (níveis 3, 7, 12)
-  | 'atributo' // Aumentos de Atributo (níveis 4, 8, 13)
-  | 'grau_habilidade' // Grau de Habilidade (níveis 5, 9, 14)
-  | 'defesa_etapa'; // Defesa por Etapa (níveis 5, 10, 15)
+  | 'poder_ou_talento' // Poder de Arquétipo ou Talento (níveis 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14)
+  | 'competencia'; // Competências (níveis 5, 10, 15 — junto com característica)
 
 /**
  * Configuração de ganhos por nível
@@ -171,8 +249,28 @@ export interface ArchetypeLevelGain {
 }
 
 /**
- * Mapeamento de ganhos por nível (1-15)
+ * Mapeamento de ganhos por nível de arquétipo (1-15+)
  * Baseado nas regras do Tabuleiro do Caos RPG
+ *
+ * Tabela de ganhos:
+ * | Nível | Ganho |
+ * |-------|-------------------------------------------|
+ * | 1     | Característica de Arquétipo                |
+ * | 2     | Poder de Arquétipo ou Talento              |
+ * | 3     | Poder de Arquétipo ou Talento              |
+ * | 4     | Poder de Arquétipo ou Talento              |
+ * | 5     | Competência + Característica de Arquétipo  |
+ * | 6     | Poder de Arquétipo ou Talento              |
+ * | 7     | Poder de Arquétipo ou Talento              |
+ * | 8     | Poder de Arquétipo ou Talento              |
+ * | 9     | Poder de Arquétipo ou Talento              |
+ * | 10    | Competência + Característica de Arquétipo  |
+ * | 11    | Poder de Arquétipo ou Talento              |
+ * | 12    | Poder de Arquétipo ou Talento              |
+ * | 13    | Poder de Arquétipo ou Talento              |
+ * | 14    | Poder de Arquétipo ou Talento              |
+ * | 15    | Competência + Característica de Arquétipo  |
+ * | 16+   | Poder/Talento (Competência se múltiplo 5)  |
  */
 export const ARCHETYPE_LEVEL_GAINS: ArchetypeLevelGain[] = [
   // Nível 1 - Característica de Arquétipo
@@ -182,160 +280,121 @@ export const ARCHETYPE_LEVEL_GAINS: ArchetypeLevelGain[] = [
     label: 'Característica de Arquétipo',
     description: 'Você ganha a característica inicial do arquétipo escolhido.',
   },
-  // Nível 2 - Poder de Arquétipo
+  // Nível 2 - Poder de Arquétipo ou Talento
   {
     level: 2,
-    type: 'poder',
-    label: 'Poder de Arquétipo',
-    description: 'Você ganha um poder especial do seu arquétipo.',
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
   },
-  // Nível 3 - Competência
+  // Nível 3 - Poder de Arquétipo ou Talento
   {
     level: 3,
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
+  },
+  // Nível 4 - Poder de Arquétipo ou Talento
+  {
+    level: 4,
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
+  },
+  // Nível 5 - Competência + Característica de Arquétipo
+  {
+    level: 5,
     type: 'competencia',
     label: 'Competência',
-    description: 'Você ganha uma habilidade especial completa e poderosa.',
+    description: 'Você ganha uma competência poderosa.',
   },
-  // Nível 4 - Poder + Aumento de Atributo
-  {
-    level: 4,
-    type: 'poder',
-    label: 'Poder de Arquétipo',
-    description: 'Você ganha um poder especial do seu arquétipo.',
-  },
-  {
-    level: 4,
-    type: 'atributo',
-    label: 'Aumento de Atributo',
-    description: 'Você pode aumentar um atributo em +1.',
-  },
-  // Nível 5 - Característica de Arquétipo + Grau de Habilidade
   {
     level: 5,
     type: 'caracteristica',
     label: 'Característica de Arquétipo',
     description: 'Você ganha uma característica avançada do arquétipo.',
   },
-  {
-    level: 5,
-    type: 'grau_habilidade',
-    label: 'Grau de Habilidade',
-    description:
-      'Você pode melhorar uma habilidade para o próximo grau de proficiência.',
-  },
-  {
-    level: 5,
-    type: 'defesa_etapa',
-    label: 'Defesa por Etapa',
-    description: 'Você ganha um bônus de defesa por etapa do seu arquétipo.',
-  },
-  // Nível 6 - Poder de Arquétipo
+  // Nível 6 - Poder de Arquétipo ou Talento
   {
     level: 6,
-    type: 'poder',
-    label: 'Poder de Arquétipo',
-    description: 'Você ganha um poder especial do seu arquétipo.',
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
   },
-  // Nível 7 - Competência
+  // Nível 7 - Poder de Arquétipo ou Talento
   {
     level: 7,
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
+  },
+  // Nível 8 - Poder de Arquétipo ou Talento
+  {
+    level: 8,
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
+  },
+  // Nível 9 - Poder de Arquétipo ou Talento
+  {
+    level: 9,
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
+  },
+  // Nível 10 - Competência + Característica de Arquétipo
+  {
+    level: 10,
     type: 'competencia',
     label: 'Competência',
-    description: 'Você ganha uma habilidade especial completa e poderosa.',
+    description: 'Você ganha uma competência poderosa.',
   },
-  // Nível 8 - Poder + Aumento de Atributo
-  {
-    level: 8,
-    type: 'poder',
-    label: 'Poder de Arquétipo',
-    description: 'Você ganha um poder especial do seu arquétipo.',
-  },
-  {
-    level: 8,
-    type: 'atributo',
-    label: 'Aumento de Atributo',
-    description: 'Você pode aumentar um atributo em +1.',
-  },
-  // Nível 9 - Poder de Arquétipo + Grau de Habilidade
-  {
-    level: 9,
-    type: 'poder',
-    label: 'Poder de Arquétipo',
-    description: 'Você ganha um poder especial do seu arquétipo.',
-  },
-  {
-    level: 9,
-    type: 'grau_habilidade',
-    label: 'Grau de Habilidade',
-    description:
-      'Você pode melhorar uma habilidade para o próximo grau de proficiência.',
-  },
-  // Nível 10 - Característica de Arquétipo + Defesa por Etapa
   {
     level: 10,
     type: 'caracteristica',
     label: 'Característica de Arquétipo',
     description: 'Você ganha uma característica poderosa do arquétipo.',
   },
-  {
-    level: 10,
-    type: 'defesa_etapa',
-    label: 'Defesa por Etapa',
-    description: 'Você ganha um bônus de defesa por etapa do seu arquétipo.',
-  },
-  // Nível 11 - Poder de Arquétipo
+  // Nível 11 - Poder de Arquétipo ou Talento
   {
     level: 11,
-    type: 'poder',
-    label: 'Poder de Arquétipo',
-    description: 'Você ganha um poder especial do seu arquétipo.',
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
   },
-  // Nível 12 - Competência
+  // Nível 12 - Poder de Arquétipo ou Talento
   {
     level: 12,
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
+  },
+  // Nível 13 - Poder de Arquétipo ou Talento
+  {
+    level: 13,
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
+  },
+  // Nível 14 - Poder de Arquétipo ou Talento
+  {
+    level: 14,
+    type: 'poder_ou_talento',
+    label: 'Poder de Arquétipo ou Talento',
+    description: 'Escolha um poder do arquétipo ou um talento.',
+  },
+  // Nível 15 - Competência + Característica de Arquétipo
+  {
+    level: 15,
     type: 'competencia',
     label: 'Competência',
-    description: 'Você ganha uma habilidade especial completa e poderosa.',
+    description: 'Você ganha uma competência poderosa.',
   },
-  // Nível 13 - Poder + Aumento de Atributo
-  {
-    level: 13,
-    type: 'poder',
-    label: 'Poder de Arquétipo',
-    description: 'Você ganha um poder especial do seu arquétipo.',
-  },
-  {
-    level: 13,
-    type: 'atributo',
-    label: 'Aumento de Atributo',
-    description: 'Você pode aumentar um atributo em +1.',
-  },
-  // Nível 14 - Poder de Arquétipo + Grau de Habilidade
-  {
-    level: 14,
-    type: 'poder',
-    label: 'Poder de Arquétipo',
-    description: 'Você ganha um poder especial do seu arquétipo.',
-  },
-  {
-    level: 14,
-    type: 'grau_habilidade',
-    label: 'Grau de Habilidade',
-    description:
-      'Você pode melhorar uma habilidade para o próximo grau de proficiência.',
-  },
-  // Nível 15 - Característica de Arquétipo + Defesa por Etapa
   {
     level: 15,
     type: 'caracteristica',
     label: 'Característica de Arquétipo',
     description: 'Você ganha a característica máxima do arquétipo.',
-  },
-  {
-    level: 15,
-    type: 'defesa_etapa',
-    label: 'Defesa por Etapa',
-    description: 'Você ganha um bônus de defesa por etapa do seu arquétipo.',
   },
 ];
 
@@ -344,11 +403,8 @@ export const ARCHETYPE_LEVEL_GAINS: ArchetypeLevelGain[] = [
  */
 export const ARCHETYPE_GAIN_LEVELS: Record<ArchetypeLevelGainType, number[]> = {
   caracteristica: [1, 5, 10, 15],
-  poder: [2, 4, 6, 8, 9, 11, 13, 14],
-  competencia: [3, 7, 12],
-  atributo: [4, 8, 13],
-  grau_habilidade: [5, 9, 14],
-  defesa_etapa: [5, 10, 15],
+  poder_ou_talento: [2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14],
+  competencia: [5, 10, 15],
 };
 
 /**
@@ -370,11 +426,8 @@ export function getGainsUpToLevel(maxLevel: number): ArchetypeLevelGain[] {
  */
 export const GAIN_TYPE_LABELS: Record<ArchetypeLevelGainType, string> = {
   caracteristica: 'Característica',
-  poder: 'Poder',
+  poder_ou_talento: 'Poder / Talento',
   competencia: 'Competência',
-  atributo: 'Aumento de Atributo',
-  grau_habilidade: 'Grau de Habilidade',
-  defesa_etapa: 'Defesa por Etapa',
 };
 
 /**
@@ -385,9 +438,6 @@ export const GAIN_TYPE_COLORS: Record<
   'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error'
 > = {
   caracteristica: 'primary',
-  poder: 'secondary',
+  poder_ou_talento: 'secondary',
   competencia: 'success',
-  atributo: 'warning',
-  grau_habilidade: 'info',
-  defesa_etapa: 'error',
 };

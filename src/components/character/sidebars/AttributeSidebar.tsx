@@ -555,29 +555,28 @@ function getAttributeImpacts(
       break;
 
     case 'agilidade':
-      // Defesa
-      const defenseTotal = character.combat.defense.total;
+      // Defesa (v0.0.2: teste ativo, não valor fixo)
       impacts.push({
-        title: 'Defesa',
-        description: `Sua Agilidade contribui diretamente para sua Defesa. Defesa atual: ${defenseTotal} (15 base + ${attributeValue} Agilidade + outros bônus).`,
+        title: 'Teste de Defesa',
+        description: `Em v0.0.2, a defesa é um teste ativo usando Reflexo (Agilidade). Sua Agilidade ${attributeValue} contribui para os dados rolados no teste de defesa.`,
         icon: <ShieldIcon color="warning" />,
         color: 'warning.main',
       });
 
-      // Iniciativa
+      // Reflexo
       impacts.push({
-        title: 'Iniciativa em Combate',
-        description: `A habilidade Iniciativa usa Agilidade como atributo-chave, determinando a ordem de combate.`,
+        title: 'Reflexo',
+        description: `A habilidade Reflexo usa Agilidade como atributo-chave, permitindo reagir rapidamente a perigos e esquivar de ataques.`,
         icon: <DirectionsRunIcon color="success" />,
         color: 'success.main',
       });
       break;
 
-    case 'constituicao':
-      // PV
+    case 'corpo':
+      // GA (Guarda)
       impacts.push({
-        title: 'Pontos de Vida',
-        description: `Constituição afeta seus PV ganhos por nível e sua resistência a efeitos físicos (Vigor e Tenacidade).`,
+        title: 'Guarda (GA)',
+        description: `Corpo afeta seus GA ganhos por nível e sua resistência física (Vigor e Tenacidade).`,
         icon: <FavoriteIcon color="error" />,
         color: 'error.main',
       });
@@ -586,17 +585,26 @@ function getAttributeImpacts(
       const dyingRounds = 2 + attributeValue;
       impacts.push({
         title: 'Estado Morrendo',
-        description: `Com Constituição ${attributeValue}, você pode sobreviver até ${dyingRounds} rodadas no estado Morrendo (2 + Constituição).`,
+        description: `Com Corpo ${attributeValue}, você pode sobreviver até ${dyingRounds} rodadas no estado Morrendo (2 + Corpo).`,
         icon: <WarningIcon color="error" />,
         color: 'error.main',
       });
+
+      // Capacidade de Carga
+      const carryCapacity = 5 + attributeValue * 5;
+      impacts.push({
+        title: 'Capacidade de Carga',
+        description: `Com Corpo ${attributeValue}, você pode carregar ${carryCapacity} espaços (5 + Corpo × 5). Pode empurrar ${attributeValue * 10} e levantar ${attributeValue * 5}.`,
+        icon: <PsychologyIcon color="primary" />,
+        color: 'primary.main',
+      });
       break;
 
-    case 'presenca':
+    case 'essencia':
       // PP
       impacts.push({
         title: 'Pontos de Poder',
-        description: `Presença afeta seus PP ganhos por nível e o limite de PP por rodada em combate.`,
+        description: `Essência afeta seus PP ganhos por nível e o limite de PP por rodada em combate.`,
         icon: <FlashOnIcon color="info" />,
         color: 'info.main',
       });
@@ -605,18 +613,17 @@ function getAttributeImpacts(
       const ppLimit = character.level + attributeValue;
       impacts.push({
         title: 'Limite de PP por Rodada',
-        description: `Com Presença ${attributeValue} e nível ${character.level}, você pode gastar até ${ppLimit} PP por rodada (Nível + Presença).`,
+        description: `Com Essência ${attributeValue} e nível ${character.level}, você pode gastar até ${ppLimit} PP por rodada (Nível + Essência).`,
         icon: <InfoIcon color="info" />,
         color: 'info.main',
       });
       break;
 
-    case 'forca':
-      // Capacidade de Carga
-      const carryCapacity = 5 + attributeValue * 5;
+    case 'instinto':
+      // Percepção e Sentidos
       impacts.push({
-        title: 'Capacidade de Carga',
-        description: `Com Força ${attributeValue}, você pode carregar ${carryCapacity} de peso (5 + Força × 5). Pode empurrar ${carryCapacity * 2} e levantar ${Math.floor(carryCapacity / 2)}.`,
+        title: 'Percepção e Sentidos',
+        description: `Instinto é chave para habilidades como Percepção, Perspicácia, Rastreamento e Natureza.`,
         icon: <PsychologyIcon color="primary" />,
         color: 'primary.main',
       });

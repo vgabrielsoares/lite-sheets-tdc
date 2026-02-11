@@ -94,19 +94,12 @@ export const CLASS_LEVEL_GAINS: ClassLevelGain[] = [
     label: 'Habilidade de Classe',
     description: 'Você ganha a habilidade inicial da classe escolhida.',
   },
-  // Nível 5 - Habilidade de Classe + Defesa por Etapa
+  // Nível 5 - Habilidade de Classe
   {
     level: 5,
     type: 'habilidade',
     label: 'Habilidade de Classe',
     description: 'Você ganha uma habilidade avançada da classe.',
-  },
-  {
-    level: 5,
-    type: 'defesa',
-    label: 'Defesa por Etapa',
-    description:
-      'Substitui a defesa por etapa padrão dos arquétipos por essa defesa.',
   },
   // Nível 7 - Melhoria de Habilidade 1
   {
@@ -122,19 +115,12 @@ export const CLASS_LEVEL_GAINS: ClassLevelGain[] = [
     label: 'Melhoria de Habilidade 2',
     description: 'Você pode melhorar outra habilidade de classe.',
   },
-  // Nível 10 - Habilidade de Classe + Defesa por Etapa
+  // Nível 10 - Habilidade de Classe
   {
     level: 10,
     type: 'habilidade',
     label: 'Habilidade de Classe',
     description: 'Você ganha uma habilidade poderosa da classe.',
-  },
-  {
-    level: 10,
-    type: 'defesa',
-    label: 'Defesa por Etapa',
-    description:
-      'Substitui a defesa por etapa padrão dos arquétipos por essa defesa.',
   },
   // Nível 14 - Melhoria de Habilidade 3
   {
@@ -143,19 +129,12 @@ export const CLASS_LEVEL_GAINS: ClassLevelGain[] = [
     label: 'Melhoria de Habilidade 3',
     description: 'Você pode melhorar mais uma habilidade de classe.',
   },
-  // Nível 15 - Habilidade de Classe + Defesa por Etapa
+  // Nível 15 - Habilidade de Classe
   {
     level: 15,
     type: 'habilidade',
     label: 'Habilidade de Classe',
     description: 'Você ganha a habilidade máxima da classe.',
-  },
-  {
-    level: 15,
-    type: 'defesa',
-    label: 'Defesa por Etapa',
-    description:
-      'Substitui a defesa por etapa padrão dos arquétipos por essa defesa.',
   },
 ];
 
@@ -165,7 +144,7 @@ export const CLASS_LEVEL_GAINS: ClassLevelGain[] = [
 export const CLASS_GAIN_LEVELS: Record<ClassGainType, number[]> = {
   habilidade: [1, 5, 10, 15],
   melhoria: [7, 9, 14],
-  defesa: [5, 10, 15],
+  defesa: [],
   proficiencia: [], // Proficiências podem vir em qualquer nível, depende da classe
 };
 

@@ -93,26 +93,26 @@ export const DEFAULT_WEAPON_PROFICIENCY: WeaponProficiencyCategory = 'simples';
 export const PROFICIENCY_COSTS = {
   weapon: {
     oneWeapon: {
-      marcial: { agilidade: 1, forca: 1 }, // 1 Agi OU 1 For
+      marcial: { agilidade: 1, corpo: 1 }, // 1 Agi OU 1 Cor
       complexa: { agilidade: 2, mente: 1 }, // 2 Agi OU 1 Men
-      pesada: { forca: 2 }, // 2 For
+      pesada: { corpo: 2 }, // 2 Cor
     },
     allWeapons: {
-      marcial: { agilidade: 3, forca: 3 }, // 3 Agi OU 3 For
+      marcial: { agilidade: 3, corpo: 3 }, // 3 Agi OU 3 Cor
       complexa: { agilidade: 4, mente: 3 }, // 4 Agi OU 3 Men
-      pesada: { forca: 4 }, // 4 For
+      pesada: { corpo: 4 }, // 4 Cor
     },
   },
   armor: {
     oneArmor: {
-      leve: { agilidade: 1, constituicao: 1 }, // 1 Agi OU 1 Con
-      media: { agilidade: 2, constituicao: 2, forca: 2 }, // 2 Agi, 2 Con OU 2 For
-      pesada: { constituicao: 3, forca: 3 }, // 3 Con OU 3 For
+      leve: { agilidade: 1, corpo: 1 }, // 1 Agi OU 1 Cor
+      media: { agilidade: 2, corpo: 2 }, // 2 Agi OU 2 Cor
+      pesada: { corpo: 3 }, // 3 Cor
     },
     allArmors: {
-      leve: { agilidade: 3, constituicao: 3 }, // 3 Agi OU 3 Con
-      media: { agilidade: 4, constituicao: 4, forca: 4 }, // 4 Agi, 4 Con OU 4 For
-      pesada: { constituicao: 5, forca: 5 }, // 5 Con OU 5 For
+      leve: { agilidade: 3, corpo: 3 }, // 3 Agi OU 3 Cor
+      media: { agilidade: 4, corpo: 4 }, // 4 Agi OU 4 Cor
+      pesada: { corpo: 5 }, // 5 Cor
     },
   },
   skill: 1, // 1 ponto de atributo relevante
