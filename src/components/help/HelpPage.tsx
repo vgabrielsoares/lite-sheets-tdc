@@ -18,33 +18,40 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import SaveIcon from '@mui/icons-material/Save';
 import CasinoIcon from '@mui/icons-material/Casino';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import FAQ from './FAQ';
 import KeyboardShortcuts from './KeyboardShortcuts';
 import ExportImportGuide from './ExportImportGuide';
 import DiceRollingGuide from './DiceRollingGuide';
+import RulesReference from './RulesReference';
 
 /**
  * Tabs disponíveis na página de ajuda
  */
-type HelpTab = 'faq' | 'keyboard' | 'export' | 'dice';
+type HelpTab = 'faq' | 'keyboard' | 'export' | 'dice' | 'reference';
 
 /**
  * Configuração das tabs
  */
 const HELP_TABS = [
   { id: 'faq' as const, label: 'FAQ', icon: HelpOutlineIcon },
+  { id: 'dice' as const, label: 'Sistema de Rolagem', icon: CasinoIcon },
   {
-    id: 'keyboard' as const,
-    label: 'Atalhos de Teclado',
-    icon: KeyboardIcon,
+    id: 'reference' as const,
+    label: 'Referências',
+    icon: MenuBookIcon,
   },
   {
     id: 'export' as const,
     label: 'Exportar/Importar',
     icon: SaveIcon,
   },
-  { id: 'dice' as const, label: 'Sistema de Rolagem', icon: CasinoIcon },
+  {
+    id: 'keyboard' as const,
+    label: 'Atalhos de Teclado',
+    icon: KeyboardIcon,
+  },
 ];
 
 /**
@@ -93,6 +100,8 @@ export default function HelpPage() {
         return <ExportImportGuide />;
       case 'dice':
         return <DiceRollingGuide />;
+      case 'reference':
+        return <RulesReference />;
       default:
         return <FAQ />;
     }
