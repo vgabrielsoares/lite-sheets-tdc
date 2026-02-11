@@ -19,6 +19,7 @@ import {
   Button,
 } from '@mui/material';
 import {
+  Home as HomeIcon,
   Person as PersonIcon,
   Add as AddIcon,
   HelpOutline as HelpIcon,
@@ -41,8 +42,13 @@ interface NavItem {
  */
 const navItems: NavItem[] = [
   {
-    label: 'Minhas Fichas',
+    label: 'Início',
     path: '/',
+    icon: <HomeIcon />,
+  },
+  {
+    label: 'Minhas Fichas',
+    path: '/characters',
     icon: <PersonIcon />,
   },
   {
@@ -113,6 +119,10 @@ export default function Navigation({
   const isActive = (path: string) => {
     if (path === '/') {
       return pathname === '/';
+    }
+    // Exact match for /characters (don't highlight for /characters/new)
+    if (path === '/characters') {
+      return pathname === '/characters';
     }
     return pathname.startsWith(path);
   };
