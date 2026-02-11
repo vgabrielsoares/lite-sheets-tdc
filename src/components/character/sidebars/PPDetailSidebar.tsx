@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import {
+  Alert,
   Box,
+  Button,
   Chip,
   Divider,
   IconButton,
@@ -11,11 +13,16 @@ import {
   Typography,
 } from '@mui/material';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import InfoIcon from '@mui/icons-material/Info';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Sidebar, EditableNumber } from '@/components/shared';
+import { PowerPointsDisplay } from '@/components/character/stats/PowerPointsDisplay';
+import { SpellPointsDisplay } from '@/components/character/stats/SpellPointsDisplay';
 import type { PowerPoints } from '@/types/combat';
+import type { SpellPoints } from '@/types/spells';
 import type { Modifier } from '@/types/common';
 import type { ArchetypeResourceBreakdown } from '@/components/character/archetypes';
 
@@ -170,6 +177,12 @@ export interface PPDetailSidebarProps {
   archetypeBreakdown?: ArchetypeResourceBreakdown[];
   /** PP base inicial (ex: 2 para nível 1) */
   basePP?: number;
+  /** Se o personagem é conjurador */
+  isCaster?: boolean;
+  /** Pontos de Feitiço (PF) — apenas se conjurador */
+  spellPoints?: SpellPoints;
+  /** Callback para atualizar PF */
+  onSpellPointsChange?: (spellPoints: SpellPoints) => void;
 }
 
 export function PPDetailSidebar({
@@ -179,8 +192,12 @@ export function PPDetailSidebar({
   onChange,
   archetypeBreakdown = [],
   basePP = 2,
+  isCaster = false,
+  spellPoints,
+  onSpellPointsChange,
 }: PPDetailSidebarProps) {
   const modifiers = pp.maxModifiers ?? [];
+  const [tempPPInput, setTempPPInput] = useState('');
 
   // Calcular totais
   const totalFromArchetypes = useMemo(
@@ -202,8 +219,22 @@ export function PPDetailSidebar({
     }
   }, [calculatedMax, pp, onChange]);
 
+  /** Adicionar PP temporário */
+  const handleAddTempPP = useCallback(() => {
+    const amount = parseInt(tempPPInput, 10);
+    if (!isNaN(amount) && amount > 0) {
+      onChange({ ...pp, temporary: (pp.temporary ?? 0) + amount });
+      setTempPPInput('');
+    }
+  }, [tempPPInput, pp, onChange]);
+
+  /** Remover todo PP temporário */
+  const handleClearTempPP = useCallback(() => {
+    onChange({ ...pp, temporary: 0 });
+  }, [pp, onChange]);
+
   // Handlers para modificadores
-  const handleAddModifier = () => {
+  const handleAddModifier = useCallback(() => {
     const newModifier: Modifier = {
       name: 'Novo modificador',
       value: 0,
@@ -213,72 +244,134 @@ export function PPDetailSidebar({
       ...pp,
       maxModifiers: [...modifiers, newModifier],
     });
-  };
+  }, [pp, modifiers, onChange]);
 
-  const handleUpdateModifier = (index: number, updates: Partial<Modifier>) => {
-    const updatedModifiers = modifiers.map((mod, i) =>
-      i === index ? { ...mod, ...updates } : mod
-    );
-    onChange({
-      ...pp,
-      maxModifiers: updatedModifiers,
-    });
-  };
+  const handleUpdateModifier = useCallback(
+    (index: number, updates: Partial<Modifier>) => {
+      const updatedModifiers = modifiers.map((mod, i) =>
+        i === index ? { ...mod, ...updates } : mod
+      );
+      // Se o valor do modificador aumentou, recuperar PP atual automaticamente
+      const oldValue = modifiers[index].value;
+      const newValue = updates.value ?? oldValue;
+      const difference = newValue - oldValue;
+      const newCurrent = difference > 0 ? pp.current + difference : pp.current;
+      onChange({
+        ...pp,
+        maxModifiers: updatedModifiers,
+        current: newCurrent,
+      });
+    },
+    [pp, modifiers, onChange]
+  );
 
-  const handleRemoveModifier = (index: number) => {
-    const updatedModifiers = modifiers.filter((_, i) => i !== index);
-    onChange({
-      ...pp,
-      maxModifiers: updatedModifiers,
-    });
-  };
+  const handleRemoveModifier = useCallback(
+    (index: number) => {
+      const updatedModifiers = modifiers.filter((_, i) => i !== index);
+      onChange({
+        ...pp,
+        maxModifiers: updatedModifiers,
+      });
+    },
+    [pp, modifiers, onChange]
+  );
+
+  // PF sincronizado com PP max (para o SpellPointsDisplay)
+  const syncedSpellPoints: SpellPoints = useMemo(
+    () => ({
+      current: spellPoints?.current ?? 0,
+      max: pp.max, // PF max = PP max sempre
+    }),
+    [spellPoints, pp.max]
+  );
 
   return (
-    <Sidebar open={open} onClose={onClose} title="Pontos de Poder">
+    <Sidebar
+      open={open}
+      onClose={onClose}
+      title="Potencial Energético"
+      width="lg"
+    >
       <Stack spacing={3}>
-        {/* PP Atual e Temporário */}
-        <Paper
-          variant="outlined"
-          sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}
-        >
-          <Stack spacing={2}>
-            <Box>
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-                gutterBottom
-              >
-                PP Atual
-              </Typography>
-              <EditableNumber
-                value={pp.current}
-                onChange={(current) => onChange({ ...pp, current })}
-                min={0}
-                max={pp.max + pp.temporary}
-                validate={(value) => {
-                  if (value < 0) return 'PP não pode ser negativo';
-                  return null;
-                }}
-              />
-            </Box>
+        {/* Componente completo de PP com Gastar/Recuperar */}
+        <PowerPointsDisplay pp={pp} onChange={onChange} />
 
-            <Box>
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-                gutterBottom
+        {/* PF para conjuradores */}
+        {isCaster && spellPoints && onSpellPointsChange && (
+          <SpellPointsDisplay
+            spellPoints={syncedSpellPoints}
+            pp={pp}
+            onChange={(newPF) => onSpellPointsChange(newPF)}
+            onPPChange={onChange}
+          />
+        )}
+
+        <Divider />
+
+        {/* PP Temporário */}
+        <Box>
+          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+            <FlashOnIcon
+              color="info"
+              fontSize="small"
+              sx={{ verticalAlign: 'middle', mr: 0.5 }}
+            />
+            PP Temporário
+          </Typography>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mb: 1, display: 'block' }}
+          >
+            Absorvido antes do PP normal. Obtido por habilidades ou itens.
+          </Typography>
+
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+            <Chip
+              label={`${pp.temporary ?? 0} PP Temp`}
+              color="info"
+              variant={(pp.temporary ?? 0) > 0 ? 'filled' : 'outlined'}
+              size="small"
+              sx={{ fontWeight: 700 }}
+            />
+            {(pp.temporary ?? 0) > 0 && (
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                onClick={handleClearTempPP}
+                sx={{ textTransform: 'none', fontSize: '0.75rem' }}
               >
-                PP Temporário
-              </Typography>
-              <EditableNumber
-                value={pp.temporary}
-                onChange={(temporary) => onChange({ ...pp, temporary })}
-                min={0}
-                max={999}
-              />
-            </Box>
+                Limpar
+              </Button>
+            )}
           </Stack>
-        </Paper>
+
+          <Stack direction="row" spacing={1} alignItems="center">
+            <TextField
+              size="small"
+              type="number"
+              placeholder="Qtd"
+              value={tempPPInput}
+              onChange={(e) => setTempPPInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddTempPP();
+              }}
+              inputProps={{ min: 1, style: { textAlign: 'center' } }}
+              sx={{ width: 80 }}
+            />
+            <Button
+              size="small"
+              variant="outlined"
+              color="info"
+              onClick={handleAddTempPP}
+              disabled={!tempPPInput || parseInt(tempPPInput, 10) <= 0}
+              sx={{ textTransform: 'none', flex: 1 }}
+            >
+              Adicionar PP Temp
+            </Button>
+          </Stack>
+        </Box>
 
         <Divider />
 
@@ -394,32 +487,19 @@ export function PPDetailSidebar({
         </Box>
 
         {/* Botão para adicionar modificador */}
-        <Tooltip title="Adicionar modificador (habilidades especiais, itens, etc.)">
-          <Box
-            onClick={handleAddModifier}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1,
-              p: 1.5,
-              border: '1px dashed',
-              borderColor: 'divider',
-              borderRadius: 2,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: 'action.hover',
-              },
-            }}
-          >
-            <AddCircleOutlineIcon color="primary" />
-            <Typography variant="body2" color="primary">
-              Adicionar Modificador
-            </Typography>
-          </Box>
-        </Tooltip>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<AddCircleOutlineIcon />}
+          onClick={handleAddModifier}
+          sx={{
+            textTransform: 'none',
+            width: '100%',
+            borderStyle: 'dashed',
+          }}
+        >
+          Adicionar Modificador
+        </Button>
 
         {/* Fórmula explicativa */}
         <Typography
@@ -432,6 +512,56 @@ export function PPDetailSidebar({
             ` ${totalFromModifiers >= 0 ? '+' : ''} ${totalFromModifiers} (mods)`}{' '}
           = {calculatedMax}
         </Typography>
+
+        <Divider />
+
+        {/* Referência rápida de regras */}
+        <Box>
+          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+            Referência de Regras
+          </Typography>
+          <Stack spacing={1.5}>
+            <Stack direction="row" spacing={1} alignItems="flex-start">
+              <FlashOnIcon color="info" fontSize="small" sx={{ mt: 0.3 }} />
+              <Box>
+                <Typography variant="body2" fontWeight={600}>
+                  Pontos de Poder (PP)
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Energia para habilidades e magias. Base 2 + bônus de arquétipo
+                  por nível. Quando PP = 0, o personagem está Esgotado e não
+                  pode conjurar.
+                </Typography>
+              </Box>
+            </Stack>
+
+            {isCaster && (
+              <Stack direction="row" spacing={1} alignItems="flex-start">
+                <AutoFixHighIcon
+                  color="secondary"
+                  fontSize="small"
+                  sx={{ mt: 0.3 }}
+                />
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    Pontos de Feitiço (PF)
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Recurso adicional para conjuradores. PF Máximo = PP Máximo.
+                    Gastar PF também gasta PP. Gerado via Canalizar Mana.
+                  </Typography>
+                </Box>
+              </Stack>
+            )}
+
+            <Alert severity="info" icon={<InfoIcon />} sx={{ mt: 1 }}>
+              <Typography variant="caption">
+                <strong>Limite de PP por Rodada:</strong> Nível + Essência.
+                Controla quantos PP podem ser gastos por turno.
+              </Typography>
+            </Alert>
+          </Stack>
+        </Box>
       </Stack>
     </Sidebar>
   );
