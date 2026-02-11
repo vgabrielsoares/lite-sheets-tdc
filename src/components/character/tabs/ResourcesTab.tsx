@@ -337,6 +337,8 @@ export const ResourcesTab = React.memo(function ResourcesTab({
           />
         </Box>
 
+        <Divider />
+
         {/* Compra de Proficiências */}
         <Card
           variant="outlined"

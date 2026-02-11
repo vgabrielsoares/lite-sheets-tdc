@@ -259,3 +259,28 @@ export {
   createEmptyComplementaryTrait,
   createEmptyCompleteTrait,
 } from './traits';
+
+// Wizard (Character Creation)
+export type {
+  WizardStep,
+  WizardStepInfo,
+  AttributeModifier as WizardAttributeModifier,
+  WizardItem,
+  WizardSpecialAbility,
+  WizardOriginState,
+  WizardLineageState,
+  WizardArchetypeState,
+  WizardProficiencyPurchase,
+  WizardState,
+  WizardValidationError,
+} from './wizard';
+
+export {
+  WIZARD_STEPS,
+  WIZARD_STEP_INFO,
+  createInitialWizardState,
+  calculateFinalAttributes,
+  calculateAvailableFreePoints,
+  hasLineagePlus2,
+  getAttributeMaxLimit,
+} from './wizard';

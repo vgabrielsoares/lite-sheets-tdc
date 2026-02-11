@@ -11,7 +11,7 @@
  */
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -20,17 +20,28 @@ import {
   Stack,
   Chip,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
 } from '@mui/material';
 import {
   Shield as ShieldIcon,
   Speed as ReflexIcon,
   FitnessCenter as VigorIcon,
+  Casino as CasinoIcon,
 } from '@mui/icons-material';
 import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName } from '@/types/skills';
 import type { DieSize, Modifier } from '@/types/common';
+import type { DicePoolResult } from '@/types';
 import { getSkillDieSize } from '@/constants/skills';
+import { ATTRIBUTE_LABELS } from '@/constants/attributes';
 import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
+import { rollSkillTest, globalDiceHistory } from '@/utils/diceRoller';
+import { DiceRollResult } from '@/components/shared/DiceRollResult';
 import type { DicePenaltyMap } from '@/utils/conditionEffects';
 import { getDicePenaltyForAttribute } from '@/utils/conditionEffects';
 
@@ -115,8 +126,29 @@ export const DefenseTest = React.memo(function DefenseTest({
   signatureSkill,
   conditionPenalties,
 }: DefenseTestProps) {
+  // Estado do diálogo de rolagem
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedOption, setSelectedOption] =
+    useState<DefenseOptionInfo | null>(null);
+  const [rollResult, setRollResult] = useState<DicePoolResult | null>(null);
+  const [tempDiceModifier, setTempDiceModifier] = useState(0);
+
+  /** Abre o diálogo de rolagem */
+  const handleCardClick = useCallback((option: DefenseOptionInfo) => {
+    setSelectedOption(option);
+    setRollResult(null);
+    setTempDiceModifier(0);
+    setDialogOpen(true);
+  }, []);
+
+  /** Fecha o diálogo */
+  const handleCloseDialog = useCallback(() => {
+    setDialogOpen(false);
+  }, []);
+
   /**
    * Calcula o pool de dados para um teste de defesa
+   * Usa calculateSkillTotalModifier para consistência com SavingThrows
    */
   const calculateDefensePool = (
     option: DefenseOptionInfo
@@ -134,28 +166,37 @@ export const DefenseTest = React.memo(function DefenseTest({
     }
 
     const isSignature = signatureSkill === option.skill;
-    const dieSize = getSkillDieSize(skill.proficiencyLevel);
 
-    // Calcula bônus de assinatura
-    const signatureBonus = isSignature
-      ? Math.min(3, Math.ceil(characterLevel / 5))
-      : 0;
+    // Obtém modificadores específicos do uso "Defender"
+    const useModifiers = skill.defaultUseModifierOverrides?.['Defender'] || [];
 
-    // Coleta modificadores de dados (affectsDice: true)
-    const diceModifiers = (skill.modifiers || [])
-      .filter((m: Modifier) => m.affectsDice)
-      .reduce((sum: number, m: Modifier) => sum + m.value, 0);
+    // Combina modificadores base da habilidade com os do uso
+    const allModifiers: Modifier[] = [
+      ...(skill.modifiers || []),
+      ...useModifiers,
+    ];
+
+    // Usa calculateSkillTotalModifier para consistência com SavingThrows
+    const calculation = calculateSkillTotalModifier(
+      option.skill,
+      option.attribute,
+      attributeValue,
+      skill.proficiencyLevel,
+      isSignature,
+      characterLevel,
+      allModifiers
+    );
 
     // Aplica penalidades de condições ativas
     const conditionPenalty = conditionPenalties
       ? getDicePenaltyForAttribute(conditionPenalties, option.attribute)
       : 0;
+    const effectiveTotalDice = calculation.totalDice + conditionPenalty;
 
-    const baseDice =
-      attributeValue + signatureBonus + diceModifiers + conditionPenalty;
+    const dieSize = calculation.dieSize;
 
-    // Se 0 ou menos dados, usa regra de penalidade: rola 2d e pega o menor
-    if (baseDice <= 0) {
+    // Se effectiveTotalDice <= 0, rola 2d e usa o menor
+    if (effectiveTotalDice <= 0) {
       return {
         diceCount: 2,
         dieSize,
@@ -164,16 +205,30 @@ export const DefenseTest = React.memo(function DefenseTest({
       };
     }
 
-    // Máximo 8 dados por teste
-    const finalDice = Math.min(8, baseDice);
-
+    const diceCount = Math.min(effectiveTotalDice, 8);
     return {
-      diceCount: finalDice,
+      diceCount,
       dieSize,
       isPenaltyRoll: false,
-      formula: `${finalDice}${dieSize}`,
+      formula: `${diceCount}${dieSize}`,
     };
   };
+
+  /** Executa a rolagem de defesa */
+  const handleRoll = useCallback(() => {
+    if (!selectedOption) return;
+    const pool = calculateDefensePool(selectedOption);
+    const baseDice = pool.isPenaltyRoll ? 0 : pool.diceCount;
+    const result = rollSkillTest(
+      baseDice,
+      pool.dieSize,
+      tempDiceModifier,
+      `Teste de Defesa (${selectedOption.label})`
+    );
+    globalDiceHistory.add(result);
+    setRollResult(result);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedOption, tempDiceModifier]);
 
   const defenseOptions = useMemo(
     () =>
@@ -187,90 +242,251 @@ export const DefenseTest = React.memo(function DefenseTest({
   );
 
   return (
-    <Box>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-        <ShieldIcon color="primary" />
-        <Typography variant="h6" component="h3" color="text.secondary">
-          Teste de Defesa
+    <>
+      <Box>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+          <ShieldIcon color="primary" />
+          <Typography variant="h6" component="h3" color="text.secondary">
+            Teste de Defesa
+          </Typography>
+          <Chip label="∆ Ação Livre" size="small" variant="outlined" />
+        </Stack>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Defesa é um teste ativo. Cada ✶ obtido anula 1✶ do atacante. Clique
+          para rolar.
         </Typography>
-        <Chip label="∆ Ação Livre" size="small" variant="outlined" />
-      </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Defesa é um teste ativo. Cada ✶ obtido anula 1✶ do atacante.
-      </Typography>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-          gap: 2,
-        }}
-      >
-        {defenseOptions.map((option) => (
-          <Card key={option.skill} variant="outlined">
-            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                spacing={1}
-                sx={{ mb: 1 }}
-              >
-                <Box sx={{ color: option.color }}>{option.icon}</Box>
-                <Typography variant="subtitle2" fontWeight="bold">
-                  {option.label}
-                </Typography>
-                <Chip
-                  label={
-                    PROFICIENCY_LABELS[option.proficiency] ?? option.proficiency
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            gap: 2,
+          }}
+        >
+          {defenseOptions.map((option) => (
+            <Tooltip
+              key={option.skill}
+              title={`Clique para rolar Defesa (${option.label})`}
+              arrow
+              placement="top"
+            >
+              <Card
+                variant="outlined"
+                onClick={() => handleCardClick(option)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleCardClick(option);
                   }
-                  size="small"
-                  variant="outlined"
-                  sx={{ fontSize: '0.7rem' }}
-                />
-                {signatureSkill === option.skill && (
-                  <Tooltip title="Habilidade de Assinatura">
-                    <Chip
-                      label="✦"
-                      size="small"
-                      color="primary"
-                      sx={{ minWidth: 28 }}
-                    />
-                  </Tooltip>
-                )}
-              </Stack>
-
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                {option.description}
-              </Typography>
-
-              {/* Pool display */}
-              <Tooltip
-                title={`Atributo: ${attributes[option.attribute]} | Dado: ${option.pool.dieSize}`}
-                arrow
+                }}
+                aria-label={`Rolar teste de defesa com ${option.label}: ${option.pool.formula}`}
+                sx={{
+                  cursor: 'pointer',
+                  borderColor: option.color,
+                  borderWidth: 2,
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: `0 4px 12px ${option.color}40`,
+                  },
+                }}
               >
-                <Chip
-                  label={option.pool.formula}
-                  color={option.pool.isPenaltyRoll ? 'warning' : 'success'}
-                  variant="filled"
-                  sx={{ fontWeight: 'bold', fontSize: '1rem' }}
-                />
-              </Tooltip>
+                <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    sx={{ mb: 1 }}
+                  >
+                    <Box sx={{ color: option.color }}>{option.icon}</Box>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      {option.label}
+                    </Typography>
+                    <Chip
+                      label={
+                        PROFICIENCY_LABELS[option.proficiency] ??
+                        option.proficiency
+                      }
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem' }}
+                    />
+                    {signatureSkill === option.skill && (
+                      <Tooltip title="Habilidade de Assinatura">
+                        <Chip
+                          label="✦"
+                          size="small"
+                          color="primary"
+                          sx={{ minWidth: 28 }}
+                        />
+                      </Tooltip>
+                    )}
+                  </Stack>
 
-              {option.pool.isPenaltyRoll && (
-                <Typography
-                  variant="caption"
-                  color="warning.main"
-                  sx={{ mt: 0.5, display: 'block' }}
-                >
-                  Penalidade: rola 2 dados e usa o menor resultado
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                  >
+                    {option.description}
+                  </Typography>
+
+                  {/* Pool display + dice icon */}
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Chip
+                      label={option.pool.formula}
+                      color={option.pool.isPenaltyRoll ? 'warning' : 'success'}
+                      variant="filled"
+                      sx={{ fontWeight: 'bold', fontSize: '1rem' }}
+                    />
+                    <CasinoIcon
+                      fontSize="small"
+                      sx={{ color: 'text.secondary' }}
+                    />
+                  </Stack>
+
+                  {option.pool.isPenaltyRoll && (
+                    <Typography
+                      variant="caption"
+                      color="warning.main"
+                      sx={{ mt: 0.5, display: 'block' }}
+                    >
+                      Penalidade: rola 2 dados e usa o menor resultado
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </Tooltip>
+          ))}
+        </Box>
       </Box>
-    </Box>
+
+      {/* Diálogo de Rolagem de Teste de Defesa */}
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        {selectedOption &&
+          (() => {
+            const pool = calculateDefensePool(selectedOption);
+            const skill = skills[selectedOption.skill];
+            const proficiency = skill?.proficiencyLevel || 'leigo';
+            const attributeValue = attributes[selectedOption.attribute];
+            const isSignature = signatureSkill === selectedOption.skill;
+
+            return (
+              <>
+                <DialogTitle>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <ShieldIcon color="primary" />
+                    <Typography variant="h6">
+                      Teste de Defesa ({selectedOption.label})
+                    </Typography>
+                  </Stack>
+                </DialogTitle>
+                <DialogContent>
+                  <Stack spacing={2}>
+                    {/* Descrição */}
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedOption.description}
+                    </Typography>
+
+                    {/* Configuração da rolagem */}
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      useFlexGap
+                    >
+                      <Chip
+                        label={`${ATTRIBUTE_LABELS[selectedOption.attribute]}: ${attributeValue}`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                      <Chip
+                        label={`${PROFICIENCY_LABELS[proficiency]} (${getSkillDieSize(proficiency)})`}
+                        size="small"
+                        color="secondary"
+                        variant="outlined"
+                      />
+                      <Chip
+                        label={`Pool: ${pool.formula}`}
+                        size="small"
+                        color="info"
+                        variant="outlined"
+                      />
+                      {isSignature && (
+                        <Chip
+                          label="⭐ Assinatura"
+                          size="small"
+                          color="warning"
+                          variant="filled"
+                        />
+                      )}
+                      {pool.isPenaltyRoll && (
+                        <Chip
+                          label="Penalidade: menor resultado"
+                          size="small"
+                          color="error"
+                          variant="filled"
+                        />
+                      )}
+                    </Stack>
+
+                    {/* Modificador temporário */}
+                    <TextField
+                      label="Modificador temporário (±d)"
+                      type="number"
+                      size="small"
+                      value={tempDiceModifier}
+                      onChange={(e) =>
+                        setTempDiceModifier(parseInt(e.target.value, 10) || 0)
+                      }
+                      inputProps={{
+                        'aria-label': 'Modificador temporário de dados',
+                      }}
+                      helperText="Adicione ou remova dados temporariamente"
+                      fullWidth
+                    />
+
+                    {/* Botão de rolagem */}
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleRoll}
+                      startIcon={<CasinoIcon />}
+                      fullWidth
+                      size="large"
+                    >
+                      Rolar {pool.formula}
+                      {tempDiceModifier !== 0 &&
+                        ` (${tempDiceModifier > 0 ? '+' : ''}${tempDiceModifier}d)`}
+                    </Button>
+
+                    {/* Resultado */}
+                    {rollResult && (
+                      <DiceRollResult
+                        result={rollResult}
+                        animate
+                        showBreakdown
+                      />
+                    )}
+                  </Stack>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleCloseDialog}>Fechar</Button>
+                </DialogActions>
+              </>
+            );
+          })()}
+      </Dialog>
+    </>
   );
 });
 

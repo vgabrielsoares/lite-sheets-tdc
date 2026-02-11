@@ -199,6 +199,27 @@ export function TabNavigation({ currentTab, onTabChange }: TabNavigationProps) {
               sx={{
                 minWidth: isCompact ? 48 : undefined,
                 minHeight: 48,
+                borderRadius: '8px 8px 0 0',
+                transition: 'all 0.2s ease-in-out',
+                position: 'relative',
+                '&.Mui-selected': {
+                  fontWeight: 700,
+                  color: 'primary.main',
+                  bgcolor: 'action.selected',
+                  '& .MuiSvgIcon-root': {
+                    color: 'primary.main',
+                  },
+                  // Em modo compacto, usar borda inferior grossa para indicar aba ativa
+                  ...(isCompact && {
+                    borderBottom: '4px solid',
+                    borderBottomColor: 'primary.main',
+                    paddingBottom: '8px',
+                    bgcolor: 'rgba(212, 175, 55, 0.15)', // Leve fundo dourado
+                  }),
+                },
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
               }}
             />
           );

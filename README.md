@@ -1,6 +1,6 @@
 # Lite Sheets TDC
 
-**Versão**: 0.0.2 (v0.1.7 do livro)
+**Versão**: 0.2 (v0.1.7 do livro)
 
 Sistema de criação e gerenciamento de fichas de RPG para **Tabuleiro do Caos** totalmente no navegador, com experiência PWA, funcionamento offline, responsividade e foco em acessibilidade. Ideal para jogadores e mestres que buscam praticidade, performance e facilidade de uso, sem depender de backend ou banco de dados externo.
 

@@ -748,7 +748,7 @@ export function LinhagemSidebar({
               inputProps={{ min: 1, max: 10000 }}
             />
             <TextField
-              label="Peso"
+              label="Espaço"
               type="number"
               value={localLineage.weightRPG}
               onChange={handleNumberChange('weightRPG')}
