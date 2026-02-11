@@ -7,10 +7,9 @@
  * com possibilidade de expandir até nível 30 ou níveis customizados 31+.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
-  Button,
   Paper,
   Table,
   TableBody,
@@ -20,18 +19,16 @@ import {
   TableRow,
   Typography,
   Stack,
-  Collapse,
   Divider,
   useTheme,
   Alert,
 } from '@mui/material';
 import {
-  ExpandMore as ExpandMoreIcon,
   TrendingUp as TrendingUpIcon,
   InfoOutlined as InfoIcon,
   AutoAwesome as ArchetypeIcon,
   Shield as ClassIcon,
-  Favorite as HPIcon,
+  Shield as ShieldIcon,
   FlashOn as PPIcon,
 } from '@mui/icons-material';
 import LevelRow from './LevelRow';
@@ -52,11 +49,6 @@ interface ProgressionTableProps {
 const DEFAULT_MAX_LEVEL = 15;
 
 /**
- * Nível máximo expandido
- */
-const EXPANDED_MAX_LEVEL = 30;
-
-/**
  * Componente ProgressionTable
  */
 export default function ProgressionTable({
@@ -64,18 +56,9 @@ export default function ProgressionTable({
   onLevelClick,
 }: ProgressionTableProps) {
   const theme = useTheme();
-  const [showExtendedLevels, setShowExtendedLevels] = useState(false);
-  const [showCustomLevels, setShowCustomLevels] = useState(false);
 
-  // Determina quantos níveis mostrar
-  const maxLevelToShow = showCustomLevels
-    ? Math.max(EXPANDED_MAX_LEVEL, currentLevel + 5)
-    : showExtendedLevels
-      ? EXPANDED_MAX_LEVEL
-      : DEFAULT_MAX_LEVEL;
-
-  // Gera array de níveis
-  const levels = Array.from({ length: maxLevelToShow }, (_, i) => i + 1);
+  // Mostrar apenas 15 níveis
+  const levels = Array.from({ length: DEFAULT_MAX_LEVEL }, (_, i) => i + 1);
 
   return (
     <Box id="section-progression">
@@ -92,7 +75,7 @@ export default function ProgressionTable({
         <Typography variant="body2">
           A cada nível, você ganha benefícios de <strong>Arquétipo</strong>{' '}
           (baseado no arquétipo escolhido) e, se tiver uma classe, benefícios de{' '}
-          <strong>Classe</strong>. PV e PP são ganhos a cada nível baseados no
+          <strong>Classe</strong>. GA e PP são ganhos a cada nível baseados no
           arquétipo escolhido.
         </Typography>
       </Alert>
@@ -155,7 +138,7 @@ export default function ProgressionTable({
                       : theme.palette.grey[100],
                 }}
               >
-                PV/PP
+                GA/PP
               </TableCell>
               <TableCell
                 sx={{
@@ -181,53 +164,6 @@ export default function ProgressionTable({
         </Table>
       </TableContainer>
 
-      {/* Botões para expandir níveis */}
-      <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-        {!showExtendedLevels && !showCustomLevels && (
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<ExpandMoreIcon />}
-            onClick={() => setShowExtendedLevels(true)}
-          >
-            Mostrar níveis 16-30
-          </Button>
-        )}
-
-        {showExtendedLevels && !showCustomLevels && (
-          <>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => setShowExtendedLevels(false)}
-            >
-              Mostrar apenas 1-15
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<ExpandMoreIcon />}
-              onClick={() => setShowCustomLevels(true)}
-            >
-              Mostrar níveis 31+
-            </Button>
-          </>
-        )}
-
-        {showCustomLevels && (
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => {
-              setShowCustomLevels(false);
-              setShowExtendedLevels(false);
-            }}
-          >
-            Mostrar apenas 1-15
-          </Button>
-        )}
-      </Stack>
-
       {/* Legenda */}
       <Divider sx={{ my: 3 }} />
       <Box>
@@ -251,19 +187,11 @@ export default function ProgressionTable({
                 <strong>Característica</strong> (nív. 1, 5, 10, 15)
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                <strong>Poder</strong> (nív. 2, 4, 6, 8, 9, 11, 13, 14)
+                <strong>Poder / Talento</strong> (nív. 2, 3, 4, 6, 7, 8, 9, 11,
+                12, 13, 14)
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                <strong>Competência</strong> (nív. 3, 7, 12)
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                <strong>+1 Atributo</strong> (nív. 4, 8, 13)
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                <strong>Grau de Habilidade</strong> (nív. 5, 9, 14)
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                <strong>Defesa por Etapa</strong> (nív. 5, 10, 15)
+                <strong>Competência</strong> (nív. 5, 10, 15)
               </Typography>
             </Stack>
           </Box>
@@ -285,28 +213,25 @@ export default function ProgressionTable({
               <Typography variant="caption" color="text.secondary">
                 <strong>Melhoria</strong> (nív. 7, 9, 14)
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                <strong>Defesa por Etapa</strong> (nív. 5, 10, 15)
-              </Typography>
             </Stack>
           </Box>
 
-          {/* PV/PP */}
+          {/* GA/PP */}
           <Box>
             <Typography
               variant="body2"
               fontWeight={500}
               sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}
             >
-              <HPIcon fontSize="small" color="error" />
+              <ShieldIcon fontSize="small" color="primary" />
               <PPIcon fontSize="small" color="info" />
-              PV/PP por Nível
+              GA/PP por Nível
             </Typography>
             <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
               <Typography variant="caption" color="text.secondary">
-                <strong>PV:</strong> Base do arquétipo + Constituição
-                (Combatente +5, Ladino +4, Natural/Acólito +3, Acadêmico +2,
-                Feiticeiro +1)
+                <strong>GA:</strong> Atributo relevante do arquétipo (Combatente
+                = Corpo, Ladino = Agilidade, Acadêmico = Mente, Feiticeiro =
+                Essência, Acólito = Influência, Natural = Instinto)
               </Typography>
             </Stack>
             <Stack
@@ -317,24 +242,13 @@ export default function ProgressionTable({
               sx={{ mt: 0.5 }}
             >
               <Typography variant="caption" color="text.secondary">
-                <strong>PP:</strong> Base do arquétipo + Presença (Feiticeiro
+                <strong>PP:</strong> Base do arquétipo + Essência (Feiticeiro
                 +5, Acadêmico +4, Acólito/Natural +3, Ladino +2, Combatente +1)
               </Typography>
             </Stack>
           </Box>
         </Stack>
       </Box>
-
-      {/* Nota sobre níveis altos */}
-      {(showExtendedLevels || showCustomLevels) && (
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          <Typography variant="body2">
-            <strong>Níveis 16+:</strong> Os ganhos seguem o mesmo padrão cíclico
-            dos níveis 1-15. Consulte seu narrador para regras específicas de
-            níveis elevados.
-          </Typography>
-        </Alert>
-      )}
     </Box>
   );
 }
