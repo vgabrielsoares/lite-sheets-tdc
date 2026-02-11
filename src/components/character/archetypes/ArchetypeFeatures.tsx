@@ -24,9 +24,6 @@ import {
   Star as StarIcon,
   FlashOn as PowerIcon,
   School as CompetenceIcon,
-  TrendingUp as AttributeIcon,
-  WorkspacePremium as SkillGradeIcon,
-  Shield as DefenseIcon,
 } from '@mui/icons-material';
 import type { Archetype, ArchetypeFeature, ArchetypeName } from '@/types';
 import {
@@ -57,16 +54,10 @@ function GainTypeIcon({ type }: { type: ArchetypeLevelGainType }) {
   switch (type) {
     case 'caracteristica':
       return <StarIcon fontSize="small" />;
-    case 'poder':
+    case 'poder_ou_talento':
       return <PowerIcon fontSize="small" />;
     case 'competencia':
       return <CompetenceIcon fontSize="small" />;
-    case 'atributo':
-      return <AttributeIcon fontSize="small" />;
-    case 'grau_habilidade':
-      return <SkillGradeIcon fontSize="small" />;
-    case 'defesa_etapa':
-      return <DefenseIcon fontSize="small" />;
     default:
       return null;
   }
@@ -102,17 +93,13 @@ function FeatureCard({
     // Se há múltiplos ganhos no nível, tentar inferir pelo nome
     if (gains.length > 1) {
       const lowerName = feature.name.toLowerCase();
-      if (lowerName.includes('poder')) return 'poder';
+      if (lowerName.includes('poder') || lowerName.includes('talento'))
+        return 'poder_ou_talento';
       if (
         lowerName.includes('competência') ||
         lowerName.includes('proficiência')
       )
         return 'competencia';
-      if (lowerName.includes('atributo')) return 'atributo';
-      if (lowerName.includes('grau') || lowerName.includes('habilidade'))
-        return 'grau_habilidade';
-      if (lowerName.includes('defesa') || lowerName.includes('etapa'))
-        return 'defesa_etapa';
       return 'caracteristica';
     }
     return gains[0]?.type ?? 'caracteristica';
@@ -469,18 +456,22 @@ export default function ArchetypeFeatures({
 
       {/* Legenda de tipos */}
       <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap">
-        {(['caracteristica', 'poder', 'competencia', 'atributo'] as const).map(
-          (type) => (
-            <Chip
-              key={type}
-              icon={<GainTypeIcon type={type} />}
-              label={GAIN_TYPE_LABELS[type]}
-              size="small"
-              color={GAIN_TYPE_COLORS[type]}
-              variant="outlined"
-            />
-          )
-        )}
+        {(
+          [
+            'caracteristica',
+            'poder_ou_talento',
+            'competencia',
+          ] as ArchetypeLevelGainType[]
+        ).map((type) => (
+          <Chip
+            key={type}
+            icon={<GainTypeIcon type={type} />}
+            label={GAIN_TYPE_LABELS[type]}
+            size="small"
+            color={GAIN_TYPE_COLORS[type]}
+            variant="outlined"
+          />
+        ))}
       </Stack>
 
       <Divider sx={{ mb: 2 }} />
