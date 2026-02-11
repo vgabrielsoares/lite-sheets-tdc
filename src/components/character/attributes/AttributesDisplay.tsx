@@ -77,6 +77,7 @@ function CompactAttributeCard({
           borderWidth: 1,
           borderStyle: 'solid',
           minWidth: 70,
+          height: 88,
           flex: 1,
           '&:hover': onClick
             ? {
