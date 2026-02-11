@@ -400,6 +400,11 @@ function migrateCharacterData(data: Character, fromVersion: string): Character {
   // Garante que campos de combate v0.0.2 existam (guard, vitality, etc.)
   result = ensureCombatFields(result);
 
+  // Garante que campos de progressão v0.0.2 existam
+  if (!result.levelHistory) {
+    result.levelHistory = [];
+  }
+
   return result;
 }
 
