@@ -1,14 +1,15 @@
 /**
  * DamageRollButton - Botão de rolagem de dano integrado
  *
- * Permite rolar dados de dano com configuração automática
- * baseada nos valores do ataque.
+ * Permite rolar dados de dano com seleção de tipo de resultado:
+ * - Raspão (0✶): Dados sem modificadores ÷ 2 (mín 1)
+ * - Normal (1✶): Dados + modificadores
+ * - Em Cheio (2✶): Dano maximizado (sem rolar)
+ * - Crítico (3+✶): Dano maximizado + dados de dano crítico extras
  *
  * Funcionalidades:
- * - Rolagem rápida com um clique
- * - Pré-preenchimento automático de valores
- * - Cálculo automático de crítico (maximiza dados base, não dobra)
- * - Opção de forçar crítico manualmente
+ * - Seleção do tipo de resultado via ToggleButtonGroup
+ * - Cálculo automático de dano por tipo
  * - Integração com histórico global de rolagens
  */
 
@@ -27,8 +28,8 @@ import {
   Typography,
   Chip,
   Stack,
-  FormControlLabel,
-  Switch,
+  ToggleButton,
+  ToggleButtonGroup,
   Alert,
   alpha,
   useTheme,
@@ -36,10 +37,20 @@ import {
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import StarsIcon from '@mui/icons-material/Stars';
 import HistoryIcon from '@mui/icons-material/History';
-import { rollDamageWithCritical, globalDiceHistory } from '@/utils/diceRoller';
-import type { DamageDiceRollResult } from '@/utils/diceRoller';
+import {
+  rollDamageByHitType,
+  globalDiceHistory,
+  formatDiceNotation,
+} from '@/utils/diceRoller';
+import type { AttackDamageResult } from '@/utils/diceRoller';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
 import type { DiceRoll, DamageType } from '@/types';
+import type { AttackHitType } from '@/types/combat';
+import {
+  ATTACK_HIT_TYPE_LABELS,
+  ATTACK_HIT_TYPE_DESCRIPTIONS,
+  ATTACK_HIT_TYPE_COLORS,
+} from '@/types/combat';
 
 export interface DamageRollButtonProps {
   /** Nome do ataque (para contexto) */
@@ -48,12 +59,12 @@ export interface DamageRollButtonProps {
   damageRoll: DiceRoll;
   /** Tipo de dano */
   damageType: DamageType;
-  /** Se é um crítico (automático) */
-  isCritical?: boolean;
-  /** Dados extras de crítico verdadeiro */
-  criticalDamage?: DiceRoll;
+  /** Número de dados extras de dano crítico (mesmo tipo do dado base). Default: 1 */
+  criticalDice?: number;
+  /** Dados de dano bônus opcionais */
+  bonusDice?: DiceRoll;
   /** Callback quando rolar (opcional) */
-  onRoll?: (result: DamageDiceRollResult, damageType: DamageType) => void;
+  onRoll?: (result: AttackDamageResult, damageType: DamageType) => void;
   /** Tamanho do botão */
   size?: 'small' | 'medium' | 'large';
   /** Cor do botão */
@@ -86,15 +97,16 @@ const DAMAGE_TYPE_LABELS: Record<DamageType, string> = {
 /**
  * Botão de rolagem para dano
  *
- * Exibe um botão de ícone que abre um diálogo de rolagem ao clicar.
- * A rolagem é pré-configurada com os valores do ataque.
+ * Exibe um botão de ícone que abre um diálogo onde o jogador
+ * seleciona o tipo de resultado (Raspão/Normal/Em Cheio/Crítico)
+ * e calcula o dano correspondente.
  */
 export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
   attackName,
   damageRoll,
   damageType,
-  isCritical: isCriticalProp = false,
-  criticalDamage,
+  criticalDice = 1,
+  bonusDice,
   onRoll,
   size = 'small',
   color = 'error',
@@ -103,27 +115,19 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
 }) => {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const [result, setResult] = useState<DamageDiceRollResult | null>(null);
-  const [forceCritical, setForceCritical] = useState(isCriticalProp);
-  const [forceTrueCritical, setForceTrueCritical] = useState(false);
-
-  // Atualizar forceCritical quando isCriticalProp mudar
-  React.useEffect(() => {
-    setForceCritical(isCriticalProp);
-  }, [isCriticalProp]);
+  const [result, setResult] = useState<AttackDamageResult | null>(null);
+  const [selectedHitType, setSelectedHitType] =
+    useState<AttackHitType>('normal');
 
   /**
    * Abre o diálogo de rolagem
    */
-  const handleOpen = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation(); // Evitar trigger de click na linha
-      setOpen(true);
-      setResult(null); // Limpar resultado anterior
-      setForceCritical(isCriticalProp); // Resetar crítico
-    },
-    [isCriticalProp]
-  );
+  const handleOpen = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    setOpen(true);
+    setResult(null);
+    setSelectedHitType('normal');
+  }, []);
 
   /**
    * Fecha o diálogo
@@ -133,130 +137,55 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
   }, []);
 
   /**
-   * Executa a rolagem de dano
+   * Executa a rolagem de dano com o tipo de resultado selecionado
    */
   const handleRoll = useCallback(() => {
-    // Extrair dados da rolagem
-    const diceCount = damageRoll.quantity;
-    const diceSides = parseInt(damageRoll.type.replace('d', ''), 10);
-    const modifier = damageRoll.modifier;
-
-    // Executar rolagem de dano base (crítico maximiza)
-    let rollResult = rollDamageWithCritical(
-      diceCount,
-      diceSides,
-      modifier,
-      forceCritical,
+    const damageResult = rollDamageByHitType(
+      damageRoll,
+      selectedHitType,
+      criticalDice,
+      bonusDice,
       `Dano (${DAMAGE_TYPE_LABELS[damageType]}): ${attackName}`
     );
 
-    // Se crítico verdadeiro, adicionar dados extras
-    if (forceCritical && forceTrueCritical && criticalDamage) {
-      const extraDiceCount = criticalDamage.quantity;
-      const extraDiceSides = parseInt(criticalDamage.type.replace('d', ''), 10);
-
-      // Rolar dados extras (ROLADOS, não maximizados)
-      const extraRolls = Array.from(
-        { length: extraDiceCount },
-        () => Math.floor(Math.random() * extraDiceSides) + 1
-      );
-      const extraDamage = extraRolls.reduce((sum, roll) => sum + roll, 0);
-
-      // Combinar com dano base
-      rollResult = {
-        ...rollResult,
-        formula: `${rollResult.formula} + ${extraDiceCount}d${extraDiceSides} (Crítico Verdadeiro)`,
-        rolls: [...rollResult.rolls, ...extraRolls],
-        baseResult: rollResult.baseResult + extraDamage,
-        finalResult: rollResult.finalResult + extraDamage,
-        context: `Dano Crítico Verdadeiro (${DAMAGE_TYPE_LABELS[damageType]}): ${attackName}`,
-      };
+    // Adicionar ao histórico global
+    globalDiceHistory.add(damageResult.baseDamage);
+    if (damageResult.bonusDamage) {
+      globalDiceHistory.add(damageResult.bonusDamage);
+    }
+    if (damageResult.criticalExtraDamage) {
+      globalDiceHistory.add(damageResult.criticalExtraDamage);
     }
 
-    // Adicionar ao histórico global
-    globalDiceHistory.add(rollResult);
+    setResult(damageResult);
 
-    // Atualizar estado
-    setResult(rollResult);
-
-    // Callback externo
     if (onRoll) {
-      onRoll(rollResult, damageType);
+      onRoll(damageResult, damageType);
     }
   }, [
     damageRoll,
-    forceCritical,
-    forceTrueCritical,
-    criticalDamage,
+    criticalDice,
+    bonusDice,
+    selectedHitType,
     attackName,
     damageType,
     onRoll,
   ]);
 
   /**
-   * Rolagem rápida (sem abrir diálogo)
-   */
-  const handleQuickRoll = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-
-      const diceCount = damageRoll.quantity;
-      const diceSides = parseInt(damageRoll.type.replace('d', ''), 10);
-      const modifier = damageRoll.modifier;
-
-      // Executar rolagem diretamente (com crítico se fornecido)
-      const rollResult = rollDamageWithCritical(
-        diceCount,
-        diceSides,
-        modifier,
-        isCriticalProp,
-        `Dano (${DAMAGE_TYPE_LABELS[damageType]}): ${attackName}`
-      );
-
-      globalDiceHistory.add(rollResult);
-
-      if (onRoll) {
-        onRoll(rollResult, damageType);
-      }
-
-      // Mostrar resultado brevemente
-      setResult(rollResult);
-      setOpen(true);
-
-      // Fechar automaticamente após 3 segundos
-      setTimeout(() => {
-        setOpen(false);
-        setResult(null);
-      }, 3000);
-    },
-    [damageRoll, isCriticalProp, attackName, damageType, onRoll]
-  );
-
-  /**
    * Formata a rolagem de dano para exibição
    */
-  const formatDamageFormula = useCallback(
-    (critical: boolean = false) => {
-      if (critical) {
-        // Crítico: mostra valor maximizado
-        const maxDamage =
-          damageRoll.quantity * parseInt(damageRoll.type.replace('d', ''));
-        const mod = damageRoll.modifier;
-        return `${damageRoll.quantity}${damageRoll.type} MAX (${maxDamage})${mod >= 0 ? '+' : ''}${mod}`;
-      }
-      // Normal: mostra fórmula normal
-      const mod = damageRoll.modifier;
-      return `${damageRoll.quantity}${damageRoll.type}${mod >= 0 ? '+' : ''}${mod}`;
-    },
-    [damageRoll]
-  );
+  const formatDamageFormula = useCallback(() => {
+    const mod = damageRoll.modifier;
+    return `${damageRoll.quantity}${damageRoll.type}${mod >= 0 ? '+' : ''}${mod}`;
+  }, [damageRoll]);
 
   /**
    * Texto do tooltip
    */
   const tooltip =
     tooltipText ||
-    `Rolar dano ${formatDamageFormula(isCriticalProp)} (${DAMAGE_TYPE_LABELS[damageType]})`;
+    `Rolar dano ${formatDamageFormula()} (${DAMAGE_TYPE_LABELS[damageType]})`;
 
   return (
     <>
@@ -265,7 +194,6 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
         <span>
           <IconButton
             onClick={handleOpen}
-            onDoubleClick={handleQuickRoll}
             size={size}
             color={color}
             disabled={disabled}
@@ -288,7 +216,7 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
         onClose={handleClose}
         maxWidth="sm"
         fullWidth
-        onClick={(e) => e.stopPropagation()} // Evitar propagação para linha
+        onClick={(e) => e.stopPropagation()}
       >
         <DialogTitle>
           <Stack
@@ -306,13 +234,10 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Scroll até o FAB e simular clique
                   const fab = document.querySelector(
                     '[aria-label="Abrir histórico de rolagens"]'
                   ) as HTMLElement;
-                  if (fab) {
-                    fab.click();
-                  }
+                  if (fab) fab.click();
                 }}
                 sx={{ ml: 'auto' }}
               >
@@ -331,7 +256,7 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                 <Chip
-                  label={formatDamageFormula(forceCritical)}
+                  label={formatDamageFormula()}
                   size="small"
                   color="error"
                 />
@@ -340,77 +265,172 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
                   size="small"
                   variant="outlined"
                 />
-                {forceCritical && (
+                <Chip
+                  label={`Crítico: +${criticalDice}d`}
+                  size="small"
+                  color="warning"
+                  variant="outlined"
+                />
+                {bonusDice && (
                   <Chip
-                    label="CRÍTICO"
+                    label={`Bônus: ${formatDiceNotation(bonusDice)}`}
                     size="small"
-                    color="warning"
-                    icon={<StarsIcon />}
+                    color="info"
+                    variant="outlined"
                   />
                 )}
               </Stack>
             </Box>
 
-            {/* Toggle de crítico */}
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={forceCritical}
-                  onChange={(e) => setForceCritical(e.target.checked)}
-                  color="warning"
-                />
-              }
-              label={
-                <Typography variant="body2">
-                  Acerto Crítico (maximiza dano base)
-                </Typography>
-              }
-            />
+            {/* Seleção do tipo de resultado */}
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Tipo de Resultado
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 1.5 }}
+              >
+                Selecione o tipo baseado nas ✶ restantes após a defesa:
+              </Typography>
+              <ToggleButtonGroup
+                value={selectedHitType}
+                exclusive
+                onChange={(_e, value) => {
+                  if (value !== null) {
+                    setSelectedHitType(value);
+                    setResult(null);
+                  }
+                }}
+                aria-label="Tipo de resultado do dano"
+                fullWidth
+                size="small"
+              >
+                {(
+                  ['raspao', 'normal', 'em-cheio', 'critico'] as AttackHitType[]
+                ).map((ht) => (
+                  <ToggleButton
+                    key={ht}
+                    value={ht}
+                    sx={{
+                      px: 1,
+                      py: 1,
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      textTransform: 'none',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      fontWeight={ht === selectedHitType ? 700 : 400}
+                    >
+                      {ATTACK_HIT_TYPE_LABELS[ht]}
+                    </Typography>
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
 
-            {/* Toggle de crítico verdadeiro (apenas se crítico estiver ativo E houver dados extras) */}
-            {forceCritical && criticalDamage && criticalDamage.quantity > 0 && (
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={forceTrueCritical}
-                    onChange={(e) => setForceTrueCritical(e.target.checked)}
-                    color="error"
-                  />
+              {/* Descrição do tipo selecionado */}
+              <Alert
+                severity={
+                  selectedHitType === 'raspao'
+                    ? 'warning'
+                    : selectedHitType === 'critico'
+                      ? 'error'
+                      : selectedHitType === 'em-cheio'
+                        ? 'success'
+                        : 'info'
                 }
-                label={
-                  <Typography variant="body2">
-                    Crítico Verdadeiro (+{criticalDamage.quantity}
-                    {criticalDamage.type} extras rolados)
-                  </Typography>
+                icon={
+                  selectedHitType === 'critico' ? (
+                    <StarsIcon />
+                  ) : selectedHitType === 'em-cheio' ? (
+                    <FlashOnIcon />
+                  ) : undefined
                 }
-              />
-            )}
+                sx={{ mt: 1 }}
+              >
+                <Typography variant="body2">
+                  {ATTACK_HIT_TYPE_DESCRIPTIONS[selectedHitType]}
+                </Typography>
+              </Alert>
+            </Box>
 
             {/* Resultado da rolagem */}
             {result && (
               <Box>
-                <DiceRollResult result={result} showBreakdown animate />
+                <Typography variant="subtitle2" gutterBottom>
+                  Resultado
+                </Typography>
 
-                {/* Explicação de crítico */}
-                {forceCritical && (
-                  <Alert
-                    severity="warning"
-                    icon={<StarsIcon />}
-                    sx={{
-                      mt: 2,
-                      bgcolor: alpha(theme.palette.warning.main, 0.1),
-                    }}
-                  >
-                    <Typography variant="body2">
-                      <strong>Dano Crítico:</strong> Dados MAXIMIZADOS (
-                      {damageRoll.quantity} × d
-                      {damageRoll.type.replace('d', '')} ={' '}
-                      {damageRoll.quantity *
-                        parseInt(damageRoll.type.replace('d', ''))}
-                      ), modificador mantido (+{damageRoll.modifier})
+                {/* Dano base */}
+                <DiceRollResult
+                  result={result.baseDamage}
+                  showBreakdown
+                  animate
+                />
+
+                {/* Dano bônus */}
+                {result.bonusDamage && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography
+                      variant="caption"
+                      color="info.main"
+                      fontWeight="bold"
+                      display="block"
+                      gutterBottom
+                    >
+                      + Dano Bônus
                     </Typography>
-                  </Alert>
+                    <DiceRollResult
+                      result={result.bonusDamage}
+                      showBreakdown
+                      animate
+                    />
+                  </Box>
                 )}
+
+                {/* Dano crítico extra */}
+                {result.criticalExtraDamage && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography
+                      variant="caption"
+                      color="warning.main"
+                      fontWeight="bold"
+                      display="block"
+                      gutterBottom
+                    >
+                      + Dano Crítico Extra
+                    </Typography>
+                    <DiceRollResult
+                      result={result.criticalExtraDamage}
+                      showBreakdown
+                      animate
+                    />
+                  </Box>
+                )}
+
+                {/* Total */}
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.palette.error.main, 0.1),
+                    border: 1,
+                    borderColor: alpha(theme.palette.error.main, 0.3),
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="h4" fontWeight="bold" color="error.main">
+                    {result.totalDamage}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {result.description}
+                  </Typography>
+                </Box>
               </Box>
             )}
           </Stack>
@@ -427,7 +447,8 @@ export const DamageRollButton: React.FC<DamageRollButtonProps> = ({
             disabled={disabled}
             color="error"
           >
-            Rolar
+            {result ? 'Rolar Novamente' : 'Rolar Dano'} (
+            {ATTACK_HIT_TYPE_LABELS[selectedHitType].split(' (')[0]})
           </Button>
         </DialogActions>
       </Dialog>

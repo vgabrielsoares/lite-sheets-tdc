@@ -27,7 +27,7 @@ import type { Character } from '@/types';
 import { AttackRollButton } from './AttackRollButton';
 import { DamageRollButton } from './DamageRollButton';
 import { CombinedAttackButton } from './CombinedAttackButton';
-import { calculateAttackRoll } from '@/utils/attackCalculations';
+import { calculateAttackPool } from '@/utils/attackCalculations';
 
 export interface AttackRowProps {
   /** Dados do ataque */
@@ -49,7 +49,7 @@ const ATTACK_TYPE_LABELS: Record<AttackType, string> = {
   magico: 'Mágico',
 };
 
-/** Labels para custo de ação (v0.0.2: actionCost numérico) */
+/** Labels para custo de ação (actionCost numérico) */
 function getActionCostLabel(cost: number): string {
   switch (cost) {
     case 0:
@@ -136,58 +136,22 @@ export function AttackRow({
   const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
 
-  // Calcular fórmula de ataque dinâmica baseada na habilidade/uso
-  const attackRollCalc = calculateAttackRoll(
+  // Calcular pool de ataque dinâmico baseado na habilidade/uso
+  const attackPoolCalc = calculateAttackPool(
     character,
     attack.attackSkill,
     attack.attackSkillUseId,
-    attack.attackBonus ?? 0,
-    attack.attackAttribute,
-    attack.attackDiceModifier || 0
+    attack.attackDiceModifier || 0,
+    attack.attackAttribute
   );
-  const attackRollStr = attackRollCalc.formula;
+  const attackRollStr = attackPoolCalc.formula;
 
-  // Calcular modificador de atributo para o dano
-  const attackAttributeKey =
-    attack.attackAttribute ||
-    character.skills[attack.attackSkill]?.keyAttribute ||
-    'forca';
-  const attributeValue = character.attributes[attackAttributeKey] || 0;
-
-  // Calcular bônus de atributo no dano
-  const attributeDamageBonus =
-    (attack.addAttributeToDamage ?? true)
-      ? attack.doubleAttributeDamage
-        ? attributeValue * 2
-        : attributeValue
-      : 0;
-
-  // Modificador total de dano (inclui modificador base + atributo)
-  const totalDamageModifier = attack.damageRoll.modifier + attributeDamageBonus;
-
-  // Formatar rolagem de dano com modificador total
+  // Formatar rolagem de dano para exibição
   const damageRollStr = formatDiceRoll(
     attack.damageRoll.quantity,
     attack.damageRoll.type,
-    totalDamageModifier
+    attack.damageRoll.modifier
   );
-
-  // Número de ataques
-  const numberOfAttacks = attack.numberOfAttacks ?? 1;
-
-  // Rolagem de dano com modificador de atributo incluído
-  const damageRollWithAttribute = {
-    ...attack.damageRoll,
-    modifier: totalDamageModifier,
-  };
-
-  // Dano crítico com modificador de atributo incluído
-  const criticalDamageWithAttribute = attack.criticalDamage
-    ? {
-        ...attack.criticalDamage,
-        modifier: attack.criticalDamage.modifier + attributeDamageBonus,
-      }
-    : { quantity: 1, type: 'd6' as const, modifier: attributeDamageBonus };
 
   // Cor baseada no tipo de ataque
   const typeColor =
@@ -245,19 +209,10 @@ export function AttackRow({
           noWrap
         >
           {attack.name}
-          {numberOfAttacks > 1 && (
-            <Typography
-              component="span"
-              variant="caption"
-              sx={{ ml: 1, color: 'text.secondary' }}
-            >
-              (×{numberOfAttacks})
-            </Typography>
-          )}
         </Typography>
 
         {/* Info rápida - Ataque */}
-        <Tooltip title="Bônus de ataque">
+        <Tooltip title="Pool de ataque">
           <Chip
             label={attackRollStr}
             size="small"
@@ -270,14 +225,12 @@ export function AttackRow({
         {/* Botão de rolagem de ataque */}
         <AttackRollButton
           attackName={attack.name}
-          attackBonus={attack.attackBonus ?? 0}
           character={character}
           attackSkill={attack.attackSkill}
           attackSkillUseId={attack.attackSkillUseId}
           attackAttribute={attack.attackAttribute}
           attackDiceModifier={attack.attackDiceModifier}
           size="small"
-          color="primary"
         />
 
         {/* Info rápida - Dano */}
@@ -294,9 +247,12 @@ export function AttackRow({
         {/* Botão de rolagem de dano */}
         <DamageRollButton
           attackName={attack.name}
-          damageRoll={damageRollWithAttribute}
+          damageRoll={attack.damageRoll}
           damageType={attack.damageType}
-          criticalDamage={criticalDamageWithAttribute}
+          criticalDice={
+            attack.criticalDice ?? attack.criticalDamage?.quantity ?? 1
+          }
+          bonusDice={attack.bonusDice}
           size="small"
           color="error"
         />
@@ -304,11 +260,12 @@ export function AttackRow({
         {/* Botão de rolagem combinada (ataque + dano) */}
         <CombinedAttackButton
           attackName={attack.name}
-          attackBonus={attack.attackBonus ?? 0}
-          damageRoll={damageRollWithAttribute}
+          damageRoll={attack.damageRoll}
           damageType={attack.damageType}
-          criticalRange={attack.criticalRange ?? 20}
-          criticalDamage={criticalDamageWithAttribute}
+          criticalDice={
+            attack.criticalDice ?? attack.criticalDamage?.quantity ?? 1
+          }
+          bonusDice={attack.bonusDice}
           character={character}
           attackSkill={attack.attackSkill}
           attackSkillUseId={attack.attackSkillUseId}
@@ -378,14 +335,12 @@ export function AttackRow({
                   </Typography>
                   <AttackRollButton
                     attackName={attack.name}
-                    attackBonus={attack.attackBonus ?? 0}
                     character={character}
                     attackSkill={attack.attackSkill}
                     attackSkillUseId={attack.attackSkillUseId}
                     attackAttribute={attack.attackAttribute}
                     attackDiceModifier={attack.attackDiceModifier}
                     size="small"
-                    color="primary"
                   />
                 </Stack>
               </Box>
@@ -400,9 +355,14 @@ export function AttackRow({
                   </Typography>
                   <DamageRollButton
                     attackName={attack.name}
-                    damageRoll={damageRollWithAttribute}
+                    damageRoll={attack.damageRoll}
                     damageType={attack.damageType}
-                    criticalDamage={criticalDamageWithAttribute}
+                    criticalDice={
+                      attack.criticalDice ??
+                      attack.criticalDamage?.quantity ??
+                      1
+                    }
+                    bonusDice={attack.bonusDice}
                     size="small"
                     color="error"
                   />
@@ -440,11 +400,12 @@ export function AttackRow({
               <Stack direction="row" spacing={1} justifyContent="center">
                 <CombinedAttackButton
                   attackName={attack.name}
-                  attackBonus={attack.attackBonus ?? 0}
-                  damageRoll={damageRollWithAttribute}
+                  damageRoll={attack.damageRoll}
                   damageType={attack.damageType}
-                  criticalRange={attack.criticalRange ?? 20}
-                  criticalDamage={criticalDamageWithAttribute}
+                  criticalDice={
+                    attack.criticalDice ?? attack.criticalDamage?.quantity ?? 1
+                  }
+                  bonusDice={attack.bonusDice}
                   character={character}
                   attackSkill={attack.attackSkill}
                   attackSkillUseId={attack.attackSkillUseId}
