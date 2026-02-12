@@ -126,40 +126,32 @@ export const ResourcesTab = React.memo(function ResourcesTab({
       }
 
       // Merge purchased proficiencies into existing proficiencies
-      // (only add if not already present)
+      // Strategy: keep all non-purchase items from current, then add ALL active purchased items
       const currentProfs = character.proficiencies;
       const updatedProfs: Proficiencies = {
         weapons: [
           ...currentProfs.weapons.filter(
             (w) => !purchasedByCategory.weapons.includes(w)
           ),
-          ...purchasedByCategory.weapons.filter(
-            (w) => !currentProfs.weapons.includes(w)
-          ),
+          ...purchasedByCategory.weapons,
         ],
         armor: [
           ...currentProfs.armor.filter(
             (a) => !purchasedByCategory.armor.includes(a)
           ),
-          ...purchasedByCategory.armor.filter(
-            (a) => !currentProfs.armor.includes(a)
-          ),
+          ...purchasedByCategory.armor,
         ],
         tools: [
           ...currentProfs.tools.filter(
             (t) => !purchasedByCategory.tools.includes(t)
           ),
-          ...purchasedByCategory.tools.filter(
-            (t) => !currentProfs.tools.includes(t)
-          ),
+          ...purchasedByCategory.tools,
         ],
         other: [
           ...currentProfs.other.filter(
             (o) => !purchasedByCategory.other.includes(o)
           ),
-          ...purchasedByCategory.other.filter(
-            (o) => !currentProfs.other.includes(o)
-          ),
+          ...purchasedByCategory.other,
         ],
       };
 
@@ -287,7 +279,7 @@ export const ResourcesTab = React.memo(function ResourcesTab({
 
   const handleApplyRecovery = useCallback(
     (gaRecovery: number, ppRecovery: number) => {
-      // v0.0.2: Recuperação aplica a GA (Guarda), não mais HP
+      // Recuperação aplica a GA (Guarda), não mais HP
       const guard = character.combat.guard;
       const newGuardCurrent = guard
         ? Math.min(guard.current + gaRecovery, guard.max)
