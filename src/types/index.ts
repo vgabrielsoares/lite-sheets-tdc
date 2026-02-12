@@ -106,6 +106,7 @@ export type {
   ActionType,
   Defense,
   AttackType,
+  AttackHitType,
   Attack,
   AttackResult,
   PPLimit,
@@ -122,6 +123,10 @@ export type {
 
 export {
   VULNERABILITY_DIE_STEPS,
+  ATTACK_HIT_TYPE_LABELS,
+  ATTACK_HIT_TYPE_DESCRIPTIONS,
+  ATTACK_HIT_TYPE_COLORS,
+  suggestHitType,
   SAVING_THROW_ATTRIBUTES,
   SAVING_THROW_SKILLS,
   DEFAULT_GA_LEVEL_1,

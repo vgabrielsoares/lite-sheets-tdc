@@ -315,6 +315,8 @@ export interface WizardState {
     chosenProficiencies: SkillName[];
     /** Habilidade de assinatura */
     signatureSkill: SkillName | null;
+    /** Nível de Sorte (0-7), cada nível acima de 0 consome 1 slot de proficiência */
+    luckLevel: number;
   };
 
   // Step 7: Equipamentos
@@ -411,6 +413,7 @@ export function createInitialWizardState(): WizardState {
     skills: {
       chosenProficiencies: [],
       signatureSkill: null,
+      luckLevel: 0,
     },
 
     equipment: {

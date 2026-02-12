@@ -131,7 +131,7 @@ export type SpellcastingSkillName =
 /**
  * Habilidade de conjuração cadastrada do personagem
  *
- * v0.0.2: ND/Bônus de Ataque removidos. Substituídos por castingBonus
+ * ND/Bônus de Ataque removidos. Substituídos por castingBonus
  * (bônus de dados adicionais ao teste de conjuração, formato +Xd/-Xd).
  */
 export interface SpellcastingAbility {
