@@ -106,6 +106,15 @@ export const PURCHASABLE_PROFICIENCIES: readonly PurchasableProficiency[] = [
     isGroupPurchase: true,
     costOptions: { corpo: 4 },
   },
+  {
+    id: 'weapon-mastery',
+    label: 'Maestria com Arma',
+    description:
+      'Maestria com uma arma com a qual o personagem já seja proficiente.',
+    category: 'weapon',
+    isGroupPurchase: false,
+    costOptions: { agilidade: 2, corpo: 2 },
+  },
 
   // ── Armaduras ──
   {
