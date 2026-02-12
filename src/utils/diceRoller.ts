@@ -1,5 +1,5 @@
 /**
- * Sistema de Rolagem de Dados para Tabuleiro do Caos RPG (v0.0.2)
+ * Sistema de Rolagem de Dados para Tabuleiro do Caos RPG
  *
  * Mecânicas implementadas:
  * - Pool de Dados: Rolar X dados onde X = valor do atributo + modificadores de dado
@@ -85,7 +85,7 @@ function classifyDie(value: number, dieSize: DieSize): DicePoolDie {
 }
 
 // ============================================================================
-// Pool de Dados — Sistema Principal (v0.0.2)
+// Pool de Dados — Sistema Principal
 // ============================================================================
 
 /**
@@ -319,6 +319,274 @@ export function rollDamageWithCritical(
   }
 
   return rollDamage(diceCount, diceSides, modifier, context);
+}
+
+// ============================================================================
+// Rolagem por Tipo de Resultado de Ataque
+// ============================================================================
+
+import type { AttackHitType } from '@/types/combat';
+import type { DiceRoll, DiceType } from '@/types/common';
+
+// ─── Dice Notation Parsers ──────────────────────────────────────────
+
+/**
+ * Tipos de dado válidos no sistema
+ */
+const VALID_DIE_SIDES = new Set([2, 3, 4, 6, 8, 10, 12, 20, 100]);
+
+/**
+ * Regex para notação de dados: aceita "d6", "1d6", "2d8", "4d12", etc.
+ */
+export const DICE_NOTATION_REGEX = /^(\d+)?d(\d+)$/i;
+
+/**
+ * Regex para notação de dado crítico: aceita "+1d", "+2d", "1d", "2d", etc.
+ */
+export const CRITICAL_DICE_REGEX = /^\+?(\d+)d$/i;
+
+/**
+ * Parseia notação de dados (ex: "1d6", "2d8", "d4") → DiceRoll (sem modificador)
+ */
+export function parseDiceNotation(notation: string): DiceRoll | null {
+  const match = notation.trim().match(DICE_NOTATION_REGEX);
+  if (!match) return null;
+  const quantity = match[1] ? parseInt(match[1], 10) : 1;
+  const sides = parseInt(match[2], 10);
+  if (quantity < 1 || sides < 1 || !VALID_DIE_SIDES.has(sides)) return null;
+  return {
+    quantity,
+    type: `d${sides}` as DiceType,
+    modifier: 0,
+  };
+}
+
+/**
+ * Parseia notação de dado crítico (ex: "+1d", "+2d", "1d") → número de dados extras
+ */
+export function parseCriticalNotation(notation: string): number | null {
+  const match = notation.trim().match(CRITICAL_DICE_REGEX);
+  if (!match) return null;
+  const count = parseInt(match[1], 10);
+  if (count < 1) return null;
+  return count;
+}
+
+/**
+ * Formata DiceRoll como string compacta (ex: "1d6", "2d8")
+ */
+export function formatDiceNotation(roll: DiceRoll): string {
+  return `${roll.quantity}${roll.type}`;
+}
+
+/**
+ * Formata preview de fórmula de dano para ataque normal (1✶)
+ */
+export function formatDamagePreview(
+  baseDice: DiceRoll,
+  bonusDice?: DiceRoll,
+  modifier?: number
+): string {
+  const parts: string[] = [];
+  parts.push(formatDiceNotation(baseDice));
+  if (bonusDice && bonusDice.quantity > 0) {
+    parts.push(formatDiceNotation(bonusDice));
+  }
+  const mod = modifier ?? baseDice.modifier;
+  if (mod > 0) parts.push(`${mod}`);
+  else if (mod < 0) parts.push(`${mod}`);
+  return parts.join(mod > 0 ? ' + ' : mod < 0 ? ' ' : ' + ');
+}
+
+/**
+ * Formata preview de fórmula de dano para todos os tipos de resultado
+ */
+export function formatAllDamagePreviews(
+  baseDice: DiceRoll,
+  criticalDice: number,
+  bonusDice?: DiceRoll
+): { raspao: string; normal: string; emCheio: string; critico: string } {
+  const baseStr = formatDiceNotation(baseDice);
+  const diceSides = parseInt(baseDice.type.replace('d', ''), 10);
+  const maxBase = baseDice.quantity * diceSides;
+  const bonusStr =
+    bonusDice && bonusDice.quantity > 0 ? formatDiceNotation(bonusDice) : '';
+  const maxBonus =
+    bonusDice && bonusDice.quantity > 0
+      ? bonusDice.quantity * parseInt(bonusDice.type.replace('d', ''), 10)
+      : 0;
+  const mod = baseDice.modifier;
+  const modStr = mod > 0 ? `+${mod}` : mod < 0 ? `${mod}` : '';
+
+  // Raspão: dados base ÷ 2 (sem mod, sem bônus)
+  const raspao = `(${baseStr}) ÷ 2`;
+
+  // Normal: dados base + bônus + mod
+  const normalParts = [baseStr];
+  if (bonusStr) normalParts.push(bonusStr);
+  const normal = normalParts.join(' + ') + (modStr ? modStr : '');
+
+  // Em Cheio: max base + bônus rolado + mod
+  const emCheioParts = [`${maxBase}`];
+  if (bonusStr) emCheioParts.push(bonusStr);
+  const emCheio = emCheioParts.join(' + ') + (modStr ? modStr : '');
+
+  // Crítico: max base + bônus rolado + mod + dados críticos
+  const critStr = `${criticalDice}${baseDice.type}`;
+  const criticoParts = [`${maxBase}`];
+  if (bonusStr) criticoParts.push(bonusStr);
+  const critico =
+    criticoParts.join(' + ') + (modStr ? modStr : '') + ` + ${critStr}`;
+
+  return { raspao, normal, emCheio, critico };
+}
+
+// ─── Attack Damage Result ───────────────────────────────────────────
+
+/**
+ * Resultado completo de dano baseado no tipo de ataque
+ */
+export interface AttackDamageResult {
+  /** Tipo de resultado do ataque */
+  hitType: AttackHitType;
+  /** Resultado do dano base (com modificador, maximizado se em cheio/crítico) */
+  baseDamage: DamageDiceRollResult;
+  /** Resultado dos dados bônus (se houver) */
+  bonusDamage?: DamageDiceRollResult;
+  /** Dados de dano crítico extra (apenas para 'critico') */
+  criticalExtraDamage?: DamageDiceRollResult;
+  /** Dano total final */
+  totalDamage: number;
+  /** Descrição legível do cálculo */
+  description: string;
+}
+
+/**
+ * Calcula dano baseado no tipo de resultado de ataque
+ *
+ * Regras:
+ * - Raspão (0✶): Rola dados base sem modificadores ÷ 2 (mín 1). Sem bônus.
+ * - Normal (1✶): Rola dados base + dados bônus + modificador
+ * - Em Cheio (2✶): Maximiza dados base + maximiza dados bônus + modificador
+ * - Crítico (3+✶): Maximiza dados base + maximiza dados bônus + modificador + rola dados críticos extras
+ *
+ * @param damageRoll - Configuração base de dano (quantity × type + modifier)
+ * @param hitType - Tipo de resultado do ataque
+ * @param criticalDice - Número de dados extras do mesmo tipo base (default: 1)
+ * @param bonusDice - Dados de dano bônus opcionais
+ * @param context - Descrição do contexto
+ */
+export function rollDamageByHitType(
+  damageRoll: DiceRoll,
+  hitType: AttackHitType,
+  criticalDice: number = 1,
+  bonusDice?: DiceRoll,
+  context?: string
+): AttackDamageResult {
+  const diceCount = damageRoll.quantity;
+  const diceSides = parseInt(damageRoll.type.replace('d', ''), 10);
+  const modifier = damageRoll.modifier;
+
+  // Helper: rolar e/ou maximizar dados bônus
+  const rollBonus = (maximize: boolean): DamageDiceRollResult | undefined => {
+    if (!bonusDice || bonusDice.quantity <= 0) return undefined;
+    const bSides = parseInt(bonusDice.type.replace('d', ''), 10);
+    if (maximize) {
+      return rollDamageWithCritical(
+        bonusDice.quantity,
+        bSides,
+        0,
+        true,
+        `Bônus: ${context || ''}`
+      );
+    }
+    return rollDamage(bonusDice.quantity, bSides, 0, `Bônus: ${context || ''}`);
+  };
+
+  switch (hitType) {
+    case 'raspao': {
+      // Rola dados BASE sem modificadores e sem bônus, divide por 2 (mín 1)
+      const baseResult = rollDamage(diceCount, diceSides, 0, context);
+      const halvedDamage = Math.max(1, Math.floor(baseResult.finalResult / 2));
+      const raspaoResult: DamageDiceRollResult = {
+        ...baseResult,
+        formula: `(${diceCount}d${diceSides} = ${baseResult.finalResult}) ÷ 2 = ${halvedDamage}`,
+        finalResult: halvedDamage,
+      };
+      return {
+        hitType,
+        baseDamage: raspaoResult,
+        totalDamage: halvedDamage,
+        description: `Raspão: ${diceCount}d${diceSides} sem modificadores, dividido por 2`,
+      };
+    }
+
+    case 'normal': {
+      // Rola dados base + bônus + modificador
+      const normalResult = rollDamage(diceCount, diceSides, modifier, context);
+      const bonus = rollBonus(false);
+      const total = normalResult.finalResult + (bonus?.finalResult ?? 0);
+      return {
+        hitType,
+        baseDamage: normalResult,
+        bonusDamage: bonus,
+        totalDamage: total,
+        description: `Normal: ${diceCount}d${diceSides}${modifier >= 0 ? '+' : ''}${modifier}${bonus ? ` + ${bonusDice!.quantity}d${parseInt(bonusDice!.type.replace('d', ''), 10)}` : ''}`,
+      };
+    }
+
+    case 'em-cheio': {
+      // Maximiza dados base + modificador, rola dados bônus normalmente
+      const maxResult = rollDamageWithCritical(
+        diceCount,
+        diceSides,
+        modifier,
+        true,
+        context
+      );
+      const bonus = rollBonus(false);
+      const total = maxResult.finalResult + (bonus?.finalResult ?? 0);
+      return {
+        hitType,
+        baseDamage: maxResult,
+        bonusDamage: bonus,
+        totalDamage: total,
+        description: `Em Cheio: ${diceCount}×${diceSides} (MAX)${modifier >= 0 ? '+' : ''}${modifier}${bonus ? ` + ${bonusDice!.quantity}d${parseInt(bonusDice!.type.replace('d', ''), 10)}` : ''} = ${total}`,
+      };
+    }
+
+    case 'critico': {
+      // Maximiza base + mod, rola dados bônus + rola criticalDice dados extras do mesmo tipo base
+      const maxResult = rollDamageWithCritical(
+        diceCount,
+        diceSides,
+        modifier,
+        true,
+        context
+      );
+      const bonus = rollBonus(false);
+      const effectiveCritDice = Math.max(1, criticalDice);
+      const critResult = rollDamage(
+        effectiveCritDice,
+        diceSides,
+        0,
+        `Dano Crítico: ${context || ''}`
+      );
+      const total =
+        maxResult.finalResult +
+        (bonus?.finalResult ?? 0) +
+        critResult.finalResult;
+
+      return {
+        hitType,
+        baseDamage: maxResult,
+        bonusDamage: bonus,
+        criticalExtraDamage: critResult,
+        totalDamage: total,
+        description: `Crítico: ${diceCount}×${diceSides} (MAX)${modifier >= 0 ? '+' : ''}${modifier}${bonus ? ` + ${bonusDice!.quantity}d${parseInt(bonusDice!.type.replace('d', ''), 10)}` : ''} + ${effectiveCritDice}d${diceSides}`,
+      };
+    }
+  }
 }
 
 // ============================================================================

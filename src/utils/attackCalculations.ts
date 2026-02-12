@@ -1,7 +1,7 @@
 /**
  * Cálculos e Utilitários para Sistema de Combate
  *
- * v0.0.2 - Sistema de Pool de Dados com Contagem de Sucessos:
+ * Sistema de Pool de Dados com Contagem de Sucessos:
  * - Ataque = pool de XdY (X = atributo + mods, Y = proficiência)
  * - Resultados ≥ 6 = ✶ (sucesso), = 1 cancela 1✶
  * - Sem comparação com defesa fixa (defensor rola separadamente)
@@ -20,11 +20,11 @@ import {
 import { calculateSignatureAbilityBonus } from './calculations';
 
 // ============================================================
-// v0.0.2 — Pool System (Contagem de Sucessos)
+// Pool System (Contagem de Sucessos)
 // ============================================================
 
 /**
- * Resultado do cálculo de pool de ataque (v0.0.2)
+ * Resultado do cálculo de pool de ataque
  */
 export interface AttackPoolCalculation {
   /** Quantidade de dados na pool */
@@ -62,7 +62,7 @@ export interface PoolRollResult {
 }
 
 /**
- * Calcula a pool de dados para um ataque (v0.0.2)
+ * Calcula a pool de dados para um ataque
  *
  * Regras:
  * - Base = valor do atributo da habilidade/uso
@@ -93,7 +93,7 @@ export function calculateAttackPool(
   // Fallback se habilidade não existir
   if (!skill) {
     const attr = attributeOverride || 'corpo';
-    const attrValue = character.attributes[attr];
+    const attrValue = character.attributes[attr] ?? 0;
     const totalDice = attrValue + attackDiceModifier;
 
     if (totalDice <= 0) {
@@ -152,7 +152,7 @@ export function calculateAttackPool(
     keyAttribute = attributeOverride;
   }
 
-  const attributeValue = character.attributes[keyAttribute];
+  const attributeValue = character.attributes[keyAttribute] ?? 0;
   const dieSize = getSkillDieSize(skill.proficiencyLevel);
 
   // Bônus de assinatura (+1d/+2d/+3d)
@@ -203,7 +203,7 @@ export function calculateAttackPool(
 }
 
 /**
- * Rola uma pool de dados e conta sucessos (v0.0.2)
+ * Rola uma pool de dados e conta sucessos
  *
  * Regras:
  * - Resultado ≥ 6 = 1✶ (sucesso)
@@ -272,11 +272,11 @@ export function formatPoolResult(result: PoolRollResult): string {
 }
 
 // ============================================================
-// Funções de dano (ainda válidas em v0.0.2 — dano é soma de dados)
+// Funções de dano (ainda válidas, dano é soma de dados)
 // ============================================================
 
 /**
- * Configuração de dano (v0.0.2: simplificado, sem graze/true-critical)
+ * Configuração de dano (simplificado, sem graze/true-critical)
  */
 export interface DamageConfig {
   /** Dados de dano base da arma */
@@ -298,7 +298,7 @@ export interface DamageResult {
 }
 
 /**
- * Calcula dano de um ataque (v0.0.2)
+ * Calcula dano de um ataque
  * Dano = soma dos dados + modificador fixo (se houver)
  *
  * @param config - Configuração do dano (dados + modificador)
@@ -334,7 +334,7 @@ export function calculateDamage(config: DamageConfig): DamageResult {
 // ============================================================
 
 /**
- * @deprecated v0.0.2: Use PoolRollResult com contagem de ✶ em vez de outcomes fixos
+ * @deprecated Use PoolRollResult com contagem de ✶ em vez de outcomes fixos
  */
 export type AttackOutcome =
   | 'miss'
@@ -344,7 +344,7 @@ export type AttackOutcome =
   | 'true-critical';
 
 /**
- * @deprecated v0.0.2: Use AttackPoolCalculation (pool de dados)
+ * @deprecated Use AttackPoolCalculation (pool de dados)
  */
 export interface AttackRollCalculation {
   /** Quantidade de d20s a rolar */
@@ -364,7 +364,7 @@ export interface AttackRollCalculation {
 }
 
 /**
- * @deprecated v0.0.2: Defesa é teste ativo, não comparação fixa
+ * @deprecated Defesa é teste ativo, não comparação fixa
  */
 export interface AttackCalculation {
   /** Resultado da rolagem de ataque */
@@ -420,7 +420,7 @@ export interface DamageCalculation {
 }
 
 /**
- * @deprecated v0.0.2: Use calculateAttackPool (pool de dados)
+ * @deprecated Use calculateAttackPool (pool de dados)
  */
 export function calculateAttackRoll(
   character: Character,
@@ -630,7 +630,7 @@ export function calculateAttackRoll(
 }
 
 /**
- * @deprecated v0.0.2: Não há mais comparação com defesa fixa
+ * @deprecated Não há mais comparação com defesa fixa
  */
 export function calculateAttackOutcome(
   attackRoll: number,
@@ -683,7 +683,7 @@ export function calculateAttackOutcome(
 }
 
 /**
- * @deprecated v0.0.2: Use calculateDamage (simplificado, sem graze/true-critical)
+ * @deprecated Use calculateDamage (simplificado, sem graze/true-critical)
  */
 export function calculateAttackDamage(
   config: CriticalDamageConfig

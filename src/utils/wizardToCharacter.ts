@@ -753,12 +753,13 @@ function createLevelHistory(
 }
 
 /**
- * Cria a sorte inicial
+ * Cria a sorte inicial com base no nível definido no wizard
  */
-function createDefaultLuck(): LuckLevel {
+function createLuckFromWizard(state: WizardState): LuckLevel {
+  const luckLevel = state.skills.luckLevel ?? 0;
   return {
-    level: 0,
-    value: 0,
+    level: luckLevel,
+    value: luckLevel,
     diceModifier: 0,
     numericModifier: 0,
   };
@@ -848,7 +849,7 @@ export function convertWizardToCharacter(state: WizardState): Character {
     proficiencyPurchases: mapProficiencyPurchases(state),
 
     // Sorte e Ofícios
-    luck: createDefaultLuck(),
+    luck: createLuckFromWizard(state),
     crafts: [],
 
     // Recursos
