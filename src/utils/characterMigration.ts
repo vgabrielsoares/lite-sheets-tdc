@@ -47,7 +47,7 @@ export function needsMigration(character: unknown): boolean {
 }
 
 /**
- * Garante que os campos de combate v0.0.2 existam no personagem.
+ * Garante que os campos de combate existam no personagem.
  * Chamar APÓS a migração principal, como safety net para personagens
  * que ficaram em estado intermediário durante o desenvolvimento.
  *
@@ -284,7 +284,7 @@ function migrateLineage(lineage: unknown): unknown {
 }
 
 /**
- * Migra dados de combate para v0.0.2
+ * Migra dados de combate para
  *
  * Mudanças:
  * - HP → GA (Guarda) + PV (Vitalidade)
@@ -401,7 +401,7 @@ function migrateCombat(combat: unknown): unknown {
 
 /**
  * Migra dados de conjuração que referenciam atributos antigos
- * e converte dcBonus/attackBonus para castingBonus (v0.0.2)
+ * e converte dcBonus/attackBonus para castingBonus (v0.2)
  */
 function migrateSpellcasting(spellcasting: unknown): unknown {
   if (!spellcasting || typeof spellcasting !== 'object') return spellcasting;

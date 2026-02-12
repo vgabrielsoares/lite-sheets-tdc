@@ -1,5 +1,5 @@
 /**
- * Usos padrões de habilidades do Tabuleiro do Caos RPG (v0.0.2)
+ * Usos padrões de habilidades do Tabuleiro do Caos RPG
  *
  * Define os usos oficiais de cada habilidade conforme livro v0.1.7,
  * organizados por nível de proficiência requerido.
@@ -10,7 +10,7 @@
  * - Custo de ação em combate (▶/↩/∆)
  * - Atributo alternativo (quando aplicável)
  *
- * @see base-files/v0.0.2.md — Seção de Habilidades
+ * @see base-files/v0.2.md — Seção de Habilidades
  */
 
 import type { SkillName, ProficiencyLevel, AttributeName } from '@/types';
@@ -47,9 +47,9 @@ export interface DefaultSkillUse {
 }
 
 /**
- * Mapa de usos padrões por habilidade (v0.0.2 / livro v0.1.7)
+ * Mapa de usos padrões por habilidade
  *
- * Fonte autoritativa: base-files/v0.0.2.md
+ * Fonte autoritativa: base-files/v0.2.md
  */
 export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
   // ─────────────────────────────────────────

@@ -16,7 +16,7 @@ export type Timestamp = string;
 
 /**
  * Níveis de proficiência para habilidades
- * No sistema v0.0.2, o grau determina o tamanho do dado:
+ * No sistema o grau determina o tamanho do dado:
  * - Leigo: d6
  * - Adepto: d8
  * - Versado: d10
@@ -78,7 +78,7 @@ export interface DicePoolDie {
 }
 
 /**
- * Resultado de uma rolagem de pool de dados (sistema v0.0.2)
+ * Resultado de uma rolagem de pool de dados
  *
  * Mecânica: Rola X dados do tamanho determinado pelo grau,
  * conta resultados ≥ 6 como sucessos (✶),

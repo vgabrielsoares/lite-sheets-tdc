@@ -1,7 +1,7 @@
 /**
  * GuardVitalitySidebar - Sidebar de detalhes de Guarda (GA) e Vitalidade (PV)
  *
- * v0.0.2: Substitui a antiga HPDetailSidebar.
+ * Substitui a antiga HPDetailSidebar.
  * Embed o GuardVitalityDisplay completo dentro de uma Sidebar.
  */
 'use client';
@@ -27,6 +27,7 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Sidebar } from '@/components/shared';
 import { GuardVitalityDisplay } from '@/components/character/stats/GuardVitalityDisplay';
+import { calculateVitality } from '@/utils/calculations';
 import type { GuardPoints, VitalityPoints } from '@/types/combat';
 import { PV_RECOVERY_COST } from '@/types/combat';
 import type { Modifier } from '@/types/common';
@@ -211,15 +212,37 @@ export const GuardVitalitySidebar: React.FC<GuardVitalitySidebarProps> =
         const updated = modifiers.map((m, i) =>
           i === index ? { ...m, ...updates } : m
         );
-        // Se o valor do modificador aumentou, recuperar a GA atual automaticamente
         const oldValue = modifiers[index].value;
         const newValue = updates.value ?? oldValue;
         const difference = newValue - oldValue;
-        const newCurrent =
-          difference > 0 ? guard.current + difference : guard.current;
+
+        // Calcula novo GA máximo modificado
+        const newModifiersTotal = updated.reduce(
+          (sum, mod) => sum + mod.value,
+          0
+        );
+        const newModifiedGAMax = guard.max + newModifiersTotal;
+
+        // Se aumentou, recuperar GA atual automaticamente
+        // Se diminuiu, clampar GA atual ao novo máximo
+        let newCurrent = guard.current;
+        if (difference > 0) {
+          newCurrent = guard.current + difference;
+        } else if (difference < 0) {
+          newCurrent = Math.min(guard.current, newModifiedGAMax);
+        }
+
+        // Recalcula PV máximo com base no novo GA máximo modificado
+        const newPVMax = calculateVitality(newModifiedGAMax);
+        const newVitality: VitalityPoints = {
+          ...vitality,
+          max: newPVMax,
+          current: Math.min(vitality.current, newPVMax),
+        };
+
         onChange(
           { ...guard, maxModifiers: updated, current: newCurrent },
-          vitality
+          newVitality
         );
       },
       [guard, modifiers, vitality, onChange]
@@ -229,7 +252,27 @@ export const GuardVitalitySidebar: React.FC<GuardVitalitySidebarProps> =
     const handleRemoveModifier = useCallback(
       (index: number) => {
         const updated = modifiers.filter((_, i) => i !== index);
-        onChange({ ...guard, maxModifiers: updated }, vitality);
+        // Calcula novo GA máximo modificado após remoção
+        const newModifiersTotal = updated.reduce(
+          (sum, mod) => sum + mod.value,
+          0
+        );
+        const newModifiedGAMax = guard.max + newModifiersTotal;
+        // Clampar GA atual ao novo máximo
+        const newCurrent = Math.min(guard.current, newModifiedGAMax);
+
+        // Recalcula PV máximo com base no novo GA máximo modificado
+        const newPVMax = calculateVitality(newModifiedGAMax);
+        const newVitality: VitalityPoints = {
+          ...vitality,
+          max: newPVMax,
+          current: Math.min(vitality.current, newPVMax),
+        };
+
+        onChange(
+          { ...guard, maxModifiers: updated, current: newCurrent },
+          newVitality
+        );
       },
       [guard, modifiers, vitality, onChange]
     );

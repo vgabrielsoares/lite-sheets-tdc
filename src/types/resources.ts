@@ -1,7 +1,7 @@
 /**
  * Resources - Tipos relacionados ao sistema de dados de recurso
  *
- * No sistema v0.0.2, recursos (água, comida, tochas, flechas etc.)
+ * No sistema, recursos (água, comida, tochas, flechas etc.)
  * usam dados que diminuem conforme o uso:
  * - Resultado ≥ 2: dado diminui um passo (ex: d12 → d10)
  * - Resultado = 1: recurso acaba (dado zerado)

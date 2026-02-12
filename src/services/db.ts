@@ -40,7 +40,7 @@ export class CharacterDatabase extends Dexie {
       characters: 'id, name, level, createdAt, updatedAt',
     });
 
-    // Versão 2: migração de atributos v0.0.1 → v0.0.2
+    // Versão 2: migração de atributos v0.0.1 → v0.2
     // Schema de índices não muda, mas os dados dos personagens são migrados
     this.version(2)
       .stores({

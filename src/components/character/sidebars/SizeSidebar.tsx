@@ -57,7 +57,7 @@ function formatModifier(value: number | string): string {
 }
 
 /**
- * Formata modificadores de dados (v0.0.2: +Xd/-Xd)
+ * Formata modificadores de dados (+Xd/-Xd)
  * Usado para habilidades, manobras de combate e rastreio
  */
 function formatDiceModifier(value: number): string {

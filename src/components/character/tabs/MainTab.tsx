@@ -75,7 +75,7 @@ export interface MainTabProps {
    */
   onOpenPP?: () => void;
   /**
-   * @deprecated Defesa é teste ativo em v0.0.2 — use a aba de Combate
+   * @deprecated Defesa é teste ativo, use a aba de Combate
    */
   onOpenDefense?: () => void;
   /**

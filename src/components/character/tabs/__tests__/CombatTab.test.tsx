@@ -99,7 +99,7 @@ describe('CombatTab', () => {
         <CombatTab character={mockCharacter} onUpdate={mockOnUpdate} />
       );
 
-      // v0.0.2: Defesa é teste ativo, não valor fixo
+      // v0.2: Defesa é teste ativo, não valor fixo
       expect(screen.getByText('Teste de Defesa')).toBeInTheDocument();
     });
   });
@@ -237,7 +237,7 @@ describe('CombatTab', () => {
         />
       );
 
-      // v0.0.2: Defense is now an active test, onOpenDefense is deprecated
+      // v0.2: Defense is now an active test, onOpenDefense is deprecated
       // Just verify the DefenseTest component renders
       expect(screen.getByText('Teste de Defesa')).toBeInTheDocument();
       // The prop is accepted but not used

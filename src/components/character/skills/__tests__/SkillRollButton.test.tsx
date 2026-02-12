@@ -1,5 +1,5 @@
 /**
- * Tests for SkillRollButton component (v0.0.2 Pool System)
+ * Tests for SkillRollButton component
  *
  * Covers:
  * - Rendering with different props

@@ -409,12 +409,12 @@ describe('attackCalculations', () => {
       const result = calculateAttackRoll(character, 'atletismo', undefined, 0);
 
       // Versado = atributo * 2 = 3 * 2 = 6
-      // Bônus assinatura (v0.0.2) = Math.min(3, ceil(5/5)) = 1
+      // Bônus assinatura (v0.2) = Math.min(3, ceil(5/5)) = 1
       // Total = 6 + 1 = 7
       expect(result.modifier).toBe(7);
     });
 
-    it('deve aplicar bônus de assinatura para habilidade de combate (v0.0.2: sem distinção)', () => {
+    it('deve aplicar bônus de assinatura para habilidade de combate (v0.2: sem distinção)', () => {
       const character = createMockCharacter(6, 4, 'luta', {
         keyAttribute: 'corpo',
         proficiencyLevel: 'adepto',
@@ -424,7 +424,7 @@ describe('attackCalculations', () => {
       const result = calculateAttackRoll(character, 'luta', undefined, 0);
 
       // Adepto = atributo * 1 = 4 * 1 = 4
-      // Bônus assinatura (v0.0.2) = Math.min(3, ceil(6/5)) = 2
+      // Bônus assinatura (v0.2) = Math.min(3, ceil(6/5)) = 2
       // Total = 4 + 2 = 6
       expect(result.modifier).toBe(6);
     });
@@ -439,7 +439,7 @@ describe('attackCalculations', () => {
       const result = calculateAttackRoll(character, 'acerto', undefined, 0);
 
       // Versado = atributo * 2 = 2 * 2 = 4
-      // Bônus assinatura (v0.0.2) = Math.min(3, ceil(2/5)) = 1
+      // Bônus assinatura (v0.2) = Math.min(3, ceil(2/5)) = 1
       // Total = 4 + 1 = 5
       expect(result.modifier).toBe(5);
     });
@@ -472,7 +472,7 @@ describe('attackCalculations', () => {
       const result = calculateAttackRoll(character, 'luta', undefined, 0);
 
       // Leigo = atributo * 0 = 5 * 0 = 0
-      // Bônus assinatura (v0.0.2) = Math.min(3, ceil(10/5)) = 2
+      // Bônus assinatura (v0.2) = Math.min(3, ceil(10/5)) = 2
       // Total = 0 + 2 = 2
       expect(result.modifier).toBe(2);
     });

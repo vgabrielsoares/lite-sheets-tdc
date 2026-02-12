@@ -35,26 +35,26 @@ export const SIZE_DESCRIPTIONS: Record<CreatureSize, string> = {
 
 /**
  * Modificadores aplicados pelo tamanho da criatura
- * v0.0.2: Skill modifiers são em dados (+Xd/-Xd), guard/defense é valor fixo para GA
+ * Skill modifiers são em dados (+Xd/-Xd), guard/defense é valor fixo para GA
  */
 export interface SizeModifiers {
   /** Alcance (em metros) */
   reach: number;
   /** Modificador de dano corpo-a-corpo (notação de dados ou numérico) */
   meleeDamage: string | number;
-  /** @deprecated v0.0.2: Use `guard`. Modificador de Guarda (GA) */
+  /** @deprecated Use `guard`. Modificador de Guarda (GA) */
   defense: number;
   /** Modificador de Guarda (GA) — valor fixo adicionado ao GA_max */
   guard: number;
   /** Quadrados ocupados (em metros) */
   squaresOccupied: number;
-  /** Modificador de espaço carregável (v0.0.2: Espaço, não Peso) */
+  /** Modificador de espaço carregável (Espaço, não Peso) */
   carryingCapacity: number;
   /** Modificador de manobras de combate (em dados: +Xd/-Xd) */
   combatManeuvers: number;
   /** Modificador de rastreio (em dados: +Xd/-Xd) */
   trackingDC: number;
-  /** Modificadores de habilidades (em dados: +Xd/-Xd, v0.0.2) */
+  /** Modificadores de habilidades (em dados: +Xd/-Xd) */
   skillModifiers: {
     acrobacia: number;
     atletismo: number;
@@ -65,10 +65,10 @@ export interface SizeModifiers {
 }
 
 /**
- * Tabela completa de modificadores por tamanho (v0.0.2)
+ * Tabela completa de modificadores por tamanho (v0.2)
  * Baseado na tabela oficial do Tabuleiro do Caos RPG (livro v0.1.7)
  *
- * v0.0.2: Modificadores de habilidade agora são em DADOS (+Xd/-Xd), não numéricos.
+ * Modificadores de habilidade agora são em DADOS (+Xd/-Xd), não numéricos.
  * Guard (GA) modifier é valor fixo adicionado/subtraído do GA_max.
  * Capacidade de carga é em Espaço (aditivo à fórmula base: 5 + Corpo × 5).
  */

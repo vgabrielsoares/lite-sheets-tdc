@@ -27,7 +27,7 @@ export interface CompactSpellPointsProps {
 /**
  * CompactSpellPoints - Exibição compacta de Pontos de Feitiço (PF)
  *
- * v0.0.2: Exibe PF atual/máximo com barra de progresso.
+ * Exibe PF atual/máximo com barra de progresso.
  * - Gerar: adiciona PF (via Canalizar Mana em combate)
  * - Gastar PF também gasta PP (regra informada via tooltip)
  * - Cor: secondary (roxo) para distinguir de PP (azul)

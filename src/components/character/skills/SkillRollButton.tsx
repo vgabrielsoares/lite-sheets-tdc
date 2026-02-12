@@ -1,5 +1,5 @@
 /**
- * SkillRollButton - Botão de rolagem integrado com habilidades (v0.0.2)
+ * SkillRollButton - Botão de rolagem integrado com habilidades
  *
  * Permite rolar dados para testes de habilidade usando o novo sistema de pool:
  * - Dados = valor do atributo + modificadores de dado

@@ -348,7 +348,7 @@ Este projeto segue as diretrizes **WCAG 2.1 Nível AA** para garantir acessibili
 
 - **[CHANGELOG.md](./CHANGELOG.md)**: Histórico de versões e mudanças
 - **Base Files**: Documentos de referência do sistema Tabuleiro do Caos (livro v0.1.7) em `base-files/`
-  - `v0.0.2.md`: Regras completas da v0.0.2 (1680 linhas)
+  - `v0.2.md`: Regras completas da v0.2 (1680 linhas)
   - `regras-basicas.md`: Regras básicas atualizadas do jogo
   - `mvp-um.md`: Especificações do MVP 1
 

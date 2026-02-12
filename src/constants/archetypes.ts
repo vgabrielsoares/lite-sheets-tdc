@@ -54,7 +54,7 @@ export const ARCHETYPE_DESCRIPTIONS: Record<ArchetypeName, string> = {
 };
 
 /**
- * @deprecated Substituído por ARCHETYPE_GA_ATTRIBUTE em v0.0.2.
+ * @deprecated Substituído por ARCHETYPE_GA_ATTRIBUTE em v0.2.
  * GA por nível agora é baseado no atributo relevante do arquétipo.
  * PV por nível ganho para cada arquétipo
  * Fórmula: Base + Corpo

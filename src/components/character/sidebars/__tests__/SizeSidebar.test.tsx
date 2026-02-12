@@ -90,7 +90,7 @@ describe('SizeSidebar', () => {
 
       const modifiers = SIZE_MODIFIERS['colossal-1'];
 
-      // Verifica que existem modificadores positivos e negativos em dados (v0.0.2)
+      // Verifica que existem modificadores positivos e negativos em dados
       expect(screen.getAllByText('+3d').length).toBeGreaterThan(0);
       expect(screen.getAllByText('-3d').length).toBeGreaterThan(0);
     });
@@ -144,7 +144,7 @@ describe('SizeSidebar', () => {
         <SizeSidebar open={true} onClose={mockOnClose} currentSize="medio" />
       );
 
-      // v0.0.2: título inclui "(em dados)"
+      // v0.2: título inclui "(em dados)"
       expect(
         screen.getByText(/Modificadores de Habilidades/i)
       ).toBeInTheDocument();
@@ -163,7 +163,7 @@ describe('SizeSidebar', () => {
       const modifiers = SIZE_MODIFIERS.pequeno;
 
       // Verifica que modificadores de habilidades estão presentes
-      // v0.0.2: título inclui "(em dados)", valores em formato +Xd
+      // v0.2: título inclui "(em dados)", valores em formato +Xd
       // pequeno: acrobacia:1, furtividade:1, reflexo:1 → "+1d"
       expect(
         screen.getByText(/Modificadores de Habilidades/i)

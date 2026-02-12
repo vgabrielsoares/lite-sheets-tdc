@@ -4,7 +4,7 @@
  * InlineModifiers - Componente simplificado para exibir e editar modificadores inline
  *
  * Exibe um campo simples para o modificador de dados (+Xd / -Xd).
- * No sistema v0.0.2, não existem modificadores numéricos — apenas modificadores de dados.
+ * No sistema não existem modificadores numéricos, apenas modificadores de dados.
  */
 
 import React from 'react';

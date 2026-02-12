@@ -76,7 +76,7 @@ describe('SignatureAbility', () => {
       const select = screen.getByRole('combobox');
       expect(select).toHaveTextContent('Acrobacia');
 
-      // Verificar Alert de sucesso com o bônus (v0.0.2: Math.min(3, ceil(3/5)) = 1)
+      // Verificar Alert de sucesso com o bônus (Math.min(3, ceil(3/5)) = 1)
       const alerts = screen.getAllByRole('alert');
       const successAlert = alerts.find((alert) =>
         alert.textContent?.includes('Acrobacia recebe')
@@ -119,7 +119,7 @@ describe('SignatureAbility', () => {
       expect(
         screen.getByText(/Bônus de Habilidade de Assinatura:/i)
       ).toBeInTheDocument();
-      // v0.0.2: Mostra faixas de nível em vez de combate/não-combate
+      // Mostra faixas de nível em vez de combate/não-combate
       expect(screen.getByText(/Nível 1-5:/i)).toBeInTheDocument();
       expect(screen.getByText(/Nível 6-10:/i)).toBeInTheDocument();
       expect(screen.getByText(/Nível 11-15:/i)).toBeInTheDocument();
@@ -211,7 +211,7 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // v0.0.2: Math.min(3, ceil(7/5)) = 2
+      // Math.min(3, ceil(7/5)) = 2
       expect(getSuccessAlert()).toHaveTextContent('+2d');
     });
 
@@ -226,7 +226,7 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // v0.0.2: Math.min(3, ceil(9/5)) = 2
+      // Math.min(3, ceil(9/5)) = 2
       expect(getSuccessAlert()).toHaveTextContent('+2d');
     });
 
@@ -241,7 +241,7 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // v0.0.2: Math.min(3, ceil(2/5)) = 1
+      // Math.min(3, ceil(2/5)) = 1
       expect(getSuccessAlert()).toHaveTextContent('+1d');
     });
 
@@ -261,8 +261,8 @@ describe('SignatureAbility', () => {
       expect(combatChips.length).toBeGreaterThan(0);
     });
 
-    it('deve calcular mesmo bônus para combate e não-combate no mesmo nível (v0.0.2)', () => {
-      // v0.0.2: Sem distinção combate/não-combate para assinatura
+    it('deve calcular mesmo bônus para combate e não-combate no mesmo nível (v0.2)', () => {
+      // Sem distinção combate/não-combate para assinatura
       const skillsNonCombat = createMockSkills('atletismo');
       const { rerender } = render(
         <SignatureAbility
@@ -272,7 +272,7 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // v0.0.2: Math.min(3, ceil(6/5)) = 2 para não-combate
+      // Math.min(3, ceil(6/5)) = 2 para não-combate
       expect(getSuccessAlert()).toHaveTextContent('+2d');
 
       // Combate: mesmo bônus
@@ -285,7 +285,7 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // v0.0.2: Math.min(3, ceil(6/5)) = 2 para combate também
+      // Math.min(3, ceil(6/5)) = 2 para combate também
       expect(getSuccessAlert()).toHaveTextContent('+2d');
     });
   });
@@ -340,7 +340,7 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // v0.0.2: Math.min(3, ceil(30/5)) = 3 (cap at 3)
+      // Math.min(3, ceil(30/5)) = 3 (cap at 3)
       expect(getSuccessAlert()).toHaveTextContent('+3d');
     });
 
@@ -355,7 +355,7 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // v0.0.2: Math.min(3, ceil(3/5)) = 1
+      // Math.min(3, ceil(3/5)) = 1
       expect(getSuccessAlert()).toHaveTextContent('+1d');
 
       // Atualizar nível
@@ -367,7 +367,7 @@ describe('SignatureAbility', () => {
         />
       );
 
-      // v0.0.2: Math.min(3, ceil(7/5)) = 2
+      // Math.min(3, ceil(7/5)) = 2
       expect(getSuccessAlert()).toHaveTextContent('+2d');
     });
   });

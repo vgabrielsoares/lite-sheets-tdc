@@ -78,7 +78,7 @@ const pulse = keyframes`
 `;
 
 /**
- * Exibe o resultado de uma pool de dados (novo sistema v0.0.2)
+ * Exibe o resultado de uma pool de dados
  */
 function PoolResultDisplay({
   result,

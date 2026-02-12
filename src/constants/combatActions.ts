@@ -1,5 +1,5 @@
 /**
- * Ações de Combate — Referência rápida (v0.0.2)
+ * Ações de Combate — Referência rápida
  *
  * Lista completa de ações de combate com custos em ações.
  * Símbolos: ▶ (ação), ↩ (reação), ∆ (ação livre)

@@ -1,5 +1,5 @@
 /**
- * Testes para DiceRollHistory (v0.0.2)
+ * Testes para DiceRollHistory
  *
  * Testa o componente de histórico de rolagens com os novos tipos:
  * - DicePoolResult (rolagens de skill com sucessos)

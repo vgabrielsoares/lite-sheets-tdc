@@ -1,7 +1,7 @@
 /**
  * CompactPowerPoints - Exibição compacta de PP (Pontos de Poder) + PF (Pontos de Feitiço)
  *
- * v0.0.2: Segue o mesmo padrão visual do CompactGuardVitality:
+ * Segue o mesmo padrão visual do CompactGuardVitality:
  * - Sem botões de gastar/recuperar (interação via sidebar)
  * - Valores atuais/máximos à direita da barra
  * - Clicável para abrir sidebar de detalhes

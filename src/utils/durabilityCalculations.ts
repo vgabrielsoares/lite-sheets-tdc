@@ -1,7 +1,7 @@
 /**
  * Durability Calculations - Funções utilitárias para durabilidade de itens
  *
- * Sistema de durabilidade v0.0.2:
+ * Sistema de durabilidade:
  * - Durabilidade representada por um dado (d2 a d100)
  * - Teste: rolar o dado atual
  *   - Resultado = 1: item danificado, dado desce um passo

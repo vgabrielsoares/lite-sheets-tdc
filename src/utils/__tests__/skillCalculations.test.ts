@@ -1,7 +1,7 @@
 /**
  * Testes para skillCalculations.ts
  *
- * Sistema v0.0.2:
+ * Sistema v0.2:
  * - Proficiência → tamanho do dado: Leigo(d6), Adepto(d8), Versado(d10), Mestre(d12)
  * - Atributo → quantidade base de dados na pool
  * - Modificadores são sempre +Xd / -Xd (affectsDice: true)

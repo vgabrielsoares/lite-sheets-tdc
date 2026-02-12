@@ -106,7 +106,7 @@ import {
 } from './sidebars';
 import { GuardVitalitySidebar } from './sidebars/GuardVitalitySidebar';
 import { PPDetailSidebar } from './sidebars/PPDetailSidebar';
-// @deprecated DefenseSidebar — v0.0.2 usa DefenseTest (teste ativo) no CombatTab
+// @deprecated DefenseSidebar
 // import DefenseSidebar from './sidebars/DefenseSidebar';
 import MovementSidebar from './sidebars/MovementSidebar';
 import { SkillUsageSidebar } from './sidebars/SkillUsageSidebar';
@@ -1318,7 +1318,7 @@ export function CharacterSheet({
             />
           )}
 
-          {/* Sidebar de Defesa — v0.0.2: defesa é teste ativo em CombatTab */}
+          {/* Sidebar de Defesa */}
 
           {/* Sidebar de Deslocamento */}
           {activeSidebar === 'movement' && (
@@ -1476,7 +1476,7 @@ export function CharacterSheet({
         />
       )}
 
-      {/* Sidebar de GA/PV em modo mobile — v0.0.2: redireciona para aba de combate */}
+      {/* Sidebar de GA/PV em modo mobile */}
       {/* A interação de Sofrer/Recuperar está no CombatTab via GuardVitalityDisplay */}
 
       {/* Sidebar de PP em modo mobile (overlay) */}
@@ -1516,7 +1516,7 @@ export function CharacterSheet({
         />
       )}
 
-      {/* Sidebar de Defesa em modo mobile — v0.0.2: defesa é teste ativo em CombatTab */}
+      {/* Sidebar de Defesa em modo mobile */}
 
       {/* Sidebar de Deslocamento em modo mobile (overlay) */}
       {isMobile && activeSidebar === 'movement' && (

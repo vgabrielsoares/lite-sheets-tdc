@@ -34,7 +34,7 @@ export interface SpellPointsDisplayProps {
 /**
  * SpellPointsDisplay - Exibição completa de Pontos de Feitiço (PF)
  *
- * v0.0.2: Componente completo com Gastar/Gerar para aba de Combate.
+ * Componente completo com Gastar/Gerar para aba de Combate.
  * - Gastar PF também gasta PP (regra do sistema)
  * - Bloqueia gasto se PP = 0 (Esgotado) ou PP insuficiente
  * - Gerar PF (via final de turno ou Canalizar Mana) não gasta PP

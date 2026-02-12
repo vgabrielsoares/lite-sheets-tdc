@@ -1,7 +1,7 @@
 /**
  * CompactGuardVitality - Exibição compacta de GA (Guarda) + PV (Vitalidade)
  *
- * Componente v0.0.2 para a aba principal, mostrando GA e PV lado a lado em formato compacto.
+ * Componente para a aba principal, mostrando GA e PV lado a lado em formato compacto.
  * Substitui o antigo CompactHealthPoints (sistema de HP depreciado).
  *
  * - GA (Guarda): Escudo, cor primária (dourado)

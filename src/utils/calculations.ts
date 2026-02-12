@@ -6,7 +6,7 @@
  * - Attributes range from 0 to 5 by default (can exceed in special cases, max 6)
  * - Attribute value 0: Roll 2d6 and take LOWEST result
  *
- * v0.0.2: GA (Guarda) + PV (Vitalidade) replace old HP system.
+ * GA (Guarda) + PV (Vitalidade) replace old HP system.
  * Defense is now an active test, not a fixed value.
  */
 
@@ -37,7 +37,7 @@ export function roundDown(value: number): number {
 }
 
 /**
- * @deprecated Defesa fixa não existe mais em v0.0.2. Defesa agora é teste ativo (Reflexo ou Vigor).
+ * @deprecated Defesa fixa não existe mais em v0.2. Defesa agora é teste ativo (Reflexo ou Vigor).
  * Mantido para compatibilidade.
  *
  * Calculates the Defense value for a character (LEGACY)
@@ -373,10 +373,10 @@ export function calculatePPPerRound(
  * - Level 6-10: +2d
  * - Level 11-15: +3d
  *
- * No combat/non-combat distinction in v0.0.2.
+ * No combat/non-combat distinction in v0.2.
  *
  * @param characterLevel - The character's current level
- * @param _isCombatSkill - @deprecated Ignored in v0.0.2 (kept for backward compat)
+ * @param _isCombatSkill - @deprecated Ignored in v0.2 (kept for backward compat)
  * @returns The number of bonus dice (+Xd) to add to the skill pool
  *
  * @example
@@ -431,7 +431,7 @@ export function calculateTotalSkillModifier(
  * Calculates GA recovery from a Descanso (Rest) using the Dormir (Sleep) action
  * Formula: Nível do Personagem × Corpo + outros modificadores
  *
- * In v0.0.2, this restores Guard Points (GA), not HP.
+ * In v0.2, this restores Guard Points (GA), not HP.
  *
  * @param characterLevel - The character's current level
  * @param corpo - The Corpo (Body) attribute value
@@ -452,7 +452,7 @@ export function calculateRestGARecovery(
 }
 
 /**
- * @deprecated Substituído por calculateRestGARecovery em v0.0.2.
+ * @deprecated Substituído por calculateRestGARecovery em v0.2.
  * Mantido para compatibilidade.
  */
 export const calculateRestHPRecovery = calculateRestGARecovery;
@@ -613,7 +613,7 @@ export function getEncumbranceState(
  * Applies damage to Health Points prioritizing temporary HP first.
  * When adding (healing), only current HP increases; temporary does not auto-recover.
  *
- * @deprecated Use applyDamageToGuardVitality + healGuard for v0.0.2.
+ * @deprecated Use applyDamageToGuardVitality + healGuard for v0.2.
  * Kept for backward compatibility with any remaining HP-based code.
  *
  * @param hp - Current HP object { max, current, temporary }

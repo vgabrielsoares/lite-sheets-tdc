@@ -4,7 +4,7 @@
  * Todos os personagens dos jogadores começam no nível 1 com estes valores base,
  * antes de aplicar modificadores de origem, linhagem e arquétipo.
  *
- * v0.0.2: HP único → GA (Guarda) + PV (Vitalidade). Defesa fixa removida.
+ * HP único → GA (Guarda) + PV (Vitalidade). Defesa fixa removida.
  */
 
 import { DEFAULT_LANGUAGE } from './languages';
@@ -51,17 +51,17 @@ export const DEFAULT_PV_CURRENT = DEFAULT_PV_MAX;
 // ─── HP (deprecado) ─────────────────────────────────────────────────
 
 /**
- * @deprecated Substituído por DEFAULT_GA_MAX em v0.0.2
+ * @deprecated Substituído por DEFAULT_GA_MAX em v0.2
  */
 export const DEFAULT_HP_MAX = 15;
 
 /**
- * @deprecated Substituído por DEFAULT_GA_CURRENT em v0.0.2
+ * @deprecated Substituído por DEFAULT_GA_CURRENT em v0.2
  */
 export const DEFAULT_HP_CURRENT = 15;
 
 /**
- * @deprecated HP temporário não existe mais separadamente em v0.0.2
+ * @deprecated HP temporário não existe mais separadamente em v0.2
  */
 export const DEFAULT_HP_TEMPORARY = 0;
 
@@ -147,7 +147,7 @@ export const DEFAULT_STARTING_MONEY = 10;
 export const DEFAULT_STARTING_CURRENCY = 'po' as const;
 
 /**
- * @deprecated Defesa fixa não existe mais em v0.0.2. Defesa agora é teste ativo.
+ * @deprecated Defesa fixa não existe mais em v0.2. Defesa agora é teste ativo.
  * Mantido para compatibilidade com dados salvos.
  */
 export const DEFAULT_BASE_DEFENSE = 15;
@@ -200,7 +200,7 @@ export const calculateSkillProficiencies = (menteValue: number): number => {
 };
 
 /**
- * @deprecated Defesa fixa não existe mais em v0.0.2. Usar teste de defesa ativo.
+ * @deprecated Defesa fixa não existe mais em v0.2. Usar teste de defesa ativo.
  * Mantido para compatibilidade.
  */
 export const calculateDefense = (
@@ -246,6 +246,6 @@ export const calculateRestGARecovery = (
 };
 
 /**
- * @deprecated Substituído por calculateRestGARecovery em v0.0.2
+ * @deprecated Substituído por calculateRestGARecovery em v0.2
  */
 export const calculateRestHPRecovery = calculateRestGARecovery;

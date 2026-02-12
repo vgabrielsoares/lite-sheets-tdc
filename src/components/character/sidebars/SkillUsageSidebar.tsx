@@ -1841,12 +1841,12 @@ export function SkillUsageSidebar({
                   {crafts.map((craft) => {
                     const attributeValue = attributes[craft.attributeKey];
 
-                    // Calcular bônus de assinatura (+Xd) se aplicável — v0.0.2: sem distinção combate/não-combate
+                    // Calcular bônus de assinatura (+Xd) se aplicável
                     const signatureBonus = skill.isSignature
                       ? calculateSignatureAbilityBonus(characterLevel)
                       : 0;
 
-                    // Pool de dados v0.0.2: atributo + assinatura + modificadores de dados
+                    // Pool de dados: atributo + assinatura + modificadores de dados
                     const totalDice =
                       attributeValue +
                       signatureBonus +

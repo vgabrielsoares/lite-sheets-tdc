@@ -1,7 +1,6 @@
 /**
  * GuardVitalityDisplay - Exibição combinada de Guarda (GA) e Vitalidade (PV)
  *
- * Sistema v0.0.2:
  * - GA (Guarda): Base 15 + bônus de arquétipo por nível. Ícone: Escudo. Cor: primary/dourado.
  * - PV (Vitalidade): floor(GA_max / 3). Ícone: Coração. Cor: error/vermelho.
  * - Dano aplicado à GA primeiro; overflow vai para PV.

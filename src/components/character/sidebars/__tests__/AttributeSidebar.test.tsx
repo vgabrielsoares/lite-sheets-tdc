@@ -178,7 +178,7 @@ describe('AttributeSidebar', () => {
         />
       );
 
-      // v0.0.2: Defense is now an active test, not a fixed value
+      // v0.2: Defense is now an active test, not a fixed value
       expect(screen.getByText('Teste de Defesa')).toBeInTheDocument();
       expect(
         screen.getByText(/defesa é um teste ativo usando Reflexo/)
@@ -196,7 +196,7 @@ describe('AttributeSidebar', () => {
         />
       );
 
-      // v0.0.2: Iniciativa was removed; Agilidade now shows Reflexo impact
+      // v0.2: Iniciativa was removed; Agilidade now shows Reflexo impact
       expect(screen.getByText('Reflexo')).toBeInTheDocument();
     });
 

@@ -68,7 +68,7 @@ interface SavingThrowInfo {
 }
 
 /**
- * Resultado do cálculo de um teste de resistência (pool de dados v0.0.2)
+ * Resultado do cálculo de um teste de resistência (pool de dados v0.2)
  */
 interface SavingThrowCalculation {
   /** Quantidade de dados a rolar */
@@ -162,7 +162,7 @@ const PROFICIENCY_LABELS: Record<ProficiencyLevel, string> = {
  * - Tenacidade (Corpo) - Força muscular, equilíbrio, resistência
  * - Vigor (Corpo) - Saúde, integridade física
  *
- * Cada teste usa o sistema de pool de dados v0.0.2.
+ * Cada teste usa o sistema de pool de dados v0.2
  *
  * @example
  * ```tsx
@@ -252,7 +252,7 @@ export function SavingThrows({
       ...useModifiers,
     ];
 
-    // Calcula a pool de dados usando o sistema v0.0.2
+    // Calcula a pool de dados usando o sistema v0.2
     const calculation = calculateSkillTotalModifier(
       info.skill,
       info.attribute,
@@ -294,7 +294,7 @@ export function SavingThrows({
   };
 
   /**
-   * Obtém a descrição da rolagem (pool de dados v0.0.2)
+   * Obtém a descrição da rolagem (pool de dados v0.2)
    */
   const getRollDescription = (calc: SavingThrowCalculation): string => {
     return calc.formula;

@@ -1,7 +1,7 @@
 /**
- * Testes para carryCapacityCalculations.ts — validação v0.0.2
+ * Testes para carryCapacityCalculations.ts — validação v0.2
  *
- * Verifica as mudanças de fórmula introduzidas na v0.0.2:
+ * Verifica as mudanças de fórmula introduzidas na v0.2:
  * - Empurrar: 10 × Corpo (mínimo 5) — baseado em Corpo diretamente
  * - Levantar: 5 × Corpo (mínimo 2) — baseado em Corpo diretamente
  * - Terminologia: "Espaço" em vez de "Peso"
@@ -36,10 +36,10 @@ const emptyCurrency: Currency = {
 };
 
 // ============================================================================
-// calculatePushCapacity (v0.0.2)
+// calculatePushCapacity (v0.2)
 // ============================================================================
 
-describe('calculatePushCapacity (v0.0.2)', () => {
+describe('calculatePushCapacity (v0.2)', () => {
   it('should return minimum 5 when corpo = 0', () => {
     expect(calculatePushCapacity(0)).toBe(5);
   });
@@ -76,10 +76,10 @@ describe('calculatePushCapacity (v0.0.2)', () => {
 });
 
 // ============================================================================
-// calculateLiftCapacity (v0.0.2)
+// calculateLiftCapacity (v0.2)
 // ============================================================================
 
-describe('calculateLiftCapacity (v0.0.2)', () => {
+describe('calculateLiftCapacity (v0.2)', () => {
   it('should return minimum 2 when corpo = 0', () => {
     expect(calculateLiftCapacity(0)).toBe(2);
   });
@@ -116,10 +116,10 @@ describe('calculateLiftCapacity (v0.0.2)', () => {
 });
 
 // ============================================================================
-// calculateFullCarryCapacity (v0.0.2 push/lift)
+// calculateFullCarryCapacity (v0.2 push/lift)
 // ============================================================================
 
-describe('calculateFullCarryCapacity (v0.0.2 push/lift)', () => {
+describe('calculateFullCarryCapacity (v0.2 push/lift)', () => {
   it('should use new push formula (10 × Corpo, min 5)', () => {
     const result = calculateFullCarryCapacity(3, 'medio');
     expect(result.pushCapacity).toBe(30); // 10 × 3
@@ -161,10 +161,10 @@ describe('calculateFullCarryCapacity (v0.0.2 push/lift)', () => {
 });
 
 // ============================================================================
-// generateCarryingCapacity (v0.0.2 push/lift)
+// generateCarryingCapacity (v0.2 push/lift)
 // ============================================================================
 
-describe('generateCarryingCapacity (v0.0.2 push/lift)', () => {
+describe('generateCarryingCapacity (v0.2 push/lift)', () => {
   it('should use new push formula for pushLimit', () => {
     const result = generateCarryingCapacity(3, 'medio', [], emptyCurrency);
     expect(result.pushLimit).toBe(30); // 10 × 3
@@ -227,10 +227,10 @@ describe('generateCarryingCapacity (v0.0.2 push/lift)', () => {
 });
 
 // ============================================================================
-// ENCUMBRANCE_STATE_DESCRIPTIONS (v0.0.2 terminology)
+// ENCUMBRANCE_STATE_DESCRIPTIONS (v0.2 terminology)
 // ============================================================================
 
-describe('ENCUMBRANCE_STATE_DESCRIPTIONS (v0.0.2 terminology)', () => {
+describe('ENCUMBRANCE_STATE_DESCRIPTIONS (v0.2 terminology)', () => {
   it('should use "Espaço" in the normal state description', () => {
     expect(ENCUMBRANCE_STATE_DESCRIPTIONS.normal).toContain('Espaço');
   });

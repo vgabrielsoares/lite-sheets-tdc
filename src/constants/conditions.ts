@@ -4,7 +4,7 @@
  * Condições são estados que afetam personagens temporariamente,
  * podendo aplicar penalidades, restrições ou efeitos especiais.
  *
- * v0.0.2: Condições agora possuem 4 categorias (corporal, mental, sensorial, espiritual),
+ * Condições agora possuem 4 categorias (corporal, mental, sensorial, espiritual),
  * condições empilháveis, condições automáticas (Avariado, Machucado, Esgotado),
  * e 4 novas condições espirituais: Desconexo, Dissonante, Esgotado (reclassificado), Manipulado.
  */
@@ -104,7 +104,7 @@ export interface ConditionInfo {
 }
 
 /**
- * Lista completa de condições v0.0.2, organizadas por categoria.
+ * Lista completa de condições v0.2, organizadas por categoria.
  * Baseado no sistema Tabuleiro do Caos RPG (livro v0.1.7)
  */
 export const CONDITIONS: readonly ConditionInfo[] = [

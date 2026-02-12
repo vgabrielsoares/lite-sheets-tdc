@@ -5,7 +5,7 @@
  * Condições automáticas (Avariado, Machucado, Esgotado) são calculadas com base
  * nos recursos do personagem e não podem ser removidas manualmente.
  *
- * v0.0.2: 4 categorias (Corporal, Mental, Sensorial, Espiritual),
+ * 4 categorias (Corporal, Mental, Sensorial, Espiritual),
  * condições empilháveis, condições automáticas.
  */
 'use client';

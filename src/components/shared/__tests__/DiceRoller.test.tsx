@@ -1,5 +1,5 @@
 /**
- * Tests for DiceRoller component (v0.0.2 Pool System)
+ * Tests for DiceRoller component
  *
  * Covers:
  * - Basic rendering

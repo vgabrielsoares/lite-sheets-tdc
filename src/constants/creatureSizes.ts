@@ -1,8 +1,8 @@
 /**
- * Creature Sizes - Constantes e utilitários para tamanhos de criatura (v0.0.2)
+ * Creature Sizes - Constantes e utilitários para tamanhos de criatura
  *
  * Re-exporta tipos e constantes de lineage.ts e adiciona helpers específicos
- * para o sistema de tamanho v0.0.2 (modificadores em dados).
+ * para o sistema de tamanho (modificadores em dados).
  *
  * @module constants/creatureSizes
  */
@@ -35,7 +35,7 @@ export function getGuardModifierForSize(size: CreatureSize): number {
 
 /**
  * Retorna o modificador de dados para uma habilidade baseado no tamanho.
- * v0.0.2: Os modificadores são em dados (+Xd/-Xd), adicionados ao pool.
+ * Os modificadores são em dados (+Xd/-Xd), adicionados ao pool.
  *
  * @param size - Tamanho da criatura
  * @param skill - Nome da habilidade (acrobacia, atletismo, furtividade, reflexo, tenacidade)
