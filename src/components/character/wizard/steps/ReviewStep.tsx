@@ -230,6 +230,7 @@ export default function ReviewStep({ wizard }: WizardStepProps) {
             <Typography fontWeight={600}>Conceito</Typography>
           </Stack>
           <Button
+            component="span"
             size="small"
             startIcon={<EditIcon />}
             onClick={(e) => {
@@ -279,6 +280,7 @@ export default function ReviewStep({ wizard }: WizardStepProps) {
             <Typography fontWeight={600}>Origem</Typography>
           </Stack>
           <Button
+            component="span"
             size="small"
             startIcon={<EditIcon />}
             onClick={(e) => {
@@ -366,6 +368,7 @@ export default function ReviewStep({ wizard }: WizardStepProps) {
             <Typography fontWeight={600}>Linhagem</Typography>
           </Stack>
           <Button
+            component="span"
             size="small"
             startIcon={<EditIcon />}
             onClick={(e) => {
@@ -430,6 +433,7 @@ export default function ReviewStep({ wizard }: WizardStepProps) {
             <Typography fontWeight={600}>Atributos</Typography>
           </Stack>
           <Button
+            component="span"
             size="small"
             startIcon={<EditIcon />}
             onClick={(e) => {
@@ -466,6 +470,7 @@ export default function ReviewStep({ wizard }: WizardStepProps) {
             <Typography fontWeight={600}>Arquétipo</Typography>
           </Stack>
           <Button
+            component="span"
             size="small"
             startIcon={<EditIcon />}
             onClick={(e) => {
@@ -533,6 +538,7 @@ export default function ReviewStep({ wizard }: WizardStepProps) {
             <Typography fontWeight={600}>Habilidades</Typography>
           </Stack>
           <Button
+            component="span"
             size="small"
             startIcon={<EditIcon />}
             onClick={(e) => {
@@ -594,6 +600,7 @@ export default function ReviewStep({ wizard }: WizardStepProps) {
             <Typography fontWeight={600}>Equipamentos</Typography>
           </Stack>
           <Button
+            component="span"
             size="small"
             startIcon={<EditIcon />}
             onClick={(e) => {
@@ -641,6 +648,7 @@ export default function ReviewStep({ wizard }: WizardStepProps) {
             <Typography fontWeight={600}>Proficiências Compradas</Typography>
           </Stack>
           <Button
+            component="span"
             size="small"
             startIcon={<EditIcon />}
             onClick={(e) => {
