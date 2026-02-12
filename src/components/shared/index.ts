@@ -40,6 +40,9 @@ export type { DiceRollHistoryProps } from './DiceRollHistory';
 export { DiceHistoryFab } from './DiceHistoryFab';
 export type { DiceHistoryFabProps } from './DiceHistoryFab';
 
+export { CustomDiceRoller } from './CustomDiceRoller';
+export type { CustomDiceRollerProps } from './CustomDiceRoller';
+
 export { SkipLink } from './SkipLink';
 export type { SkipLinkProps } from './SkipLink';
 
