@@ -68,10 +68,13 @@ describe('SpellsTab', () => {
       },
       combat: {
         ...base.combat,
-        hp: {
+        guard: {
           max: 25,
           current: 25,
-          temporary: 0,
+        },
+        vitality: {
+          max: 8,
+          current: 8,
         },
         pp: {
           max: 10,
@@ -91,8 +94,7 @@ describe('SpellsTab', () => {
             id: 'ability-1',
             skill: 'arcano',
             attribute: 'essencia',
-            dcBonus: 0,
-            attackBonus: 0,
+            castingBonus: 0,
           },
         ],
         masteredMatrices: ['arcana'],

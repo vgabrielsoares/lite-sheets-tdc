@@ -374,7 +374,7 @@ describe('applyLevelUp', () => {
 
   it('should add PP gain based on archetype base + essencia', () => {
     const char = createMockCharacter({ level: 1 });
-    char.combat.pp = { current: 2, max: 2 };
+    char.combat.pp = { current: 2, max: 2, temporary: 0 };
     // combatente base = 1, essencia = 1 → PP gain = 2
     applyLevelUp(char, 'combatente');
     expect(char.combat.pp.max).toBe(4);
