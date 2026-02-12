@@ -135,7 +135,7 @@ export function createDefaultMovement(): Record<MovementType, number> {
 }
 
 /**
- * @deprecated v0.0.2: Defesa agora é um teste ativo (Reflexo ou Vigor), não valor fixo.
+ * @deprecated Defesa agora é um teste ativo (Reflexo ou Vigor), não valor fixo.
  * Use DefenseTest.tsx para exibição. Use `getGuardSizeModifier` para modificador de GA.
  *
  * Calcula defesa baseada em agilidade e modificadores de tamanho (sistema antigo d20)
@@ -153,7 +153,7 @@ export function calculateDefense(
 
 /**
  * Retorna o modificador de Guarda (GA) baseado no tamanho da criatura.
- * v0.0.2: É um valor fixo adicionado/subtraído do GA máximo.
+ * É um valor fixo adicionado/subtraído do GA máximo.
  *
  * @param size - Tamanho da criatura
  * @returns Modificador de GA (positivo = mais GA, negativo = menos GA)
@@ -165,7 +165,7 @@ export function getGuardSizeModifier(size: string): number {
 
 /**
  * Aplica modificadores de tamanho a uma habilidade específica
- * v0.0.2: Retorna modificador em DADOS (+Xd/-Xd), não numérico.
+ * Retorna modificador em DADOS (+Xd/-Xd), não numérico.
  *
  * @param skillName - Nome da habilidade
  * @param size - Tamanho da criatura

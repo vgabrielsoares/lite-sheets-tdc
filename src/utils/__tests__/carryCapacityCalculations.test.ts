@@ -165,7 +165,7 @@ describe('carryCapacityCalculations', () => {
   });
 
   describe('calculatePushCapacity', () => {
-    it('deve retornar 10 × Corpo (v0.0.2)', () => {
+    it('deve retornar 10 × Corpo (v0.2)', () => {
       // corpo=2: 10 × 2 = 20
       expect(calculatePushCapacity(2)).toBe(20);
     });
@@ -181,7 +181,7 @@ describe('carryCapacityCalculations', () => {
   });
 
   describe('calculateLiftCapacity', () => {
-    it('deve retornar 5 × Corpo (v0.0.2)', () => {
+    it('deve retornar 5 × Corpo (v0.2)', () => {
       // corpo=2: 5 × 2 = 10
       expect(calculateLiftCapacity(2)).toBe(10);
     });
@@ -320,8 +320,8 @@ describe('carryCapacityCalculations', () => {
       expect(result.sizeModifier).toBe(0);
       expect(result.otherModifiers).toBe(0);
       expect(result.total).toBe(20);
-      expect(result.pushCapacity).toBe(30); // 10 × 3 (v0.0.2)
-      expect(result.liftCapacity).toBe(15); // 5 × 3 (v0.0.2)
+      expect(result.pushCapacity).toBe(30); // 10 × 3 (v0.2)
+      expect(result.liftCapacity).toBe(15); // 5 × 3 (v0.2)
     });
 
     it('deve aplicar modificador de tamanho grande', () => {
@@ -330,8 +330,8 @@ describe('carryCapacityCalculations', () => {
       expect(result.base).toBe(15);
       expect(result.sizeModifier).toBe(2);
       expect(result.total).toBe(17);
-      expect(result.pushCapacity).toBe(20); // 10 × 2 (v0.0.2)
-      expect(result.liftCapacity).toBe(10); // 5 × 2 (v0.0.2)
+      expect(result.pushCapacity).toBe(20); // 10 × 2 (v0.2)
+      expect(result.liftCapacity).toBe(10); // 5 × 2 (v0.2)
     });
 
     it('deve aplicar outros modificadores', () => {
@@ -356,8 +356,8 @@ describe('carryCapacityCalculations', () => {
       expect(result.total).toBe(20);
       expect(result.currentWeight).toBe(6); // 5 + 1
       expect(result.encumbranceState).toBe('normal');
-      expect(result.pushLimit).toBe(30); // 10 × 3 (v0.0.2)
-      expect(result.liftLimit).toBe(15); // 5 × 3 (v0.0.2)
+      expect(result.pushLimit).toBe(30); // 10 × 3 (v0.2)
+      expect(result.liftLimit).toBe(15); // 5 × 3 (v0.2)
     });
 
     it('deve detectar estado sobrecarregado', () => {

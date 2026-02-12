@@ -183,7 +183,7 @@ export interface Skill {
 export type Skills = Record<SkillName, Skill>;
 
 /**
- * Resultado do cálculo de pool de dados de uma habilidade (sistema v0.0.2)
+ * Resultado do cálculo de pool de dados de uma habilidade
  *
  * No sistema pool de dados:
  * - Proficiência determina o tamanho do dado (d6/d8/d10/d12)
@@ -224,7 +224,7 @@ export interface SkillPoolCalculation {
 export type SkillModifierCalculation = SkillPoolCalculation;
 
 /**
- * Fórmula de rolagem de pool de dados de uma habilidade (sistema v0.0.2)
+ * Fórmula de rolagem de pool de dados de uma habilidade
  *
  * Formato: "Xd[tamanho]" (ex: "3d8", "2d6 (menor)")
  * Sem modificadores numéricos em testes de habilidade.

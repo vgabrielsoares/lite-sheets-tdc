@@ -41,6 +41,9 @@ function generateSessionId(): string {
 /**
  * Recupera o estado do wizard do localStorage
  */
+/** Expiração de sessões do wizard (24 horas em ms) */
+const WIZARD_SESSION_EXPIRATION_MS = 24 * 60 * 60 * 1000;
+
 function loadWizardState(): WizardState | null {
   if (typeof window === 'undefined') return null;
 
@@ -51,7 +54,9 @@ function loadWizardState(): WizardState | null {
 
   if (keys.length === 0) return null;
 
-  // Usar a sessão mais recente
+  const now = Date.now();
+
+  // Usar a sessão mais recente (se não expirada)
   let latestState: WizardState | null = null;
   let latestTimestamp = 0;
 
@@ -60,13 +65,21 @@ function loadWizardState(): WizardState | null {
       const stored = localStorage.getItem(key);
       if (stored) {
         const state = JSON.parse(stored) as WizardState;
+
+        // Limpar sessões expiradas (mais de 24h)
+        if (now - state.lastUpdated > WIZARD_SESSION_EXPIRATION_MS) {
+          localStorage.removeItem(key);
+          continue;
+        }
+
         if (state.lastUpdated > latestTimestamp) {
           latestTimestamp = state.lastUpdated;
           latestState = state;
         }
       }
     } catch {
-      // Ignorar erros de parsing
+      // Ignorar erros de parsing, remover chave corrompida
+      localStorage.removeItem(key);
     }
   }
 
@@ -532,8 +545,9 @@ export function useCharacterWizard(): UseCharacterWizardReturn {
    * Cancelar e voltar para a lista de personagens
    */
   const cancel = useCallback(() => {
+    clearWizardState(state.sessionId);
     router.push('/characters');
-  }, [router]);
+  }, [router, state.sessionId]);
 
   return {
     state,

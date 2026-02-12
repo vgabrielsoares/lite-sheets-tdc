@@ -1,11 +1,10 @@
 /**
  * Combat Penalties - Funções utilitárias para sistema de penalidades de combate
  *
- * v0.0.2 Mudanças:
+ * Mudanças:
  * - Penalidade de defesa: @deprecated (defesa fixa não existe mais)
  * - Penalidades de testes de resistência: agora em -Xd (dados), não -1d20
  *
- * Sistema v0.0.2:
  * 1. Penalidade de Testes de Resistência:
  *    - Quando passa em um teste que mitiga todo o efeito, sofre -1d naquele teste
  *    - Cada tipo de resistência é rastreado separadamente
@@ -21,12 +20,12 @@ import type { SavingThrowType, CombatPenalties } from '@/types/combat';
 export type CombatPenaltiesState = CombatPenalties;
 
 /**
- * @deprecated Defesa fixa não existe mais em v0.0.2. Mantido para compatibilidade.
+ * @deprecated Defesa fixa não existe mais em v0.2. Mantido para compatibilidade.
  */
 export const MIN_DEFENSE = 15;
 
 /**
- * @deprecated Defesa fixa não existe mais em v0.0.2. Mantido para compatibilidade.
+ * @deprecated Defesa fixa não existe mais em v0.2. Mantido para compatibilidade.
  */
 export const DEFENSE_PENALTY_PER_MISS = -1;
 
@@ -52,7 +51,7 @@ export function createDefaultCombatPenalties(): CombatPenaltiesState {
 }
 
 /**
- * @deprecated Defesa fixa não existe mais em v0.0.2.
+ * @deprecated Defesa fixa não existe mais em v0.2.
  * Aplica penalidade na defesa quando um ataque erra
  */
 export function applyDefensePenalty(
@@ -72,7 +71,7 @@ export function applyDefensePenalty(
 }
 
 /**
- * @deprecated Defesa fixa não existe mais em v0.0.2.
+ * @deprecated Defesa fixa não existe mais em v0.2.
  */
 export function resetDefensePenalty(): number {
   return 0;
@@ -123,7 +122,7 @@ export function resetAllPenalties(): CombatPenaltiesState {
 }
 
 /**
- * @deprecated Defesa fixa não existe mais em v0.0.2.
+ * @deprecated Defesa fixa não existe mais em v0.2.
  */
 export function calculateEffectiveDefense(
   baseDefense: number,

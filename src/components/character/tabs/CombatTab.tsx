@@ -49,7 +49,7 @@ export interface CombatTabProps {
   onOpenHP?: () => void;
   /** Callback para abrir detalhes de PP */
   onOpenPP?: () => void;
-  /** @deprecated v0.0.2: Defesa agora é teste ativo, não tem sidebar */
+  /** @deprecated Defesa agora é teste ativo, não tem sidebar */
   onOpenDefense?: () => void;
   /** Callback para abrir detalhes do Limite de PP */
   onOpenPPLimit?: () => void;
@@ -337,7 +337,7 @@ export const CombatTab = React.memo(function CombatTab({
 
         <Divider />
 
-        {/* Seção 3: Teste de Defesa Ativo (v0.0.2 — substitui defesa fixa) */}
+        {/* Seção 3: Teste de Defesa Ativo */}
         <Box id="section-defense">
           <DefenseTest
             attributes={character.attributes}

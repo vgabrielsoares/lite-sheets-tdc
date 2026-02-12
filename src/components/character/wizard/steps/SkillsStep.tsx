@@ -31,9 +31,11 @@ import Grid from '@mui/material/Grid';
 import BuildIcon from '@mui/icons-material/Build';
 import StarIcon from '@mui/icons-material/Star';
 import InfoIcon from '@mui/icons-material/Info';
+import CasinoIcon from '@mui/icons-material/Casino';
 import type { WizardStepProps } from '../CharacterCreationWizard';
 import type { SkillName, AttributeName } from '@/types';
 import { SKILL_LIST, SKILL_LABELS, SKILL_METADATA } from '@/constants/skills';
+import { MAX_LUCK_LEVEL } from '@/constants/skills';
 import {
   ATTRIBUTE_LABELS,
   ATTRIBUTE_DEFAULT,
@@ -76,6 +78,9 @@ export default function SkillsStep({ wizard }: WizardStepProps) {
   const { state, updateNestedState } = wizard;
   const { skills, origin, archetype, attributes, lineage } = state;
 
+  // Nível de Sorte do wizard
+  const luckLevel = skills.luckLevel ?? 0;
+
   // Valor de Mente calculado
   const menteValue = useMemo(
     () => calculateAttributeValue('mente', origin, lineage, attributes),
@@ -109,15 +114,24 @@ export default function SkillsStep({ wizard }: WizardStepProps) {
   // Proficiências escolhidas livremente pelo jogador
   const chosenProficiencies = skills.chosenProficiencies as SkillName[];
 
-  // Total de proficiências escolhidas
-  const chosenCount = chosenProficiencies.length;
+  // Total de proficiências escolhidas (inclui slots gastos com Sorte)
+  const chosenCount = chosenProficiencies.length + luckLevel;
 
   // Slots livres restantes disponíveis
   const remainingFreeSlots = freeSlots - chosenCount;
 
+  // Habilidades bloqueadas no wizard (não podem ser escolhidas por este meio)
+  const blockedSkills: SkillName[] = [
+    'oficio' as SkillName,
+    'sorte' as SkillName,
+  ];
+
   // Handler para toggle de habilidade
   const handleSkillToggle = useCallback(
     (skill: SkillName, checked: boolean) => {
+      // Bloquear habilidades especiais
+      if (blockedSkills.includes(skill)) return;
+
       if (checked) {
         // Adicionar se tiver slots
         if (remainingFreeSlots > 0) {
@@ -132,7 +146,7 @@ export default function SkillsStep({ wizard }: WizardStepProps) {
         });
       }
     },
-    [remainingFreeSlots, chosenProficiencies, updateNestedState]
+    [remainingFreeSlots, chosenProficiencies, updateNestedState, blockedSkills]
   );
 
   // Handler para habilidade de assinatura
@@ -144,6 +158,21 @@ export default function SkillsStep({ wizard }: WizardStepProps) {
       });
     },
     [updateNestedState]
+  );
+
+  // Handler para nível de Sorte
+  const handleLuckLevelChange = useCallback(
+    (event: SelectChangeEvent<string>) => {
+      const newLevel = parseInt(event.target.value, 10);
+      if (isNaN(newLevel) || newLevel < 0 || newLevel > MAX_LUCK_LEVEL) return;
+
+      // Verifica se há slots livres suficientes para o novo nível
+      const slotsNeeded = newLevel - luckLevel;
+      if (slotsNeeded > 0 && remainingFreeSlots < slotsNeeded) return;
+
+      updateNestedState('skills', { luckLevel: newLevel });
+    },
+    [updateNestedState, luckLevel, remainingFreeSlots]
   );
 
   // Agrupar habilidades por atributo
@@ -212,6 +241,14 @@ export default function SkillsStep({ wizard }: WizardStepProps) {
               size="small"
               color={remainingFreeSlots > 0 ? 'warning' : 'success'}
             />
+            {luckLevel > 0 && (
+              <Chip
+                label={`Sorte: Nv. ${luckLevel} (${luckLevel} slot${luckLevel !== 1 ? 's' : ''})`}
+                size="small"
+                color="warning"
+                icon={<CasinoIcon />}
+              />
+            )}
           </Stack>
         </Box>
       </Paper>
@@ -317,73 +354,130 @@ export default function SkillsStep({ wizard }: WizardStepProps) {
                     {attrLabel} ({attrAbbr})
                   </Typography>
                   <Grid container spacing={0}>
-                    {skillsInGroup.map((skill) => {
-                      const isFixed = fixedProficiencies.includes(skill);
-                      const isChosen = chosenProficiencies.includes(skill);
-                      const isDisabled =
-                        isFixed || (!isChosen && remainingFreeSlots <= 0);
+                    {skillsInGroup
+                      .filter((skill) => !blockedSkills.includes(skill))
+                      .map((skill) => {
+                        const isFixed = fixedProficiencies.includes(skill);
+                        const isChosen = chosenProficiencies.includes(skill);
+                        const isDisabled =
+                          isFixed || (!isChosen && remainingFreeSlots <= 0);
 
-                      return (
-                        <Grid key={skill} size={{ xs: 6, sm: 4, md: 3 }}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={isFixed || isChosen}
-                                onChange={(e) =>
-                                  handleSkillToggle(skill, e.target.checked)
-                                }
-                                disabled={isFixed || isDisabled}
-                                size="small"
-                              />
-                            }
-                            label={
-                              <Stack
-                                direction="row"
-                                alignItems="center"
-                                spacing={0.5}
-                              >
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    textDecoration: isFixed
-                                      ? 'none'
-                                      : 'inherit',
-                                    color: isFixed
-                                      ? 'text.secondary'
-                                      : 'inherit',
-                                  }}
+                        return (
+                          <Grid key={skill} size={{ xs: 6, sm: 4, md: 3 }}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={isFixed || isChosen}
+                                  onChange={(e) =>
+                                    handleSkillToggle(skill, e.target.checked)
+                                  }
+                                  disabled={isFixed || isDisabled}
+                                  size="small"
+                                />
+                              }
+                              label={
+                                <Stack
+                                  direction="row"
+                                  alignItems="center"
+                                  spacing={0.5}
                                 >
-                                  {SKILL_LABELS[skill]}
-                                </Typography>
-                                {isFixed && (
-                                  <Tooltip
-                                    title={
-                                      originProficiencies.includes(skill)
-                                        ? 'Origem'
-                                        : 'Arquétipo'
-                                    }
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      textDecoration: isFixed
+                                        ? 'none'
+                                        : 'inherit',
+                                      color: isFixed
+                                        ? 'text.secondary'
+                                        : 'inherit',
+                                    }}
                                   >
-                                    <InfoIcon
-                                      fontSize="small"
-                                      sx={{
-                                        fontSize: 14,
-                                        color: 'action.active',
-                                      }}
-                                    />
-                                  </Tooltip>
-                                )}
-                              </Stack>
-                            }
-                            sx={{ m: 0 }}
-                          />
-                        </Grid>
-                      );
-                    })}
+                                    {SKILL_LABELS[skill]}
+                                  </Typography>
+                                  {isFixed && (
+                                    <Tooltip
+                                      title={
+                                        originProficiencies.includes(skill)
+                                          ? 'Origem'
+                                          : 'Arquétipo'
+                                      }
+                                    >
+                                      <InfoIcon
+                                        fontSize="small"
+                                        sx={{
+                                          fontSize: 14,
+                                          color: 'action.active',
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  )}
+                                </Stack>
+                              }
+                              sx={{ m: 0 }}
+                            />
+                          </Grid>
+                        );
+                      })}
                   </Grid>
                 </Box>
               );
             })}
           </>
+        )}
+      </Paper>
+
+      {/* Nível de Sorte */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'warning.main',
+          borderRadius: 2,
+        }}
+      >
+        <Stack direction="row" alignItems="center" gap={1} mb={2}>
+          <CasinoIcon color="warning" />
+          <Typography variant="subtitle2">Nível de Sorte</Typography>
+        </Stack>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          A Sorte funciona de forma única: cada nível acima de 0 consome{' '}
+          <strong>1 slot de proficiência</strong>. O nível máximo é{' '}
+          {MAX_LUCK_LEVEL}.
+        </Typography>
+
+        <FormControl fullWidth size="small">
+          <InputLabel>Nível de Sorte</InputLabel>
+          <Select
+            value={String(luckLevel)}
+            onChange={handleLuckLevelChange}
+            label="Nível de Sorte"
+          >
+            {Array.from({ length: MAX_LUCK_LEVEL + 1 }, (_, i) => (
+              <MenuItem
+                key={i}
+                value={String(i)}
+                disabled={i > luckLevel && remainingFreeSlots < i - luckLevel}
+              >
+                Nível {i}
+                {i === 0
+                  ? ' (sem Sorte)'
+                  : ` (${i} slot${i !== 1 ? 's' : ''} de proficiência)`}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {luckLevel > 0 && (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            Nível de Sorte <strong>{luckLevel}</strong> — consumindo{' '}
+            <strong>
+              {luckLevel} slot{luckLevel !== 1 ? 's' : ''}
+            </strong>{' '}
+            de proficiência.
+          </Alert>
         )}
       </Paper>
 

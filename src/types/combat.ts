@@ -219,6 +219,53 @@ export interface Defense {
 export type AttackType = 'corpo-a-corpo' | 'distancia' | 'magico';
 
 /**
+ * Tipo de resultado de ataque baseado em ✶ após defesa
+ *
+ * 0✶: Raspão — dano dos dados sem modificadores, dividido por 2 (mín 1)
+ * 1✶: Normal — rolagem de dano padrão
+ * 2✶: Em Cheio — dano maximizado (sem rolar)
+ * 3+✶: Crítico — dano maximizado + dados de dano crítico extras
+ */
+export type AttackHitType = 'raspao' | 'normal' | 'em-cheio' | 'critico';
+
+/** Labels para tipos de resultado de ataque */
+export const ATTACK_HIT_TYPE_LABELS: Record<AttackHitType, string> = {
+  raspao: 'Ataque de Raspão (0✶)',
+  normal: 'Ataque Normal (1✶)',
+  'em-cheio': 'Ataque em Cheio (2✶)',
+  critico: 'Ataque Crítico (3+✶)',
+};
+
+/** Descrições curtas para tipos de resultado de ataque */
+export const ATTACK_HIT_TYPE_DESCRIPTIONS: Record<AttackHitType, string> = {
+  raspao: 'Dano dos dados ÷ 2 (sem modificadores, mín 1)',
+  normal: 'Dano normal (dados + modificadores)',
+  'em-cheio': 'Dano maximizado (sem rolar)',
+  critico: 'Dano maximizado + dados de dano crítico',
+};
+
+/** Cores para tipos de resultado de ataque */
+export const ATTACK_HIT_TYPE_COLORS: Record<
+  AttackHitType,
+  'default' | 'warning' | 'success' | 'error'
+> = {
+  raspao: 'default',
+  normal: 'warning',
+  'em-cheio': 'success',
+  critico: 'error',
+};
+
+/**
+ * Sugere o tipo de resultado de ataque baseado nos ✶ líquidos
+ */
+export function suggestHitType(netSuccesses: number): AttackHitType {
+  if (netSuccesses <= 0) return 'raspao';
+  if (netSuccesses === 1) return 'normal';
+  if (netSuccesses === 2) return 'em-cheio';
+  return 'critico'; // 3+
+}
+
+/**
  * Informações de um ataque
  *
  * No, ataques usam pool de dados com contagem de ✶.
@@ -255,14 +302,29 @@ export interface Attack {
   doubleAttributeDamage?: boolean;
   /** Se é um ataque padrão do sistema (como Ataque Desarmado) - não pode ser deletado */
   isDefaultAttack?: boolean;
+  /**
+   * Número de dados extras de dano crítico.
+   * Usa o MESMO tipo de dado base (damageRoll.type).
+   * Ex: criticalDice=1 com damageRoll 1d6 → +1d6 em Ataque Crítico (3+✶).
+   * Default: 1 ("+1d" — mínimo obrigatório).
+   */
+  criticalDice?: number;
+  /**
+   * Dados de dano bônus (ex: dano elemental de encantamento).
+   * Adicionados ao dano em Normal (1✶), Em Cheio (2✶) e Crítico (3+✶).
+   * NÃO são aplicados em Raspão (0✶).
+   */
+  bonusDice?: DiceRoll;
+
+  // ─── Campos deprecados (mantidos para compatibilidade) ────────────
+  /** @deprecated Usar criticalDice. Mantido para migração de dados antigos. */
+  criticalDamage?: DiceRoll;
 
   // ─── Campos deprecados (mantidos para compatibilidade) ────────────
   /** @deprecated Não existe mais defesa fixa para "acertar". Manter para migração. */
   attackBonus?: number;
   /** @deprecated Removido em. Manter para migração. */
   criticalRange?: number;
-  /** @deprecated Removido em. Manter para migração. */
-  criticalDamage?: DiceRoll;
   /** @deprecated Usar actionCost. Manter para migração. */
   actionType?: string;
   /** @deprecated Removido em. */

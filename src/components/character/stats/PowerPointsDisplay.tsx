@@ -1,7 +1,7 @@
 /**
  * PowerPointsDisplay - Exibição completa de PP (Pontos de Poder)
  *
- * v0.0.2: Componente para aba de combate, segue o padrão de ResourceBlock
+ * Componente para aba de combate, segue o padrão de ResourceBlock
  * usado por GuardVitalityDisplay (GA e PV):
  * - Ícone + nome do recurso
  * - Números grandes (current / max)

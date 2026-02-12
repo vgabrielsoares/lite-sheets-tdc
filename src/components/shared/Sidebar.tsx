@@ -6,9 +6,9 @@ import CloseIcon from '@mui/icons-material/Close';
 
 const SIDEBAR_WIDTHS = {
   sm: '20rem', // ~320px
-  md: '28rem', // ~448px
-  lg: '24rem', // ~384px (padrão responsivo)
-  xl: '28rem', // ~448px (telas grandes)
+  md: '24rem', // ~384px
+  lg: '24rem', // ~384px (padrão desktop)
+  xl: '28rem', // ~448px (telas grandes 1920px+)
 } as const;
 
 export type SidebarWidth = keyof typeof SIDEBAR_WIDTHS;
@@ -129,19 +129,27 @@ export function Sidebar({
         width: {
           xs: '100%', // Mobile: tela cheia (usa % para evitar problema com scrollbar)
           md: SIDEBAR_WIDTHS.md, // Tablet: 28rem
-          lg: SIDEBAR_WIDTHS.lg, // Desktop: 24rem
-          xl: SIDEBAR_WIDTHS.xl, // Telas grandes: 28rem
+          lg: SIDEBAR_WIDTHS.lg, // Desktop: 30rem
+          xl: SIDEBAR_WIDTHS.xl, // Telas grandes: 34rem
         },
         // Largura máxima - usar calc com 100% para evitar problema da scrollbar
         maxWidth: {
           xs: '100%',
           md: 'calc(100% - 2rem)', // Margem de 1rem em cada lado
-          lg: SIDEBAR_WIDTHS.lg, // Respeitar largura definida
-          xl: SIDEBAR_WIDTHS.xl,
         },
-        // Media query customizada para telas 1440p+ (2560px+)
-        '@media (min-width: 2560px)': {
-          width: '36rem', // 576px para telas muito grandes
+        // Media queries customizadas para telas maiores
+        // Thresholds reduzidos para compensar scrollbar do navegador (~17px)
+        '@media (min-width: 1500px)': {
+          width: '26rem', // ~416px para telas ~1500px+
+          maxWidth: '26rem',
+        },
+        '@media (min-width: 1900px)': {
+          width: '30rem', // ~480px para telas ~1920px+
+          maxWidth: '30rem',
+        },
+        '@media (min-width: 2400px)': {
+          width: '45rem', // ~720px para telas muito grandes
+          maxWidth: '45rem',
         },
         display: 'flex',
         flexDirection: 'column',

@@ -4,7 +4,7 @@
  * Agrega penalidades de dados de todas as condições ativas (manuais + automáticas)
  * e retorna um mapa de penalidades por alvo (atributo ou 'todos').
  *
- * v0.0.2: Condições aplicam penalidades em dados (-Xd), não em valores fixos.
+ * Condições aplicam penalidades em dados (-Xd), não em valores fixos.
  * Condições empilháveis multiplicam a penalidade pelo número de pilhas.
  */
 

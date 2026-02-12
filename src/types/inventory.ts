@@ -55,7 +55,7 @@ export interface DurabilityTestResult {
 }
 
 /**
- * Categoria de item (20 categorias v0.0.2)
+ * Categoria de item (20 categorias)
  */
 export type ItemCategory =
   | 'aventura'

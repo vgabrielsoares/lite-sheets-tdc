@@ -20,7 +20,7 @@ import { SKILL_LIST } from '@/types';
  * @deprecated Usar PROFICIENCY_DIE_MAP do types no lugar.
  * Graus de proficiência em habilidades
  * No sistema antigo, o multiplicador era aplicado ao atributo-chave.
- * No sistema novo (v0.0.2), o grau determina o tamanho do dado.
+ * Na nova versão, o grau determina o tamanho do dado.
  */
 export const SKILL_PROFICIENCY_LEVELS: Record<ProficiencyLevel, number> = {
   leigo: 0,
@@ -447,7 +447,7 @@ export const SKILLS_REQUIRING_INSTRUMENT: SkillName[] = SKILL_LIST.filter(
   (skill) => SKILL_METADATA[skill].requiresInstrument
 );
 
-// --- Constantes de penalidade em dados (v0.0.2) ---
+// --- Constantes de penalidade em dados ---
 
 /** Penalidade de carga por excesso de peso: -2d */
 export const OVERLOAD_DICE_PENALTY = -2;
@@ -498,7 +498,7 @@ export interface LuckLevelEntry {
  * independente do nível do personagem. Cada nível determina
  * a quantidade e tipo de dados a rolar.
  *
- * @see v0.0.2 rules - Sorte
+ * @see v0.2 rules - Sorte
  */
 export const LUCK_LEVELS: Record<number, LuckLevelEntry> = {
   0: { dice: 1, dieSize: 'd6', formula: '1d6' },
@@ -535,7 +535,7 @@ export interface BettingResultEntry {
  * Define o que acontece conforme a quantidade de sucessos (✶)
  * obtidos em um teste de Sorte ao apostar.
  *
- * @see v0.0.2 rules - Apostar
+ * @see v0.2 rules - Apostar
  */
 export const LUCK_BETTING_TABLE: BettingResultEntry[] = [
   { successes: 0, result: 'Perde tudo', multiplier: -1 },
@@ -568,7 +568,7 @@ export interface BetPlaceLevelEntry {
  * valor base. Ganhos fracionados: decimais = C$ ×10.
  * Uso requer 1d6 horas.
  *
- * @see v0.0.2 rules - Apostar
+ * @see v0.2 rules - Apostar
  */
 export const LUCK_BET_PLACE_LEVELS: BetPlaceLevelEntry[] = [
   {

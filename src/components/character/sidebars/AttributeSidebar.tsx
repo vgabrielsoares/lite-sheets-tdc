@@ -555,10 +555,10 @@ function getAttributeImpacts(
       break;
 
     case 'agilidade':
-      // Defesa (v0.0.2: teste ativo, não valor fixo)
+      // Defesa (v0.2: teste ativo, não valor fixo)
       impacts.push({
         title: 'Teste de Defesa',
-        description: `Em v0.0.2, a defesa é um teste ativo usando Reflexo (Agilidade). Sua Agilidade ${attributeValue} contribui para os dados rolados no teste de defesa.`,
+        description: `Em v0.2, a defesa é um teste ativo usando Reflexo (Agilidade). Sua Agilidade ${attributeValue} contribui para os dados rolados no teste de defesa.`,
         icon: <ShieldIcon color="warning" />,
         color: 'warning.main',
       });

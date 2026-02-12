@@ -2,13 +2,13 @@
  * Skill Calculations - Funções para cálculos relacionados a habilidades
  *
  * Este arquivo implementa todos os cálculos necessários para o sistema de habilidades
- * do Tabuleiro do Caos RPG (v0.0.2), incluindo:
+ * do Tabuleiro do Caos RPG, incluindo:
  * - Pool de dados (quantidade de dados + tamanho do dado)
  * - Fórmula de rolagem (ex: "3d8", "2d6 (menor)")
  * - Penalidade de carga (-Xd em habilidades com propriedade Carga)
  * - Bônus de Habilidade de Assinatura (+Xd)
  *
- * Regras (v0.0.2):
+ * Regras:
  * - Proficiência determina o tamanho do dado: Leigo=d6, Adepto=d8, Versado=d10, Mestre=d12
  * - Atributo determina a quantidade base de dados na pool
  * - Todos os modificadores são em dados (+Xd / -Xd)
@@ -84,7 +84,7 @@ function getArmorDicePenalty(armorType: ArmorType | null): number {
 }
 
 /**
- * Calcula todas as penalidades de dados aplicáveis a uma habilidade (v0.0.2)
+ * Calcula todas as penalidades de dados aplicáveis a uma habilidade
  *
  * Penalidades:
  * - Carga (sobrepeso): -2d se sobrecarregado E habilidade tem propriedade Carga
@@ -167,7 +167,7 @@ function formatPoolFormula(
 }
 
 /**
- * Calcula a pool de dados de uma habilidade (sistema v0.0.2)
+ * Calcula a pool de dados de uma habilidade
  *
  * No sistema de pool:
  * - Atributo determina a quantidade base de dados
@@ -217,7 +217,7 @@ export function calculateSkillTotalModifier(
   // 1. Tamanho do dado determinado pelo grau de proficiência
   const dieSize = getSkillDieSize(proficiencyLevel);
 
-  // 2. Bônus de Habilidade de Assinatura (+Xd) — v0.0.2: sem distinção combate/não-combate
+  // 2. Bônus de Habilidade de Assinatura (+Xd)
   let signatureDiceBonus = 0;
   if (isSignature) {
     signatureDiceBonus = calculateSignatureAbilityBonus(characterLevel);
@@ -258,7 +258,7 @@ export function calculateSkillTotalModifier(
 }
 
 /**
- * Calcula a fórmula de rolagem de pool de dados de uma habilidade (sistema v0.0.2)
+ * Calcula a fórmula de rolagem de pool de dados de uma habilidade
  *
  * Regras:
  * - Quantidade de dados = valor do atributo + modificadores de dados
@@ -306,7 +306,7 @@ export function calculateSkillRollFormula(
 }
 
 /**
- * Calcula pool de dados e fórmula completos de uma habilidade (sistema v0.0.2)
+ * Calcula pool de dados e fórmula completos de uma habilidade
  * Combina calculateSkillTotalModifier e calculateSkillRollFormula
  *
  * @param skillName - Nome da habilidade
@@ -426,7 +426,7 @@ export function isCombatSkill(skillName: SkillName): boolean {
 }
 
 /**
- * Calcula a pool de dados para um uso customizado de habilidade (sistema v0.0.2)
+ * Calcula a pool de dados para um uso customizado de habilidade
  *
  * Usa as mesmas regras que calculateSkillTotalModifier, mas com:
  * - Atributo-chave do uso customizado
@@ -507,7 +507,7 @@ export function calculateSkillUseModifier(
 }
 
 /**
- * Calcula a fórmula de rolagem para um uso customizado de habilidade (sistema v0.0.2)
+ * Calcula a fórmula de rolagem para um uso customizado de habilidade
  *
  * @param skillUse - Uso customizado da habilidade
  * @param baseSkill - Habilidade base (para proficiência e assinatura)

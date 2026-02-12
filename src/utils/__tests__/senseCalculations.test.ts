@@ -1,5 +1,5 @@
 /**
- * Tests for senseCalculations utility functions (v0.0.2 pool-based dice system)
+ * Tests for senseCalculations utility functions (v0.2 pool-based dice system)
  *
  * Sistema de pool de dados:
  * - baseDice = valor do atributo + modificadores de dados

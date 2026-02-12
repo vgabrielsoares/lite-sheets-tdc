@@ -99,7 +99,7 @@ describe('SkillRow', () => {
       />
     );
 
-    // v0.0.2: Agilidade 2, Versado (d10) = pool 2d10
+    // v0.2: Agilidade 2, Versado (d10) = pool 2d10
     expect(screen.getByText('2d10')).toBeInTheDocument();
   });
 
@@ -114,7 +114,7 @@ describe('SkillRow', () => {
       />
     );
 
-    // v0.0.2: Agilidade 2, Versado (d10) = pool 2d10
+    // v0.2: Agilidade 2, Versado (d10) = pool 2d10
     expect(screen.getByText('2d10')).toBeInTheDocument();
   });
 
@@ -196,7 +196,7 @@ describe('SkillRow', () => {
       />
     );
 
-    // v0.0.2: Corpo 3, Adepto (d8), + bônus assinatura +1d (level 5) = pool 4d8
+    // v0.2: Corpo 3, Adepto (d8), + bônus assinatura +1d (level 5) = pool 4d8
     expect(screen.getByText('4d8')).toBeInTheDocument();
   });
 
@@ -211,7 +211,7 @@ describe('SkillRow', () => {
       />
     );
 
-    // v0.0.2: Agilidade 2, Versado (d10), overloaded -2d = 0d → penalty roll 2d10 (menor)
+    // v0.2: Agilidade 2, Versado (d10), overloaded -2d = 0d → penalty roll 2d10 (menor)
     expect(screen.getByText(/2d10.*menor/i)).toBeInTheDocument();
   });
 

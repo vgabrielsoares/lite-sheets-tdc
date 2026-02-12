@@ -77,7 +77,7 @@ export function useCharacterSync(): UseCharacterSyncReturn {
           if (result.migratedNames.length > 0) {
             const count = result.migratedNames.length;
             showInfo(
-              `${count} ficha(s) migrada(s) automaticamente para v0.0.2: ${result.migratedNames.join(', ')}`
+              `${count} ficha(s) migrada(s) automaticamente para v0.2: ${result.migratedNames.join(', ')}`
             );
           }
         })

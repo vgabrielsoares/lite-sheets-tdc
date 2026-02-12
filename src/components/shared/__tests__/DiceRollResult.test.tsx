@@ -1,5 +1,5 @@
 /**
- * Testes para DiceRollResult (v0.0.2)
+ * Testes para DiceRollResult
  *
  * Testa o componente de exibição de resultado de rolagem com os novos tipos:
  * - DicePoolResult (rolagens de skill com sucessos)

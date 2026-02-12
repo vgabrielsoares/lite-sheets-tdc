@@ -12,6 +12,7 @@ import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
 import Header from './Header';
 import Footer from './Footer';
 import { DiceHistoryFab } from '@/components/shared';
+import { CustomDiceRoller } from '@/components/shared/CustomDiceRoller';
 
 /**
  * Props do AppLayout
@@ -126,7 +127,8 @@ export default function AppLayout({
       {/* Footer */}
       <Footer />
 
-      {/* Botão flutuante de histórico de rolagens */}
+      {/* Botões flutuantes de dados */}
+      <CustomDiceRoller />
       <DiceHistoryFab />
     </Box>
   );

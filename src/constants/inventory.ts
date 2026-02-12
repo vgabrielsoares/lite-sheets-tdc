@@ -1,7 +1,7 @@
 /**
  * Inventory Constants - Constantes centralizadas para categorias de itens
  *
- * 20 categorias de itens conforme v0.0.2 do livro de regras.
+ * 20 categorias de itens
  */
 
 import type { ItemCategory } from '@/types/inventory';
@@ -26,7 +26,7 @@ export interface ItemCategoryDefinition {
 }
 
 /**
- * Todas as 20 categorias de itens (v0.0.2)
+ * Todas as 20 categorias de itens
  *
  * Ordenadas alfabeticamente pelo label para UI.
  */

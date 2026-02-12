@@ -95,7 +95,7 @@ export function calculateCarryCapacity(
 /**
  * Calcula a capacidade de empurrar
  *
- * Regra v0.0.2: 10 × Corpo (mínimo 5)
+ * Regra: 10 × Corpo (mínimo 5)
  *
  * @param corpo - Valor do atributo Corpo
  * @returns Capacidade de empurrar em espaços
@@ -107,7 +107,7 @@ export function calculatePushCapacity(corpo: number): number {
 /**
  * Calcula a capacidade de levantar
  *
- * Regra v0.0.2: 5 × Corpo (mínimo 2)
+ * Regra: 5 × Corpo (mínimo 2)
  *
  * @param corpo - Valor do atributo Corpo
  * @returns Capacidade de levantar em espaços

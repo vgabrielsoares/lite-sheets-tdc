@@ -212,12 +212,20 @@ export function WizardStepIndicator({
             </StepLabel>
           );
 
-          // Se navegação habilitada e passo visitado, usar StepButton
+          // Se navegação habilitada e passo visitado, usar StepButton (clickable)
           if (enableNavigation && isVisited) {
             return (
-              <Step key={step} completed={isCompleted}>
+              <Step key={step} completed={isCompleted} disabled={false}>
                 <Tooltip title={stepInfo.description} arrow>
-                  <StepButton onClick={() => handleStepClick(step)}>
+                  <StepButton
+                    onClick={() => handleStepClick(step)}
+                    sx={{
+                      cursor: 'pointer',
+                      '& .MuiStepLabel-root': {
+                        cursor: 'pointer',
+                      },
+                    }}
+                  >
                     {stepContent}
                   </StepButton>
                 </Tooltip>

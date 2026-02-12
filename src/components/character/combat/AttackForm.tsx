@@ -19,9 +19,6 @@ import {
   InputAdornment,
   Divider,
   Alert,
-  Switch,
-  FormControlLabel,
-  Collapse,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -30,7 +27,7 @@ import {
 } from '@mui/icons-material';
 import type { Attack, AttackType } from '@/types/combat';
 import type { SkillName } from '@/types/skills';
-import type { DamageType, DiceType } from '@/types/common';
+import type { DamageType } from '@/types/common';
 import type { AttributeName, Character } from '@/types';
 import {
   SKILL_LABELS,
@@ -38,8 +35,16 @@ import {
   SKILL_METADATA,
 } from '@/constants/skills';
 import { ATTRIBUTE_LABELS } from '@/constants/attributes';
-import { calculateAttackRoll } from '@/utils/attackCalculations';
+import { calculateAttackPool } from '@/utils/attackCalculations';
 import { getAvailableDefaultUses } from '@/constants/skillUses';
+import {
+  parseDiceNotation,
+  parseCriticalNotation,
+  formatDiceNotation,
+  formatAllDamagePreviews,
+  DICE_NOTATION_REGEX,
+  CRITICAL_DICE_REGEX,
+} from '@/utils/diceRoller';
 
 export interface AttackFormProps {
   /** Se o dialog está aberto */
@@ -61,7 +66,7 @@ const ATTACK_TYPES: { value: AttackType; label: string }[] = [
   { value: 'magico', label: 'Mágico' },
 ];
 
-/** Opções de custo de ação (v0.0.2: actionCost em número de ▶) */
+/** Opções de custo de ação (actionCost em número de ▶) */
 const ACTION_COST_OPTIONS: { value: number; label: string }[] = [
   { value: 1, label: '▶ Ação (1)' },
   { value: 2, label: '▶▶ Ação Dupla (2)' },
@@ -86,18 +91,6 @@ const DAMAGE_TYPES: { value: DamageType; label: string }[] = [
   { value: 'sagrado', label: 'Sagrado' },
   { value: 'sonoro', label: 'Sonoro' },
   { value: 'veneno', label: 'Veneno' },
-];
-
-/** Tipos de dados disponíveis */
-const DICE_TYPES: DiceType[] = [
-  'd2',
-  'd3',
-  'd4',
-  'd6',
-  'd8',
-  'd10',
-  'd12',
-  'd20',
 ];
 
 /** Alcances predefinidos */
@@ -141,13 +134,12 @@ const DEFAULT_ATTACK: Attack = {
     type: 'd6',
     modifier: 0,
   },
+  criticalDice: 1,
   damageType: 'fisico',
   range: 'Adjacente',
   description: '',
   ppCost: 0,
   actionCost: 1,
-  addAttributeToDamage: true,
-  doubleAttributeDamage: false,
   isDefaultAttack: false,
 };
 
@@ -186,6 +178,12 @@ export function AttackForm({
   const [attack, setAttack] = useState<Attack>(DEFAULT_ATTACK);
   const [customRange, setCustomRange] = useState('');
   const [useCustomRange, setUseCustomRange] = useState(false);
+
+  // State for dice notation text fields
+  const [baseDiceStr, setBaseDiceStr] = useState('1d6');
+  const [criticalDiceStr, setCriticalDiceStr] = useState('+1d');
+  const [bonusDiceStr, setBonusDiceStr] = useState('');
+  const [damageModifier, setDamageModifier] = useState(0);
 
   // Obter habilidade atual
   const currentSkill = useMemo(() => {
@@ -239,19 +237,17 @@ export function AttackForm({
 
   // Calcular preview da fórmula de ataque
   const attackPreview = useMemo(() => {
-    return calculateAttackRoll(
+    return calculateAttackPool(
       character,
       attack.attackSkill,
       attack.attackSkillUseId,
-      attack.attackBonus ?? 0,
-      attack.attackAttribute,
-      attack.attackDiceModifier || 0
+      attack.attackDiceModifier || 0,
+      attack.attackAttribute
     );
   }, [
     character,
     attack.attackSkill,
     attack.attackSkillUseId,
-    attack.attackBonus,
     attack.attackAttribute,
     attack.attackDiceModifier,
   ]);
@@ -261,12 +257,26 @@ export function AttackForm({
     if (open) {
       if (editingAttack) {
         // Garantir que campos novos existam (migração de ataques antigos)
+        const migratedCriticalDice =
+          editingAttack.criticalDice ??
+          editingAttack.criticalDamage?.quantity ??
+          1;
         const attackWithDefaults: Attack = {
           ...editingAttack,
           actionCost: editingAttack.actionCost ?? 1,
           attackDiceModifier: editingAttack.attackDiceModifier ?? 0,
+          criticalDice: migratedCriticalDice,
         };
         setAttack(attackWithDefaults);
+        // Populate text fields from model
+        setBaseDiceStr(formatDiceNotation(attackWithDefaults.damageRoll));
+        setCriticalDiceStr(`+${migratedCriticalDice}d`);
+        setBonusDiceStr(
+          attackWithDefaults.bonusDice
+            ? formatDiceNotation(attackWithDefaults.bonusDice)
+            : ''
+        );
+        setDamageModifier(attackWithDefaults.damageRoll.modifier);
         // Verificar se o alcance é customizado
         const isCustom =
           editingAttack.range && !RANGE_OPTIONS.includes(editingAttack.range);
@@ -276,6 +286,10 @@ export function AttackForm({
         }
       } else {
         setAttack(DEFAULT_ATTACK);
+        setBaseDiceStr('1d6');
+        setCriticalDiceStr('+1d');
+        setBonusDiceStr('');
+        setDamageModifier(0);
         setCustomRange('');
         setUseCustomRange(false);
       }
@@ -293,45 +307,95 @@ export function AttackForm({
   );
 
   /**
-   * Atualiza um campo da rolagem de dano
+   * Atualiza um campo da rolagem de dano via texto (base, bônus)
+   * Sincroniza os campos de texto com o modelo Attack
    */
-  const updateDamageRoll = useCallback(
-    (field: 'quantity' | 'type' | 'modifier', value: number | DiceType) => {
+  const syncDamageToModel = useCallback(() => {
+    const parsed = parseDiceNotation(baseDiceStr);
+    if (parsed) {
       setAttack((prev) => ({
         ...prev,
         damageRoll: {
-          ...prev.damageRoll,
-          [field]: value,
+          quantity: parsed.quantity,
+          type: parsed.type,
+          modifier: damageModifier,
         },
       }));
-    },
-    []
-  );
+    }
+  }, [baseDiceStr, damageModifier]);
 
-  /**
-   * Atualiza um campo do dano crítico
-   */
-  const updateCriticalDamage = useCallback(
-    (field: 'quantity' | 'type' | 'modifier', value: number | DiceType) => {
-      setAttack((prev) => ({
-        ...prev,
-        criticalDamage: {
-          quantity: prev.criticalDamage?.quantity ?? 0,
-          type: prev.criticalDamage?.type ?? 'd6',
-          modifier: prev.criticalDamage?.modifier ?? 0,
-          [field]: value,
-        },
-      }));
-    },
-    []
+  // Sync text fields to model when they change
+  useEffect(() => {
+    syncDamageToModel();
+  }, [syncDamageToModel]);
+
+  // Sync criticalDice and bonusDice to model
+  useEffect(() => {
+    const critNum = parseCriticalNotation(criticalDiceStr);
+    setAttack((prev) => ({
+      ...prev,
+      criticalDice: critNum ?? 1,
+    }));
+  }, [criticalDiceStr]);
+
+  useEffect(() => {
+    if (bonusDiceStr.trim() === '') {
+      setAttack((prev) => ({ ...prev, bonusDice: undefined }));
+    } else {
+      const parsed = parseDiceNotation(bonusDiceStr);
+      if (parsed) {
+        setAttack((prev) => ({
+          ...prev,
+          bonusDice: {
+            quantity: parsed.quantity,
+            type: parsed.type,
+            modifier: 0,
+          },
+        }));
+      }
+    }
+  }, [bonusDiceStr]);
+
+  // Damage formula previews
+  const damagePreviews = useMemo(() => {
+    const parsed = parseDiceNotation(baseDiceStr);
+    if (!parsed) return null;
+    const critNum = parseCriticalNotation(criticalDiceStr) ?? 1;
+    const bonusParsed = bonusDiceStr.trim()
+      ? parseDiceNotation(bonusDiceStr)
+      : undefined;
+    const baseDice = { ...parsed, modifier: damageModifier };
+    const bonus = bonusParsed ? { ...bonusParsed, modifier: 0 } : undefined;
+    return formatAllDamagePreviews(baseDice, critNum, bonus);
+  }, [baseDiceStr, criticalDiceStr, bonusDiceStr, damageModifier]);
+
+  // Validation helpers for text fields
+  const isBaseDiceValid = useMemo(
+    () => DICE_NOTATION_REGEX.test(baseDiceStr.trim()),
+    [baseDiceStr]
+  );
+  const isCriticalDiceValid = useMemo(
+    () => CRITICAL_DICE_REGEX.test(criticalDiceStr.trim()),
+    [criticalDiceStr]
+  );
+  const isBonusDiceValid = useMemo(
+    () =>
+      bonusDiceStr.trim() === '' ||
+      DICE_NOTATION_REGEX.test(bonusDiceStr.trim()),
+    [bonusDiceStr]
   );
 
   /**
    * Valida se o ataque é válido para salvar
    */
   const isValid = useCallback(() => {
-    return attack.name.trim().length > 0 && attack.damageRoll.quantity > 0;
-  }, [attack]);
+    return (
+      attack.name.trim().length > 0 &&
+      isBaseDiceValid &&
+      isCriticalDiceValid &&
+      isBonusDiceValid
+    );
+  }, [attack, isBaseDiceValid, isCriticalDiceValid, isBonusDiceValid]);
 
   /**
    * Salva o ataque
@@ -339,17 +403,52 @@ export function AttackForm({
   const handleSave = useCallback(() => {
     if (!isValid()) return;
 
+    // Parse text fields into model
+    const baseParsed = parseDiceNotation(baseDiceStr);
+    const critNum = parseCriticalNotation(criticalDiceStr) ?? 1;
+    const bonusParsed = bonusDiceStr.trim()
+      ? parseDiceNotation(bonusDiceStr)
+      : undefined;
+
     // Ajustar alcance customizado
     const finalAttack: Attack = {
       ...attack,
       name: attack.name.trim(),
       range: useCustomRange ? customRange.trim() : attack.range,
       description: attack.description?.trim() || undefined,
+      damageRoll: baseParsed
+        ? {
+            quantity: baseParsed.quantity,
+            type: baseParsed.type,
+            modifier: damageModifier,
+          }
+        : attack.damageRoll,
+      criticalDice: critNum,
+      bonusDice: bonusParsed
+        ? {
+            quantity: bonusParsed.quantity,
+            type: bonusParsed.type,
+            modifier: 0,
+          }
+        : undefined,
+      // Remove deprecated field
+      criticalDamage: undefined,
     };
 
     onSave(finalAttack);
     onClose();
-  }, [attack, customRange, useCustomRange, isValid, onSave, onClose]);
+  }, [
+    attack,
+    customRange,
+    useCustomRange,
+    isValid,
+    onSave,
+    onClose,
+    baseDiceStr,
+    criticalDiceStr,
+    bonusDiceStr,
+    damageModifier,
+  ]);
 
   const isEditing = !!editingAttack;
 
@@ -444,11 +543,11 @@ export function AttackForm({
             </Typography>
           </Divider>
 
-          {/* Habilidade e Bônus de ataque */}
+          {/* Habilidade e Uso de Habilidade */}
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '2fr 1fr' },
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
               gap: 2,
             }}
           >
@@ -467,8 +566,7 @@ export function AttackForm({
               >
                 {/* Habilidades de ataque principais primeiro */}
                 {ATTACK_SKILLS.map((skill) => {
-                  const skillData = character.skills[skill];
-                  const formula = calculateAttackRoll(
+                  const formula = calculateAttackPool(
                     character,
                     skill,
                     undefined,
@@ -483,7 +581,7 @@ export function AttackForm({
                 <Divider />
                 {/* Habilidades secundárias */}
                 {SECONDARY_ATTACK_SKILLS.map((skill) => {
-                  const formula = calculateAttackRoll(
+                  const formula = calculateAttackPool(
                     character,
                     skill,
                     undefined,
@@ -498,33 +596,6 @@ export function AttackForm({
               </Select>
             </FormControl>
 
-            <TextField
-              label="Bônus Adicional"
-              type="number"
-              value={attack.attackBonus ?? 0}
-              onChange={(e) =>
-                updateField('attackBonus', parseInt(e.target.value) || 0)
-              }
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    {(attack.attackBonus ?? 0) >= 0 ? '+' : ''}
-                  </InputAdornment>
-                ),
-              }}
-              helperText="Somado aos modificadores da habilidade/uso"
-              fullWidth
-            />
-          </Box>
-
-          {/* Uso de Habilidade e Atributo */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-              gap: 2,
-            }}
-          >
             <FormControl fullWidth>
               <InputLabel id="skill-use-label">Uso de Habilidade</InputLabel>
               <Select
@@ -541,10 +612,10 @@ export function AttackForm({
                 </MenuItem>
                 {allAvailableUses.map((use) => {
                   // Calcular fórmula do uso
-                  const useFormula = calculateAttackRoll(
+                  const useFormula = calculateAttackPool(
                     character,
                     attack.attackSkill,
-                    use.id, // Usar o ID correto (inclusive para usos padrões)
+                    use.id,
                     0
                   ).formula;
                   return (
@@ -555,7 +626,16 @@ export function AttackForm({
                 })}
               </Select>
             </FormControl>
+          </Box>
 
+          {/* Atributo e Modificador de Dados */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: 2,
+            }}
+          >
             <FormControl fullWidth>
               <InputLabel id="attack-attribute-label">
                 Atributo (padrão: {ATTRIBUTE_LABELS[defaultAttribute]})
@@ -580,21 +660,14 @@ export function AttackForm({
                 </MenuItem>
                 {(Object.keys(ATTRIBUTE_LABELS) as AttributeName[]).map(
                   (attr) => {
-                    // Calcular diferença de fórmula usando este atributo
-                    const attrFormula = calculateAttackRoll(
+                    // Calcular fórmula usando este atributo
+                    const attrFormula = calculateAttackPool(
                       character,
                       attack.attackSkill,
                       attack.attackSkillUseId,
                       0,
                       attr
                     ).formula;
-                    const defaultFormula = calculateAttackRoll(
-                      character,
-                      attack.attackSkill,
-                      attack.attackSkillUseId,
-                      0
-                    ).formula;
-                    const isDefaultAttr = attr === defaultAttribute;
 
                     return (
                       <MenuItem key={attr} value={attr}>
@@ -608,128 +681,43 @@ export function AttackForm({
                 )}
               </Select>
             </FormControl>
-          </Box>
 
-          {/* Modificador de Dados */}
-          <TextField
-            label="Modificador de Dados"
-            type="number"
-            value={attack.attackDiceModifier || 0}
-            onChange={(e) =>
-              updateField('attackDiceModifier', parseInt(e.target.value) || 0)
-            }
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  {(attack.attackDiceModifier || 0) >= 0 ? '+' : ''}
-                </InputAdornment>
-              ),
-            }}
-            helperText="Dados adicionais de ataque (+1 = +1d20, -1 = -1d20)"
-            fullWidth
-          />
+            <TextField
+              label="Modificador de Dados"
+              type="number"
+              value={attack.attackDiceModifier || 0}
+              onChange={(e) =>
+                updateField('attackDiceModifier', parseInt(e.target.value) || 0)
+              }
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    {(attack.attackDiceModifier || 0) >= 0 ? '+' : ''}
+                  </InputAdornment>
+                ),
+              }}
+              helperText="+1 = +1d, -1 = -1d"
+              fullWidth
+            />
+          </Box>
 
           {/* Preview da Rolagem de Ataque */}
           <Alert severity="info" icon={false}>
             <Typography variant="body2" fontWeight="bold">
-              Rolagem de Ataque: {attackPreview.formula}
+              Pool de Ataque: {attackPreview.formula}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {attackPreview.diceCount}d20 (
+              {attackPreview.diceCount}
+              {attackPreview.dieSize} (
               {attack.attackAttribute &&
               ATTRIBUTE_LABELS[attack.attackAttribute as AttributeName]
                 ? ATTRIBUTE_LABELS[attack.attackAttribute as AttributeName]
                 : ATTRIBUTE_LABELS[defaultAttribute]}
               {attackPreview.useName ? ` - ${attackPreview.useName}` : ''})
-              {attackPreview.modifier !== 0 &&
-                ` ${attackPreview.modifier >= 0 ? '+' : ''}${attackPreview.modifier}`}
+              {attackPreview.isPenaltyRoll &&
+                ' — Penalidade: usa menor resultado'}
             </Typography>
           </Alert>
-
-          {/* Seção de crítico deprecada em v0.0.2 — mostrar apenas se ataque legado tiver dados */}
-          {(attack.criticalRange != null || attack.criticalDamage != null) && (
-            <>
-              <Divider>
-                <Typography variant="caption" color="text.secondary">
-                  Crítico (legado)
-                </Typography>
-              </Divider>
-
-              <Alert severity="warning" sx={{ mb: 1 }}>
-                <Typography variant="caption">
-                  Em v0.0.2, críticos são determinados pelo Dado de
-                  Vulnerabilidade. Estes campos são mantidos apenas para
-                  compatibilidade.
-                </Typography>
-              </Alert>
-
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: '1fr 3fr' },
-                  gap: 2,
-                }}
-              >
-                <TextField
-                  label="Margem de Crítico"
-                  type="number"
-                  value={attack.criticalRange ?? 20}
-                  onChange={(e) =>
-                    updateField(
-                      'criticalRange',
-                      Math.min(20, Math.max(1, parseInt(e.target.value) || 20))
-                    )
-                  }
-                  inputProps={{ min: 1, max: 20 }}
-                  fullWidth
-                  helperText="Ex: 20, 19, 18"
-                />
-
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 2,
-                  }}
-                >
-                  <TextField
-                    label="Quantidade"
-                    type="number"
-                    value={attack.criticalDamage?.quantity ?? 0}
-                    onChange={(e) =>
-                      updateCriticalDamage(
-                        'quantity',
-                        Math.max(0, parseInt(e.target.value) || 0)
-                      )
-                    }
-                    inputProps={{ min: 0 }}
-                    fullWidth
-                    helperText="Dados extras (Crítico Verdadeiro)"
-                  />
-
-                  <FormControl fullWidth>
-                    <InputLabel id="critical-dice-type-label">
-                      Tipo de Dado
-                    </InputLabel>
-                    <Select
-                      labelId="critical-dice-type-label"
-                      value={attack.criticalDamage?.type ?? 'd6'}
-                      label="Tipo de Dado"
-                      onChange={(e) =>
-                        updateCriticalDamage('type', e.target.value as DiceType)
-                      }
-                    >
-                      {DICE_TYPES.map((dice) => (
-                        <MenuItem key={dice} value={dice}>
-                          {dice}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-              </Box>
-            </>
-          )}
 
           <Divider>
             <Typography variant="caption" color="text.secondary">
@@ -737,57 +725,64 @@ export function AttackForm({
             </Typography>
           </Divider>
 
-          {/* Dados de dano */}
+          {/* Dados de dano, campos de texto com regex */}
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 1fr' },
+              gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 1fr 1fr' },
               gap: 2,
             }}
           >
             <TextField
-              label="Quantidade"
-              type="number"
-              value={attack.damageRoll.quantity}
-              onChange={(e) =>
-                updateDamageRoll(
-                  'quantity',
-                  Math.max(1, parseInt(e.target.value) || 1)
-                )
-              }
-              inputProps={{ min: 1 }}
+              label="Dado Base"
+              value={baseDiceStr}
+              onChange={(e) => setBaseDiceStr(e.target.value)}
+              placeholder="1d6"
+              error={!isBaseDiceValid}
+              helperText={!isBaseDiceValid ? 'Ex: d4, 1d6, 2d8' : undefined}
               fullWidth
+              slotProps={{
+                htmlInput: { autoComplete: 'off' },
+              }}
             />
 
-            <FormControl fullWidth>
-              <InputLabel id="dice-type-label">Dado</InputLabel>
-              <Select
-                labelId="dice-type-label"
-                value={attack.damageRoll.type}
-                label="Dado"
-                onChange={(e) =>
-                  updateDamageRoll('type', e.target.value as DiceType)
-                }
-              >
-                {DICE_TYPES.map((dice) => (
-                  <MenuItem key={dice} value={dice}>
-                    {dice}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              label="Dado Crítico"
+              value={criticalDiceStr}
+              onChange={(e) => setCriticalDiceStr(e.target.value)}
+              placeholder="+1d"
+              error={!isCriticalDiceValid}
+              helperText={
+                !isCriticalDiceValid ? 'Ex: +1d, +2d' : 'Dados extras (3+✶)'
+              }
+              fullWidth
+              slotProps={{
+                htmlInput: { autoComplete: 'off' },
+              }}
+            />
+
+            <TextField
+              label="Dado Bônus"
+              value={bonusDiceStr}
+              onChange={(e) => setBonusDiceStr(e.target.value)}
+              placeholder="Nenhum"
+              error={!isBonusDiceValid}
+              helperText={!isBonusDiceValid ? 'Ex: d4, 1d6' : 'Opcional'}
+              fullWidth
+              slotProps={{
+                htmlInput: { autoComplete: 'off' },
+              }}
+            />
 
             <TextField
               label="Modificador"
               type="number"
-              value={attack.damageRoll.modifier}
-              onChange={(e) =>
-                updateDamageRoll('modifier', parseInt(e.target.value) || 0)
-              }
+              value={damageModifier}
+              onChange={(e) => setDamageModifier(parseInt(e.target.value) || 0)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    {attack.damageRoll.modifier >= 0 ? '+' : ''}
+                    {damageModifier >= 0 ? '+' : ''}
                   </InputAdornment>
                 ),
               }}
@@ -814,70 +809,28 @@ export function AttackForm({
             </Select>
           </FormControl>
 
-          {/* Número de ataques (legado/opcional) */}
-          <TextField
-            label="Número de Ataques"
-            type="number"
-            value={attack.numberOfAttacks ?? 1}
-            onChange={(e) =>
-              updateField(
-                'numberOfAttacks',
-                Math.max(1, parseInt(e.target.value) || 1)
-              )
-            }
-            inputProps={{ min: 1 }}
-            fullWidth
-            helperText="Quantidade de ataques realizados com esta ação (opcional)"
-          />
-
-          {/* Switch: Adicionar modificador de atributo ao dano */}
-          <Box>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={attack.addAttributeToDamage ?? true}
-                  onChange={(e) =>
-                    updateField('addAttributeToDamage', e.target.checked)
-                  }
-                  color="primary"
-                />
-              }
-              label="Adicionar modificador de atributo ao dano"
-            />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: 'block', ml: 7 }}
-            >
-              Soma o valor do atributo usado no ataque ao dano
-            </Typography>
-
-            {/* Switch secundário: Dobrar atributo no dano (só aparece se o primeiro estiver ativo) */}
-            <Collapse in={attack.addAttributeToDamage ?? true}>
-              <Box sx={{ ml: 4, mt: 1 }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={attack.doubleAttributeDamage ?? false}
-                      onChange={(e) =>
-                        updateField('doubleAttributeDamage', e.target.checked)
-                      }
-                      color="secondary"
-                    />
-                  }
-                  label="Adicionar o dobro do atributo"
-                />
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: 'block', ml: 7 }}
-                >
-                  Soma o dobro do valor do atributo ao dano (ao invés de 1x)
+          {/* Preview da Rolagem de Dano */}
+          {damagePreviews && (
+            <Alert severity="info" icon={false}>
+              <Typography variant="body2" fontWeight="bold" gutterBottom>
+                Fórmulas de Dano
+              </Typography>
+              <Stack spacing={0.5}>
+                <Typography variant="caption" color="text.secondary">
+                  0✶ Raspão: {damagePreviews.raspao}
                 </Typography>
-              </Box>
-            </Collapse>
-          </Box>
-
+                <Typography variant="caption" fontWeight="bold">
+                  1✶ Normal: {damagePreviews.normal}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  2✶ Em Cheio: {damagePreviews.emCheio}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  3+✶ Crítico: {damagePreviews.critico}
+                </Typography>
+              </Stack>
+            </Alert>
+          )}
           <Divider>
             <Typography variant="caption" color="text.secondary">
               Detalhes Adicionais

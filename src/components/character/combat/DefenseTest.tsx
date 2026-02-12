@@ -1,7 +1,6 @@
 /**
- * DefenseTest - Componente para Teste de Defesa Ativo (v0.0.2)
+ * DefenseTest - Componente para Teste de Defesa Ativo
  *
- * Sistema v0.0.2:
  * - Defesa agora é um teste ATIVO usando Reflexo (Agilidade) ou Vigor (Corpo)
  * - É uma Ação Livre (∆) para rolar teste de defesa
  * - Cada ✶ no teste reduz ✶ do atacante
@@ -90,7 +89,7 @@ const DEFENSE_OPTIONS: DefenseOptionInfo[] = [
     label: 'Reflexo',
     icon: <ReflexIcon />,
     color: '#4CAF50',
-    description: 'Esquivar, desviar, reação rápida. Usa Agilidade.',
+    description: 'Esquivar, aparar, reação rápida. Usa Agilidade.',
   },
   {
     skill: 'vigor',
@@ -98,7 +97,7 @@ const DEFENSE_OPTIONS: DefenseOptionInfo[] = [
     label: 'Vigor',
     icon: <VigorIcon />,
     color: '#F44336',
-    description: 'Resistir pelo corpo, aguentar o impacto. Usa Corpo.',
+    description: 'Resistir, bloquear, aguentar o impacto. Usa Corpo.',
   },
 ];
 
@@ -115,7 +114,7 @@ const PROFICIENCY_LABELS: Record<string, string> = {
 /**
  * Componente que exibe as opções de teste de defesa ativo
  *
- * v0.0.2: Defesa é um teste ativo, não um valor fixo.
+ * Defesa é um teste ativo, não um valor fixo.
  * O jogador pode defender com Reflexo (Agi) ou Vigor (Corpo).
  * Cada ✶ obtido reduz 1✶ do ataque inimigo.
  */

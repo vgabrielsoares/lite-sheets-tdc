@@ -143,16 +143,20 @@ export const ArchetypesTab = React.memo(function ArchetypesTab({
         />
       </Box>
 
-      <Divider sx={{ my: 4 }} />
+      {character.level >= 3 && (
+        <>
+          <Divider sx={{ my: 4 }} />
 
-      {/* Seção 3: Sistema de Classes */}
-      <Box id="section-classes">
-        <ClassesDisplay
-          classes={character.classes ?? []}
-          characterLevel={character.level}
-          onClassesChange={handleClassesChange}
-        />
-      </Box>
+          {/* Seção 3: Sistema de Classes (desbloqueado no nível 3) */}
+          <Box id="section-classes">
+            <ClassesDisplay
+              classes={character.classes ?? []}
+              characterLevel={character.level}
+              onClassesChange={handleClassesChange}
+            />
+          </Box>
+        </>
+      )}
 
       <Divider sx={{ my: 4 }} />
 

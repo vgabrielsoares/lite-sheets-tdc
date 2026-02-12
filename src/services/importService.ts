@@ -172,7 +172,7 @@ function validateAttributes(attributes: any, warnings: string[]): void {
 /**
  * Valida os pontos de vida dentro de combat
  *
- * v0.0.2: Aceita tanto o formato antigo (hp) quanto o novo (guard + vitality).
+ * Aceita tanto o formato antigo (hp) quanto o novo (guard + vitality).
  * Se guard e vitality existem, valida esses campos.
  * Se apenas hp existe (formato antigo), valida hp (migração posterior converterá).
  *
@@ -186,7 +186,7 @@ function validateHealthPoints(combat: any): void {
     );
   }
 
-  // v0.0.2: Check for new guard/vitality format first
+  // Check for new guard/vitality format first
   const guard = combat.guard;
   const vitality = combat.vitality;
 
@@ -217,11 +217,11 @@ function validateHealthPoints(combat: any): void {
     return;
   }
 
-  // Fallback: validate old hp format (pre-v0.0.2)
+  // Fallback: validate old hp format (pre-v0.2)
   const hp = combat.hp;
   if (!hp || typeof hp !== 'object') {
     throw new ImportServiceError(
-      'Pontos de Vida inválidos: deve ter guard/vitality (v0.0.2) ou hp (legado)',
+      'Pontos de Vida inválidos: deve ter guard/vitality (v0.2) ou hp (legado)',
       'INVALID_HP'
     );
   }
@@ -397,10 +397,10 @@ function migrateCharacterData(data: Character, fromVersion: string): Character {
     result = migrated as unknown as Character;
   }
 
-  // Garante que campos de combate v0.0.2 existam (guard, vitality, etc.)
+  // Garante que campos de combate v0.2 existam (guard, vitality, etc.)
   result = ensureCombatFields(result);
 
-  // Garante que campos de progressão v0.0.2 existam
+  // Garante que campos de progressão v0.2 existam
   if (!result.levelHistory) {
     result.levelHistory = [];
   }

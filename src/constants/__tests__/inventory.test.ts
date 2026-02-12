@@ -2,7 +2,7 @@
  * Testes para constants/inventory.ts
  *
  * Testes unitários para constantes de categorias de itens do inventário.
- * Verifica a integridade e consistência das 20 categorias (v0.0.2).
+ * Verifica a integridade e consistência das 20 categorias.
  */
 
 import {
@@ -14,7 +14,7 @@ import {
 import type { ItemCategory } from '@/types/inventory';
 
 /**
- * Lista completa das 20 categorias de itens (v0.0.2)
+ * Lista completa das 20 categorias de itens
  */
 const ALL_ITEM_CATEGORIES: ItemCategory[] = [
   'aventura',

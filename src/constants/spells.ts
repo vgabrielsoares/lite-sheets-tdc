@@ -14,7 +14,7 @@ export type SpellCircle = (typeof SPELL_CIRCLES)[number];
 
 /**
  * Custo em PP por círculo de feitiço
- * @deprecated Use SPELL_CIRCLE_PF_COST para custos em PF (v0.0.2+)
+ * @deprecated Use SPELL_CIRCLE_PF_COST para custos em PF (v0.2+)
  */
 export const SPELL_CIRCLE_PP_COST: Record<SpellCircle, number> = {
   1: 0,

@@ -1,14 +1,13 @@
 /**
- * AttackRollButton - Botão de rolagem de ataque integrado
+ * AttackRollButton - Botão de rolagem de ataque
  *
- * Permite rolar dados para ataques com configuração automática
- * baseada nos valores do ataque (habilidade, bônus de ataque).
+ * Permite rolar pool de dados para ataques com contagem de ✶ (sucessos).
  *
  * Funcionalidades:
  * - Rolagem rápida com um clique
- * - Pré-preenchimento automático de valores
- * - Comparação com Defesa do alvo
- * - Detecção de crítico (20 natural)
+ * - Pool de dados baseada em atributo + proficiência
+ * - Contagem de sucessos (✶) com cancelamentos
+ * - Sem comparação com defesa (defensor rola separadamente)
  * - Integração com histórico global de rolagens
  */
 
@@ -27,23 +26,21 @@ import {
   Typography,
   Chip,
   Stack,
-  TextField,
-  Alert,
   alpha,
   useTheme,
 } from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import StarsIcon from '@mui/icons-material/Stars';
 import HistoryIcon from '@mui/icons-material/History';
 import {
-  rollD20,
+  rollDicePool,
+  rollWithPenalty,
   globalDiceHistory,
-  legacyRollToHistoryEntry,
 } from '@/utils/diceRoller';
-import { calculateAttackRoll } from '@/utils/attackCalculations';
-import type { DiceRollResult as RollResult } from '@/utils/diceRoller';
+import type { DicePoolResult } from '@/types';
+import {
+  calculateAttackPool,
+  type AttackPoolCalculation,
+} from '@/utils/attackCalculations';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
 import type { Character, AttributeName } from '@/types';
 import type { SkillName } from '@/types/skills';
@@ -51,22 +48,18 @@ import type { SkillName } from '@/types/skills';
 export interface AttackRollButtonProps {
   /** Nome do ataque (para contexto) */
   attackName: string;
-  /** Bônus de ataque total (já calculado) */
-  attackBonus: number;
   /** Dados do personagem (para acessar atributos/habilidades) */
   character: Character;
-  /** Nome da habilidade usada no ataque (para calcular quantidade de dados) */
+  /** Nome da habilidade usada no ataque (para calcular pool) */
   attackSkill?: SkillName;
   /** ID do uso específico de habilidade (opcional) */
   attackSkillUseId?: string;
   /** Atributo alternativo para o ataque (opcional) */
   attackAttribute?: AttributeName;
-  /** Modificador de dados adicional (ex: +1 = +1d20) */
+  /** Modificador de dados adicional (+Xd / -Xd) */
   attackDiceModifier?: number;
-  /** Defesa do alvo (opcional, para comparação) */
-  targetDefense?: number;
   /** Callback quando rolar (opcional) */
-  onRoll?: (result: RollResult, hit: boolean, critical: boolean) => void;
+  onRoll?: (result: DicePoolResult) => void;
   /** Tamanho do botão */
   size?: 'small' | 'medium' | 'large';
   /** Cor do botão */
@@ -78,20 +71,32 @@ export interface AttackRollButtonProps {
 }
 
 /**
- * Botão de rolagem para ataques
+ * Retorna cor e label baseado na quantidade de ✶
+ */
+function getSuccessDisplay(netSuccesses: number): {
+  color: 'error' | 'warning' | 'success' | 'info';
+  label: string;
+} {
+  if (netSuccesses === 0) return { color: 'error', label: '0✶ — Falha' };
+  if (netSuccesses === 1) return { color: 'warning', label: '1✶ — Sucesso' };
+  if (netSuccesses === 2)
+    return { color: 'success', label: '2✶ — Sucesso Forte' };
+  return { color: 'info', label: `${netSuccesses}✶ — Sucesso Excepcional` };
+}
+
+/**
+ * Botão de rolagem para ataques usando pool de dados
  *
  * Exibe um botão de ícone que abre um diálogo de rolagem ao clicar.
- * A rolagem é pré-configurada com os valores do ataque.
+ * A rolagem usa o sistema de pool com contagem de ✶.
  */
 export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
   attackName,
-  attackBonus,
   character,
   attackSkill,
   attackSkillUseId,
   attackAttribute,
   attackDiceModifier = 0,
-  targetDefense,
   onRoll,
   size = 'small',
   color = 'primary',
@@ -100,35 +105,31 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
 }) => {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const [result, setResult] = useState<RollResult | null>(null);
-  const [defenseInput, setDefenseInput] = useState<string>(
-    targetDefense?.toString() || ''
-  );
+  const [result, setResult] = useState<DicePoolResult | null>(null);
 
-  // Calcular f\u00f3rmula de ataque dinamicamente
-  const attackRollCalc = useMemo(() => {
+  // Calcular pool de ataque dinamicamente
+  const attackPoolCalc: AttackPoolCalculation = useMemo(() => {
     if (attackSkill) {
-      return calculateAttackRoll(
+      return calculateAttackPool(
         character,
         attackSkill,
         attackSkillUseId,
-        attackBonus,
-        attackAttribute,
-        attackDiceModifier
+        attackDiceModifier,
+        attackAttribute
       );
     }
     return {
       diceCount: 1,
-      modifier: attackBonus,
-      formula: `1d20+${attackBonus}`,
-      attribute: 'agilidade' as const,
-      skillName: 'acerto' as const,
+      dieSize: 'd6' as const,
+      isPenaltyRoll: false,
+      formula: '1d6',
+      attribute: 'corpo' as const,
+      skillName: 'luta' as const,
     };
   }, [
     character,
     attackSkill,
     attackSkillUseId,
-    attackBonus,
     attackAttribute,
     attackDiceModifier,
   ]);
@@ -136,18 +137,11 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
   /**
    * Abre o diálogo de rolagem
    */
-  const handleOpen = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation(); // Evitar trigger de click na linha
-      setOpen(true);
-      setResult(null); // Limpar resultado anterior
-      // Resetar defesa para valor padrão se fornecido
-      if (targetDefense !== undefined) {
-        setDefenseInput(targetDefense.toString());
-      }
-    },
-    [targetDefense]
-  );
+  const handleOpen = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    setOpen(true);
+    setResult(null);
+  }, []);
 
   /**
    * Fecha o diálogo
@@ -157,61 +151,63 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
   }, []);
 
   /**
-   * Executa a rolagem de ataque
+   * Executa a rolagem de ataque usando pool de dados
    */
   const handleRoll = useCallback(() => {
-    // Executar rolagem de ataque usando o cálculo dinâmico
-    const rollResult = rollD20(
-      attackRollCalc.diceCount,
-      attackRollCalc.modifier,
-      'normal',
-      `Ataque: ${attackName}`
-    );
+    let poolResult: DicePoolResult;
 
-    // Adicionar ao histórico global (convertendo para formato compatível)
-    globalDiceHistory.add(legacyRollToHistoryEntry(rollResult));
-
-    // Determinar se acertou
-    const defense = defenseInput ? parseInt(defenseInput, 10) : undefined;
-    const hit =
-      defense !== undefined ? rollResult.finalResult >= defense : false;
-    const critical = rollResult.isCritical || false;
-
-    // Atualizar estado
-    setResult(rollResult);
-
-    // Callback externo
-    if (onRoll) {
-      onRoll(rollResult, hit, critical);
+    if (attackPoolCalc.isPenaltyRoll) {
+      poolResult = rollWithPenalty(
+        attackPoolCalc.dieSize,
+        `Ataque: ${attackName}`
+      );
+    } else {
+      poolResult = rollDicePool(
+        attackPoolCalc.diceCount,
+        attackPoolCalc.dieSize,
+        `Ataque: ${attackName}`
+      );
     }
-  }, [attackRollCalc, attackName, defenseInput, onRoll]); /**
-   * Rolagem rápida (sem abrir diálogo)
+
+    // Adicionar ao histórico global
+    globalDiceHistory.add(poolResult);
+
+    setResult(poolResult);
+
+    if (onRoll) {
+      onRoll(poolResult);
+    }
+  }, [attackPoolCalc, attackName, onRoll]);
+
+  /**
+   * Rolagem rápida (sem abrir diálogo primeiro)
    */
   const handleQuickRoll = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
 
-      // Executar rolagem diretamente usando o cálculo dinâmico
-      const rollResult = rollD20(
-        attackRollCalc.diceCount,
-        attackRollCalc.modifier,
-        'normal',
-        `Ataque: ${attackName}`
-      );
+      let poolResult: DicePoolResult;
 
-      globalDiceHistory.add(legacyRollToHistoryEntry(rollResult));
-
-      const defense = targetDefense;
-      const hit =
-        defense !== undefined ? rollResult.finalResult >= defense : false;
-      const critical = rollResult.isCritical || false;
-
-      if (onRoll) {
-        onRoll(rollResult, hit, critical);
+      if (attackPoolCalc.isPenaltyRoll) {
+        poolResult = rollWithPenalty(
+          attackPoolCalc.dieSize,
+          `Ataque: ${attackName}`
+        );
+      } else {
+        poolResult = rollDicePool(
+          attackPoolCalc.diceCount,
+          attackPoolCalc.dieSize,
+          `Ataque: ${attackName}`
+        );
       }
 
-      // Mostrar resultado brevemente
-      setResult(rollResult);
+      globalDiceHistory.add(poolResult);
+
+      if (onRoll) {
+        onRoll(poolResult);
+      }
+
+      setResult(poolResult);
       setOpen(true);
 
       // Fechar automaticamente após 3 segundos
@@ -220,23 +216,16 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
         setResult(null);
       }, 3000);
     },
-    [attackRollCalc, attackName, targetDefense, onRoll]
+    [attackPoolCalc, attackName, onRoll]
   );
 
-  /**
-   * Determina se o ataque acertou
-   */
-  const defense = defenseInput ? parseInt(defenseInput, 10) : undefined;
-  const hit =
-    result && defense !== undefined ? result.finalResult >= defense : undefined;
-  const critical = result?.isCritical || false;
+  // Informação de sucesso do resultado
+  const successDisplay = result ? getSuccessDisplay(result.netSuccesses) : null;
 
   /**
    * Texto do tooltip
    */
-  const tooltip =
-    tooltipText ||
-    `Rolar ataque ${attackRollCalc.formula}${defense ? ` (vs Defesa ${defense})` : ''}`;
+  const tooltip = tooltipText || `Rolar ataque: ${attackPoolCalc.formula}`;
 
   return (
     <>
@@ -268,7 +257,7 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
         onClose={handleClose}
         maxWidth="sm"
         fullWidth
-        onClick={(e) => e.stopPropagation()} // Evitar propagação para linha
+        onClick={(e) => e.stopPropagation()}
       >
         <DialogTitle>
           <Stack
@@ -286,7 +275,6 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Scroll até o FAB e simular clique
                   const fab = document.querySelector(
                     '[aria-label="Abrir histórico de rolagens"]'
                   ) as HTMLElement;
@@ -304,81 +292,65 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
 
         <DialogContent>
           <Stack spacing={3}>
-            {/* Informações da rolagem */}
+            {/* Informações da pool */}
             <Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Configuração:
+                Pool de Ataque:
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                 <Chip
-                  label={`1d20${attackBonus >= 0 ? '+' : ''}${attackBonus}`}
+                  label={attackPoolCalc.formula}
                   size="small"
                   color="primary"
                 />
+                {attackPoolCalc.isPenaltyRoll && (
+                  <Chip
+                    label="Penalidade (menor resultado)"
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                  />
+                )}
               </Stack>
             </Box>
-
-            {/* Campo de entrada da Defesa */}
-            <TextField
-              label="Defesa do Alvo"
-              type="number"
-              value={defenseInput}
-              onChange={(e) => setDefenseInput(e.target.value)}
-              size="small"
-              fullWidth
-              helperText="Digite a Defesa do alvo para verificar se acertou"
-              InputProps={{
-                inputProps: { min: 0 },
-              }}
-            />
 
             {/* Resultado da rolagem */}
             {result && (
               <Box>
-                <DiceRollResult
-                  result={legacyRollToHistoryEntry(result)}
-                  showBreakdown
-                  animate
-                />
+                <DiceRollResult result={result} showBreakdown animate />
 
-                {/* Indicador de crítico */}
-                {critical && (
-                  <Alert
-                    severity="warning"
-                    icon={<StarsIcon />}
+                {/* Resultado em ✶ */}
+                {successDisplay && (
+                  <Box
                     sx={{
                       mt: 2,
-                      bgcolor: alpha(theme.palette.warning.main, 0.1),
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: alpha(
+                        theme.palette[successDisplay.color].main,
+                        0.1
+                      ),
+                      border: 1,
+                      borderColor: alpha(
+                        theme.palette[successDisplay.color].main,
+                        0.3
+                      ),
+                      textAlign: 'center',
                     }}
                   >
-                    <Typography variant="body2">
-                      <strong>CRÍTICO!</strong> 20 natural - Dobre os dados de
-                      dano
+                    <Typography
+                      variant="h5"
+                      fontWeight="bold"
+                      color={`${successDisplay.color}.main`}
+                    >
+                      {result.netSuccesses}✶
                     </Typography>
-                  </Alert>
-                )}
-
-                {/* Feedback de acerto/erro com Defesa */}
-                {defense !== undefined && hit !== undefined && (
-                  <Alert
-                    severity={hit ? 'success' : 'error'}
-                    icon={hit ? <CheckCircleIcon /> : <CancelIcon />}
-                    sx={{ mt: critical ? 1 : 2 }}
-                  >
-                    <Typography variant="body2">
-                      {hit ? (
-                        <>
-                          <strong>Acertou!</strong> Resultado{' '}
-                          {result.finalResult} ≥ Defesa {defense}
-                        </>
-                      ) : (
-                        <>
-                          <strong>Errou.</strong> Resultado {result.finalResult}{' '}
-                          {'<'} Defesa {defense}
-                        </>
-                      )}
+                    <Typography variant="body2" color="text.secondary">
+                      {successDisplay.label}
+                      {result.cancellations > 0 &&
+                        ` (${result.successes} sucessos - ${result.cancellations} cancelamentos)`}
                     </Typography>
-                  </Alert>
+                  </Box>
                 )}
               </Box>
             )}

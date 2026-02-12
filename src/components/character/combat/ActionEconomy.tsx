@@ -85,7 +85,6 @@ const TURN_TYPE_CONFIG: Record<
 /**
  * Componente que gerencia a Economia de Ações em combate
  *
- * O sistema Tabuleiro do Caos v0.0.2 usa:
  * - Turno Rápido (▶▶): 2 ações, age primeiro
  * - Turno Lento (▶▶▶): 3 ações, age depois de inimigos rápidos
  * - 1 Reação (↩) por rodada

@@ -136,7 +136,7 @@ describe('SpellLearningCalculator', () => {
 
       // Aguardar expansão do componente
       await waitFor(() => {
-        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // v0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
         // (3×5) + 1 + 30 = 46%
         const percentageDisplays = screen.getAllByText('46%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
@@ -156,7 +156,7 @@ describe('SpellLearningCalculator', () => {
       const listbox = within(screen.getByRole('listbox'));
       fireEvent.click(listbox.getByText(/Natureza/));
 
-      // v0.0.2: modHabilidade = totalDice = instinto(1) + 0 = 1
+      // v0.2: modHabilidade = totalDice = instinto(1) + 0 = 1
       // (3×5) + 1 + 30 = 46%
       const percentageDisplays = screen.getAllByText('46%');
       expect(percentageDisplays.length).toBeGreaterThan(0);
@@ -180,7 +180,7 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(listbox.getByText('2º Círculo'));
 
       await waitFor(() => {
-        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // v0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
         // (3×5) + 1 + 10 = 26%
         const percentageDisplays = screen.getAllByText('26%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
@@ -217,7 +217,7 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(expandButton);
 
       await waitFor(() => {
-        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // v0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
         // (3×5) + 1 + 0 = 16%
         const percentageDisplays = screen.getAllByText('16%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
@@ -241,7 +241,7 @@ describe('SpellLearningCalculator', () => {
       fireEvent.change(matrizInput, { target: { value: '5' } });
 
       await waitFor(() => {
-        // v0.0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
+        // v0.2: modHabilidade = totalDice = essencia(1) + 0 = 1
         // (3×5) + 1 + 30 + 5 = 51%
         const percentageDisplays = screen.getAllByText('51%');
         expect(percentageDisplays.length).toBeGreaterThan(0);
@@ -258,7 +258,7 @@ describe('SpellLearningCalculator', () => {
       fireEvent.click(expandButton);
 
       await waitFor(() => {
-        // v0.0.2: (3×5) + 1 + 30 = 46% -> "Moderado"
+        // v0.2: (3×5) + 1 + 30 = 46% -> "Moderado"
         expect(screen.getByText('Moderado')).toBeInTheDocument();
       });
     });
@@ -292,7 +292,7 @@ describe('SpellLearningCalculator', () => {
       const matrixInput = screen.getByLabelText('Mod. Matriz');
       fireEvent.change(matrixInput, { target: { value: '20' } });
 
-      // v0.0.2: modHabilidade = totalDice = mente(5) + 0 = 5
+      // v0.2: modHabilidade = totalDice = mente(5) + 0 = 5
       // (5×5) + 5 + 30 + 20 = 80% (abaixo do limite, mas vamos usar outros mods)
       const otherInput = screen.getByLabelText('Outros Modificadores');
       fireEvent.change(otherInput, { target: { value: '20' } });

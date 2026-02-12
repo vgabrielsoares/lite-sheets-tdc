@@ -1,5 +1,5 @@
 /**
- * Tests for Suffer/Recover Interaction (Phase 4 - v0.0.2)
+ * Tests for Suffer/Recover Interaction (Phase 4 - v0.2)
  *
  * Tests the GA/PV damage, healing, combat state detection, and PP delta
  * functions used in the GuardVitalityDisplay component.

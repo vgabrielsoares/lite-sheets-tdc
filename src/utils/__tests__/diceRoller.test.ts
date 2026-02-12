@@ -1,5 +1,5 @@
 /**
- * Testes para o Sistema de Rolagem de Dados (v0.0.2)
+ * Testes para o Sistema de Rolagem de Dados (v0.2)
  *
  * Sistema de pool de dados com contagem de sucessos:
  * - Xd onde X = valor do atributo + modificadores
@@ -63,7 +63,7 @@ function restoreMathRandom(spy: jest.SpyInstance): void {
 // Testes do Core Pool System
 // ============================================================================
 
-describe('Sistema de Pool de Dados (v0.0.2)', () => {
+describe('Sistema de Pool de Dados (v0.2)', () => {
   describe('rollDicePool - Rolagem de Pool', () => {
     describe('Rolagem básica', () => {
       it('deve rolar a quantidade correta de dados', () => {

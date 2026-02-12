@@ -6,7 +6,6 @@
  * - Observar (associado a sentido aguçado de visão)
  * - Ouvir (associado a sentido aguçado de audição)
  *
- * Sistema de pool de dados v0.0.2:
  * - Rola-se Xd(tamanho) onde X = atributo + modificadores de dados
  * - Resultados ≥ 6 = sucessos (✶), resultados = 1 cancelam 1 sucesso
  * - Os bônus de sentido aguçado adicionam dados à pool
@@ -43,7 +42,7 @@ export const SENSE_TO_PERCEPTION_USE: Record<SenseType, string> = {
 } as const;
 
 /**
- * Resultado do cálculo de um sentido específico (pool de dados v0.0.2)
+ * Resultado do cálculo de um sentido específico (pool de dados v0.2)
  */
 export interface SenseCalculationResult {
   /** Nome do uso de Percepção (Farejar, Observar, Ouvir) */
@@ -82,7 +81,7 @@ export function getKeenSenseBonus(
 }
 
 /**
- * Calcula a pool de dados para um uso de sentido específico (v0.0.2)
+ * Calcula a pool de dados para um uso de sentido específico (v0.2)
  *
  * Pool = atributo + modificadores de dados + sentido aguçado (+Xd)
  * Tamanho do dado = proficiência em Percepção (d6/d8/d10/d12)
@@ -120,7 +119,7 @@ export function calculateSenseModifier(
     ...useModifiers,
   ];
 
-  // 3. Calcular pool base via sistema de pool v0.0.2
+  // 3. Calcular pool base via sistema de pool v0.2
   const baseCalc = calculateSkillTotalModifier(
     'percepcao',
     effectiveAttribute,

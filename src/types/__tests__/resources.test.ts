@@ -1,5 +1,5 @@
 /**
- * Tests for Resource Die System (Phase 4 - v0.0.2)
+ * Tests for Resource Die System
  *
  * Tests the resource die scale, step-down/step-up mechanics,
  * and the processResourceUse function that handles resource consumption.

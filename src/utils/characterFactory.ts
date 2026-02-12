@@ -115,7 +115,7 @@ function createDefaultVulnerabilityDie(): VulnerabilityDie {
 }
 
 /**
- * @deprecated Substituído por createDefaultGuard + createDefaultVitality em v0.0.2
+ * @deprecated Substituído por createDefaultGuard + createDefaultVitality em v0.2
  * Cria pontos de vida padrão de nível 1 (legado)
  * Base: 15 PV máximo e atual, 0 temporário
  */
@@ -158,7 +158,7 @@ function createUnarmedAttack(): Attack {
     name: UNARMED_ATTACK_NAME,
     type: 'corpo-a-corpo',
     attackSkill: 'luta',
-    attackSkillUseId: 'atacar',
+    attackSkillUseId: 'default-Atacar',
     attackAttribute: 'corpo',
     attackDiceModifier: 0,
     damageRoll: {
@@ -172,8 +172,6 @@ function createUnarmedAttack(): Attack {
       'Um ataque corpo a corpo desarmado usando punhos, chutes ou outras partes do corpo.',
     ppCost: 0,
     actionCost: 1, // ▶ (1 ação)
-    addAttributeToDamage: true,
-    doubleAttributeDamage: false,
     isDefaultAttack: true,
   };
 }
@@ -181,7 +179,7 @@ function createUnarmedAttack(): Attack {
 /**
  * Cria dados de combate padrão de nível 1
  *
- * Mudanças v0.0.2:
+ * Mudanças v0.2:
  * - HP → GA (Guarda) + PV (Vitalidade)
  * - Defesa fixa → removida (teste ativo)
  * - Ação Maior/Menor → Turno Rápido/Lento

@@ -209,7 +209,7 @@ export function isValidPV(current: number, max: number): boolean {
 
 /**
  * Validates if HP (Health Points) values are valid
- * @deprecated Use isValidGA + isValidPV in v0.0.2. Kept for backward compatibility.
+ * @deprecated Use isValidGA + isValidPV in v0.2. Kept for backward compatibility.
  *
  * Current HP cannot exceed max HP, temporary HP is separate
  *
@@ -304,7 +304,7 @@ export function isValidXP(xp: number): boolean {
 
 /**
  * Validates if a defense value is reasonable
- * @deprecated Defesa fixa não existe mais em v0.0.2. Defesa agora é teste ativo.
+ * @deprecated Defesa fixa não existe mais em v0.2. Defesa agora é teste ativo.
  * Mantido para compatibilidade.
  *
  * Minimum defense is 15 (base), typically shouldn't exceed 30 at normal levels

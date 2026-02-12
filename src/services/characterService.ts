@@ -677,11 +677,7 @@ export const characterService = {
       },
       damageType: 'impacto' as const,
       criticalRange: 20,
-      criticalDamage: {
-        quantity: 1,
-        type: 'd2' as const,
-        modifier: 0,
-      },
+      criticalDice: 1,
       range: 'Adjacente/Toque (1m)',
       description:
         'Um ataque corpo a corpo desarmado usando punhos, chutes ou outras partes do corpo.',

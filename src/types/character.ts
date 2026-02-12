@@ -394,7 +394,7 @@ export interface Experience {
  */
 export interface Character extends BaseEntity {
   // Versão do Schema
-  /** Versão do schema da ficha (2 para v0.0.2+) */
+  /** Versão do schema da ficha (2 para v0.2+) */
   schemaVersion: number;
 
   // Informações Básicas
