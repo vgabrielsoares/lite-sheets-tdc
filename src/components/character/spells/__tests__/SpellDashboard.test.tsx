@@ -181,6 +181,96 @@ describe('SpellDashboard - Refatorado', () => {
       const arcanoElements = screen.getAllByText('Arcano');
       expect(arcanoElements.length).toBeGreaterThanOrEqual(1);
     });
+
+    it('deve calcular pool de conjuração corretamente com uso customizado "Conjurar Feitiço"', () => {
+      // Cenário: Personagem com 3 de Essência, Adepto em Arcano,
+      // +1d de assinatura geral e +1d de item no uso "Conjurar Feitiço"
+      mockCharacter.attributes.essencia = 3;
+      mockCharacter.level = 1;
+
+      // Garantir que skills existe e tem a estrutura correta
+      // Usar a skill Arcano que já existe no character default e apenas modificar
+      if (mockCharacter.skills && mockCharacter.skills.arcano) {
+        mockCharacter.skills.arcano = {
+          ...mockCharacter.skills.arcano,
+          keyAttribute: 'essencia',
+          proficiencyLevel: 'adepto', // d8
+          isSignature: true, // +1d
+          customUses: [
+            {
+              name: 'Conjurar Feitiço',
+              keyAttribute: 'essencia',
+              bonus: 1, // +1d do item
+              modifiers: [],
+            },
+          ],
+          modifiers: [],
+        };
+      }
+
+      // Adicionar habilidade de conjuração
+      mockCharacter.spellcasting.spellcastingAbilities = [
+        {
+          id: 'test-arcano',
+          skill: 'arcano',
+          attribute: 'essencia',
+          castingBonus: 0,
+        },
+      ];
+
+      renderComponent();
+
+      // V erificar se a seção "Habilidades de Conjuração" está presente
+      expect(screen.getByText('Habilidades de Conjuração')).toBeInTheDocument();
+
+      // Verificar se "Arcano" está presente como habilidade cadastrada
+      const arcanoHeadings = screen.getAllByText('Arcano');
+      expect(arcanoHeadings.length).toBeGreaterThan(0);
+
+      // Buscar pelo elemento Typography que tem variant="h4" (onde o pool é exibido)
+      // e verificar se contém o padrão {número}d{tamanho}
+      const poolElements = screen.queryAllByRole('heading', { level: 4 });
+      const poolElement = poolElements.find((el) =>
+        /^\d+d(6|8|10|12)$/.test(el.textContent || '')
+      );
+
+      expect(poolElement).toBeDefined();
+      expect(poolElement?.textContent).toBe('5d8');
+    });
+
+    it('deve calcular pool de conjuração corretamente sem uso customizado', () => {
+      // Cenário: Personagem com 3 de Essência, Adepto em Arcano, +1d de assinatura
+      mockCharacter.attributes.essencia = 3;
+      mockCharacter.level = 1;
+
+      // Configurar habilidade Arcano sem uso customizado
+      if (!mockCharacter.skills) {
+        mockCharacter.skills = {};
+      }
+
+      mockCharacter.skills.arcano = {
+        keyAttribute: 'essencia',
+        proficiencyLevel: 'adepto', // d8
+        isSignature: true, // +1d
+        customUses: [],
+        modifiers: [],
+      };
+
+      // Adicionar habilidade de conjuração
+      mockCharacter.spellcasting.spellcastingAbilities = [
+        {
+          id: 'test-arcano',
+          skill: 'arcano',
+          attribute: 'essencia',
+          castingBonus: 0,
+        },
+      ];
+
+      renderComponent();
+
+      // Deve exibir "4d8": 3 (Essência) + 1 (assinatura) = 4 dados de d8
+      expect(screen.getByText('4d8')).toBeInTheDocument();
+    });
   });
 
   describe('Responsividade', () => {

@@ -37,6 +37,7 @@ import type {
   SpellcastingSkillName,
   SpellcastingAbility,
 } from '@/types/spells';
+import { PROFICIENCY_DIE_MAP } from '@/types/common';
 import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
 import { calculatePPPerRound } from '@/utils/calculations';
 import {
@@ -147,6 +148,8 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
    * Calcula o modificador de uma habilidade de conjuração
    * Prioriza o uso customizado "Conjurar Feitiço" se existir
    * Inclui modificadores gerais da habilidade + modificadores do uso customizado
+   *
+   * @returns Modificadores da habilidade (em dados), SEM incluir o atributo base
    */
   const calculateSpellcastingModifier = useCallback(
     (skillName: SpellcastingSkillName): number => {
@@ -178,6 +181,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
             name: `Uso: ${conjurarFeiticoUse.name}`,
             value: conjurarFeiticoUse.bonus,
             type: conjurarFeiticoUse.bonus > 0 ? 'bonus' : 'penalidade',
+            affectsDice: true, // Importante: marcar que afeta o pool de dados
           });
         }
 
@@ -192,15 +196,16 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
           false
         );
 
-        // TODO: [Phase 5] Rework spell DC/attack to use pool system instead of flat modifier
-        return calc.totalDice;
+        // Retornar apenas os modificadores (sem o atributo base)
+        return calc.totalDice - attributeValue;
       }
 
       // Caso contrário, usar modificador geral da habilidade
+      const attributeValue = character.attributes[skill.keyAttribute];
       const calc = calculateSkillTotalModifier(
         skillName,
         skill.keyAttribute,
-        character.attributes[skill.keyAttribute],
+        attributeValue,
         skill.proficiencyLevel,
         skill.isSignature,
         character.level,
@@ -208,8 +213,8 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
         false
       );
 
-      // TODO: [Phase 5] Rework spell DC/attack to use pool system instead of flat modifier
-      return calc.totalDice;
+      // Retornar apenas os modificadores (sem o atributo base)
+      return calc.totalDice - attributeValue;
     },
     [character]
   );
@@ -224,6 +229,11 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
       const skillModifier = calculateSpellcastingModifier(ability.skill);
       const totalDice = attributeValue + skillModifier + ability.castingBonus;
 
+      // Buscar proficiência da habilidade para determinar o tamanho do dado
+      const skill = character.skills?.[ability.skill];
+      const proficiencyLevel = skill?.proficiencyLevel || 'leigo';
+      const dieSize = PROFICIENCY_DIE_MAP[proficiencyLevel];
+
       const breakdown = [
         `${attributeValue}d (${ATTRIBUTE_LABELS[ability.attribute]})`,
         `${skillModifier >= 0 ? '+' : ''}${skillModifier}d (mod. ${SKILL_LABELS[ability.skill]})`,
@@ -236,11 +246,12 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
 
       return {
         totalDice: Math.max(0, totalDice),
+        dieSize,
         skillModifier,
         breakdown,
       };
     },
-    [character.attributes, calculateSpellcastingModifier]
+    [character.attributes, character.skills, calculateSpellcastingModifier]
   );
 
   // Handlers
@@ -1148,7 +1159,8 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                               variant="h4"
                               sx={{ fontWeight: 700, color: 'primary.main' }}
                             >
-                              {pool.totalDice}d
+                              {pool.totalDice}
+                              {pool.dieSize}
                             </Typography>
                           </Box>
                         </Box>
