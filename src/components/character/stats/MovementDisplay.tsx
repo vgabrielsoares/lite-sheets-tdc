@@ -154,11 +154,12 @@ export const MovementDisplay: React.FC<MovementDisplayProps> = React.memo(
           border: onOpenDetails ? 1 : 0,
           borderColor: onOpenDetails ? 'primary.main' : 'transparent',
           cursor: onOpenDetails ? 'pointer' : 'default',
-          transition: 'all 0.15s ease-in-out',
+          transition: 'all 0.2s ease-in-out',
           '&:hover': onOpenDetails
             ? {
                 borderColor: 'primary.dark',
-                bgcolor: 'action.hover',
+                transform: 'translateY(-2px)',
+                boxShadow: 4,
               }
             : {},
         }}

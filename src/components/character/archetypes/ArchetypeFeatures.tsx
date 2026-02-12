@@ -119,8 +119,10 @@ function FeatureCard({
         borderLeft: 4,
         borderColor: `${GAIN_TYPE_COLORS[gainType]}.main`,
         bgcolor: 'background.paper',
+        transition: 'all 0.2s ease-in-out',
         '&:hover': {
-          bgcolor: theme.palette.action.hover,
+          transform: 'translateY(-2px)',
+          boxShadow: 4,
         },
       }}
     >
