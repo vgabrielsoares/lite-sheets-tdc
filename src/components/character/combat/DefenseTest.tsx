@@ -90,7 +90,7 @@ const DEFENSE_OPTIONS: DefenseOptionInfo[] = [
     label: 'Reflexo',
     icon: <ReflexIcon />,
     color: '#4CAF50',
-    description: 'Esquivar, desviar, reação rápida. Usa Agilidade.',
+    description: 'Esquivar, aparar, reação rápida. Usa Agilidade.',
   },
   {
     skill: 'vigor',
@@ -98,7 +98,7 @@ const DEFENSE_OPTIONS: DefenseOptionInfo[] = [
     label: 'Vigor',
     icon: <VigorIcon />,
     color: '#F44336',
-    description: 'Resistir pelo corpo, aguentar o impacto. Usa Corpo.',
+    description: 'Resistir, bloquear, aguentar o impacto. Usa Corpo.',
   },
 ];
 
