@@ -121,6 +121,7 @@ const DAMAGE_TYPE_LABELS: Record<DamageType, string> = {
   sagrado: 'Sagrado',
   sonoro: 'Sonoro',
   veneno: 'Veneno',
+  qualquer: 'Qualquer',
 };
 
 /**
