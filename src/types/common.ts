@@ -242,7 +242,8 @@ export type DamageType =
   | 'profano'
   | 'sagrado'
   | 'sonoro'
-  | 'veneno';
+  | 'veneno'
+  | 'qualquer';
 
 /**
  * Resistência a tipos de dano

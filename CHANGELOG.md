@@ -18,6 +18,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **Sistema de feitiços**: Pontos de Feitiço (PF) por círculo, toggle de Conjurador
 - **Progressão por Arquétipos**: 6 arquétipos combinados em Classes
 - **Wizard de criação**: Criação guiada de personagens com validação
+- **RD universal**: Redução de Dano com "Qualquer" tipos de dano
 - **Constantes de símbolos**: `src/constants/symbols.ts` — referência centralizada de ✶, ▶, ↩, ∆
 - **Constantes de passos de dados**: `src/constants/diceSteps.ts` — 27 passos de progressão
 - **Constantes de versão**: `src/constants/version.ts` — APP_VERSION, RULEBOOK_VERSION

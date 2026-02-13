@@ -284,6 +284,27 @@ export function ResistancesDisplay({
   }, [rdType, rdValue, resistances, onChange]);
 
   /**
+   * Verifica se um tipo de dano já possui RD
+   */
+  const hasRDForType = useCallback(
+    (type: DamageType): boolean => {
+      return resistances.damageReduction.some((rd) => rd.type === type);
+    },
+    [resistances.damageReduction]
+  );
+
+  /**
+   * Separa tipos de dano em específicos e universais
+   */
+  const damageTypeCategories = React.useMemo(() => {
+    const universal: DamageType[] = ['qualquer'];
+    const specific = DAMAGE_TYPES.filter(
+      (dt) => !universal.includes(dt.id)
+    ).map((dt) => dt.id);
+    return { universal, specific };
+  }, []);
+
+  /**
    * Remove um tipo de dano de uma categoria
    */
   const handleRemoveDamageType = useCallback(
@@ -375,22 +396,31 @@ export function ResistancesDisplay({
     if (category === 'conditionImmunities') return null;
 
     if (category === 'damageReduction') {
-      return resistances.damageReduction.map((rd) => (
-        <Chip
-          key={`rd-${rd.type}`}
-          label={`${getDamageTypeLabel(rd.type)} (RD ${rd.value})`}
-          color={info.chipColor}
-          size="small"
-          variant="outlined"
-          onDelete={() => handleRemoveDamageType(category, rd.type)}
-          deleteIcon={
-            <Tooltip title="Remover" arrow enterDelay={150}>
-              <DeleteOutlineIcon fontSize="small" />
-            </Tooltip>
-          }
-          sx={{ m: 0.5 }}
-        />
-      ));
+      return resistances.damageReduction.map((rd) => {
+        const isUniversal = rd.type === 'qualquer';
+        return (
+          <Chip
+            key={`rd-${rd.type}`}
+            label={`${getDamageTypeLabel(rd.type)} (RD ${rd.value})`}
+            color={info.chipColor}
+            size="small"
+            variant={isUniversal ? 'filled' : 'outlined'}
+            onDelete={() => handleRemoveDamageType(category, rd.type)}
+            deleteIcon={
+              <Tooltip title="Remover" arrow enterDelay={150}>
+                <DeleteOutlineIcon fontSize="small" />
+              </Tooltip>
+            }
+            sx={{
+              m: 0.5,
+              ...(isUniversal && {
+                fontWeight: 'bold',
+                borderWidth: 2,
+              }),
+            }}
+          />
+        );
+      });
     }
 
     const list = resistances[
@@ -632,11 +662,44 @@ export function ResistancesDisplay({
                     setRdType(e.target.value as DamageType)
                   }
                 >
-                  {DAMAGE_TYPES.map((dt) => (
-                    <MenuItem key={dt.id} value={dt.id}>
-                      {dt.label}
-                    </MenuItem>
-                  ))}
+                  {/* Tipos Universais */}
+                  {damageTypeCategories.universal.map((typeId) => {
+                    const dt = DAMAGE_TYPES.find((d) => d.id === typeId);
+                    if (!dt) return null;
+                    const alreadyHas = hasRDForType(typeId);
+                    return (
+                      <MenuItem
+                        key={dt.id}
+                        value={dt.id}
+                        disabled={alreadyHas}
+                        sx={{
+                          fontWeight: 'bold',
+                          color: alreadyHas ? 'text.disabled' : 'primary.main',
+                        }}
+                      >
+                        {dt.label}
+                        {alreadyHas && ' (já adicionado)'}
+                      </MenuItem>
+                    );
+                  })}
+                  {/* Divider */}
+                  <MenuItem disabled divider>
+                    <Typography variant="caption" color="text.secondary">
+                      Tipos Específicos
+                    </Typography>
+                  </MenuItem>
+                  {/* Tipos Específicos */}
+                  {damageTypeCategories.specific.map((typeId) => {
+                    const dt = DAMAGE_TYPES.find((d) => d.id === typeId);
+                    if (!dt) return null;
+                    const alreadyHas = hasRDForType(typeId);
+                    return (
+                      <MenuItem key={dt.id} value={dt.id} disabled={alreadyHas}>
+                        {dt.label}
+                        {alreadyHas && ' (já adicionado)'}
+                      </MenuItem>
+                    );
+                  })}
                 </Select>
               </FormControl>
               <TextField

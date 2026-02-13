@@ -143,6 +143,13 @@ export const DAMAGE_TYPES: readonly DamageTypeInfo[] = [
     icon: 'Coronavirus',
     color: '#8BC34A', // Verde veneno
   },
+  {
+    id: 'qualquer',
+    label: 'Qualquer',
+    description: 'RD aplicada a qualquer tipo de dano recebido.',
+    icon: 'AllInclusive',
+    color: '#9E9E9E', // Cinza neutro
+  },
 ] as const;
 
 /**
@@ -175,5 +182,9 @@ export function getDamageTypeInfo(id: DamageType): DamageTypeInfo | undefined {
  * Obtém o label de um tipo de dano pelo ID
  */
 export function getDamageTypeLabel(id: DamageType): string {
-  return DAMAGE_TYPE_MAP[id]?.label ?? id;
+  // Retorna o label do mapa, ou capitaliza o ID se não encontrado
+  const info = DAMAGE_TYPE_MAP[id];
+  if (info) return info.label;
+  // Fallback: capitaliza a primeira letra
+  return id.charAt(0).toUpperCase() + id.slice(1);
 }
