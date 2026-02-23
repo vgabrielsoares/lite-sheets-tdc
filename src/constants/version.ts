@@ -1,5 +1,5 @@
 /**
- * Version Constants — Versões do Sistema
+ * Version Constants - Versões do Sistema
  *
  * Versão do projeto/site e versão do livro de regras.
  * Exibidas no footer e na seção de ajuda.

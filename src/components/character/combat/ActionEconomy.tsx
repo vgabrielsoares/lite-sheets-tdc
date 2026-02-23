@@ -71,13 +71,13 @@ const TURN_TYPE_CONFIG: Record<
   rapido: {
     label: 'Turno Rápido',
     actionCount: 2,
-    description: 'Age primeiro — 2 ações (▶▶)',
+    description: 'Age primeiro - 2 ações (▶▶)',
     symbol: '▶▶',
   },
   lento: {
     label: 'Turno Lento',
     actionCount: 3,
-    description: 'Age depois — 3 ações (▶▶▶)',
+    description: 'Age depois - 3 ações (▶▶▶)',
     symbol: '▶▶▶',
   },
 };
@@ -364,7 +364,7 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
                 icon={<ActionIcon />}
                 color={theme.palette.warning.main}
                 onClick={() => toggleAction(index)}
-                tooltip={`Ação ${index + 1} — Clique para ${available ? 'usar' : 'recuperar'}`}
+                tooltip={`Ação ${index + 1} - Clique para ${available ? 'usar' : 'recuperar'}`}
               />
             ))}
 
@@ -377,7 +377,7 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
                 icon={<ActionIcon />}
                 color={theme.palette.warning.main}
                 onClick={() => toggleExtraAction(action.id)}
-                tooltip={`Ação extra (▶) — ${action.source}`}
+                tooltip={`Ação extra (▶) - ${action.source}`}
                 isExtra
               />
             ))}
@@ -391,7 +391,7 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
             color="text.secondary"
             sx={{ display: 'block', mb: 1 }}
           >
-            Reação (↩) — 1 por rodada
+            Reação (↩) - 1 por rodada
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <ActionButton
@@ -400,7 +400,7 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
               icon={<ReactionIcon />}
               color={theme.palette.info.main}
               onClick={toggleReaction}
-              tooltip={`Reação — Clique para ${reaction ? 'usar' : 'recuperar'}`}
+              tooltip={`Reação - Clique para ${reaction ? 'usar' : 'recuperar'}`}
             />
 
             {/* Ações extras de reação */}
@@ -412,7 +412,7 @@ export function ActionEconomy({ actionEconomy, onChange }: ActionEconomyProps) {
                 icon={<ReactionIcon />}
                 color={theme.palette.info.main}
                 onClick={() => toggleExtraAction(action.id)}
-                tooltip={`Reação extra (↩) — ${action.source}`}
+                tooltip={`Reação extra (↩) - ${action.source}`}
                 isExtra
               />
             ))}

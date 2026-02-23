@@ -87,7 +87,7 @@ export const DEFAULT_CHARACTER_LEVEL = 0;
 
 /**
  * Experiência (XP) inicial.
- * Começa com 15 XP — exatamente o necessário para subir do nível 0 para o 1,
+ * Começa com 15 XP - exatamente o necessário para subir do nível 0 para o 1,
  * garantindo que o jogador possa imediatamente subir de nível e escolher seu
  * primeiro arquétipo ao criar a ficha.
  */

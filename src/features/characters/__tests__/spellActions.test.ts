@@ -591,7 +591,7 @@ describe('Spell Actions (Fase 6)', () => {
         castSpell({ characterId: char.id, circle: 1 })
       );
 
-      // 1st circle is 0 PF cost — no PF or PP subtracted
+      // 1st circle is 0 PF cost - no PF or PP subtracted
       expect(result.entities[char.id]?.spellcasting?.spellPoints.current).toBe(
         5
       );

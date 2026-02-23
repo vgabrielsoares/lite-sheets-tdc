@@ -2,7 +2,7 @@
  * wizardToCharacter - Converte o estado do wizard para um Character completo
  *
  * Aplica todos os ganhos de nível 1 e monta a estrutura final do personagem
- * conforme as regras do RPG Tabuleiro do Caos (livro v0.1.7).
+ * conforme as regras do RPG Tabuleiro do Caos.
  */
 
 import { uuidv4 } from './uuid';
@@ -608,7 +608,7 @@ function createCharacterProficiencies(state: WizardState): {
       lowerProf.includes('armor') ||
       lowerProf.includes('escudo')
     ) {
-      // Armaduras e escudos — DEVE vir antes de 'arma' para evitar falso positivo
+      // Armaduras e escudos - DEVE vir antes de 'arma' para evitar falso positivo
       proficiencies.armor.push(prof);
     } else if (
       lowerProf.includes('arma') ||

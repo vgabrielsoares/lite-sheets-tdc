@@ -1,5 +1,5 @@
 /**
- * Level Up Calculations — Utility functions for the level-up workflow
+ * Level Up Calculations - Utility functions for the level-up workflow
  *
  * Determines what gains a character receives when leveling up
  * in a specific archetype, and applies them to the Character.

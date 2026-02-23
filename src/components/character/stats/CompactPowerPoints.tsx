@@ -205,7 +205,7 @@ export const CompactPowerPoints = React.memo(function CompactPowerPoints({
             </Box>
           </Box>
 
-          {/* PF (Pontos de Feitiço) — apenas para conjuradores */}
+          {/* PF (Pontos de Feitiço) - apenas para conjuradores */}
           {spellPoints && (
             <Box>
               <Stack

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * LevelUpModal — Modal de subida de nível do personagem
+ * LevelUpModal - Modal de subida de nível do personagem
  *
  * Permite ao jogador:
  * 1. Escolher o arquétipo para progredir

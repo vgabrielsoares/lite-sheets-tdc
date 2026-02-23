@@ -18,7 +18,7 @@ import type { AttributeName } from './attributes';
 // ─── Guarda & Vitalidade ────────────────────────────────────
 
 /**
- * Pontos de Guarda (GA) — primeira camada de proteção
+ * Pontos de Guarda (GA) - primeira camada de proteção
  *
  * GA mede a capacidade de se defender e evitar ataques.
  * Receber dano na GA não significa ser ferido, mas ter as defesas desgastadas.
@@ -37,7 +37,7 @@ export interface GuardPoints {
 }
 
 /**
- * Pontos de Vitalidade (PV) — saúde real do personagem
+ * Pontos de Vitalidade (PV) - saúde real do personagem
  *
  * PV = floor(GA_max / 3).
  * Quando PV = 0, o personagem sofre Ferimento Crítico.
@@ -147,8 +147,8 @@ export interface VulnerabilityDie {
 /**
  * Tipo de turno escolhido em combate
  *
- * - Rápido: 2 ações (▶▶) — age primeiro
- * - Lento: 3 ações (▶▶▶) — age depois de inimigos rápidos
+ * - Rápido: 2 ações (▶▶) - age primeiro
+ * - Lento: 3 ações (▶▶▶) - age depois de inimigos rápidos
  */
 export type TurnType = 'rapido' | 'lento';
 
@@ -163,7 +163,7 @@ export type TurnType = 'rapido' | 'lento';
 export interface ActionEconomy {
   /** Tipo de turno escolhido (Rápido ou Lento) */
   turnType: TurnType;
-  /** Ações (▶) disponíveis — array de booleanos (2 para rápido, 3 para lento) */
+  /** Ações (▶) disponíveis - array de booleanos (2 para rápido, 3 para lento) */
   actions: boolean[];
   /** Reação (↩) disponível (1 por rodada) */
   reaction: boolean;
@@ -221,10 +221,10 @@ export type AttackType = 'corpo-a-corpo' | 'distancia' | 'magico';
 /**
  * Tipo de resultado de ataque baseado em ✶ após defesa
  *
- * 0✶: Raspão — dano dos dados sem modificadores, dividido por 2 (mín 1)
- * 1✶: Normal — rolagem de dano padrão
- * 2✶: Em Cheio — dano maximizado (sem rolar)
- * 3+✶: Crítico — dano maximizado + dados de dano crítico extras
+ * 0✶: Raspão - dano dos dados sem modificadores, dividido por 2 (mín 1)
+ * 1✶: Normal - rolagem de dano padrão
+ * 2✶: Em Cheio - dano maximizado (sem rolar)
+ * 3+✶: Crítico - dano maximizado + dados de dano crítico extras
  */
 export type AttackHitType = 'raspao' | 'normal' | 'em-cheio' | 'critico';
 
@@ -284,7 +284,7 @@ export interface Attack {
   attackAttribute?: AttributeName;
   /** Modificador de dados adicional (+Xd / -Xd) */
   attackDiceModifier?: number;
-  /** Rolagem de dano (soma de dados — separado do sistema de ✶) */
+  /** Rolagem de dano (soma de dados - separado do sistema de ✶) */
   damageRoll: DiceRoll;
   /** Tipo de dano */
   damageType: DamageType;
@@ -306,7 +306,7 @@ export interface Attack {
    * Número de dados extras de dano crítico.
    * Usa o MESMO tipo de dado base (damageRoll.type).
    * Ex: criticalDice=1 com damageRoll 1d6 → +1d6 em Ataque Crítico (3+✶).
-   * Default: 1 ("+1d" — mínimo obrigatório).
+   * Default: 1 ("+1d" - mínimo obrigatório).
    */
   criticalDice?: number;
   /**
@@ -510,9 +510,9 @@ export interface CombatPenalties {
  * Dados completos de combate do personagem
  */
 export interface CombatData {
-  /** Pontos de Guarda (GA) — proteção */
+  /** Pontos de Guarda (GA) - proteção */
   guard: GuardPoints;
-  /** Pontos de Vitalidade (PV) — saúde real */
+  /** Pontos de Vitalidade (PV) - saúde real */
   vitality: VitalityPoints;
   /** Pontos de Poder */
   pp: PowerPoints;

@@ -85,7 +85,7 @@ function classifyDie(value: number, dieSize: DieSize): DicePoolDie {
 }
 
 // ============================================================================
-// Pool de Dados — Sistema Principal
+// Pool de Dados - Sistema Principal
 // ============================================================================
 
 /**
@@ -673,7 +673,7 @@ export type HistoryEntry =
   | CustomDiceResult;
 
 /**
- * Histórico de rolagens — armazena as últimas N rolagens
+ * Histórico de rolagens - armazena as últimas N rolagens
  */
 export class DiceRollHistory {
   private history: HistoryEntry[] = [];
@@ -746,7 +746,7 @@ export function isCustomDiceResult(
 }
 
 // ============================================================================
-// LEGACY COMPATIBILITY — To be removed in Phase 3
+// LEGACY COMPATIBILITY - To be removed in Phase 3
 // These functions provide backward compatibility for combat components
 // that haven't been updated to the new pool system yet.
 // ============================================================================

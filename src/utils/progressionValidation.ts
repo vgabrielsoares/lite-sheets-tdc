@@ -1,7 +1,7 @@
 /**
- * Progression Validation — Validates multi-archetype and class constraints
+ * Progression Validation - Validates multi-archetype and class constraints
  *
- * Rules (livro v0.1.7):
+ * Rules:
  * - Each level is invested in exactly one archetype
  * - Sum of archetype levels = character level
  * - Classes unlock at character level 3

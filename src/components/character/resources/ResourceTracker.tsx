@@ -228,9 +228,9 @@ const ResourceCard = React.memo(function ResourceCard({
               Rolou <strong>{lastRoll.dieRolled}</strong>: obteve{' '}
               <strong>{lastRoll.value}</strong>
               {lastRoll.isDepleted
-                ? ' — Recurso esgotado!'
+                ? ' - Recurso esgotado!'
                 : lastRoll.isSteppedDown && lastRoll.newDie
-                  ? ` — Dado diminuiu para ${lastRoll.newDie}`
+                  ? ` - Dado diminuiu para ${lastRoll.newDie}`
                   : ''}
             </Typography>
           </Alert>

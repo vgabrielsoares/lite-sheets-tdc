@@ -1,11 +1,11 @@
 /**
- * Proficiency Purchases — Sistema de compra de proficiências por atributos
+ * Proficiency Purchases - Sistema de compra de proficiências por atributos
  *
  * Cada atributo dá pontos de compra = valor do atributo.
  * Proficiências podem ser compradas gastando pontos do atributo relevante.
  * Retroativo: ao aumentar atributo, pontos de compra sobem.
  *
- * Livro v0.1.7 — Tabela de proficiências compráveis.
+ * Tabela de proficiências compráveis.
  */
 
 import type { AttributeName } from '@/types/attributes';
@@ -54,7 +54,7 @@ export interface ProficiencyPurchaseRecord {
 
 /**
  * Lista completa de proficiências compráveis no sistema.
- * Baseada na tabela do livro v0.1.7.
+ * Baseada na tabela do livro de regras.
  */
 export const PURCHASABLE_PROFICIENCIES: readonly PurchasableProficiency[] = [
   // ── Armas ──

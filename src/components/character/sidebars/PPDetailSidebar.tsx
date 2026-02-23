@@ -179,7 +179,7 @@ export interface PPDetailSidebarProps {
   basePP?: number;
   /** Se o personagem é conjurador */
   isCaster?: boolean;
-  /** Pontos de Feitiço (PF) — apenas se conjurador */
+  /** Pontos de Feitiço (PF) - apenas se conjurador */
   spellPoints?: SpellPoints;
   /** Callback para atualizar PF */
   onSpellPointsChange?: (spellPoints: SpellPoints) => void;

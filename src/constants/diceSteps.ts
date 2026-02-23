@@ -1,7 +1,7 @@
 /**
- * Dice Steps — Passos de Dados do Sistema
+ * Dice Steps - Passos de Dados do Sistema
  *
- * Progressão e regressão de passos de dados conforme o livro v0.1.7.
+ * Progressão e regressão de passos de dados conforme o livro de regras.
  * Várias mecânicas de jogo podem alterar os passos de dado de algum
  * efeito mecânico do sistema.
  */
@@ -20,7 +20,7 @@ export interface DiceStep {
 }
 
 /**
- * Progressão completa de passos de dados conforme livro v0.1.7.
+ * Progressão completa de passos de dados conforme livro de regras.
  *
  * Ordem: 1(1d1) → 1d2 → 1d3 → 1d4 → 1d6 → 1d8/2d4 → 1d10 →
  * 1d12/2d6/3d4 → 2d8/4d4 → 3d6 → 2d10/5d4 → 2d12/3d8/4d6/6d4 →

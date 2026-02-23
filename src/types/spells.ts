@@ -146,7 +146,7 @@ export interface SpellcastingAbility {
 }
 
 /**
- * Pontos de Feitiço (PF) — recurso exclusivo de conjuradores
+ * Pontos de Feitiço (PF) - recurso exclusivo de conjuradores
  *
  * PF são análogos a PP, mas específicos para conjuração.
  * Gastar PF também gasta PP no mesmo valor.
@@ -169,7 +169,7 @@ export interface SpellcastingData {
   isCaster: boolean;
   /** Habilidade de conjuração principal: Arcano, Natureza ou Religião */
   castingSkill?: SpellType;
-  /** Pontos de Feitiço (PF) — apenas para conjuradores */
+  /** Pontos de Feitiço (PF) - apenas para conjuradores */
   spellPoints: SpellPoints;
   /** Feitiços conhecidos */
   knownSpells: KnownSpell[];

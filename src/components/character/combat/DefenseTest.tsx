@@ -1,12 +1,12 @@
 /**
  * DefenseTest - Componente para Teste de Defesa Ativo
  *
- * - Defesa agora é um teste ATIVO usando Reflexo (Agilidade) ou Vigor (Corpo)
+ * Defesa é um teste padronizado por nível, como ataques físicos.
+ * - Dado de defesa = nível do personagem (d6/d8/d10/d12)
+ * - Quantidade de dados = Corpo ou Agilidade (escolha do jogador)
  * - É uma Ação Livre (∆) para rolar teste de defesa
  * - Cada ✶ no teste reduz ✶ do atacante
- * - NÃO existe mais defesa fixa (15 + Agi + bônus)
- *
- * Substitui o antigo display de defesa fixa e seção de MissPenalties (defesa).
+ * - NÃO usa mais Reflexo/Vigor como habilidades de defesa
  */
 'use client';
 
@@ -36,9 +36,8 @@ import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName } from '@/types/skills';
 import type { DieSize, Modifier } from '@/types/common';
 import type { DicePoolResult } from '@/types';
-import { getSkillDieSize } from '@/constants/skills';
 import { ATTRIBUTE_LABELS } from '@/constants/attributes';
-import { calculateSkillTotalModifier } from '@/utils/skillCalculations';
+import { getAttackDefenseDieSize } from '@/constants/combatLevels';
 import { rollSkillTest, globalDiceHistory } from '@/utils/diceRoller';
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
 import type { DicePenaltyMap } from '@/utils/conditionEffects';
@@ -55,13 +54,18 @@ export interface DefenseTestProps {
   signatureSkill?: SkillName;
   /** Penalidades de dados de condições ativas (opcional) */
   conditionPenalties?: DicePenaltyMap;
+  /** Penalidade de defesa das condições ativas (-Xd no teste de defesa) */
+  conditionDefensePenalty?: number;
+  /** Modificador permanente de dados de defesa (+Xd/-Xd) */
+  permanentDiceModifier?: number;
+  /** Callback para alterar o modificador permanente */
+  onPermanentDiceModifierChange?: (value: number) => void;
 }
 
 /**
  * Informações de uma opção de teste de defesa
  */
 interface DefenseOptionInfo {
-  skill: SkillName;
   attribute: keyof Attributes;
   label: string;
   icon: React.ReactNode;
@@ -80,21 +84,19 @@ interface DefensePoolResult {
 }
 
 /**
- * As duas opções de teste de defesa ativo
+ * As duas opções de teste de defesa ativo (baseado em atributo + nível)
  */
 const DEFENSE_OPTIONS: DefenseOptionInfo[] = [
   {
-    skill: 'reflexo',
     attribute: 'agilidade',
-    label: 'Reflexo',
+    label: 'Agilidade',
     icon: <ReflexIcon />,
     color: '#4CAF50',
     description: 'Esquivar, aparar, reação rápida. Usa Agilidade.',
   },
   {
-    skill: 'vigor',
     attribute: 'corpo',
-    label: 'Vigor',
+    label: 'Corpo',
     icon: <VigorIcon />,
     color: '#F44336',
     description: 'Resistir, bloquear, aguentar o impacto. Usa Corpo.',
@@ -102,20 +104,11 @@ const DEFENSE_OPTIONS: DefenseOptionInfo[] = [
 ];
 
 /**
- * Labels amigáveis para níveis de proficiência
- */
-const PROFICIENCY_LABELS: Record<string, string> = {
-  leigo: 'Leigo',
-  adepto: 'Adepto',
-  versado: 'Versado',
-  mestre: 'Mestre',
-};
-
-/**
  * Componente que exibe as opções de teste de defesa ativo
  *
- * Defesa é um teste ativo, não um valor fixo.
- * O jogador pode defender com Reflexo (Agi) ou Vigor (Corpo).
+ * Defesa é um teste padronizado por nível (não usa proficiência).
+ * O jogador pode defender com Corpo ou Agilidade.
+ * Dado = nível do personagem. Quantidade = valor do atributo.
  * Cada ✶ obtido reduz 1✶ do ataque inimigo.
  */
 export const DefenseTest = React.memo(function DefenseTest({
@@ -124,6 +117,9 @@ export const DefenseTest = React.memo(function DefenseTest({
   characterLevel,
   signatureSkill,
   conditionPenalties,
+  conditionDefensePenalty = 0,
+  permanentDiceModifier = 0,
+  onPermanentDiceModifierChange,
 }: DefenseTestProps) {
   // Estado do diálogo de rolagem
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -147,52 +143,19 @@ export const DefenseTest = React.memo(function DefenseTest({
 
   /**
    * Calcula o pool de dados para um teste de defesa
-   * Usa calculateSkillTotalModifier para consistência com SavingThrows
+   * Dado = nível do personagem, quantidade = valor do atributo + modificadores
    */
   const calculateDefensePool = (
     option: DefenseOptionInfo
   ): DefensePoolResult => {
-    const skill = skills[option.skill];
     const attributeValue = attributes[option.attribute];
-
-    if (!skill) {
-      return {
-        diceCount: 2,
-        dieSize: 'd6' as DieSize,
-        isPenaltyRoll: true,
-        formula: '2d6 (menor)',
-      };
-    }
-
-    const isSignature = signatureSkill === option.skill;
-
-    // Obtém modificadores específicos do uso "Defender"
-    const useModifiers = skill.defaultUseModifierOverrides?.['Defender'] || [];
-
-    // Combina modificadores base da habilidade com os do uso
-    const allModifiers: Modifier[] = [
-      ...(skill.modifiers || []),
-      ...useModifiers,
-    ];
-
-    // Usa calculateSkillTotalModifier para consistência com SavingThrows
-    const calculation = calculateSkillTotalModifier(
-      option.skill,
-      option.attribute,
-      attributeValue,
-      skill.proficiencyLevel,
-      isSignature,
-      characterLevel,
-      allModifiers
-    );
+    const dieSize = getAttackDefenseDieSize(characterLevel);
 
     // Aplica penalidades de condições ativas
     const conditionPenalty = conditionPenalties
       ? getDicePenaltyForAttribute(conditionPenalties, option.attribute)
       : 0;
-    const effectiveTotalDice = calculation.totalDice + conditionPenalty;
-
-    const dieSize = calculation.dieSize;
+    const effectiveTotalDice = attributeValue + conditionPenalty + conditionDefensePenalty + permanentDiceModifier;
 
     // Se effectiveTotalDice <= 0, rola 2d e usa o menor
     if (effectiveTotalDice <= 0) {
@@ -234,10 +197,9 @@ export const DefenseTest = React.memo(function DefenseTest({
       DEFENSE_OPTIONS.map((option) => ({
         ...option,
         pool: calculateDefensePool(option),
-        proficiency: skills[option.skill]?.proficiencyLevel ?? 'leigo',
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [attributes, skills, characterLevel, signatureSkill, conditionPenalties]
+    [attributes, characterLevel, conditionPenalties, conditionDefensePenalty, permanentDiceModifier]
   );
 
   return (
@@ -265,7 +227,7 @@ export const DefenseTest = React.memo(function DefenseTest({
         >
           {defenseOptions.map((option) => (
             <Tooltip
-              key={option.skill}
+              key={option.attribute}
               title={`Clique para rolar Defesa (${option.label})`}
               arrow
               placement="top"
@@ -305,24 +267,11 @@ export const DefenseTest = React.memo(function DefenseTest({
                       {option.label}
                     </Typography>
                     <Chip
-                      label={
-                        PROFICIENCY_LABELS[option.proficiency] ??
-                        option.proficiency
-                      }
+                      label={getAttackDefenseDieSize(characterLevel)}
                       size="small"
                       variant="outlined"
                       sx={{ fontSize: '0.7rem' }}
                     />
-                    {signatureSkill === option.skill && (
-                      <Tooltip title="Habilidade de Assinatura">
-                        <Chip
-                          label="✦"
-                          size="small"
-                          color="primary"
-                          sx={{ minWidth: 28 }}
-                        />
-                      </Tooltip>
-                    )}
                   </Stack>
 
                   <Typography
@@ -373,10 +322,8 @@ export const DefenseTest = React.memo(function DefenseTest({
         {selectedOption &&
           (() => {
             const pool = calculateDefensePool(selectedOption);
-            const skill = skills[selectedOption.skill];
-            const proficiency = skill?.proficiencyLevel || 'leigo';
             const attributeValue = attributes[selectedOption.attribute];
-            const isSignature = signatureSkill === selectedOption.skill;
+            const dieSize = getAttackDefenseDieSize(characterLevel);
 
             return (
               <>
@@ -409,7 +356,7 @@ export const DefenseTest = React.memo(function DefenseTest({
                         variant="outlined"
                       />
                       <Chip
-                        label={`${PROFICIENCY_LABELS[proficiency]} (${getSkillDieSize(proficiency)})`}
+                        label={`Nível ${characterLevel} (${dieSize})`}
                         size="small"
                         color="secondary"
                         variant="outlined"
@@ -420,14 +367,6 @@ export const DefenseTest = React.memo(function DefenseTest({
                         color="info"
                         variant="outlined"
                       />
-                      {isSignature && (
-                        <Chip
-                          label="⭐ Assinatura"
-                          size="small"
-                          color="warning"
-                          variant="filled"
-                        />
-                      )}
                       {pool.isPenaltyRoll && (
                         <Chip
                           label="Penalidade: menor resultado"
@@ -436,7 +375,35 @@ export const DefenseTest = React.memo(function DefenseTest({
                           variant="filled"
                         />
                       )}
+                      {permanentDiceModifier !== 0 && (
+                        <Chip
+                          label={`Mod. permanente: ${permanentDiceModifier > 0 ? '+' : ''}${permanentDiceModifier}d`}
+                          size="small"
+                          color="warning"
+                          variant="outlined"
+                        />
+                      )}
                     </Stack>
+
+                    {/* Modificador permanente */}
+                    {onPermanentDiceModifierChange && (
+                      <TextField
+                        label="Modificador permanente (±d)"
+                        type="number"
+                        size="small"
+                        value={permanentDiceModifier}
+                        onChange={(e) =>
+                          onPermanentDiceModifierChange(
+                            parseInt(e.target.value, 10) || 0
+                          )
+                        }
+                        inputProps={{
+                          'aria-label': 'Modificador permanente de dados de defesa',
+                        }}
+                        helperText="Bônus ou penalidade permanente (ex: escudo, item)"
+                        fullWidth
+                      />
+                    )}
 
                     {/* Modificador temporário */}
                     <TextField

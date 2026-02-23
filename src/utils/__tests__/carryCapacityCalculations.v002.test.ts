@@ -1,9 +1,9 @@
 /**
- * Testes para carryCapacityCalculations.ts — validação v0.2
+ * Testes para carryCapacityCalculations.ts - validação v0.2
  *
  * Verifica as mudanças de fórmula introduzidas na v0.2:
- * - Empurrar: 10 × Corpo (mínimo 5) — baseado em Corpo diretamente
- * - Levantar: 5 × Corpo (mínimo 2) — baseado em Corpo diretamente
+ * - Empurrar: 10 × Corpo (mínimo 5) - baseado em Corpo diretamente
+ * - Levantar: 5 × Corpo (mínimo 2) - baseado em Corpo diretamente
  * - Terminologia: "Espaço" em vez de "Peso"
  */
 

@@ -37,7 +37,7 @@ export interface PowerPointsProps {
 }
 
 /**
- * Componente de Pontos de Poder (PP) — LEGACY
+ * Componente de Pontos de Poder (PP) - LEGACY
  *
  * @deprecated Use CompactPowerPoints (Gastar/Recuperar pattern) instead.
  * This component still uses +/- buttons. Kept for backwards compatibility.

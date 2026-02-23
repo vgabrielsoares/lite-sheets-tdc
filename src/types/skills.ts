@@ -214,7 +214,7 @@ export interface SkillPoolCalculation {
   totalDiceModifier: number;
   /** Total de dados na pool (attributeValue + totalDiceModifier) */
   totalDice: number;
-  /** Se usa regra de penalidade extrema (2d, menor) — quando totalDice ≤ 0 */
+  /** Se usa regra de penalidade extrema (2d, menor) - quando totalDice ≤ 0 */
   isPenaltyRoll: boolean;
 }
 

@@ -1,7 +1,7 @@
 /**
  * Constantes relacionadas aos Atributos do personagem
  *
- * Os seis atributos principais do Tabuleiro do Caos RPG (livro v0.1.7):
+ * Os seis atributos principais do Tabuleiro do Caos RPG:
  * - Agilidade (Agi)
  * - Corpo (Cor)
  * - Influência (Inf)
@@ -36,7 +36,7 @@ export const ATTRIBUTE_MAX_LEVEL_1 = 3;
 export const ATTRIBUTE_DEFAULT = 1;
 
 /**
- * Descrições completas de cada atributo (conforme livro v0.1.7)
+ * Descrições completas de cada atributo (conforme livro de regras)
  */
 export const ATTRIBUTE_DESCRIPTIONS: Record<AttributeName, string> = {
   agilidade:

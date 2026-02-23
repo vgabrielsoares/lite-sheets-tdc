@@ -359,7 +359,7 @@ describe('archetypeCalculations', () => {
     });
   });
 
-  describe('ARCHETYPE_GA_ATTRIBUTE (v0.1.7)', () => {
+  describe('ARCHETYPE_GA_ATTRIBUTE', () => {
     it('Acadêmico usa Mente para GA', () => {
       expect(ARCHETYPE_GA_ATTRIBUTE.academico).toBe('mente');
     });
@@ -391,7 +391,7 @@ describe('archetypeCalculations', () => {
     });
   });
 
-  describe('ARCHETYPE_PP_BASE_PER_LEVEL (v0.1.7)', () => {
+  describe('ARCHETYPE_PP_BASE_PER_LEVEL', () => {
     it('Acadêmico: +4 PP base', () => {
       expect(ARCHETYPE_PP_BASE_PER_LEVEL.academico).toBe(4);
     });
@@ -417,7 +417,7 @@ describe('archetypeCalculations', () => {
     });
   });
 
-  describe('ARCHETYPE_INITIAL_SKILLS (v0.1.7)', () => {
+  describe('ARCHETYPE_INITIAL_SKILLS', () => {
     it('deve ter habilidades iniciais para todos os arquétipos', () => {
       ARCHETYPE_LIST.forEach((archetype) => {
         expect(ARCHETYPE_INITIAL_SKILLS[archetype]).toBeDefined();
@@ -440,7 +440,7 @@ describe('archetypeCalculations', () => {
     });
   });
 
-  describe('ARCHETYPE_INITIAL_PROFICIENCIES (v0.1.7)', () => {
+  describe('ARCHETYPE_INITIAL_PROFICIENCIES', () => {
     it('Combatente: Armas Marciais, Armadura Leve, Maestria em 1 arma', () => {
       expect(ARCHETYPE_INITIAL_PROFICIENCIES.combatente).toEqual([
         'Armas Marciais',

@@ -351,7 +351,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
 
   // ─── Handlers de Conjurador / PF ─────────────────────────────
 
-  /** Toggle de conjurador — habilita/desabilita o sistema de PF */
+  /** Toggle de conjurador - habilita/desabilita o sistema de PF */
   const handleToggleCaster = useCallback(
     (checked: boolean) => {
       onUpdate({
@@ -428,7 +428,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
   );
 
   /**
-   * Canalizar Mana — gera PF sem gastar PP
+   * Canalizar Mana - gera PF sem gastar PP
    * ▶ = 1 PF, ▶▶ = 2 PF, ▶▶▶ = 4 PF
    */
   const handleChannelMana = useCallback(
@@ -551,14 +551,14 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
           </Box>
         )}
 
-        {/* PF Compacto + Cards informativos — todos em linha */}
+        {/* PF Compacto + Cards informativos - todos em linha */}
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={2}
           justifyContent="center"
           alignItems="stretch"
         >
-          {/* Pontos de Feitiço (PF) — apenas para conjuradores */}
+          {/* Pontos de Feitiço (PF) - apenas para conjuradores */}
           {isCaster && (
             <Card
               elevation={0}
@@ -877,7 +877,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
           </Card>
         </Stack>
 
-        {/* Tabela de Custos por Círculo — Issue 6.4 */}
+        {/* Tabela de Custos por Círculo - Issue 6.4 */}
         <Card variant="outlined" sx={{ borderColor: 'divider' }}>
           <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
@@ -905,7 +905,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                     key={circle}
                     title={
                       ppExhausted
-                        ? 'PP esgotado — não pode conjurar'
+                        ? 'PP esgotado - não pode conjurar'
                         : pfInsufficient
                           ? `PF insuficiente (necessário: ${cost})`
                           : ppInsufficient
@@ -961,7 +961,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Canalizar Mana — Issue 6.5 */}
+        {/* Canalizar Mana - Issue 6.5 */}
         <Card variant="outlined" sx={{ borderColor: 'divider' }}>
           <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
             <Box
@@ -1133,7 +1133,7 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                         </Box>
                       </Box>
 
-                      {/* Teste de Conjuração — pool de dados */}
+                      {/* Teste de Conjuração - pool de dados */}
                       <Tooltip title={pool.breakdown} arrow placement="top">
                         <Box
                           sx={{

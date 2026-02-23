@@ -1,7 +1,7 @@
 /**
  * Usos padrões de habilidades do Tabuleiro do Caos RPG
  *
- * Define os usos oficiais de cada habilidade conforme livro v0.1.7,
+ * Define os usos oficiais de cada habilidade conforme livro de regras,
  * organizados por nível de proficiência requerido.
  *
  * Cada uso inclui:
@@ -10,7 +10,7 @@
  * - Custo de ação em combate (▶/↩/∆)
  * - Atributo alternativo (quando aplicável)
  *
- * @see base-files/v0.2.md — Seção de Habilidades
+ * @see base-files/v0.2.md - Seção de Habilidades
  */
 
 import type { SkillName, ProficiencyLevel, AttributeName } from '@/types';

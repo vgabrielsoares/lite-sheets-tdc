@@ -105,7 +105,7 @@ export interface ConditionInfo {
 
 /**
  * Lista completa de condições v0.2, organizadas por categoria.
- * Baseado no sistema Tabuleiro do Caos RPG (livro v0.1.7)
+ * Baseado no sistema Tabuleiro do Caos RPG
  */
 export const CONDITIONS: readonly ConditionInfo[] = [
   // ═══════════════════════════════════════════════════

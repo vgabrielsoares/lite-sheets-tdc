@@ -56,7 +56,7 @@ const SYSTEM_PILLARS = [
  * Exibe contextualização do universo, pilares e resumo das mecânicas.
  * Usado na landing page (estado vazio) para novos usuários.
  *
- * Conteúdo baseado no livro de regras v0.1.7.
+ * Conteúdo baseado no livro de regras.
  */
 export default function SystemPresentation() {
   return (
@@ -71,7 +71,7 @@ export default function SystemPresentation() {
           {SYSTEM_NAME}
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          Sistema de fichas para o {SYSTEM_NAME} — livro v{RULEBOOK_VERSION}
+          Sistema de fichas para o {SYSTEM_NAME} - livro v{RULEBOOK_VERSION}
         </Typography>
 
         {/* Keywords */}
@@ -119,7 +119,7 @@ export default function SystemPresentation() {
           Os deuses andam entre os mortais, e os mortais muitas vezes buscam
           ascender à posição dos deuses. Em um mundo perigoso, onde tudo é
           possível e nada é longe demais, as mais bravas pessoas triunfam ao
-          conseguir trabalhos — desde tesouros amaldiçoados até cidades inteiras
+          conseguir trabalhos - desde tesouros amaldiçoados até cidades inteiras
           ameaçadas por males terríveis.
         </Typography>
         <Typography

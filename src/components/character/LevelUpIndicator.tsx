@@ -1,5 +1,5 @@
 /**
- * LevelUpIndicator — Visual indicator for XP progress and level up readiness
+ * LevelUpIndicator - Visual indicator for XP progress and level up readiness
  *
  * Shows:
  * - XP progress bar (current / needed)

@@ -402,7 +402,7 @@ export const GuardVitalityDisplay = React.memo(function GuardVitalityDisplay({
   const isAvariado = guard.current <= modifiedGAMax / 2 && guard.current > 0;
 
   /**
-   * Aplica dano — GA absorve primeiro, overflow vai para PV
+   * Aplica dano - GA absorve primeiro, overflow vai para PV
    */
   const handleDamage = useCallback(
     (amount: number) => {

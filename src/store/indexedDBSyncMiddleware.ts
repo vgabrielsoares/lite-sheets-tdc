@@ -87,7 +87,7 @@ export const indexedDBSyncMiddleware: Middleware<{}, RootState> =
         case 'characters/updateCraft':
         case 'characters/removeCraft':
         case 'characters/levelUp': {
-          // Ações síncronas que modificam um personagem — persistir no IndexedDB
+          // Ações síncronas que modificam um personagem - persistir no IndexedDB
           const payload = action.payload as { characterId: string };
           const charId = payload.characterId;
           const state = store.getState();

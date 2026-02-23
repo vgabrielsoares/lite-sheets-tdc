@@ -31,7 +31,7 @@ interface GlossaryTerm {
 }
 
 /**
- * Termos do glossário conforme livro v0.1.7
+ * Termos do glossário conforme livro de regras
  */
 const GLOSSARY_TERMS: GlossaryTerm[] = [
   {
@@ -230,7 +230,7 @@ export default function RulesReference() {
 
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         Consulte tabelas de referência, glossário de termos e outras informações
-        úteis do Tabuleiro do Caos RPG (livro v0.1.7).
+        úteis do Tabuleiro do Caos RPG.
       </Typography>
 
       {/* Glossário de Termos */}

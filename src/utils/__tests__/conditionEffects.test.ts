@@ -120,7 +120,7 @@ describe('conditionEffects', () => {
     });
 
     it('should handle non-stackable condition with stacks > 1 (uses base modifier)', () => {
-      // Esgotado is not stackable — modifier should NOT scale even if stacks set
+      // Esgotado is not stackable - modifier should NOT scale even if stacks set
       const conditions = [makeCondition('esgotado', 3)];
       const result = calculateConditionDicePenalties(conditions, []);
       // scalesWithStacks is falsy, so stays at -1

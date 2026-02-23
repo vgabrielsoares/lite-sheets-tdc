@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * ProficiencyPurchasePanel — Interface de compra de proficiências com pontos de atributo
+ * ProficiencyPurchasePanel - Interface de compra de proficiências com pontos de atributo
  *
- * Regras (livro v0.1.7):
+ * Regras:
  * - Cada atributo dá pontos de compra = valor do atributo
  * - Proficiências custam pontos de um atributo específico
  * - Retroativo: ao aumentar atributo, ganha mais pontos
