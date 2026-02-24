@@ -432,9 +432,9 @@ describe('archetypeCalculations', () => {
       ]);
     });
 
-    it('Combatente: Acerto ou Luta, Reflexo ou Vigor', () => {
+    it('Combatente: Tenacidade ou Determinação, Reflexo ou Vigor', () => {
       expect(ARCHETYPE_INITIAL_SKILLS.combatente).toEqual([
-        'Acerto ou Luta',
+        'Tenacidade ou Determinação',
         'Reflexo ou Vigor',
       ]);
     });

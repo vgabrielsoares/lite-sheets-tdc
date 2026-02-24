@@ -147,10 +147,10 @@ describe('characterFactory', () => {
     });
 
     describe('Habilidades (Skills)', () => {
-      it('deve ter todas as 33 habilidades do sistema', () => {
+      it('deve ter todas as 31 habilidades do sistema', () => {
         const skillKeys = Object.keys(character.skills);
         expect(skillKeys).toHaveLength(SKILL_LIST.length);
-        expect(skillKeys).toHaveLength(33);
+        expect(skillKeys).toHaveLength(31);
       });
 
       it('deve ter todas as habilidades listadas no SKILL_LIST', () => {
@@ -322,7 +322,7 @@ describe('characterFactory', () => {
         expect(character.combat.attacks).toHaveLength(1);
         expect(character.combat.attacks[0].name).toBe('Ataque Desarmado');
         expect(character.combat.attacks[0].type).toBe('corpo-a-corpo');
-        expect(character.combat.attacks[0].attackSkill).toBe('luta');
+        expect(character.combat.attacks[0].attackSkill).toBeUndefined();
         expect(character.combat.attacks[0].attackAttribute).toBe('corpo');
         expect(character.combat.attacks[0].damageRoll.type).toBe('d2');
         expect(character.combat.attacks[0].isDefaultAttack).toBe(true);

@@ -63,7 +63,7 @@ const createMockCharacter = (overrides?: Partial<Character>): Character =>
       tools: [],
       other: [],
     },
-    signatureAbility: { skill: 'luta', bonus: 5 },
+    signatureAbility: { skill: 'atletismo', bonus: 5 },
     luckyPoints: { level: 1, total: 6 },
     senses: {} as any,
     crafts: [],

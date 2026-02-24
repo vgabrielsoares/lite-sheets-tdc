@@ -75,7 +75,7 @@ describe('importService', () => {
         },
       },
       skills: {
-        acerto: {
+        reflexo: {
           proficiencyLevel: 'versado',
           keyAttribute: 'agilidade',
           otherModifiers: 0,
@@ -299,7 +299,7 @@ describe('importService', () => {
 
     it('deve rejeitar personagem com habilidade inválida', async () => {
       const mockChar = createMockCharacter();
-      (mockChar.skills as any).acerto.proficiencyLevel = 'invalid'; // Proficiência inválida
+      (mockChar.skills as any).reflexo.proficiencyLevel = 'invalid'; // Proficiência inválida
 
       const exportedData = {
         version: EXPORT_VERSION,

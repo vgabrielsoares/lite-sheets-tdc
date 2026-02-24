@@ -51,8 +51,8 @@ function makePurchase(
 // ─── PURCHASABLE_PROFICIENCIES ──────────────────────────────
 
 describe('PURCHASABLE_PROFICIENCIES', () => {
-  it('should have 16 purchasable proficiencies', () => {
-    expect(PURCHASABLE_PROFICIENCIES).toHaveLength(16);
+  it('should have 17 purchasable proficiencies', () => {
+    expect(PURCHASABLE_PROFICIENCIES).toHaveLength(17);
   });
 
   it('should have unique IDs', () => {

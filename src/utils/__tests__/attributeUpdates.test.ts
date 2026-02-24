@@ -148,7 +148,7 @@ describe('attributeUpdates utilities', () => {
       const character = createDefaultCharacter({ name: 'Test' });
       character.attributes.mente = 1; // Allows 4 proficiencies
       // Set 4 skills to non-leigo
-      setSkillProficiency(character, 'acerto', 'adepto');
+      setSkillProficiency(character, 'reflexo', 'adepto');
       setSkillProficiency(character, 'acrobacia', 'versado');
       setSkillProficiency(character, 'atletismo', 'adepto');
       setSkillProficiency(character, 'furtividade', 'mestre');
@@ -165,7 +165,7 @@ describe('attributeUpdates utilities', () => {
       const character = createDefaultCharacter({ name: 'Test' });
       character.attributes.mente = 0; // Allows only 3 proficiencies
       // Set 5 skills to non-leigo (excess!)
-      setSkillProficiency(character, 'acerto', 'adepto');
+      setSkillProficiency(character, 'reflexo', 'adepto');
       setSkillProficiency(character, 'acrobacia', 'adepto');
       setSkillProficiency(character, 'atletismo', 'adepto');
       setSkillProficiency(character, 'furtividade', 'adepto');
@@ -196,7 +196,7 @@ describe('attributeUpdates utilities', () => {
       const character = createDefaultCharacter({ name: 'Test' });
       character.attributes.mente = 2; // Allows 5 proficiencies
       // Set 3 skills to non-leigo
-      setSkillProficiency(character, 'acerto', 'adepto');
+      setSkillProficiency(character, 'reflexo', 'adepto');
       setSkillProficiency(character, 'atletismo', 'versado');
       setSkillProficiency(character, 'percepcao', 'adepto');
 
@@ -210,7 +210,7 @@ describe('attributeUpdates utilities', () => {
       const character = createDefaultCharacter({ name: 'Test' });
       character.attributes.mente = 1; // Allows 4 proficiencies
       // Set exactly 4 skills
-      setSkillProficiency(character, 'acerto', 'adepto');
+      setSkillProficiency(character, 'reflexo', 'adepto');
       setSkillProficiency(character, 'atletismo', 'adepto');
       setSkillProficiency(character, 'percepcao', 'adepto');
       setSkillProficiency(character, 'furtividade', 'adepto');
@@ -278,7 +278,7 @@ describe('attributeUpdates utilities', () => {
       const character = createDefaultCharacter({ name: 'Test' });
       character.attributes.mente = 0; // Allows 3 proficiencies
       // Set 5 skills (excess!)
-      setSkillProficiency(character, 'acerto', 'adepto');
+      setSkillProficiency(character, 'reflexo', 'adepto');
       setSkillProficiency(character, 'atletismo', 'adepto');
       setSkillProficiency(character, 'percepcao', 'adepto');
       setSkillProficiency(character, 'furtividade', 'adepto');
@@ -296,12 +296,12 @@ describe('attributeUpdates utilities', () => {
       // Excess languages
       character.languages = ['comum', 'elfico', 'anao'];
       // Excess proficiencies
-      setSkillProficiency(character, 'acerto', 'adepto');
+      setSkillProficiency(character, 'reflexo', 'adepto');
       setSkillProficiency(character, 'atletismo', 'adepto');
       setSkillProficiency(character, 'percepcao', 'adepto');
       setSkillProficiency(character, 'furtividade', 'adepto');
       setSkillProficiency(character, 'acrobacia', 'adepto');
-      setSkillProficiency(character, 'luta', 'adepto');
+      setSkillProficiency(character, 'vigor', 'adepto');
 
       const warnings = getAttributeWarnings(character);
 

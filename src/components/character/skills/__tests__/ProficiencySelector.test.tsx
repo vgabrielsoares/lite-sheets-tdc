@@ -111,7 +111,7 @@ describe('ProficiencySelector', () => {
       const skills = createMockSkills([
         'acrobacia',
         'atletismo',
-        'acerto',
+        'reflexo',
         'adestramento',
         'arte',
         'conducao',
@@ -300,11 +300,11 @@ describe('ProficiencySelector', () => {
       const skills = createMockSkills([
         'acrobacia',
         'atletismo',
-        'acerto',
+        'reflexo',
         'adestramento',
         'arte',
         'conducao',
-        'luta',
+        'vigor',
       ]); // 7 proficiências (limite = 6 com Mente 3)
 
       render(
@@ -324,7 +324,7 @@ describe('ProficiencySelector', () => {
       const skills = createMockSkills([
         'acrobacia',
         'atletismo',
-        'acerto',
+        'reflexo',
         'adestramento',
         'arte',
         'furtividade',
@@ -411,7 +411,7 @@ describe('ProficiencySelector', () => {
       const skills = createMockSkills([
         'acrobacia',
         'atletismo',
-        'acerto',
+        'reflexo',
         'adestramento',
         'arte',
       ]); // 5 proficiências

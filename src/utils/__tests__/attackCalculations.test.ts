@@ -415,13 +415,13 @@ describe('attackCalculations', () => {
     });
 
     it('deve aplicar bônus de assinatura para habilidade de combate (v0.2: sem distinção)', () => {
-      const character = createMockCharacter(6, 4, 'luta', {
+      const character = createMockCharacter(6, 4, 'atletismo', {
         keyAttribute: 'corpo',
         proficiencyLevel: 'adepto',
         isSignature: true,
       });
 
-      const result = calculateAttackRoll(character, 'luta', undefined, 0);
+      const result = calculateAttackRoll(character, 'atletismo', undefined, 0);
 
       // Adepto = atributo * 1 = 4 * 1 = 4
       // Bônus assinatura (v0.2) = Math.min(3, ceil(6/5)) = 2
@@ -430,13 +430,13 @@ describe('attackCalculations', () => {
     });
 
     it('deve aplicar bônus mínimo de +1d para assinatura em nível baixo', () => {
-      const character = createMockCharacter(2, 2, 'acerto', {
-        keyAttribute: 'corpo',
+      const character = createMockCharacter(2, 2, 'reflexo', {
+        keyAttribute: 'agilidade',
         proficiencyLevel: 'versado',
         isSignature: true,
       });
 
-      const result = calculateAttackRoll(character, 'acerto', undefined, 0);
+      const result = calculateAttackRoll(character, 'reflexo', undefined, 0);
 
       // Versado = atributo * 2 = 2 * 2 = 4
       // Bônus assinatura (v0.2) = Math.min(3, ceil(2/5)) = 1
@@ -463,13 +463,13 @@ describe('attackCalculations', () => {
     });
 
     it('deve aplicar bônus de assinatura mesmo para habilidade leiga', () => {
-      const character = createMockCharacter(10, 5, 'luta', {
+      const character = createMockCharacter(10, 5, 'atletismo', {
         keyAttribute: 'corpo',
         proficiencyLevel: 'leigo',
         isSignature: true, // Assinatura ativa com proficiência leiga
       });
 
-      const result = calculateAttackRoll(character, 'luta', undefined, 0);
+      const result = calculateAttackRoll(character, 'atletismo', undefined, 0);
 
       // Leigo = atributo * 0 = 5 * 0 = 0
       // Bônus assinatura (v0.2) = Math.min(3, ceil(10/5)) = 2
@@ -478,13 +478,13 @@ describe('attackCalculations', () => {
     });
 
     it('deve incluir fórmula formatada no resultado', () => {
-      const character = createMockCharacter(6, 3, 'luta', {
+      const character = createMockCharacter(6, 3, 'atletismo', {
         keyAttribute: 'corpo',
         proficiencyLevel: 'versado',
         isSignature: true,
       });
 
-      const result = calculateAttackRoll(character, 'luta', undefined, 0);
+      const result = calculateAttackRoll(character, 'atletismo', undefined, 0);
 
       // Versado = 3 * 2 = 6
       // Bônus assinatura (combate) = floor(6 / 3) = 2

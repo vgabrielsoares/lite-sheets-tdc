@@ -143,7 +143,7 @@ describe('isValidProficiencyLevel', () => {
 
 describe('isValidSkillName', () => {
   it('should accept valid skill names', () => {
-    expect(isValidSkillName('acerto')).toBe(true);
+    expect(isValidSkillName('reflexo')).toBe(true);
     expect(isValidSkillName('atletismo')).toBe(true);
     expect(isValidSkillName('percepcao')).toBe(true);
     expect(isValidSkillName('furtividade')).toBe(true);

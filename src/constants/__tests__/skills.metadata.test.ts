@@ -7,12 +7,8 @@ import { SKILL_METADATA, COMBAT_SKILLS } from '../skills';
 
 describe('Metadados de Habilidades - Validação contra Regras Básicas', () => {
   describe('Habilidades de Combate', () => {
-    it('deve ter exatamente 10 habilidades de combate', () => {
-      expect(COMBAT_SKILLS).toHaveLength(10);
-    });
-
-    it('deve marcar Acerto como habilidade de combate', () => {
-      expect(SKILL_METADATA.acerto.isCombatSkill).toBe(true);
+    it('deve ter exatamente 8 habilidades de combate', () => {
+      expect(COMBAT_SKILLS).toHaveLength(8);
     });
 
     it('deve marcar Arcano como habilidade de combate', () => {
@@ -21,10 +17,6 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
 
     it('deve marcar Determinação como habilidade de combate', () => {
       expect(SKILL_METADATA.determinacao.isCombatSkill).toBe(true);
-    });
-
-    it('deve marcar Luta como habilidade de combate', () => {
-      expect(SKILL_METADATA.luta.isCombatSkill).toBe(true);
     });
 
     it('deve marcar Natureza como habilidade de combate', () => {
@@ -43,16 +35,18 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
       expect(SKILL_METADATA.tenacidade.isCombatSkill).toBe(true);
     });
 
+    it('deve marcar Sintonia como habilidade de combate', () => {
+      expect(SKILL_METADATA.sintonia.isCombatSkill).toBe(true);
+    });
+
     it('deve marcar Vigor como habilidade de combate', () => {
       expect(SKILL_METADATA.vigor.isCombatSkill).toBe(true);
     });
 
-    it('deve incluir todas as 11 habilidades corretas no array COMBAT_SKILLS', () => {
+    it('deve incluir todas as 8 habilidades corretas no array COMBAT_SKILLS', () => {
       const expectedCombatSkills = [
-        'acerto',
         'arcano',
         'determinacao',
-        'luta',
         'natureza',
         'reflexo',
         'religiao',
@@ -93,8 +87,8 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
       expect(SKILL_METADATA.reflexo.hasCargaPenalty).toBe(true);
     });
 
-    it('não deve marcar Acerto com penalidade de carga', () => {
-      expect(SKILL_METADATA.acerto.hasCargaPenalty).toBe(false);
+    it('não deve marcar Vigor com penalidade de carga', () => {
+      expect(SKILL_METADATA.vigor.hasCargaPenalty).toBe(false);
     });
   });
 
@@ -119,8 +113,8 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
       expect(SKILL_METADATA.oficio.requiresInstrument).toBe(true);
     });
 
-    it('não deve marcar Acerto como requer instrumento', () => {
-      expect(SKILL_METADATA.acerto.requiresInstrument).toBe(false);
+    it('não deve marcar Vigor como requer instrumento', () => {
+      expect(SKILL_METADATA.vigor.requiresInstrument).toBe(false);
     });
 
     it('não deve marcar Adestramento como requer instrumento', () => {
@@ -177,8 +171,8 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
       expect(SKILL_METADATA.religiao.requiresProficiency).toBe(true);
     });
 
-    it('não deve marcar Acerto como requer proficiência', () => {
-      expect(SKILL_METADATA.acerto.requiresProficiency).toBe(false);
+    it('não deve marcar Vigor como requer proficiência', () => {
+      expect(SKILL_METADATA.vigor.requiresProficiency).toBe(false);
     });
 
     it('não deve marcar Tenacidade como requer proficiência', () => {
@@ -191,16 +185,16 @@ describe('Metadados de Habilidades - Validação contra Regras Básicas', () => 
   });
 
   describe('Validação de Atributos-chave', () => {
-    it('Acerto deve usar Agilidade', () => {
-      expect(SKILL_METADATA.acerto.keyAttribute).toBe('agilidade');
+    it('Reflexo deve usar Agilidade', () => {
+      expect(SKILL_METADATA.reflexo.keyAttribute).toBe('agilidade');
     });
 
     it('Determinação deve usar Mente', () => {
       expect(SKILL_METADATA.determinacao.keyAttribute).toBe('mente');
     });
 
-    it('Luta deve usar Corpo', () => {
-      expect(SKILL_METADATA.luta.keyAttribute).toBe('corpo');
+    it('Tenacidade deve usar Corpo', () => {
+      expect(SKILL_METADATA.tenacidade.keyAttribute).toBe('corpo');
     });
 
     it('Natureza deve usar Instinto', () => {
