@@ -138,3 +138,55 @@ export function formatPenaltySummary(penalties: DicePenaltyMap): string[] {
       return `${value > 0 ? '+' : ''}${value}d ${label}`;
     });
 }
+
+/**
+ * Calcula a penalidade total de defesa baseada nas condições ativas.
+ *
+ * Condições que dão "+Xd ataques contra a criatura" se traduzem em
+ * "-Xd no teste de defesa" do PJ afetado.
+ *
+ * @param manualConditions - Condições aplicadas manualmente ao personagem
+ * @param autoConditionIds - IDs das condições ativadas automaticamente
+ * @returns Penalidade total em dados de defesa (negativo = penalidade)
+ *
+ * @example
+ * ```ts
+ * const penalty = calculateDefensePenaltyFromConditions(
+ *   character.combat.conditions,
+ *   ['avariado']
+ * );
+ * // Resultado: -1 (de Agarrado ativo, por ex.)
+ * ```
+ */
+export function calculateDefensePenaltyFromConditions(
+  manualConditions: Condition[],
+  autoConditionIds: ConditionId[]
+): number {
+  let totalPenalty = 0;
+
+  // 1. Processar condições manuais
+  for (const condition of manualConditions) {
+    const info = CONDITION_INFO_MAP.get(condition.name as ConditionId);
+    if (!info?.defensePenalty) continue;
+
+    const stacks = info.stackable
+      ? (condition.modifiers.find((m) => m.name === 'stacks')?.value ?? 1)
+      : 1;
+
+    totalPenalty += info.defensePenalty.scalesWithStacks
+      ? info.defensePenalty.modifier * stacks
+      : info.defensePenalty.modifier;
+  }
+
+  // 2. Processar condições automáticas (não duplicar)
+  for (const autoId of autoConditionIds) {
+    if (manualConditions.some((c) => c.name === autoId)) continue;
+
+    const info = CONDITION_INFO_MAP.get(autoId);
+    if (!info?.defensePenalty) continue;
+
+    totalPenalty += info.defensePenalty.modifier;
+  }
+
+  return totalPenalty;
+}
