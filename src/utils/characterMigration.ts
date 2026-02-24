@@ -134,7 +134,7 @@ export function migrateAttributes(
   const influencia = oldAttributes.influencia ?? 1;
   const mente = oldAttributes.mente ?? 1;
 
-  // Corpo = max(constituicao, forca) — merge de dois atributos
+  // Corpo = max(constituicao, forca) - merge de dois atributos
   const constituicao = oldAttributes.constituicao ?? oldAttributes.corpo ?? 1;
   const forca = oldAttributes.forca ?? 0;
   const corpo = oldAttributes.corpo ?? Math.max(constituicao, forca);

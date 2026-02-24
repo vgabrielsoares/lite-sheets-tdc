@@ -140,20 +140,20 @@ export function InventoryItemRow({
         if (result.newState === 'quebrado') {
           setDurabilityResult({
             open: true,
-            message: `${item.name}: rolou ${rollValue} no ${result.previousDie} — QUEBROU!`,
+            message: `${item.name}: rolou ${rollValue} no ${result.previousDie} - QUEBROU!`,
             severity: 'error',
           });
         } else {
           setDurabilityResult({
             open: true,
-            message: `${item.name}: rolou ${rollValue} no ${result.previousDie} — Danificado! (${result.previousDie} → ${result.newDie})`,
+            message: `${item.name}: rolou ${rollValue} no ${result.previousDie} - Danificado! (${result.previousDie} → ${result.newDie})`,
             severity: 'warning',
           });
         }
       } else {
         setDurabilityResult({
           open: true,
-          message: `${item.name}: rolou ${rollValue} no ${result.previousDie} — Item resiste!`,
+          message: `${item.name}: rolou ${rollValue} no ${result.previousDie} - Item resiste!`,
           severity: 'success',
         });
       }

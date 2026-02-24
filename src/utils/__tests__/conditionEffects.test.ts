@@ -90,9 +90,9 @@ describe('conditionEffects', () => {
     });
 
     it('should include auto-triggered condition penalties', () => {
-      // Esgotado: -1d corpo, -1d instinto (auto-triggered when PP = 0)
+      // Esgotado: -1d corpo, -1d essencia (auto-triggered when PP = 0)
       const result = calculateConditionDicePenalties([], ['esgotado']);
-      expect(result).toEqual({ corpo: -1, instinto: -1 });
+      expect(result).toEqual({ corpo: -1, essencia: -1 });
     });
 
     it('should not duplicate penalty if auto condition is also in manual list', () => {
@@ -100,7 +100,7 @@ describe('conditionEffects', () => {
       const conditions = [makeCondition('esgotado')];
       const result = calculateConditionDicePenalties(conditions, ['esgotado']);
       // Should be -1 each, not -2
-      expect(result).toEqual({ corpo: -1, instinto: -1 });
+      expect(result).toEqual({ corpo: -1, essencia: -1 });
     });
 
     it('should handle auto conditions without dicePenalty (avariado, machucado)', () => {
@@ -113,30 +113,30 @@ describe('conditionEffects', () => {
     });
 
     it('should handle conditions without dicePenalty gracefully', () => {
-      // Caído has no dicePenalty
-      const conditions = [makeCondition('caido')];
+      // Doente has no dicePenalty
+      const conditions = [makeCondition('doente')];
       const result = calculateConditionDicePenalties(conditions, []);
       expect(result).toEqual({});
     });
 
     it('should handle non-stackable condition with stacks > 1 (uses base modifier)', () => {
-      // Esgotado is not stackable — modifier should NOT scale even if stacks set
+      // Esgotado is not stackable - modifier should NOT scale even if stacks set
       const conditions = [makeCondition('esgotado', 3)];
       const result = calculateConditionDicePenalties(conditions, []);
       // scalesWithStacks is falsy, so stays at -1
-      expect(result).toEqual({ corpo: -1, instinto: -1 });
+      expect(result).toEqual({ corpo: -1, essencia: -1 });
     });
 
     it('should combine auto + manual conditions with overlapping targets', () => {
       const conditions = [
         makeCondition('exausto', 1), // -1d agi, -1d corpo (stackable)
       ];
-      const autoIds = ['esgotado'] as const; // -1d corpo, -1d instinto
+      const autoIds = ['esgotado'] as const; // -1d corpo, -1d essencia
       const result = calculateConditionDicePenalties(conditions, [...autoIds]);
       expect(result).toEqual({
         agilidade: -1,
         corpo: -2, // -1 from exausto + -1 from esgotado
-        instinto: -1,
+        essencia: -1,
       });
     });
   });
@@ -208,12 +208,12 @@ describe('conditionEffects', () => {
       const result = formatPenaltySummary({
         todos: -1,
         corpo: -2,
-        instinto: -1,
+        essencia: -1,
       });
       expect(result).toHaveLength(3);
       expect(result).toContain('-1d todos os testes');
       expect(result).toContain('-2d Corpo');
-      expect(result).toContain('-1d Instinto');
+      expect(result).toContain('-1d Essência');
     });
 
     it('should skip zero-value entries', () => {

@@ -31,7 +31,7 @@ const FAQ_ITEMS: FAQItem[] = [
     answer: [
       'Na página inicial, clique no botão "Nova Ficha".',
       'Você pode criar uma ficha em branco (com valores padrão de nível 1) ou usar o wizard de criação passo a passo.',
-      'A ficha será criada conforme as regras do Tabuleiro do Caos RPG (livro v0.1.7).',
+      'A ficha será criada conforme as regras do Tabuleiro do Caos RPG.',
     ],
     category: 'Primeiros Passos',
     tags: ['criação', 'início'],
@@ -85,12 +85,12 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'Quais são os 6 atributos do sistema?',
     answer: [
       'Os atributos do Tabuleiro do Caos RPG são:',
-      '• Agilidade (Agi) — Destreza, reflexos, coordenação, rapidez',
-      '• Corpo (Cor) — Capacidades físicas, saúde, força, resistência',
-      '• Influência (Inf) — Habilidades sociais, carisma',
-      '• Mente (Men) — Inteligência, raciocínio, conhecimentos',
-      '• Essência (Ess) — Capacidades mágicas, potencial energético',
-      '• Instinto (Ins) — Sentidos, instintos naturais',
+      '• Agilidade (Agi) - Destreza, reflexos, coordenação, rapidez',
+      '• Corpo (Cor) - Capacidades físicas, saúde, força, resistência',
+      '• Influência (Inf) - Habilidades sociais, carisma',
+      '• Mente (Men) - Inteligência, raciocínio, conhecimentos',
+      '• Essência (Ess) - Capacidades mágicas, potencial energético',
+      '• Instinto (Ins) - Sentidos, instintos naturais',
       '',
       'Categorias: Físico (Agi, Cor), Mental (Inf, Men), Espiritual (Ess, Ins).',
       'Valores de 0 a 5. Com atributo 0, rola 2d e usa o menor.',
@@ -169,8 +169,8 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'Como funciona a economia de ações em combate?',
     answer: [
-      '• Turno Rápido: 2 ações (▶▶) — age primeiro na rodada.',
-      '• Turno Lento: 3 ações (▶▶▶) — age depois dos turnos rápidos.',
+      '• Turno Rápido: 2 ações (▶▶) - age primeiro na rodada.',
+      '• Turno Lento: 3 ações (▶▶▶) - age depois dos turnos rápidos.',
       '• Cada criatura tem 1 reação (↩) por rodada.',
       '• Ações livres (∆) não custam recursos.',
       '• Defesa é um teste ativo (não um valor fixo).',

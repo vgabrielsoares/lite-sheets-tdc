@@ -13,7 +13,6 @@ import type { ProficiencyLevel, DieSize, Modifier } from './common';
  * Baseada na tabela oficial das Regras Básicas
  */
 export const SKILL_LIST = [
-  'acerto',
   'acrobacia',
   'adestramento',
   'arcano',
@@ -29,7 +28,6 @@ export const SKILL_LIST = [
   'instrucao',
   'intimidacao',
   'investigacao',
-  'luta',
   'medicina',
   'natureza',
   'oficio',
@@ -63,7 +61,6 @@ export const SKILL_KEY_ATTRIBUTES: Record<
   SkillName,
   AttributeName | 'especial'
 > = {
-  acerto: 'agilidade',
   acrobacia: 'agilidade',
   adestramento: 'influencia',
   arcano: 'essencia',
@@ -79,7 +76,6 @@ export const SKILL_KEY_ATTRIBUTES: Record<
   instrucao: 'mente',
   intimidacao: 'influencia',
   investigacao: 'mente',
-  luta: 'corpo',
   medicina: 'mente',
   natureza: 'instinto',
   oficio: 'especial',
@@ -104,10 +100,8 @@ export const SKILL_KEY_ATTRIBUTES: Record<
  * Baseado na tabela oficial das Regras Básicas
  */
 export const COMBAT_SKILLS: SkillName[] = [
-  'acerto',
   'arcano',
   'determinacao',
-  'luta',
   'natureza',
   'reflexo',
   'religiao',
@@ -214,7 +208,7 @@ export interface SkillPoolCalculation {
   totalDiceModifier: number;
   /** Total de dados na pool (attributeValue + totalDiceModifier) */
   totalDice: number;
-  /** Se usa regra de penalidade extrema (2d, menor) — quando totalDice ≤ 0 */
+  /** Se usa regra de penalidade extrema (2d, menor) - quando totalDice ≤ 0 */
   isPenaltyRoll: boolean;
 }
 
@@ -249,7 +243,6 @@ export type SkillRollFormula = SkillPoolFormula;
  * Descrições das habilidades
  */
 export const SKILL_DESCRIPTIONS: Record<SkillName, string> = {
-  acerto: 'Capacidade de acertar ataques à distância e com armas de precisão.',
   acrobacia:
     'Capacidade de realizar manobras acrobáticas e manter o equilíbrio.',
   adestramento: 'Capacidade de treinar e controlar animais.',
@@ -266,7 +259,6 @@ export const SKILL_DESCRIPTIONS: Record<SkillName, string> = {
   instrucao: 'Repertório de estudo e conhecimento acadêmico.',
   intimidacao: 'Capacidade de ameaçar e intimidar outros.',
   investigacao: 'Capacidade de encontrar pistas e resolver mistérios.',
-  luta: 'Capacidade de combate corpo a corpo desarmado ou com armas.',
   medicina: 'Conhecimento sobre cura, doenças e anatomia.',
   natureza: 'Conhecimento sobre o mundo natural e sintonia com a natureza.',
   oficio: 'Habilidade em um ofício específico ou artesanato.',

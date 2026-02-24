@@ -45,8 +45,8 @@ export default function DiceRollingGuide() {
 
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         O Lite Sheets TDC usa o sistema de pool de dados com contagem de
-        sucessos do Tabuleiro do Caos RPG (livro v0.1.7). Aprenda como funciona
-        a rolagem, os graus de habilidade e como interpretar resultados.
+        sucessos do Tabuleiro do Caos RPG. Aprenda como funciona a rolagem, os
+        graus de habilidade e como interpretar resultados.
       </Typography>
 
       {/* Mecânica Básica */}

@@ -27,7 +27,7 @@ export interface ArchetypesTabProps {
  *
  * Exibe informações de arquétipos e classes:
  * - Nível total do personagem
- * - Nível de cada arquétipo (somente leitura — level up via aba Principal)
+ * - Nível de cada arquétipo (somente leitura - level up via aba Principal)
  * - Cálculo de GA e PP baseado nos arquétipos
  * - Características e Poderes de arquétipo (sincronizados com aba Especiais)
  * - Sistema de classes (até 3 classes)

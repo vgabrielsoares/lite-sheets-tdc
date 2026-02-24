@@ -216,7 +216,7 @@ describe('SignatureAbility', () => {
     });
 
     it('deve calcular bônus +2d para nível 9 (faixa 6-10)', () => {
-      const skills = createMockSkills('acerto'); // Acerto é combate, mas bônus é o mesmo
+      const skills = createMockSkills('reflexo'); // Reflexo é combate, mas bônus é o mesmo
 
       render(
         <SignatureAbility
@@ -231,7 +231,7 @@ describe('SignatureAbility', () => {
     });
 
     it('deve calcular bônus +1d para nível baixo (faixa 1-5)', () => {
-      const skills = createMockSkills('luta'); // Luta é combate
+      const skills = createMockSkills('vigor'); // Vigor é combate
 
       render(
         <SignatureAbility
@@ -246,7 +246,7 @@ describe('SignatureAbility', () => {
     });
 
     it('deve mostrar chip "Combate" para habilidades de combate', () => {
-      const skills = createMockSkills('acerto');
+      const skills = createMockSkills('reflexo');
 
       render(
         <SignatureAbility
@@ -276,7 +276,7 @@ describe('SignatureAbility', () => {
       expect(getSuccessAlert()).toHaveTextContent('+2d');
 
       // Combate: mesmo bônus
-      const skillsCombat = createMockSkills('acerto');
+      const skillsCombat = createMockSkills('reflexo');
       rerender(
         <SignatureAbility
           skills={skillsCombat}

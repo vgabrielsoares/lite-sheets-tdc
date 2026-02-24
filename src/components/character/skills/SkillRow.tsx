@@ -592,7 +592,7 @@ export const SkillRow: React.FC<SkillRowProps> = React.memo(
                     color="text.disabled"
                     sx={{ px: 1 }}
                   >
-                    —
+                    -
                   </Typography>
                 )}
               </>

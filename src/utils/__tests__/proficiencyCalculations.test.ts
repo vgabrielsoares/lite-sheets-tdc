@@ -24,11 +24,6 @@ const createMockSkills = (
   };
 
   const skills = {
-    acerto: {
-      ...defaultSkill,
-      name: 'acerto' as const,
-      proficiencyLevel: 'leigo' as const,
-    },
     acrobacia: {
       ...defaultSkill,
       name: 'acrobacia' as const,
@@ -107,11 +102,6 @@ const createMockSkills = (
     investigacao: {
       ...defaultSkill,
       name: 'investigacao' as const,
-      proficiencyLevel: 'leigo' as const,
-    },
-    luta: {
-      ...defaultSkill,
-      name: 'luta' as const,
       proficiencyLevel: 'leigo' as const,
     },
     medicina: {
@@ -237,7 +227,7 @@ describe('proficiencyCalculations', () => {
 
     it('should count adepto proficiencies', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
       });
@@ -254,14 +244,14 @@ describe('proficiencyCalculations', () => {
 
     it('should count mestre proficiencies', () => {
       const skills = createMockSkills({
-        luta: 'mestre',
+        medicina: 'mestre',
       });
       expect(countAcquiredProficiencies(skills)).toBe(1);
     });
 
     it('should count mixed proficiencies', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'versado',
         percepcao: 'mestre',
         furtividade: 'adepto',
@@ -273,7 +263,7 @@ describe('proficiencyCalculations', () => {
   describe('canAddProficiency', () => {
     it('should allow adding when below limit', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
       });
       expect(canAddProficiency(skills, 2)).toBe(true); // 2 of 5 used
@@ -281,7 +271,7 @@ describe('proficiencyCalculations', () => {
 
     it('should not allow adding when at limit', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
         furtividade: 'adepto',
@@ -291,11 +281,11 @@ describe('proficiencyCalculations', () => {
 
     it('should not allow adding when above limit', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
         furtividade: 'adepto',
-        luta: 'adepto',
+        medicina: 'adepto',
       });
       expect(canAddProficiency(skills, 1)).toBe(false); // 5 of 4 used
     });
@@ -304,7 +294,7 @@ describe('proficiencyCalculations', () => {
   describe('validateProficienciesLimit', () => {
     it('should validate when within limit', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
       });
@@ -313,7 +303,7 @@ describe('proficiencyCalculations', () => {
 
     it('should validate when at limit', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
         furtividade: 'adepto',
@@ -323,11 +313,11 @@ describe('proficiencyCalculations', () => {
 
     it('should not validate when above limit', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
         furtividade: 'adepto',
-        luta: 'adepto',
+        medicina: 'adepto',
       });
       expect(validateProficienciesLimit(skills, 1)).toBe(false); // 5 of 4
     });
@@ -341,7 +331,7 @@ describe('proficiencyCalculations', () => {
   describe('getRemainingProficiencies', () => {
     it('should calculate remaining proficiencies', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
       });
       expect(getRemainingProficiencies(skills, 2)).toBe(3); // 5 - 2 = 3
@@ -349,7 +339,7 @@ describe('proficiencyCalculations', () => {
 
     it('should return 0 when at limit', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
         furtividade: 'adepto',
@@ -359,11 +349,11 @@ describe('proficiencyCalculations', () => {
 
     it('should return 0 (not negative) when above limit', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
         furtividade: 'adepto',
-        luta: 'adepto',
+        medicina: 'adepto',
       });
       expect(getRemainingProficiencies(skills, 1)).toBe(0); // Max(0, 4-5)
     });
@@ -372,7 +362,7 @@ describe('proficiencyCalculations', () => {
   describe('getProficiencyInfo', () => {
     it('should return complete proficiency info', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'versado',
         percepcao: 'mestre',
       });
@@ -389,7 +379,7 @@ describe('proficiencyCalculations', () => {
 
     it('should indicate when cannot add more', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
         furtividade: 'adepto',
@@ -402,11 +392,11 @@ describe('proficiencyCalculations', () => {
 
     it('should indicate when invalid (above limit)', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
         furtividade: 'adepto',
-        luta: 'adepto',
+        medicina: 'adepto',
       });
       const info = getProficiencyInfo(skills, 1);
 
@@ -419,14 +409,14 @@ describe('proficiencyCalculations', () => {
   describe('countProficienciesByLevel', () => {
     it('should count proficiencies by level', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'versado',
         furtividade: 'mestre',
       });
       const counts = countProficienciesByLevel(skills);
 
-      expect(counts.leigo).toBe(29); // 33 - 4
+      expect(counts.leigo).toBe(27); // 31 - 4
       expect(counts.adepto).toBe(2);
       expect(counts.versado).toBe(1);
       expect(counts.mestre).toBe(1);
@@ -436,7 +426,7 @@ describe('proficiencyCalculations', () => {
       const skills = createMockSkills({});
       const counts = countProficienciesByLevel(skills);
 
-      expect(counts.leigo).toBe(33);
+      expect(counts.leigo).toBe(31);
       expect(counts.adepto).toBe(0);
       expect(counts.versado).toBe(0);
       expect(counts.mestre).toBe(0);
@@ -446,7 +436,7 @@ describe('proficiencyCalculations', () => {
   describe('retroactive behavior', () => {
     it('should increase max proficiencies when Mente increases', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
       });
@@ -462,7 +452,7 @@ describe('proficiencyCalculations', () => {
 
     it('should keep proficiencies when Mente decreases', () => {
       const skills = createMockSkills({
-        acerto: 'adepto',
+        destreza: 'adepto',
         atletismo: 'adepto',
         percepcao: 'adepto',
         furtividade: 'adepto',

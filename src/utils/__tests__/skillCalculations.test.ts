@@ -122,7 +122,7 @@ describe('skillCalculations', () => {
 
     it('deve aplicar bônus de Assinatura +2d para nível 6-10', () => {
       const result = calculateSkillTotalModifier(
-        'acerto',
+        'reflexo',
         'agilidade',
         3,
         'versado',
@@ -141,7 +141,7 @@ describe('skillCalculations', () => {
 
     it('deve aplicar bônus de Assinatura +1d para nível 1 (mínimo)', () => {
       const result = calculateSkillTotalModifier(
-        'luta',
+        'vigor',
         'corpo',
         2,
         'adepto',
@@ -616,8 +616,6 @@ describe('skillCalculations', () => {
 
   describe('isCombatSkill', () => {
     it('deve retornar true para habilidades de combate', () => {
-      expect(isCombatSkill('acerto')).toBe(true);
-      expect(isCombatSkill('luta')).toBe(true);
       expect(isCombatSkill('reflexo')).toBe(true);
       expect(isCombatSkill('determinacao')).toBe(true);
       expect(isCombatSkill('natureza')).toBe(true);
@@ -704,11 +702,11 @@ describe('skillCalculations', () => {
       const skillUse = {
         keyAttribute: 'mente' as const,
         bonus: 0,
-        skillName: 'luta' as const,
+        skillName: 'vigor' as const,
       };
 
       const baseSkill: Skill = {
-        name: 'luta',
+        name: 'vigor',
         keyAttribute: 'corpo',
         proficiencyLevel: 'mestre' as const,
         isSignature: true,

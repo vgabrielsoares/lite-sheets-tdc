@@ -2,7 +2,7 @@
  * Resources Constants - Constantes para o sistema de dados de recurso
  *
  * Define os recursos padrão, pré-definidos e configurações do sistema
- * de dados de recurso do Tabuleiro do Caos RPG v0.1.7.
+ * de dados de recurso do Tabuleiro do Caos RPG.
  */
 
 import type { DiceType } from '@/types/common';

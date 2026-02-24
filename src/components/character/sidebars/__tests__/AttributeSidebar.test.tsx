@@ -290,16 +290,16 @@ describe('AttributeSidebar', () => {
       expect(
         screen.getByText('Habilidades que Usam Agilidade')
       ).toBeInTheDocument();
-      // Agilidade skills: acerto, acrobacia, conducao, destreza, furtividade, iniciativa, reflexo
-      expect(screen.getByText('acerto')).toBeInTheDocument();
+      // Agilidade skills: acrobacia, conducao, destreza, furtividade, reflexo
+      expect(screen.getByText('reflexo')).toBeInTheDocument();
       expect(screen.getByText('acrobacia')).toBeInTheDocument();
       expect(screen.getByText('furtividade')).toBeInTheDocument();
     });
 
     it('should show proficiency level for each skill', () => {
       // Set some skills to non-leigo proficiency
-      mockCharacter.skills.acerto = {
-        ...mockCharacter.skills.acerto,
+      mockCharacter.skills.reflexo = {
+        ...mockCharacter.skills.reflexo,
         proficiencyLevel: 'adepto',
       };
       mockCharacter.skills.furtividade = {
@@ -325,9 +325,9 @@ describe('AttributeSidebar', () => {
     });
 
     it('should mark skills with changed key attribute as crossed out', () => {
-      // Change luta to use Agilidade instead of Corpo
-      mockCharacter.skills.luta = {
-        ...mockCharacter.skills.luta,
+      // Change vigor to use Agilidade instead of Corpo
+      mockCharacter.skills.vigor = {
+        ...mockCharacter.skills.vigor,
         keyAttribute: 'agilidade',
       };
 
@@ -341,10 +341,10 @@ describe('AttributeSidebar', () => {
         />
       );
 
-      // Find luta skill item - should have reduced opacity or line-through
-      const lutaItem = container.querySelector('li')?.parentElement;
+      // Find vigor skill item - should have reduced opacity or line-through
+      const vigorItem = container.querySelector('li')?.parentElement;
       // This is a simplified check - actual implementation may vary
-      expect(screen.getByText('luta')).toBeInTheDocument();
+      expect(screen.getByText('vigor')).toBeInTheDocument();
     });
 
     it('should show custom key skills section when applicable', () => {

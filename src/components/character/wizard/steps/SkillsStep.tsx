@@ -220,7 +220,7 @@ export default function SkillsStep({ wizard }: WizardStepProps) {
         <Box sx={{ mt: 2 }}>
           <Typography variant="body2" color="text.secondary">
             Proficiências livres: <strong>{freeSlots}</strong> (3 base +{' '}
-            {menteValue} Mente) — além das ganhas por Origem e Arquétipo
+            {menteValue} Mente) - além das ganhas por Origem e Arquétipo
           </Typography>
 
           <Stack
@@ -472,7 +472,7 @@ export default function SkillsStep({ wizard }: WizardStepProps) {
 
         {luckLevel > 0 && (
           <Alert severity="info" sx={{ mt: 2 }}>
-            Nível de Sorte <strong>{luckLevel}</strong> — consumindo{' '}
+            Nível de Sorte <strong>{luckLevel}</strong> - consumindo{' '}
             <strong>
               {luckLevel} slot{luckLevel !== 1 ? 's' : ''}
             </strong>{' '}

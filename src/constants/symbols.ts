@@ -1,8 +1,8 @@
 /**
- * System Symbols — Símbolos e Significados do Sistema
+ * System Symbols - Símbolos e Significados do Sistema
  *
  * Referência centralizada de todos os símbolos usados no
- * Tabuleiro do Caos RPG (livro v0.1.7).
+ * Tabuleiro do Caos RPG.
  *
  * Usar esta constante em toda a UI para garantir consistência.
  */

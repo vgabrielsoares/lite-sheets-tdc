@@ -220,7 +220,7 @@ export const SpellPointsDisplay = React.memo(function SpellPointsDisplay({
                 fontWeight: 600,
               }}
             >
-              Esgotado — não pode conjurar com 0 PP
+              Esgotado - não pode conjurar com 0 PP
             </Typography>
           )}
 
@@ -247,7 +247,7 @@ export const SpellPointsDisplay = React.memo(function SpellPointsDisplay({
               <Tooltip
                 title={
                   isExhausted
-                    ? 'Esgotado — 0 PP'
+                    ? 'Esgotado - 0 PP'
                     : 'Gastar PF também gasta PP no mesmo valor'
                 }
                 arrow

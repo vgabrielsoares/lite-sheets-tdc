@@ -182,7 +182,7 @@ export default function LevelRow({
               ))
             ) : (
               <Typography variant="body2" color="text.secondary">
-                —
+                -
               </Typography>
             )}
           </Stack>
@@ -205,7 +205,7 @@ export default function LevelRow({
               ))
             ) : (
               <Typography variant="body2" color="text.secondary">
-                —
+                -
               </Typography>
             )}
           </Stack>

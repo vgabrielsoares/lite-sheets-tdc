@@ -2,7 +2,7 @@
  * Attributes - Tipos relacionados a atributos do personagem
  *
  * Este arquivo contém os tipos e interfaces relacionados aos seis atributos base
- * do sistema Tabuleiro do Caos RPG (v0.1.7): Agilidade, Corpo, Influência, Mente, Essência e Instinto.
+ * do sistema Tabuleiro do Caos RPG: Agilidade, Corpo, Influência, Mente, Essência e Instinto.
  */
 
 /**
@@ -69,13 +69,13 @@ export const ATTRIBUTE_MIN = 0;
 export const ATTRIBUTE_MAX_DEFAULT = 5; // Pode ser superado em casos especiais
 
 /**
- * Descrições dos atributos (conforme livro v0.1.7)
+ * Descrições dos atributos (conforme livro de regras)
  */
 export const ATTRIBUTE_DESCRIPTIONS: Record<AttributeName, string> = {
   agilidade:
     'A agilidade mede a destreza manual e física, reflexos, coordenação motora, flexibilidade e rapidez. Foco: esquiva, ataques à distância, armas com propriedades ideais, destreza, acrobacia, furtividade.',
   corpo:
-    'O corpo mede as capacidades físicas de uma criatura, sua saúde, força e resistência. Foco: combate corpo a corpo, vigor, atletismo, luta, testes de resistência.',
+    'O corpo mede as capacidades físicas de uma criatura, sua saúde, força e resistência. Foco: combate corpo a corpo, vigor, atletismo, testes de resistência.',
   influencia:
     'A influência diz respeito às habilidades sociais de uma criatura e seu carisma. Foco: persuasão, enganação, intimidação.',
   mente:

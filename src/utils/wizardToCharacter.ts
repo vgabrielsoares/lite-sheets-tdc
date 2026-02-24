@@ -2,7 +2,7 @@
  * wizardToCharacter - Converte o estado do wizard para um Character completo
  *
  * Aplica todos os ganhos de nível 1 e monta a estrutura final do personagem
- * conforme as regras do RPG Tabuleiro do Caos (livro v0.1.7).
+ * conforme as regras do RPG Tabuleiro do Caos.
  */
 
 import { uuidv4 } from './uuid';
@@ -290,13 +290,13 @@ function calculatePP(state: WizardState): number {
 
 /**
  * Cria o ataque desarmado padrão
+ * Ataque físico padronizado por nível
  */
 function createUnarmedAttack(): Attack {
   return {
     name: 'Ataque Desarmado',
     type: 'corpo-a-corpo',
-    attackSkill: 'luta',
-    attackSkillUseId: 'atacar',
+    attackSkill: undefined,
     attackAttribute: 'corpo',
     attackDiceModifier: 0,
     damageRoll: {
@@ -608,7 +608,7 @@ function createCharacterProficiencies(state: WizardState): {
       lowerProf.includes('armor') ||
       lowerProf.includes('escudo')
     ) {
-      // Armaduras e escudos — DEVE vir antes de 'arma' para evitar falso positivo
+      // Armaduras e escudos - DEVE vir antes de 'arma' para evitar falso positivo
       proficiencies.armor.push(prof);
     } else if (
       lowerProf.includes('arma') ||
@@ -827,7 +827,7 @@ export function convertWizardToCharacter(state: WizardState): Character {
 
     // Habilidades
     skills: createCharacterSkills(state),
-    signatureSkill: state.skills.signatureSkill || 'acerto',
+    signatureSkill: state.skills.signatureSkill || 'acrobacia',
     // Proficiências de origem + arquétipo são bônus adicionais ao 3+Mente
     skillProficiencyBonusSlots: new Set([
       ...state.origin.skillProficiencies,

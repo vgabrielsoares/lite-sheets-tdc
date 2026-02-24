@@ -36,6 +36,7 @@ import {
 } from '@/constants/skills';
 import { ATTRIBUTE_LABELS } from '@/constants/attributes';
 import { calculateAttackPool } from '@/utils/attackCalculations';
+import { getAttackDefenseDieSize } from '@/constants/combatLevels';
 import { getAvailableDefaultUses } from '@/constants/skillUses';
 import {
   parseDiceNotation,
@@ -104,14 +105,8 @@ const RANGE_OPTIONS = [
   'Ilimitado',
 ];
 
-/** Habilidades de ataque principais */
-const ATTACK_SKILLS: SkillName[] = [
-  'acerto',
-  'luta',
-  'arcano',
-  'natureza',
-  'religiao',
-];
+/** Habilidades de ataque principais (mágicas) */
+const ATTACK_SKILLS: SkillName[] = ['arcano', 'natureza', 'religiao'];
 
 /** Habilidades de ataque secundárias */
 const SECONDARY_ATTACK_SKILLS: SkillName[] = [
@@ -123,11 +118,17 @@ const SECONDARY_ATTACK_SKILLS: SkillName[] = [
   'reflexo',
 ];
 
+/**
+ * Valor sentinela para ataques físicos padronizados por nível.
+ * Quando selecionado, attackSkill será undefined no Attack salvo.
+ */
+const PHYSICAL_ATTACK_VALUE = '__physical__';
+
 /** Ataque padrão para novo ataque */
 const DEFAULT_ATTACK: Attack = {
   name: '',
   type: 'corpo-a-corpo',
-  attackSkill: 'acerto',
+  attackSkill: undefined,
   attackDiceModifier: 0,
   damageRoll: {
     quantity: 1,
@@ -149,7 +150,7 @@ const DEFAULT_ATTACK: Attack = {
  * Permite configurar:
  * - Nome do ataque
  * - Tipo de ataque (corpo a corpo, distância, mágico)
- * - Habilidade usada (Acerto, Luta, Arcano, etc.)
+ * - Habilidade usada (Arcano, Natureza, Religião, ou Ataque Físico por nível)
  * - Bônus de ataque
  * - Rolagem de dano (quantidade, tipo de dado, modificador)
  * - Tipo de dano
@@ -185,14 +186,15 @@ export function AttackForm({
   const [bonusDiceStr, setBonusDiceStr] = useState('');
   const [damageModifier, setDamageModifier] = useState(0);
 
-  // Obter habilidade atual
+  // Obter habilidade atual (undefined para ataques físicos)
   const currentSkill = useMemo(() => {
+    if (!attack.attackSkill) return undefined;
     return character.skills[attack.attackSkill];
   }, [character.skills, attack.attackSkill]);
 
   // Obter usos padrões disponíveis baseado na proficiência
   const availableDefaultUses = useMemo(() => {
-    if (!currentSkill) return [];
+    if (!attack.attackSkill || !currentSkill) return [];
     return getAvailableDefaultUses(
       attack.attackSkill,
       currentSkill.proficiencyLevel
@@ -221,7 +223,12 @@ export function AttackForm({
 
   // Obter atributo padrão da habilidade/uso selecionado
   const defaultAttribute = useMemo(() => {
-    if (!currentSkill) return 'agilidade' as AttributeName;
+    // Ataque físico: sugestão baseada no tipo, mas jogador escolhe livremente
+    if (!attack.attackSkill || !currentSkill) {
+      return (
+        attack.type === 'distancia' ? 'agilidade' : 'corpo'
+      ) as AttributeName;
+    }
 
     // Se um uso está selecionado, usa o atributo do uso
     if (attack.attackSkillUseId && currentSkill.customUses) {
@@ -233,7 +240,14 @@ export function AttackForm({
 
     // Senão, usa o atributo da habilidade
     return currentSkill.keyAttribute;
-  }, [currentSkill, attack.attackSkillUseId]);
+  }, [currentSkill, attack.attackSkillUseId, attack.attackSkill, attack.type]);
+
+  // Se é ataque físico, verificar se o jogador já tem um atributo selecionado
+  const isPhysicalAttack = !attack.attackSkill;
+  const effectivePhysicalAttribute = useMemo(() => {
+    if (!isPhysicalAttack) return undefined;
+    return attack.attackAttribute || defaultAttribute;
+  }, [isPhysicalAttack, attack.attackAttribute, defaultAttribute]);
 
   // Calcular preview da fórmula de ataque
   const attackPreview = useMemo(() => {
@@ -242,7 +256,8 @@ export function AttackForm({
       attack.attackSkill,
       attack.attackSkillUseId,
       attack.attackDiceModifier || 0,
-      attack.attackAttribute
+      attack.attackAttribute,
+      attack.type
     );
   }, [
     character,
@@ -250,6 +265,7 @@ export function AttackForm({
     attack.attackSkillUseId,
     attack.attackAttribute,
     attack.attackDiceModifier,
+    attack.type,
   ]);
 
   // Resetar form quando abrir/fechar ou mudar ataque editado
@@ -555,16 +571,37 @@ export function AttackForm({
               <InputLabel id="attack-skill-label">Habilidade Usada</InputLabel>
               <Select
                 labelId="attack-skill-label"
-                value={attack.attackSkill}
+                value={attack.attackSkill || PHYSICAL_ATTACK_VALUE}
                 label="Habilidade Usada"
                 onChange={(e) => {
-                  updateField('attackSkill', e.target.value as SkillName);
+                  const value = e.target.value;
+                  if (value === PHYSICAL_ATTACK_VALUE) {
+                    updateField('attackSkill', undefined);
+                  } else {
+                    updateField('attackSkill', value as SkillName);
+                  }
                   // Reset skill use quando mudar a habilidade
                   updateField('attackSkillUseId', undefined);
                   updateField('attackAttribute', undefined);
                 }}
               >
-                {/* Habilidades de ataque principais primeiro */}
+                {/* Ataque Físico Padronizado (dado por nível) */}
+                <MenuItem value={PHYSICAL_ATTACK_VALUE}>
+                  <strong>Ataque Físico</strong>&nbsp; (
+                  {
+                    calculateAttackPool(
+                      character,
+                      undefined,
+                      undefined,
+                      0,
+                      undefined,
+                      attack.type
+                    ).formula
+                  }{' '}
+                  - {getAttackDefenseDieSize(character.level)} por nível)
+                </MenuItem>
+                <Divider />
+                {/* Habilidades de ataque mágicas */}
                 {ATTACK_SKILLS.map((skill) => {
                   const formula = calculateAttackPool(
                     character,
@@ -596,7 +633,7 @@ export function AttackForm({
               </Select>
             </FormControl>
 
-            <FormControl fullWidth>
+            <FormControl fullWidth disabled={!attack.attackSkill}>
               <InputLabel id="skill-use-label">Uso de Habilidade</InputLabel>
               <Select
                 labelId="skill-use-label"
@@ -608,7 +645,11 @@ export function AttackForm({
                 }}
               >
                 <MenuItem value="">
-                  <em>Usar Habilidade Padrão</em>
+                  <em>
+                    {attack.attackSkill
+                      ? 'Usar Habilidade Padrão'
+                      : 'N/A (Ataque Físico)'}
+                  </em>
                 </MenuItem>
                 {allAvailableUses.map((use) => {
                   // Calcular fórmula do uso
@@ -638,12 +679,21 @@ export function AttackForm({
           >
             <FormControl fullWidth>
               <InputLabel id="attack-attribute-label">
-                Atributo (padrão: {ATTRIBUTE_LABELS[defaultAttribute]})
+                {isPhysicalAttack
+                  ? 'Atributo do Ataque'
+                  : `Atributo (padrão: ${ATTRIBUTE_LABELS[defaultAttribute]})`}
               </InputLabel>
               <Select
                 labelId="attack-attribute-label"
-                value={attack.attackAttribute || ''}
-                label={`Atributo (padrão: ${ATTRIBUTE_LABELS[defaultAttribute]})`}
+                value={
+                  attack.attackAttribute ||
+                  (isPhysicalAttack ? defaultAttribute : '')
+                }
+                label={
+                  isPhysicalAttack
+                    ? 'Atributo do Ataque'
+                    : `Atributo (padrão: ${ATTRIBUTE_LABELS[defaultAttribute]})`
+                }
                 onChange={(e) =>
                   updateField(
                     'attackAttribute',
@@ -653,32 +703,45 @@ export function AttackForm({
                   )
                 }
               >
-                <MenuItem value="">
-                  <em>
-                    Usar Atributo Padrão ({ATTRIBUTE_LABELS[defaultAttribute]})
-                  </em>
-                </MenuItem>
-                {(Object.keys(ATTRIBUTE_LABELS) as AttributeName[]).map(
-                  (attr) => {
-                    // Calcular fórmula usando este atributo
-                    const attrFormula = calculateAttackPool(
-                      character,
-                      attack.attackSkill,
-                      attack.attackSkillUseId,
-                      0,
-                      attr
-                    ).formula;
+                {isPhysicalAttack
+                  ? // Para ataques físicos, mostrar apenas Corpo e Agilidade
+                    [
+                      <MenuItem key="corpo" value="corpo">
+                        Corpo ({character.attributes.corpo})
+                      </MenuItem>,
+                      <MenuItem key="agilidade" value="agilidade">
+                        Agilidade ({character.attributes.agilidade})
+                      </MenuItem>,
+                    ]
+                  : // Para ataques mágicos, manter seleção completa
+                    [
+                      <MenuItem key="" value="">
+                        <em>
+                          Usar Atributo Padrão (
+                          {ATTRIBUTE_LABELS[defaultAttribute]})
+                        </em>
+                      </MenuItem>,
+                      ...(Object.keys(ATTRIBUTE_LABELS) as AttributeName[]).map(
+                        (attr) => {
+                          const attrFormula = calculateAttackPool(
+                            character,
+                            attack.attackSkill,
+                            attack.attackSkillUseId,
+                            0,
+                            attr
+                          ).formula;
 
-                    return (
-                      <MenuItem key={attr} value={attr}>
-                        {ATTRIBUTE_LABELS[attr]}
-                        {' ('}
-                        {attrFormula}
-                        {')'}
-                      </MenuItem>
-                    );
-                  }
-                )}
+                          return (
+                            <MenuItem key={attr} value={attr}>
+                              {ATTRIBUTE_LABELS[attr]}
+                              {' ('}
+                              {attrFormula}
+                              {')'}
+                            </MenuItem>
+                          );
+                        }
+                      ),
+                    ]}
               </Select>
             </FormControl>
 
@@ -715,7 +778,7 @@ export function AttackForm({
                 : ATTRIBUTE_LABELS[defaultAttribute]}
               {attackPreview.useName ? ` - ${attackPreview.useName}` : ''})
               {attackPreview.isPenaltyRoll &&
-                ' — Penalidade: usa menor resultado'}
+                ' - Penalidade: usa menor resultado'}
             </Typography>
           </Alert>
 

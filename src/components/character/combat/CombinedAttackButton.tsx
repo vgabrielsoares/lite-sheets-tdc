@@ -180,14 +180,14 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
         attackAttribute
       );
     }
-    return {
-      diceCount: 1,
-      dieSize: 'd6' as const,
-      isPenaltyRoll: false,
-      formula: '1d6',
-      attribute: 'corpo' as const,
-      skillName: 'luta' as const,
-    };
+    // Ataque físico padronizado por nível
+    return calculateAttackPool(
+      character,
+      undefined,
+      undefined,
+      attackDiceModifier,
+      attackAttribute
+    );
   }, [
     character,
     attackSkill,

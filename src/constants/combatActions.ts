@@ -1,10 +1,10 @@
 /**
- * Ações de Combate — Referência rápida
+ * Ações de Combate - Referência rápida
  *
  * Lista completa de ações de combate com custos em ações.
  * Símbolos: ▶ (ação), ↩ (reação), ∆ (ação livre)
  *
- * Baseado nas regras v0.1.7 do Tabuleiro do Caos RPG.
+ * Baseado nas regras do Tabuleiro do Caos RPG.
  */
 
 /**
@@ -57,7 +57,7 @@ export function formatActionCost(action: CombatAction): string {
 }
 
 /**
- * Ações — custos em ▶
+ * Ações - custos em ▶
  */
 export const ACTION_COMBAT_ACTIONS: CombatAction[] = [
   {
@@ -161,7 +161,7 @@ export const ACTION_COMBAT_ACTIONS: CombatAction[] = [
 ];
 
 /**
- * Reações — custos em ↩
+ * Reações - custos em ↩
  */
 export const REACTION_COMBAT_ACTIONS: CombatAction[] = [
   {
@@ -188,7 +188,7 @@ export const REACTION_COMBAT_ACTIONS: CombatAction[] = [
 ];
 
 /**
- * Ações Livres — custos em ∆
+ * Ações Livres - custos em ∆
  */
 export const FREE_COMBAT_ACTIONS: CombatAction[] = [
   {

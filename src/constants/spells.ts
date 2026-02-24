@@ -31,7 +31,7 @@ export const SPELL_CIRCLE_PP_COST: Record<SpellCircle, number> = {
  * Custo em PF (Pontos de Feitiço) por círculo de feitiço
  * Gastar PF também gasta PP no mesmo valor.
  * Não é possível reduzir o custo abaixo de 1 PF, exceto 1º Círculo sem aprimoramentos.
- * Tabela oficial (livro v0.1.7):
+ * Tabela oficial:
  * 1º=0, 2º=1, 3º=3, 4º=5, 5º=7, 6º=9, 7º=15, 8º=20
  */
 export const SPELL_CIRCLE_PF_COST: Record<SpellCircle, number> = {

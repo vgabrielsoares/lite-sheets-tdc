@@ -662,14 +662,13 @@ export const characterService = {
       return character;
     }
 
-    // Criar ataque desarmado
+    // Criar ataque desarmado (ataque físico padronizado por nível)
     const unarmedAttack = {
       name: UNARMED_ATTACK_NAME,
       type: 'corpo-a-corpo' as const,
-      attackSkill: 'luta' as const,
-      attackSkillUseId: 'atacar',
+      attackSkill: undefined,
       attackAttribute: 'corpo' as const,
-      attackBonus: 0,
+      attackDiceModifier: 0,
       damageRoll: {
         quantity: 1,
         type: 'd2' as const,

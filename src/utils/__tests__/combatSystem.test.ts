@@ -309,7 +309,7 @@ describe('Pool de Ataque', () => {
         isPenaltyRoll: false,
         formula: '5d6',
         attribute: 'corpo' as AttributeName,
-        skillName: 'luta' as SkillName,
+        skillName: 'atletismo' as SkillName,
         useName: 'Atacar',
       });
 
@@ -331,7 +331,7 @@ describe('Pool de Ataque', () => {
         isPenaltyRoll: false,
         formula: '100d6',
         attribute: 'corpo' as AttributeName,
-        skillName: 'luta' as SkillName,
+        skillName: 'atletismo' as SkillName,
         useName: 'Atacar',
       });
 
@@ -350,7 +350,7 @@ describe('Pool de Ataque', () => {
         isPenaltyRoll: true,
         formula: '2d6 (menor)',
         attribute: 'corpo' as AttributeName,
-        skillName: 'luta' as SkillName,
+        skillName: 'atletismo' as SkillName,
         useName: 'Atacar',
       };
 
@@ -368,7 +368,7 @@ describe('Pool de Ataque', () => {
         isPenaltyRoll: false,
         formula: '8d8',
         attribute: 'corpo' as AttributeName,
-        skillName: 'luta' as SkillName,
+        skillName: 'atletismo' as SkillName,
         useName: 'Atacar',
       });
 
@@ -633,10 +633,10 @@ describe('Condições', () => {
   });
 
   describe('penalidades de dados', () => {
-    it('Esgotado: -1d em Corpo e Instinto', () => {
+    it('Esgotado: -1d em Corpo e Essência', () => {
       const esgotado = CONDITION_MAP['esgotado'];
       expect(esgotado.dicePenalty?.targets).toContain('corpo');
-      expect(esgotado.dicePenalty?.targets).toContain('instinto');
+      expect(esgotado.dicePenalty?.targets).toContain('essencia');
       expect(esgotado.dicePenalty?.modifier).toBe(-1);
     });
 

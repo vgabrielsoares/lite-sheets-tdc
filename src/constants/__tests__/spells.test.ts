@@ -40,7 +40,7 @@ describe('SPELL_CIRCLES', () => {
 // ─── PP Cost (deprecated but still used) ────────────────────
 
 describe('SPELL_CIRCLE_PP_COST', () => {
-  it('should have correct costs per circle (book v0.1.7)', () => {
+  it('should have correct costs per circle', () => {
     expect(SPELL_CIRCLE_PP_COST[1]).toBe(0);
     expect(SPELL_CIRCLE_PP_COST[2]).toBe(1);
     expect(SPELL_CIRCLE_PP_COST[3]).toBe(3);
@@ -72,7 +72,7 @@ describe('SPELL_CIRCLE_PP_COST', () => {
 // ─── PF Cost ────────────────────────────────────────────────
 
 describe('SPELL_CIRCLE_PF_COST', () => {
-  it('should have correct costs per circle (book v0.1.7)', () => {
+  it('should have correct costs per circle', () => {
     expect(SPELL_CIRCLE_PF_COST[1]).toBe(0);
     expect(SPELL_CIRCLE_PF_COST[2]).toBe(1);
     expect(SPELL_CIRCLE_PF_COST[3]).toBe(3);
@@ -89,8 +89,8 @@ describe('SPELL_CIRCLE_PF_COST', () => {
     }
   });
 
-  it('should match PP costs (v0.1.7: same table)', () => {
-    // In v0.1.7, PF costs = PP costs (same values)
+  it('should match PP costs (same table)', () => {
+    // PF costs = PP costs (same values)
     for (const circle of SPELL_CIRCLES) {
       expect(SPELL_CIRCLE_PF_COST[circle]).toBe(SPELL_CIRCLE_PP_COST[circle]);
     }

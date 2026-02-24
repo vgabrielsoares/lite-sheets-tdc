@@ -205,7 +205,7 @@ export default function ArchetypeDisplay({
     [archetypes, attributes.essencia]
   );
 
-  // Handler removed — archetype levels are managed exclusively via LevelUpModal
+  // Handler removed - archetype levels are managed exclusively via LevelUpModal
 
   return (
     <Box>

@@ -1,7 +1,7 @@
 /**
  * Utility functions for RPG system calculations
  *
- * All calculations follow Tabuleiro do Caos RPG rules (livro v0.1.7):
+ * All calculations follow Tabuleiro do Caos RPG rules:
  * - Always round DOWN for fractional results
  * - Attributes range from 0 to 5 by default (can exceed in special cases, max 6)
  * - Attribute value 0: Roll 2d6 and take LOWEST result

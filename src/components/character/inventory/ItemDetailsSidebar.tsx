@@ -2,7 +2,7 @@
  * ItemDetailsSidebar - Sidebar de Detalhes de Item
  *
  * Sidebar complementar para visualizar resumo do item e editar dados estendidos
- * (tags e notas). Informações básicas são exibidas em modo leitura —
+ * (tags e notas). Informações básicas são exibidas em modo leitura
  * para editá-las o jogador usa o dialog de edição na lista do inventário.
  */
 

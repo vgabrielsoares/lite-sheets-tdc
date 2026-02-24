@@ -102,7 +102,7 @@ describe('SpellDashboard - Refatorado', () => {
       mockCharacter.combat.ppLimit.modifiers = [];
       renderComponent();
 
-      // Deve exibir 5 (3 + 2 + 0) — may appear in cost table too
+      // Deve exibir 5 (3 + 2 + 0) - may appear in cost table too
       const fives = screen.getAllByText('5');
       expect(fives.length).toBeGreaterThanOrEqual(1);
     });

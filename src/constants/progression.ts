@@ -1,14 +1,14 @@
 /**
- * Constantes de Progressão — Tabela de XP e Level Up
+ * Constantes de Progressão - Tabela de XP e Level Up
  *
- * Tabela oficial do livro v0.1.7 (Tabuleiro do Caos RPG).
+ * Tabela oficial do Tabuleiro do Caos RPG.
  * Inclui XP necessário por nível (0→30+), e funções auxiliares.
  */
 
 /**
  * XP necessário para progredir de cada nível para o próximo.
  * Índice 0 = nível 0→1, índice 1 = nível 1→2, etc.
- * Tabela oficial (livro v0.1.7):
+ * Tabela oficial:
  */
 export const XP_TABLE: readonly number[] = [
   15, // 0→1

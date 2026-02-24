@@ -13,10 +13,9 @@ import type { SkillName, ProficiencyLevel } from '@/types';
 
 describe('skillUses constants', () => {
   describe('DEFAULT_SKILL_USES', () => {
-    it('should have entries for all 33 skills', () => {
-      // Verificar que todas as 33 habilidades estão mapeadas
+    it('should have entries for all 31 skills', () => {
+      // Verificar que todas as 31 habilidades estão mapeadas
       const skills: SkillName[] = [
-        'acerto',
         'acrobacia',
         'adestramento',
         'arcano',
@@ -32,7 +31,6 @@ describe('skillUses constants', () => {
         'instrucao',
         'intimidacao',
         'investigacao',
-        'luta',
         'medicina',
         'natureza',
         'oficio',
@@ -80,8 +78,8 @@ describe('skillUses constants', () => {
     });
 
     it('should have expected number of uses for specific skills', () => {
-      // acerto: Atacar, Mirar (adepto)
-      expect(DEFAULT_SKILL_USES.acerto).toHaveLength(2);
+      // reflexo: Agarrar-se à Beirada, Resistir
+      expect(DEFAULT_SKILL_USES.reflexo).toHaveLength(2);
 
       // acrobacia: 5 usos
       expect(DEFAULT_SKILL_USES.acrobacia).toHaveLength(5);
@@ -96,27 +94,27 @@ describe('skillUses constants', () => {
       expect(DEFAULT_SKILL_USES.oficio).toHaveLength(0);
     });
 
-    it('should have correct proficiency requirements for acerto', () => {
-      const acertoUses = DEFAULT_SKILL_USES.acerto;
+    it('should have correct proficiency requirements for enganacao', () => {
+      const enganacaoUses = DEFAULT_SKILL_USES.enganacao;
 
-      // Atacar - sem requisito
-      const atacar = acertoUses.find((u) => u.name === 'Atacar');
-      expect(atacar).toBeDefined();
-      expect(atacar?.requiredProficiency).toBeUndefined();
+      // Insinuar - sem requisito
+      const insinuar = enganacaoUses.find((u) => u.name === 'Insinuar');
+      expect(insinuar).toBeDefined();
+      expect(insinuar?.requiredProficiency).toBeUndefined();
 
-      // Mirar - requer adepto
-      const mirar = acertoUses.find((u) => u.name === 'Mirar');
-      expect(mirar).toBeDefined();
-      expect(mirar?.requiredProficiency).toBe('adepto');
+      // Disfarçar - requer adepto
+      const disfarcar = enganacaoUses.find((u) => u.name === 'Disfarçar');
+      expect(disfarcar).toBeDefined();
+      expect(disfarcar?.requiredProficiency).toBe('adepto');
     });
   });
 
   describe('getDefaultSkillUses', () => {
     it('should return all default uses for a skill', () => {
-      const acertoUses = getDefaultSkillUses('acerto');
-      expect(acertoUses).toHaveLength(2);
-      expect(acertoUses[0].name).toBe('Atacar');
-      expect(acertoUses[1].name).toBe('Mirar');
+      const reflexoUses = getDefaultSkillUses('reflexo');
+      expect(reflexoUses).toHaveLength(2);
+      expect(reflexoUses[0].name).toBe('Agarrar-se à Beirada');
+      expect(reflexoUses[1].name).toBe('Resistir');
     });
 
     it('should return empty array for oficio', () => {
@@ -135,27 +133,27 @@ describe('skillUses constants', () => {
 
   describe('isDefaultUseAvailable', () => {
     it('should return true for uses without proficiency requirement', () => {
-      const atacar = DEFAULT_SKILL_USES.acerto[0]; // Atacar - sem requisito
-      expect(isDefaultUseAvailable(atacar, 'leigo')).toBe(true);
-      expect(isDefaultUseAvailable(atacar, 'adepto')).toBe(true);
-      expect(isDefaultUseAvailable(atacar, 'versado')).toBe(true);
-      expect(isDefaultUseAvailable(atacar, 'mestre')).toBe(true);
+      const insinuar = DEFAULT_SKILL_USES.enganacao[0]; // Insinuar - sem requisito
+      expect(isDefaultUseAvailable(insinuar, 'leigo')).toBe(true);
+      expect(isDefaultUseAvailable(insinuar, 'adepto')).toBe(true);
+      expect(isDefaultUseAvailable(insinuar, 'versado')).toBe(true);
+      expect(isDefaultUseAvailable(insinuar, 'mestre')).toBe(true);
     });
 
     it('should return false for leigo with adepto requirement', () => {
-      const mirar = DEFAULT_SKILL_USES.acerto[1]; // Mirar - requer adepto
-      expect(isDefaultUseAvailable(mirar, 'leigo')).toBe(false);
+      const disfarcar = DEFAULT_SKILL_USES.enganacao[3]; // Disfarçar - requer adepto
+      expect(isDefaultUseAvailable(disfarcar, 'leigo')).toBe(false);
     });
 
     it('should return true for adepto with adepto requirement', () => {
-      const mirar = DEFAULT_SKILL_USES.acerto[1]; // Mirar - requer adepto
-      expect(isDefaultUseAvailable(mirar, 'adepto')).toBe(true);
+      const disfarcar = DEFAULT_SKILL_USES.enganacao[3]; // Disfarçar - requer adepto
+      expect(isDefaultUseAvailable(disfarcar, 'adepto')).toBe(true);
     });
 
     it('should return true for higher proficiencies with adepto requirement', () => {
-      const mirar = DEFAULT_SKILL_USES.acerto[1]; // Mirar - requer adepto
-      expect(isDefaultUseAvailable(mirar, 'versado')).toBe(true);
-      expect(isDefaultUseAvailable(mirar, 'mestre')).toBe(true);
+      const disfarcar = DEFAULT_SKILL_USES.enganacao[3]; // Disfarçar - requer adepto
+      expect(isDefaultUseAvailable(disfarcar, 'versado')).toBe(true);
+      expect(isDefaultUseAvailable(disfarcar, 'mestre')).toBe(true);
     });
 
     it('should handle versado requirements correctly', () => {
@@ -179,16 +177,16 @@ describe('skillUses constants', () => {
     });
 
     it('should filter adepto requirements for leigo', () => {
-      const acertoUses = getAvailableDefaultUses('acerto', 'leigo');
-      // acerto: Atacar (ok), Mirar (adepto - bloqueado)
-      expect(acertoUses).toHaveLength(1);
-      expect(acertoUses[0].name).toBe('Atacar');
+      const enganacaoUses = getAvailableDefaultUses('enganacao', 'leigo');
+      // enganacao: Insinuar, Intrigar, Mentir (ok), Disfarçar (adepto - bloqueado), Falsificar (versado - bloqueado)
+      expect(enganacaoUses).toHaveLength(3);
+      expect(enganacaoUses[0].name).toBe('Insinuar');
     });
 
-    it('should return all uses for adepto', () => {
-      const acertoUses = getAvailableDefaultUses('acerto', 'adepto');
-      // acerto: Atacar + Mirar (ambos disponíveis)
-      expect(acertoUses).toHaveLength(2);
+    it('should return more uses for adepto', () => {
+      const enganacaoUses = getAvailableDefaultUses('enganacao', 'adepto');
+      // enganacao: Insinuar, Intrigar, Mentir + Disfarçar (adepto ok), Falsificar (versado - bloqueado)
+      expect(enganacaoUses).toHaveLength(4);
     });
 
     it('should filter versado requirements correctly', () => {

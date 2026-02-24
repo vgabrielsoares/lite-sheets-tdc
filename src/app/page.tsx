@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import SystemPresentation from '@/components/shared/SystemPresentation';
 
 /**
- * Página inicial — Apresentação do Sistema
+ * Página inicial - Apresentação do Sistema
  *
  * Landing page com contextualização do universo do Tabuleiro do Caos RPG,
  * pilares do sistema e resumo das mecânicas.

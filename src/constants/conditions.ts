@@ -101,11 +101,22 @@ export interface ConditionInfo {
     /** Se escala com pilhas */
     scalesWithStacks?: boolean;
   };
+  /**
+   * Penalidade de defesa para PJs quando esta condição está ativa.
+   * Condições que dão "+Xd ataques contra a criatura" se traduzem
+   * em "-Xd no teste de defesa" do PJ afetado.
+   */
+  defensePenalty?: {
+    /** Modificador de dados no teste de defesa (negativo = penalidade) */
+    modifier: number;
+    /** Se escala com pilhas (ex: Vulnerável nível 1: -1d, nível 2: -2d) */
+    scalesWithStacks?: boolean;
+  };
 }
 
 /**
  * Lista completa de condições v0.2, organizadas por categoria.
- * Baseado no sistema Tabuleiro do Caos RPG (livro v0.1.7)
+ * Baseado no sistema Tabuleiro do Caos RPG
  */
 export const CONDITIONS: readonly ConditionInfo[] = [
   // ═══════════════════════════════════════════════════
@@ -128,11 +139,18 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'agarrado',
     label: 'Agarrado',
     description:
-      'A criatura está sendo segurada por outra. Seu movimento é reduzido a 0. A condição termina se a criatura que está agarrando ficar Incapacitada ou se a criatura for afastada.',
+      'A criatura sofre -1d em testes de Reflexo e -1d em testes de ataque. Não pode atacar com armas de Duas Mãos. Ataques contra ela têm +1d. Deslocamento reduzido a 0. Ataques à distância contra criaturas envolvidas no agarre têm 50% de chance de acertar o alvo errado (se adjacentes).',
     icon: 'PanTool',
     color: '#5D4037',
     type: 'negativa',
     category: 'corporal',
+    dicePenalty: {
+      targets: ['reflexo', 'ataque'],
+      modifier: -1,
+    },
+    defensePenalty: {
+      modifier: -1,
+    },
   },
   {
     id: 'asfixiado',
@@ -163,17 +181,24 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'caido',
     label: 'Caído',
     description:
-      'A criatura está no chão. Ataques corpo a corpo contra ela têm vantagem. Levantar custa movimento.',
+      'A criatura está no chão. Sofre -2d em ataques corpo a corpo. Deslocamento reduzido a 1/3. Ataques corpo a corpo contra ela têm +1d, ataques à distância sofrem -1d. Levantar custa ▶. Outra criatura pode levantá-la com ▶.',
     icon: 'Download',
     color: '#795548',
     type: 'negativa',
     category: 'corporal',
+    dicePenalty: {
+      targets: ['ataque-cac'],
+      modifier: -2,
+    },
+    defensePenalty: {
+      modifier: -1,
+    },
   },
   {
     id: 'doente',
     label: 'Doente',
     description:
-      'A criatura está doente, sofrendo penalidades gerais e possivelmente dano contínuo.',
+      'A criatura fica sob efeito de uma doença. Efeitos variam conforme a doença.',
     icon: 'Sick',
     color: '#4CAF50',
     type: 'negativa',
@@ -183,7 +208,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'emChamas',
     label: 'Em Chamas',
     description:
-      'A criatura está pegando fogo, sofrendo dano de fogo contínuo até apagar as chamas.',
+      'Corpo, roupas e itens carregados atingidos pelo fogo. No início de cada turno, sofre 1d6 de dano de fogo. O personagem pode usar ▶ para apagar. Submergir em água/líquido não inflamável encerra a condição.',
     icon: 'LocalFireDepartment',
     color: '#FF5722',
     type: 'negativa',
@@ -192,8 +217,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
   {
     id: 'enjoado',
     label: 'Enjoado',
-    description:
-      'A criatura está enjoada, podendo sofrer penalidades em ações e concentração.',
+    description: 'A criatura só pode utilizar uma ▶ por turno.',
     icon: 'SickOutlined',
     color: '#8BC34A',
     type: 'negativa',
@@ -203,7 +227,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'enraizado',
     label: 'Enraizado',
     description:
-      'A criatura está presa ao chão, não podendo se mover mas mantendo outras ações.',
+      'A criatura é impedida de se deslocar. Deslocamento reduzido a 0.',
     icon: 'Park',
     color: '#4E342E',
     type: 'negativa',
@@ -213,7 +237,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'envenenado',
     label: 'Envenenado',
     description:
-      'A criatura está sob efeito de veneno. Sofre penalidades em testes e pode receber dano contínuo.',
+      'A criatura fica sob efeito de um veneno. Efeitos variam conforme o veneno. Dano de envenenamento é cumulativo.',
     icon: 'Coronavirus',
     color: '#8BC34A',
     type: 'negativa',
@@ -223,7 +247,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'exausto',
     label: 'Exausto',
     description:
-      'Nível 1: -1d em Agilidade e Corpo. Nível 2: -2d em Agilidade e Corpo + metade do deslocamento. Nível 3: Incapacitado.',
+      'Nível 1: -1d em Agilidade e Corpo, ataques contra a criatura têm +1d. Nível 2: -2d em Agilidade e Corpo, deslocamento reduzido pela metade, não pode correr. Nível 3: Incapacitado.',
     icon: 'Battery0Bar',
     color: '#D32F2F',
     type: 'negativa',
@@ -234,6 +258,9 @@ export const CONDITIONS: readonly ConditionInfo[] = [
       targets: ['agilidade', 'corpo'],
       modifier: -1,
       scalesWithStacks: true,
+    },
+    defensePenalty: {
+      modifier: -1,
     },
   },
   {
@@ -257,7 +284,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'invisivel',
     label: 'Invisível',
     description:
-      'A criatura não pode ser vista por meios normais. Possui +2d em ataques contra alvos que não possam vê-la. Ainda produz sons e cheiros. Criaturas que não dependem da visão ignoram este efeito.',
+      'A criatura tem +2d em ataques contra alvos que não possam vê-la, ou -2d em Defesa contra atacantes invisíveis. Se a localização for conhecida, -2d no ataque ou +2d na Defesa. Ainda produz sons e cheiros.',
     icon: 'VisibilityOff',
     color: '#B0BEC5',
     type: 'positiva',
@@ -267,7 +294,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'lento',
     label: 'Lento',
     description:
-      'O movimento da criatura é reduzido. Pode afetar ações também.',
+      'Todo tipo de deslocamento da criatura é reduzido pela metade e ela não pode correr.',
     icon: 'SlowMotionVideo',
     color: '#00BCD4',
     type: 'negativa',
@@ -302,18 +329,21 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'petrificado',
     label: 'Petrificado',
     description:
-      'A criatura foi transformada em pedra. Está Incapacitada e imune à maioria dos efeitos.',
+      'Ataques contra a criatura têm +2d. Falha automaticamente em testes de resistência. Não pode fazer ações ou reações. Ataques corpo a corpo são críticos. Peso 5x maior. Recebe RD 5 e Resistência Aprimorada. Considerada Incapacitada.',
     icon: 'Landscape',
     color: '#757575',
     type: 'negativa',
     category: 'corporal',
     impliedConditions: ['incapacitado'],
+    defensePenalty: {
+      modifier: -2,
+    },
   },
   {
     id: 'sangrando',
     label: 'Sangrando',
     description:
-      'A criatura está perdendo sangue, sofrendo dano contínuo por rodada. Cada instância adicional aumenta o dano em +1d6.',
+      'No início de cada turno, teste de Vigor: 1✶ encerra em 1d6 turnos, 2✶ em 1d3, 3✶ imediatamente. Em falha, sofre 1d6 de dano interno no final do turno. Cura de 10 pontos encerra (sem restaurar GA). Medicina também encerra. Cada instância adicional +1d6 dano.',
     icon: 'Bloodtype',
     color: '#C62828',
     type: 'negativa',
@@ -324,11 +354,14 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'sobrecarregado',
     label: 'Sobrecarregado',
     description:
-      'A criatura está carregando peso demais. Movimento reduzido e penalidades em testes físicos.',
+      'Ataques contra a criatura têm +1d. Sofre -2d em testes com "penalidade de carga". Deslocamento reduzido em 2 metros.',
     icon: 'FitnessCenter',
     color: '#8D6E63',
     type: 'negativa',
     category: 'corporal',
+    defensePenalty: {
+      modifier: -1,
+    },
   },
 
   // ═══════════════════════════════════════════════════
@@ -369,7 +402,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'enfeiticado',
     label: 'Enfeitiçado',
     description:
-      'A criatura está sob efeito de encantamento, podendo ter sua percepção ou comportamento alterados.',
+      'A criatura não pode atacar ou atingir o enfeitiçador com efeitos nocivos. O enfeitiçador tem +3d em testes sociais contra o enfeitiçado.',
     icon: 'Favorite',
     color: '#E91E63',
     type: 'negativa',
@@ -379,7 +412,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'incapacitado',
     label: 'Incapacitado',
     description:
-      'A criatura não pode realizar ações ou reações. Ainda pode se mover. Se ficar Incapacitada novamente, fica Inconsciente.',
+      'A criatura não pode fazer ações ou reações, e não pode manter concentração. Se ficar Incapacitada novamente, fica Inconsciente. Mesmo se acordada, permanece incapacitada até o efeito encerrar.',
     icon: 'PersonOff',
     color: '#9E9E9E',
     type: 'negativa',
@@ -391,18 +424,21 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'inconsciente',
     label: 'Inconsciente',
     description:
-      'A criatura está desacordada. Não pode se mover, agir ou perceber o ambiente. É considerada Incapacitada.',
+      'Ataques contra a criatura têm +2d. Falha automaticamente em Reflexo e Tenacidade. Não pode fazer ações/reações. -2d em Percepção. Acordar requer ▶ de criatura adjacente. Pode sofrer golpes de misericórdia. Considerada Incapacitada.',
     icon: 'Hotel',
     color: '#263238',
     type: 'negativa',
     category: 'mental',
     impliedConditions: ['incapacitado'],
+    defensePenalty: {
+      modifier: -2,
+    },
   },
   {
     id: 'perplexo',
     label: 'Perplexo',
     description:
-      'A criatura está confusa e desorientada. Considerada Incapacitada.',
+      'Sofre -2d em Percepção. Não pode fazer ações ou reações, atenção fixa em um ponto. Ações hostis encerram a condição. Acordar requer ▶ de criatura adjacente. Considerada Incapacitada.',
     icon: 'HelpOutline',
     color: '#FFC107',
     type: 'negativa',
@@ -434,17 +470,20 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'atordoado',
     label: 'Atordoado',
     description:
-      'A criatura está confusa e desorientada. Não pode realizar ações e tem penalidades na defesa.',
+      'Falha automaticamente em testes de Reflexo e Tenacidade. Ataques contra a criatura têm +1d (ou -1d em Defesa para PJs). Não pode fazer ações.',
     icon: 'StarBorder',
     color: '#FFC107',
     type: 'negativa',
     category: 'sensorial',
+    defensePenalty: {
+      modifier: -1,
+    },
   },
   {
     id: 'cego',
     label: 'Cego',
     description:
-      'A criatura sofre -1d em testes de Reflexo e -1d em habilidades com Agilidade ou Corpo. Deslocamento reduzido pela metade. Falha em testes de Percepção com visão.',
+      'Sofre -1d em Reflexo e -1d em habilidades de Agilidade ou Corpo (cumulativo). Ataques contra a criatura têm +1d. Deslocamento reduzido pela metade, não pode correr (exceto com 1✶ em Determinação). Falha em testes de Percepção com visão. Alvos de ataque recebem Invisibilidade.',
     icon: 'VisibilityOff',
     color: '#37474F',
     type: 'negativa',
@@ -453,12 +492,15 @@ export const CONDITIONS: readonly ConditionInfo[] = [
       targets: ['agilidade', 'corpo'],
       modifier: -1,
     },
+    defensePenalty: {
+      modifier: -1,
+    },
   },
   {
     id: 'desequilibrado',
     label: 'Desequilibrado',
     description:
-      'A criatura perdeu o equilíbrio, sofrendo penalidades em testes físicos e de movimento. Se ficar Desequilibrada novamente, fica Atordoada.',
+      'Sofre -1d em testes de Reflexo e Tenacidade. Não pode fazer reações. Se ficar Desequilibrada novamente, fica Atordoada.',
     icon: 'Balance',
     color: '#FF9800',
     type: 'negativa',
@@ -470,49 +512,61 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'desprevenido',
     label: 'Desprevenido',
     description:
-      'A criatura foi pega de surpresa, sofrendo penalidades na defesa e reações.',
+      'Sofre -1d em testes de Reflexo. Ataques contra a criatura têm +1d. Se por Surpresa: sempre Turno Lento e possui apenas ▶▶.',
     icon: 'ReportProblem',
     color: '#FF5722',
     type: 'negativa',
     category: 'sensorial',
+    defensePenalty: {
+      modifier: -1,
+    },
   },
   {
     id: 'fotossensivel',
     label: 'Fotossensível',
     description:
-      'A criatura é sensível à luz, sofrendo penalidades quando exposta a iluminação forte. Possui 4 graus de severidade.',
+      'Grau 1: -3d em Observar (Percepção), ataques à distância contra a criatura têm +1d. Grau 2: +1d6 dano por hora em luz brilhante. Grau 3: por minuto. Grau 4: por rodada.',
     icon: 'WbSunny',
     color: '#FFEB3B',
     type: 'negativa',
     category: 'sensorial',
     stackable: true,
     maxStacks: 4,
+    defensePenalty: {
+      modifier: -1,
+    },
   },
   {
     id: 'indefeso',
     label: 'Indefeso',
     description:
-      'A criatura está completamente vulnerável, sem capacidade de se defender.',
+      'Ataques contra a criatura têm +2d. Falha automaticamente em testes de Reflexo.',
     icon: 'ShieldOutlined',
     color: '#C62828',
     type: 'negativa',
     category: 'sensorial',
+    defensePenalty: {
+      modifier: -2,
+    },
   },
   {
     id: 'paralisado',
     label: 'Paralisado',
     description:
-      'A criatura está completamente imóvel. Não pode se mover, falar ou agir.',
+      'Deslocamento reduzido a 0. Ataques contra a criatura têm +2d. Falha automaticamente em Reflexo e Tenacidade. Não pode mover o corpo, mas pode realizar ações mentais.',
     icon: 'PauseCircle',
     color: '#4527A0',
     type: 'negativa',
     category: 'sensorial',
+    defensePenalty: {
+      modifier: -2,
+    },
   },
   {
     id: 'surdo',
     label: 'Surdo',
     description:
-      'A criatura não pode ouvir. Falha automaticamente em testes que requerem audição.',
+      'Falha em testes de Percepção com audição. Sofre -1d em Reflexo. Fica Desprevenida contra inimigos fora de sua linha de visão.',
     icon: 'HearingDisabled',
     color: '#546E7A',
     type: 'negativa',
@@ -529,6 +583,10 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     category: 'sensorial',
     stackable: true,
     maxStacks: 2,
+    defensePenalty: {
+      modifier: -1,
+      scalesWithStacks: true,
+    },
   },
 
   // ═══════════════════════════════════════════════════
@@ -565,7 +623,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
     id: 'esgotado',
     label: 'Esgotado',
     description:
-      'A criatura está cansada e sem energias. Corpo, alma e magia depletados. Fica Esgotado ao chegar em 0 PP (e vice-versa). Sofre -1d em testes de Corpo e Instinto.',
+      'Corpo, alma e magia depletados. Fica Esgotado ao chegar em 0 PP (e vice-versa). Sofre -1d em testes de Corpo e Essência.',
     icon: 'BatteryAlert',
     color: '#FF5722',
     type: 'negativa',
@@ -575,7 +633,7 @@ export const CONDITIONS: readonly ConditionInfo[] = [
       description: 'Aplicado automaticamente quando PP = 0 (bidirecional)',
     },
     dicePenalty: {
-      targets: ['corpo', 'instinto'],
+      targets: ['corpo', 'essencia'],
       modifier: -1,
     },
   },

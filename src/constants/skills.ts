@@ -56,7 +56,6 @@ export const SKILL_PROFICIENCY_LABELS: Record<ProficiencyLevel, string> = {
  * Nomes amigáveis das habilidades (para exibição)
  */
 export const SKILL_LABELS: Record<SkillName, string> = {
-  acerto: 'Acerto',
   acrobacia: 'Acrobacia',
   adestramento: 'Adestramento',
   arcano: 'Arcano',
@@ -72,7 +71,6 @@ export const SKILL_LABELS: Record<SkillName, string> = {
   instrucao: 'Instrução',
   intimidacao: 'Intimidação',
   investigacao: 'Investigação',
-  luta: 'Luta',
   medicina: 'Medicina',
   natureza: 'Natureza',
   oficio: 'Ofício',
@@ -115,15 +113,6 @@ export interface SkillMetadata {
  * Baseado na tabela oficial das Regras Básicas do Tabuleiro do Caos RPG
  */
 export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
-  acerto: {
-    name: 'acerto',
-    label: 'Acerto',
-    keyAttribute: 'agilidade',
-    hasCargaPenalty: false,
-    requiresInstrument: false,
-    requiresProficiency: false,
-    isCombatSkill: true,
-  },
   acrobacia: {
     name: 'acrobacia',
     label: 'Acrobacia',
@@ -258,15 +247,6 @@ export const SKILL_METADATA: Record<SkillName, SkillMetadata> = {
     requiresInstrument: false,
     requiresProficiency: false,
     isCombatSkill: false,
-  },
-  luta: {
-    name: 'luta',
-    label: 'Luta',
-    keyAttribute: 'corpo',
-    hasCargaPenalty: false,
-    requiresInstrument: false,
-    requiresProficiency: false,
-    isCombatSkill: true,
   },
   medicina: {
     name: 'medicina',

@@ -1073,7 +1073,7 @@ export function SkillUsageSidebar({
                         Atributo alt.:{' '}
                         {ATTRIBUTE_LABELS[defaultUse.alternateAttribute]}
                         {defaultUse.alternateAttributeNote &&
-                          ` — ${defaultUse.alternateAttributeNote}`}
+                          ` - ${defaultUse.alternateAttributeNote}`}
                       </Typography>
                     )}
                   </Box>
@@ -1139,7 +1139,7 @@ export function SkillUsageSidebar({
                 <Tooltip
                   title={
                     defaultUse.alternateAttribute
-                      ? `Alt: ${ATTRIBUTE_LABELS[defaultUse.alternateAttribute]}${defaultUse.alternateAttributeNote ? ` — ${defaultUse.alternateAttributeNote}` : ''}`
+                      ? `Alt: ${ATTRIBUTE_LABELS[defaultUse.alternateAttribute]}${defaultUse.alternateAttributeNote ? ` - ${defaultUse.alternateAttributeNote}` : ''}`
                       : ''
                   }
                   disableHoverListener={!defaultUse.alternateAttribute}

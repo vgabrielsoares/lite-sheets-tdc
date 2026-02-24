@@ -37,7 +37,7 @@ describe('originUtils', () => {
           { attribute: 'agilidade', value: 1 },
           { attribute: 'mente', value: -1 },
         ],
-        skillProficiencies: ['acerto', 'atletismo'],
+        skillProficiencies: ['reflexo', 'atletismo'],
         specialAbility: {
           name: 'Veterano',
           description: 'Bônus em combate',
@@ -113,7 +113,7 @@ describe('originUtils', () => {
         name: 'Soldado',
         description: 'Descrição',
         attributeModifiers: [{ attribute: 'corpo', value: 1 }],
-        skillProficiencies: ['acerto'],
+        skillProficiencies: ['reflexo'],
       };
 
       expect(isOriginEmpty(origin)).toBe(false);

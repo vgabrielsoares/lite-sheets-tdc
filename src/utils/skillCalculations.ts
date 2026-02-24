@@ -117,7 +117,7 @@ export function calculateSkillPenalties(
   const loadDicePenalty =
     ctx.isOverloaded && metadata.hasCargaPenalty ? OVERLOAD_DICE_PENALTY : 0;
 
-  // 2. Penalidade de armadura (-1d média, -2d pesada) — só em habilidades com Carga
+  // 2. Penalidade de armadura (-1d média, -2d pesada) - só em habilidades com Carga
   const armorDicePenalty = metadata.hasCargaPenalty
     ? getArmorDicePenalty(ctx.equippedArmorType)
     : 0;
@@ -418,7 +418,7 @@ export function requiresProficiency(skillName: SkillName): boolean {
  * @returns true se é habilidade de combate
  *
  * @example
- * isCombatSkill('acerto'); // true
+ * isCombatSkill('reflexo'); // true
  * isCombatSkill('acrobacia'); // false
  */
 export function isCombatSkill(skillName: SkillName): boolean {

@@ -134,7 +134,7 @@ export const ARCHETYPE_PP_PER_LEVEL: Record<ArchetypeName, number> = {
 export const ARCHETYPE_INITIAL_SKILLS: Record<ArchetypeName, string[]> = {
   academico: ['Instrução', '1 à escolha'],
   acolito: ['Religião', 'Determinação'],
-  combatente: ['Acerto ou Luta', 'Reflexo ou Vigor'],
+  combatente: ['Tenacidade ou Determinação', 'Reflexo ou Vigor'],
   feiticeiro: ['Arcano', 'Determinação'],
   ladino: ['Destreza', 'Reflexo'],
   natural: ['Natureza', 'Sobrevivência'],
@@ -232,7 +232,7 @@ export const ARCHETYPE_IS_SPELLCASTER: Record<ArchetypeName, boolean> = {
 export type ArchetypeLevelGainType =
   | 'caracteristica' // Características de Arquétipo (níveis 1, 5, 10, 15)
   | 'poder_ou_talento' // Poder de Arquétipo ou Talento (níveis 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14)
-  | 'competencia'; // Competências (níveis 5, 10, 15 — junto com característica)
+  | 'competencia'; // Competências (níveis 5, 10, 15 - junto com característica)
 
 /**
  * Configuração de ganhos por nível
