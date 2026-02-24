@@ -276,8 +276,14 @@ export interface Attack {
   name: string;
   /** Tipo de ataque */
   type: AttackType;
-  /** Habilidade usada para acertar (Luta para CaC, Acerto para distância) */
-  attackSkill: SkillName;
+  /**
+   * Habilidade usada para acertar.
+   * undefined = ataque físico padronizado por nível.
+   * Quando undefined, dado determinado pelo nível do personagem e atributo pelo tipo:
+   * - corpo-a-corpo → Corpo
+   * - distancia → Agilidade
+   */
+  attackSkill?: SkillName;
   /** ID do uso de habilidade específico (opcional) */
   attackSkillUseId?: string;
   /** Atributo alternativo para o ataque (opcional) */
@@ -536,6 +542,8 @@ export interface CombatData {
   conditions: Condition[];
   /** Penalidades de combate */
   penalties: CombatPenalties;
+  /** Modificador permanente de dados de defesa (+Xd/-Xd) */
+  defenseDiceModifier?: number;
 
   // ─── Campos deprecados (mantidos para compatibilidade/migração) ───
   /** @deprecated Substituído por guard + vitality em */

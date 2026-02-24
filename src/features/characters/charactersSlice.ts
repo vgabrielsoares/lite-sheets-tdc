@@ -410,10 +410,33 @@ const charactersSlice = createSlice({
       state.error = null;
     },
 
+    // ─── Defesa ────────────────────────────────────────────────────
+
+    /**
+     * Atualiza o modificador permanente de dados de defesa
+     */
+    updateDefenseDiceModifier: (
+      state,
+      action: PayloadAction<{
+        characterId: string;
+        modifier: number;
+      }>
+    ) => {
+      const { characterId, modifier } = action.payload;
+      const character = state.entities[characterId];
+      if (!character) {
+        state.error = `Personagem com ID ${characterId} não encontrado`;
+        return;
+      }
+      character.combat.defenseDiceModifier = modifier;
+      character.updatedAt = new Date().toISOString();
+      state.error = null;
+    },
+
     // ─── Feitiços & Conjuração (Fase 6) ───────────────────────────
 
     /**
-     * Toggle de conjurador — habilita/desabilita o sistema de PF
+     * Toggle de conjurador - habilita/desabilita o sistema de PF
      */
     toggleCaster: (
       state,
@@ -479,7 +502,7 @@ const charactersSlice = createSlice({
     },
 
     /**
-     * Gasta Pontos de Feitiço (PF) — também gasta PP no mesmo valor
+     * Gasta Pontos de Feitiço (PF) - também gasta PP no mesmo valor
      * Bloqueia se PP insuficiente ou PP = 0
      */
     spendSpellPoints: (
@@ -501,7 +524,7 @@ const charactersSlice = createSlice({
 
       // Verificações de bloqueio
       if (pp.current <= 0) {
-        state.error = 'Esgotado — não pode conjurar com 0 PP';
+        state.error = 'Esgotado - não pode conjurar com 0 PP';
         return;
       }
       if (pp.current < amount) {
@@ -524,7 +547,7 @@ const charactersSlice = createSlice({
     },
 
     /**
-     * Gera Pontos de Feitiço (PF) — não gasta PP
+     * Gera Pontos de Feitiço (PF) - não gasta PP
      * Usado por Canalizar Mana e final de turno
      */
     generateSpellPoints: (
@@ -570,7 +593,7 @@ const charactersSlice = createSlice({
     },
 
     /**
-     * Lança feitiço por círculo — aplica custo de PF e PP
+     * Lança feitiço por círculo - aplica custo de PF e PP
      * 1º Círculo: 0 PF mas exige PP ≥ 1
      */
     castSpell: (
@@ -593,7 +616,7 @@ const charactersSlice = createSlice({
 
       // Verificações
       if (pp.current <= 0) {
-        state.error = 'Esgotado — não pode conjurar com 0 PP';
+        state.error = 'Esgotado - não pode conjurar com 0 PP';
         return;
       }
 
@@ -774,6 +797,7 @@ export const {
   addCraft,
   updateCraft,
   removeCraft,
+  updateDefenseDiceModifier,
   toggleCaster,
   setCastingSkill,
   spendSpellPoints,
