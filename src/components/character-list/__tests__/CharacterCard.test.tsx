@@ -107,6 +107,39 @@ describe('CharacterCard', () => {
     expect(screen.getByText(/8\/10/)).toBeInTheDocument();
   });
 
+  it('deve incluir maxModifiers no GA, PV e PP máximos exibidos', () => {
+    const character = createMockCharacter({
+      combat: {
+        guard: {
+          current: 45,
+          max: 50,
+          maxModifiers: [
+            { source: 'Item Mágico', value: 5 },
+            { source: 'Bênção', value: 3 },
+          ],
+        },
+        vitality: {
+          current: 16,
+          max: 16,
+          maxModifiers: [{ source: 'Resistência', value: 2 }],
+        },
+        pp: {
+          current: 8,
+          max: 10,
+          temporary: 0,
+          maxModifiers: [{ source: 'Foco Arcano', value: 4 }],
+        },
+      } as any,
+    });
+    render(<CharacterCard character={character} />);
+    // GA: 50 + 5 + 3 = 58
+    expect(screen.getByText(/45\/58/)).toBeInTheDocument();
+    // PV: 16 + 2 = 18
+    expect(screen.getByText(/16\/18/)).toBeInTheDocument();
+    // PP: 10 + 4 = 14
+    expect(screen.getByText(/8\/14/)).toBeInTheDocument();
+  });
+
   it('deve chamar onClick quando clicado', async () => {
     const user = userEvent.setup();
     const handleClick = jest.fn();

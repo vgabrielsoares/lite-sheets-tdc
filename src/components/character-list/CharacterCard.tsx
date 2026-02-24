@@ -263,7 +263,7 @@ export default function CharacterCard({
             )}
           </Box>
 
-          {/* PV e PP */}
+          {/* GA, PV e PP */}
           <Box
             sx={{
               display: 'flex',
@@ -282,7 +282,11 @@ export default function CharacterCard({
                 GA:
               </Box>{' '}
               {character.combat.guard?.current ?? 0}/
-              {character.combat.guard?.max ?? 0}
+              {(character.combat.guard?.max ?? 0) +
+                (character.combat.guard?.maxModifiers ?? []).reduce(
+                  (sum, mod) => sum + mod.value,
+                  0
+                )}
               {' | '}
               <Box
                 component="span"
@@ -291,7 +295,11 @@ export default function CharacterCard({
                 PV:
               </Box>{' '}
               {character.combat.vitality?.current ?? 0}/
-              {character.combat.vitality?.max ?? 0}
+              {(character.combat.vitality?.max ?? 0) +
+                (character.combat.vitality?.maxModifiers ?? []).reduce(
+                  (sum, mod) => sum + mod.value,
+                  0
+                )}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               <Box
@@ -300,7 +308,12 @@ export default function CharacterCard({
               >
                 PP:
               </Box>{' '}
-              {character.combat.pp.current}/{character.combat.pp.max}
+              {character.combat.pp.current}/
+              {character.combat.pp.max +
+                (character.combat.pp.maxModifiers ?? []).reduce(
+                  (sum, mod) => sum + mod.value,
+                  0
+                )}
             </Typography>
           </Box>
         </CardContent>
