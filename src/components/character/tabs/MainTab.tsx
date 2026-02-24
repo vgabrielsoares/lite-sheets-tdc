@@ -31,6 +31,7 @@ import {
 } from '@/utils';
 import {
   calculateConditionDicePenalties,
+  calculateDefensePenaltyFromConditions,
   type DicePenaltyMap,
 } from '@/utils/conditionEffects';
 import {
@@ -241,6 +242,32 @@ export const MainTab = React.memo(function MainTab({
     character.combat.pp.current,
   ]);
 
+  // Calcula penalidade de defesa das condições ativas
+  const conditionDefensePenalty = useMemo((): number => {
+    const AUTO_IDS: ConditionId[] = ['avariado', 'machucado', 'esgotado'];
+    const state = {
+      gaCurrent: character.combat.guard.current,
+      gaMax: character.combat.guard.max,
+      pvCurrent: character.combat.vitality.current,
+      pvMax: character.combat.vitality.max,
+      ppCurrent: character.combat.pp.current,
+    };
+    const activeAutoIds = AUTO_IDS.filter((id) =>
+      shouldConditionBeActive(id, state)
+    );
+    return calculateDefensePenaltyFromConditions(
+      character.combat.conditions,
+      activeAutoIds
+    );
+  }, [
+    character.combat.conditions,
+    character.combat.guard.current,
+    character.combat.guard.max,
+    character.combat.vitality.current,
+    character.combat.vitality.max,
+    character.combat.pp.current,
+  ]);
+
   return (
     <Box>
       <Stack spacing={3}>
@@ -303,6 +330,9 @@ export const MainTab = React.memo(function MainTab({
                 ([, s]) => s.isSignature
               )?.[0] as import('@/types').SkillName | undefined
             }
+            permanentDiceModifier={character.combat.defenseDiceModifier ?? 0}
+            conditionPenalties={conditionDicePenalties}
+            conditionDefensePenalty={conditionDefensePenalty}
           />
 
           {/* Deslocamento */}

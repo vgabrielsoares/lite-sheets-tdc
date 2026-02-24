@@ -31,6 +31,7 @@ import {
 import { createDefaultCombatPenalties } from '@/utils/combatPenalties';
 import {
   calculateConditionDicePenalties,
+  calculateDefensePenaltyFromConditions,
   hasActivePenalties,
   formatPenaltySummary,
   type DicePenaltyMap,
@@ -137,6 +138,34 @@ export const CombatTab = React.memo(function CombatTab({
   ]);
 
   /**
+   * Calcula penalidade de defesa das condições ativas
+   */
+  const conditionDefensePenalty = useMemo((): number => {
+    const AUTO_IDS: ConditionId[] = ['avariado', 'machucado', 'esgotado'];
+    const state = {
+      gaCurrent: character.combat.guard.current,
+      gaMax: character.combat.guard.max,
+      pvCurrent: character.combat.vitality.current,
+      pvMax: character.combat.vitality.max,
+      ppCurrent: character.combat.pp.current,
+    };
+    const activeAutoIds = AUTO_IDS.filter((id) =>
+      shouldConditionBeActive(id, state)
+    );
+    return calculateDefensePenaltyFromConditions(
+      character.combat.conditions,
+      activeAutoIds
+    );
+  }, [
+    character.combat.conditions,
+    character.combat.guard.current,
+    character.combat.guard.max,
+    character.combat.vitality.current,
+    character.combat.vitality.max,
+    character.combat.pp.current,
+  ]);
+
+  /**
    * Handler para atualizar estado morrendo
    */
   const handleDyingStateChange = (dyingState: DyingState) => {
@@ -189,6 +218,18 @@ export const CombatTab = React.memo(function CombatTab({
       combat: {
         ...character.combat,
         actionEconomy,
+      },
+    });
+  };
+
+  /**
+   * Handler para atualizar modificador permanente de defesa
+   */
+  const handleDefenseDiceModifierChange = (modifier: number) => {
+    onUpdate({
+      combat: {
+        ...character.combat,
+        defenseDiceModifier: modifier,
       },
     });
   };
@@ -276,7 +317,7 @@ export const CombatTab = React.memo(function CombatTab({
               onOpenDetails={onOpenPP}
             />
 
-            {/* Pontos de Feitiço — apenas para conjuradores */}
+            {/* Pontos de Feitiço - apenas para conjuradores */}
             {character.spellcasting?.isCaster && (
               <SpellPointsDisplay
                 spellPoints={{
@@ -345,6 +386,9 @@ export const CombatTab = React.memo(function CombatTab({
             characterLevel={character.level}
             signatureSkill={currentSignatureSkill}
             conditionPenalties={conditionDicePenalties}
+            conditionDefensePenalty={conditionDefensePenalty}
+            permanentDiceModifier={character.combat.defenseDiceModifier ?? 0}
+            onPermanentDiceModifierChange={handleDefenseDiceModifierChange}
           />
         </Box>
 
@@ -443,7 +487,8 @@ export const CombatTab = React.memo(function CombatTab({
           </Box>
 
           {/* Resumo de penalidades de condições */}
-          {hasActivePenalties(conditionDicePenalties) && (
+          {(hasActivePenalties(conditionDicePenalties) ||
+            conditionDefensePenalty !== 0) && (
             <Alert severity="warning" sx={{ mt: 2 }}>
               <Typography
                 variant="subtitle2"
@@ -462,6 +507,14 @@ export const CombatTab = React.memo(function CombatTab({
                     variant="outlined"
                   />
                 ))}
+                {conditionDefensePenalty !== 0 && (
+                  <Chip
+                    label={`${conditionDefensePenalty > 0 ? '+' : ''}${conditionDefensePenalty}d Defesa`}
+                    size="small"
+                    color="error"
+                    variant="outlined"
+                  />
+                )}
               </Stack>
             </Alert>
           )}

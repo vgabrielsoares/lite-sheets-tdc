@@ -27,15 +27,25 @@ import {
  * Palavras-chave do sistema
  */
 const SYSTEM_KEYWORDS = [
-  'Alta Fantasia',
-  'Dungeonpunk',
-  'Sandbox',
-  'Tático',
+  'Hexcrawl',
   'Narrativo',
-  'Customização',
-  'Semi Letal',
+  'Tático',
+  'Customização de Personagem',
+  'Rules-Heavy',
+  'Combate de Alto Risco',
+  'High Fantasy',
+  'Dungeonpunk',
   'Gestão de Recursos',
+  'Procedural',
+  'Modularidade',
+  'Progressão Diagonal',
+  'Simulacionismo',
   'Magitech',
+  'Player-Driven',
+  'Versátil',
+  'Pulp Fantasy',
+  'Fiction-First',
+  'Crunchy',
 ];
 
 /**

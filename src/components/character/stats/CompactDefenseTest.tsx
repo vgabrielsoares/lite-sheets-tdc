@@ -2,7 +2,8 @@
  * CompactDefenseTest - Exibição compacta do Teste de Defesa Ativo
  *
  * Versão compacta para uso na aba principal, ao lado de Deslocamento.
- * Mostra as duas opções de defesa (Reflexo e Vigor) com suas pools de dados.
+ * Mostra as duas opções de defesa (Agilidade e Corpo) com pools baseados
+ * no nível do personagem (dado padronizado por nível).
  *
  * Para a versão completa, ver DefenseTest na pasta combat/.
  */
@@ -15,23 +16,30 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import type { Attributes } from '@/types/attributes';
 import type { Skills, SkillName } from '@/types/skills';
-import type { DieSize, Modifier } from '@/types/common';
-import { getSkillDieSize } from '@/constants/skills';
+import type { DieSize } from '@/types/common';
+import { getAttackDefenseDieSize } from '@/constants/combatLevels';
 import { SkillRollButton } from '@/components/character/skills/SkillRollButton';
+import type { DicePenaltyMap } from '@/utils/conditionEffects';
+import { getDicePenaltyForAttribute } from '@/utils/conditionEffects';
 
 export interface CompactDefenseTestProps {
   /** Atributos do personagem */
   attributes: Attributes;
-  /** Habilidades do personagem */
+  /** Habilidades do personagem (para compatibilidade) */
   skills: Skills;
   /** Nível do personagem */
   characterLevel: number;
   /** Habilidade de assinatura */
   signatureSkill?: SkillName;
+  /** Modificador permanente de dados de defesa */
+  permanentDiceModifier?: number;
+  /** Penalidades de dados de condições ativas */
+  conditionPenalties?: DicePenaltyMap;
+  /** Penalidade de defesa das condições ativas (-Xd no teste de defesa) */
+  conditionDefensePenalty?: number;
 }
 
 interface DefenseOption {
-  skill: SkillName;
   attribute: keyof Attributes;
   label: string;
   icon: React.ReactNode;
@@ -39,15 +47,13 @@ interface DefenseOption {
 
 const DEFENSE_OPTIONS: DefenseOption[] = [
   {
-    skill: 'reflexo',
     attribute: 'agilidade',
-    label: 'Reflexo',
+    label: 'Agilidade',
     icon: <SpeedIcon fontSize="small" />,
   },
   {
-    skill: 'vigor',
     attribute: 'corpo',
-    label: 'Vigor',
+    label: 'Corpo',
     icon: <FitnessCenterIcon fontSize="small" />,
   },
 ];
@@ -56,51 +62,52 @@ interface PoolInfo {
   formula: string;
   dieSize: DieSize;
   isPenalty: boolean;
-  proficiency: string;
+  totalDice: number;
 }
-
-const PROFICIENCY_LABELS: Record<string, string> = {
-  leigo: 'Leigo',
-  adepto: 'Adepto',
-  versado: 'Versado',
-  mestre: 'Mestre',
-};
 
 /**
  * Componente compacto de Teste de Defesa para a aba principal.
+ *
+ * Defesa é um teste padronizado por nível (não usa proficiência de habilidade).
+ * Dado = nível do personagem. Quantidade = valor do atributo + modificadores.
  */
 export const CompactDefenseTest = React.memo(function CompactDefenseTest({
   attributes,
   skills,
   characterLevel,
   signatureSkill,
+  permanentDiceModifier = 0,
+  conditionPenalties,
+  conditionDefensePenalty = 0,
 }: CompactDefenseTestProps) {
+  const dieSize = useMemo(
+    () => getAttackDefenseDieSize(characterLevel),
+    [characterLevel]
+  );
+
   const options = useMemo(() => {
     return DEFENSE_OPTIONS.map((opt) => {
-      const skill = skills[opt.skill];
       const attrValue = attributes[opt.attribute];
-      const profLevel = skill?.proficiencyLevel ?? 'leigo';
-      const dieSize = getSkillDieSize(profLevel);
 
-      const isSignature = signatureSkill === opt.skill;
-      const signatureBonus = isSignature
-        ? Math.min(3, Math.ceil(characterLevel / 5))
+      // Penalidades de condições para este atributo
+      const condPenalty = conditionPenalties
+        ? getDicePenaltyForAttribute(conditionPenalties, opt.attribute)
         : 0;
 
-      const diceMods = (skill?.modifiers || [])
-        .filter((m: Modifier) => m.affectsDice)
-        .reduce((sum: number, m: Modifier) => sum + m.value, 0);
-
-      const baseDice = attrValue + signatureBonus + diceMods;
+      const totalDice =
+        attrValue +
+        permanentDiceModifier +
+        condPenalty +
+        conditionDefensePenalty;
 
       let formula: string;
       let isPenalty = false;
 
-      if (baseDice <= 0) {
+      if (totalDice <= 0) {
         formula = `2${dieSize} (menor)`;
         isPenalty = true;
       } else {
-        const finalDice = Math.min(8, baseDice);
+        const finalDice = Math.min(8, totalDice);
         formula = `${finalDice}${dieSize}`;
       }
 
@@ -110,15 +117,20 @@ export const CompactDefenseTest = React.memo(function CompactDefenseTest({
           formula,
           dieSize,
           isPenalty,
-          proficiency: PROFICIENCY_LABELS[profLevel] ?? profLevel,
+          totalDice,
         } as PoolInfo,
-        isSignature,
         attrValue,
-        profLevel,
-        totalDiceMod: signatureBonus + diceMods,
+        diceModifier: permanentDiceModifier + condPenalty,
       };
     });
-  }, [attributes, skills, characterLevel, signatureSkill]);
+  }, [
+    attributes,
+    characterLevel,
+    permanentDiceModifier,
+    conditionPenalties,
+    conditionDefensePenalty,
+    dieSize,
+  ]);
 
   return (
     <Paper
@@ -150,14 +162,14 @@ export const CompactDefenseTest = React.memo(function CompactDefenseTest({
         color="text.secondary"
         sx={{ display: 'block', mb: 1.5 }}
       >
-        Defesa ativa — cada ✶ anula 1✶ do ataque
+        Defesa ativa - cada ✶ anula 1✶ do ataque
       </Typography>
 
       {/* Defense options */}
       <Stack spacing={1}>
         {options.map((opt) => (
           <Box
-            key={opt.skill}
+            key={opt.attribute}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -175,15 +187,17 @@ export const CompactDefenseTest = React.memo(function CompactDefenseTest({
                 {opt.label}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                ({opt.pool.proficiency})
+                ({opt.attrValue}d)
               </Typography>
-              {opt.isSignature && (
-                <Tooltip title="Habilidade de Assinatura">
+              {permanentDiceModifier !== 0 && (
+                <Tooltip
+                  title={`Modificador permanente: ${permanentDiceModifier > 0 ? '+' : ''}${permanentDiceModifier}d`}
+                >
                   <Chip
-                    label="✦"
+                    label={`${permanentDiceModifier > 0 ? '+' : ''}${permanentDiceModifier}d`}
                     size="small"
-                    color="primary"
-                    sx={{ minWidth: 24, height: 20, fontSize: '0.7rem' }}
+                    color={permanentDiceModifier > 0 ? 'success' : 'warning'}
+                    sx={{ minWidth: 24, height: 20, fontSize: '0.65rem' }}
                   />
                 </Tooltip>
               )}
@@ -199,8 +213,8 @@ export const CompactDefenseTest = React.memo(function CompactDefenseTest({
               <SkillRollButton
                 skillLabel={`Defesa: ${opt.label}`}
                 attributeValue={opt.attrValue}
-                proficiencyLevel={opt.profLevel}
-                diceModifier={opt.totalDiceMod}
+                proficiencyLevel="leigo"
+                diceModifier={opt.diceModifier}
                 size="small"
                 tooltipText={`Rolar teste de defesa (${opt.label})`}
               />
