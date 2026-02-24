@@ -56,6 +56,9 @@ export * from './creatureSizes';
 // Ações de Combate
 export * from './combatActions';
 
+// Níveis de Ataque e Defesa (sistema padronizado por nível)
+export * from './combatLevels';
+
 // Recursos (Dados de Recurso)
 export * from './resources';
 

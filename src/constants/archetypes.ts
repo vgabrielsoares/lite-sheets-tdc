@@ -134,7 +134,7 @@ export const ARCHETYPE_PP_PER_LEVEL: Record<ArchetypeName, number> = {
 export const ARCHETYPE_INITIAL_SKILLS: Record<ArchetypeName, string[]> = {
   academico: ['Instrução', '1 à escolha'],
   acolito: ['Religião', 'Determinação'],
-  combatente: ['Acerto ou Luta', 'Reflexo ou Vigor'],
+  combatente: ['Tenacidade ou Determinação', 'Reflexo ou Vigor'],
   feiticeiro: ['Arcano', 'Determinação'],
   ladino: ['Destreza', 'Reflexo'],
   natural: ['Natureza', 'Sobrevivência'],

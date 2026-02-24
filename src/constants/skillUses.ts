@@ -53,25 +53,6 @@ export interface DefaultSkillUse {
  */
 export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
   // ─────────────────────────────────────────
-  // Acerto (Agilidade - Combate)
-  // ─────────────────────────────────────────
-  acerto: [
-    {
-      name: 'Atacar',
-      description: 'Teste de ataque à distância ou com armas de arremesso.',
-      alternateAttribute: 'corpo',
-      alternateAttributeNote: 'Para objetos pesados (arremesso de força)',
-    },
-    {
-      name: 'Mirar',
-      requiredProficiency: 'adepto',
-      actionCost: '▶',
-      description:
-        'Concentrar-se para evitar penalidade ao atacar alvos engajados com aliados.',
-    },
-  ],
-
-  // ─────────────────────────────────────────
   // Acrobacia (Agilidade - Carga)
   // ─────────────────────────────────────────
   acrobacia: [
@@ -83,7 +64,7 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
     {
       name: 'Atravessar Inimigo',
       description:
-        'Passar pelo espaço ocupado por um inimigo sem provocar ataque de oportunidade.',
+        'Passar pelo espaço ocupado por um inimigo (teste contra Acrobacia, Ataque Corpo a Corpo ou Tenacidade do oponente).',
     },
     {
       name: 'Saltar de Pé',
@@ -102,7 +83,8 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
       name: 'Amortecer Queda',
       requiredProficiency: 'versado',
       actionCost: '↩',
-      description: 'Reduzir dano de queda.',
+      description:
+        'Reduzir dano de queda. Reduz o efeito de 3 metros de queda para cada ✶ no teste.',
     },
   ],
 
@@ -113,7 +95,9 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
     {
       name: 'Comando Animal',
       requiredProficiency: 'adepto',
-      description: 'Dar comandos a um animal treinado ou doméstico.',
+      actionCost: '∆',
+      description:
+        'Dar comandos a um animal para executar tarefa. Animal treinado não requer teste; selvagem requer 1✶ ou mais.',
     },
     {
       name: 'Pacificar Animal',
@@ -252,6 +236,7 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
     {
       name: 'Escapar',
       requiredProficiency: 'adepto',
+      actionCost: '▶▶▶',
       description: 'Escapar de amarras, algemas ou contenções.',
     },
     {
@@ -327,7 +312,9 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
     {
       name: 'Planejar Ação',
       requiredProficiency: 'versado',
-      description: 'Ajudar aliado em alcance médio com um plano de ação.',
+      description:
+        'Ajudar aliado em alcance médio com um plano de ação. O aliado assistido ganha +2d no próximo teste até o final de seu próximo turno.',
+      actionCost: '▶',
     },
   ],
 
@@ -337,7 +324,9 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
   furtividade: [
     {
       name: 'Esconder-se',
-      description: 'Esconder-se de criaturas.',
+      description:
+        'Esconder-se de criaturas. Criaturas que não sabem da localização do personagem escondido garantem a condição de Invisibilidade. Caso o personagem ataque, grite, conjure um feitiço ou faça qualquer ação chamativa, o teste recebe -3d.',
+      actionCost: '▶',
     },
     {
       name: 'Seguir',
@@ -392,7 +381,9 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
     {
       name: 'Assustar',
       requiredProficiency: 'adepto',
-      description: 'Assustar uma criatura.',
+      actionCost: '▶',
+      description:
+        'Assustar uma criatura em alcance curto (teste oposto a Determinação do alvo). Mais ✶ que o alvo: Perturbado por 1d6 rodadas. 2✶ ou mais que o alvo: Amedrontado por 1d4+1 rodadas, depois Perturbado pelo resto do combate.',
     },
   ],
 
@@ -419,17 +410,6 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
       requiredProficiency: 'adepto',
       description:
         'Analisar detalhes de um objeto (marcas, idade, compartimentos secretos).',
-    },
-  ],
-
-  // ─────────────────────────────────────────
-  // Luta (Corpo - Combate)
-  // ─────────────────────────────────────────
-  luta: [
-    {
-      name: 'Atacar',
-      description:
-        'Teste de ataque corpo a corpo. Resultados variam conforme ✶ obtidos.',
     },
   ],
 
@@ -560,7 +540,7 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
     {
       name: 'Mudar Atitude',
       description:
-        'Mudar a atitude de uma criatura (requer mais ✶ que Determinação do alvo).',
+        'Mudar a atitude de uma criatura (requer mais ✶ que Determinação do alvo). Muda a atitude em uma categoria para cada ✶. Em combate, pode ser feito como ▶▶.',
       alternateAttribute: 'mente',
       alternateAttributeNote: 'Para argumentos baseados em fatos e evidências',
     },
@@ -580,7 +560,8 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
       name: 'Motivar',
       requiredProficiency: 'adepto',
       actionCost: '▶▶▶',
-      description: 'Remover algumas condições mentais de criatura aliada.',
+      description:
+        'Remover condições mentais de aliado que possa ouvi-lo. Condições removíveis: Abalado, Amedrontado, Perturbado (exceto efeitos mágicos). Não funciona em si mesmo.',
     },
   ],
 
@@ -663,8 +644,9 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
     {
       name: 'Realizar Ritual Religioso',
       requiredProficiency: 'versado',
-      description: 'Gastar 5 PP e realizar cerimônia religiosa por 1 hora.',
-      testInfo: 'Custo: 5 PP, Duração: 1 hora',
+      description:
+        'Realizar uma cerimônia religiosa por uma hora. Inclui abençoar água, abençoar aniversariante, rito fúnebre, casamento ou similares.',
+      testInfo: 'Duração: 1 hora',
     },
   ],
 
@@ -746,7 +728,9 @@ export const DEFAULT_SKILL_USES: Record<SkillName, DefaultSkillUse[]> = {
     {
       name: 'Resilir Condições',
       requiredProficiency: 'adepto',
-      description: 'Tentar sair de determinadas condições.',
+      actionCost: '↩',
+      description:
+        'Encerrar condição com 1✶ em Tenacidade + gasto de PP. Custos: 1 PP (Amedrontado, Lento); 2 PP (Enjoado, Enraizado, Vulnerável por nível); 3 PP (Fraco por nível, Perturbado por nível, Surpreso); 4 PP (Exausto por nível); 5 PP (Atordoado).',
     },
     {
       name: 'Suportar Resistências',
