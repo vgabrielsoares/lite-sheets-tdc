@@ -230,6 +230,7 @@ export function AttackRow({
           attackSkill={attack.attackSkill}
           attackSkillUseId={attack.attackSkillUseId}
           attackAttribute={attack.attackAttribute}
+          attackType={attack.type}
           attackDiceModifier={attack.attackDiceModifier}
           size="small"
         />
@@ -332,7 +333,7 @@ export function AttackRow({
                 </Typography>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Typography variant="body2">
-                    {attackRollStr} ({attack.attackSkill})
+                    {attackRollStr} ({attack.attackSkill || 'Ataque Físico'})
                   </Typography>
                   <AttackRollButton
                     attackName={attack.name}
@@ -340,6 +341,7 @@ export function AttackRow({
                     attackSkill={attack.attackSkill}
                     attackSkillUseId={attack.attackSkillUseId}
                     attackAttribute={attack.attackAttribute}
+                    attackType={attack.type}
                     attackDiceModifier={attack.attackDiceModifier}
                     size="small"
                   />

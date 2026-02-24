@@ -126,13 +126,30 @@ export const DefenseTest = React.memo(function DefenseTest({
   const [selectedOption, setSelectedOption] =
     useState<DefenseOptionInfo | null>(null);
   const [rollResult, setRollResult] = useState<DicePoolResult | null>(null);
-  const [tempDiceModifier, setTempDiceModifier] = useState(0);
+  // Modificadores temporários preservados por atributo de defesa
+  const [tempModifiers, setTempModifiers] = useState<Record<string, number>>(
+    {}
+  );
+
+  const tempDiceModifier = selectedOption
+    ? (tempModifiers[selectedOption.attribute] ?? 0)
+    : 0;
+
+  const setTempDiceModifier = useCallback(
+    (value: number) => {
+      if (!selectedOption) return;
+      setTempModifiers((prev) => ({
+        ...prev,
+        [selectedOption.attribute]: value,
+      }));
+    },
+    [selectedOption]
+  );
 
   /** Abre o diálogo de rolagem */
   const handleCardClick = useCallback((option: DefenseOptionInfo) => {
     setSelectedOption(option);
     setRollResult(null);
-    setTempDiceModifier(0);
     setDialogOpen(true);
   }, []);
 
@@ -155,7 +172,11 @@ export const DefenseTest = React.memo(function DefenseTest({
     const conditionPenalty = conditionPenalties
       ? getDicePenaltyForAttribute(conditionPenalties, option.attribute)
       : 0;
-    const effectiveTotalDice = attributeValue + conditionPenalty + conditionDefensePenalty + permanentDiceModifier;
+    const effectiveTotalDice =
+      attributeValue +
+      conditionPenalty +
+      conditionDefensePenalty +
+      permanentDiceModifier;
 
     // Se effectiveTotalDice <= 0, rola 2d e usa o menor
     if (effectiveTotalDice <= 0) {
@@ -199,7 +220,13 @@ export const DefenseTest = React.memo(function DefenseTest({
         pool: calculateDefensePool(option),
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [attributes, characterLevel, conditionPenalties, conditionDefensePenalty, permanentDiceModifier]
+    [
+      attributes,
+      characterLevel,
+      conditionPenalties,
+      conditionDefensePenalty,
+      permanentDiceModifier,
+    ]
   );
 
   return (
@@ -350,7 +377,7 @@ export const DefenseTest = React.memo(function DefenseTest({
                       useFlexGap
                     >
                       <Chip
-                        label={`${ATTRIBUTE_LABELS[selectedOption.attribute]}: ${attributeValue}`}
+                        label={`${ATTRIBUTE_LABELS[selectedOption.attribute]}: ${attributeValue}d`}
                         size="small"
                         color="primary"
                         variant="outlined"
@@ -361,26 +388,66 @@ export const DefenseTest = React.memo(function DefenseTest({
                         color="secondary"
                         variant="outlined"
                       />
-                      <Chip
-                        label={`Pool: ${pool.formula}`}
-                        size="small"
-                        color="info"
-                        variant="outlined"
-                      />
-                      {pool.isPenaltyRoll && (
-                        <Chip
-                          label="Penalidade: menor resultado"
-                          size="small"
-                          color="error"
-                          variant="filled"
-                        />
-                      )}
                       {permanentDiceModifier !== 0 && (
                         <Chip
                           label={`Mod. permanente: ${permanentDiceModifier > 0 ? '+' : ''}${permanentDiceModifier}d`}
                           size="small"
                           color="warning"
                           variant="outlined"
+                        />
+                      )}
+                      {(() => {
+                        const attrCondPenalty = conditionPenalties
+                          ? getDicePenaltyForAttribute(
+                              conditionPenalties,
+                              selectedOption.attribute
+                            )
+                          : 0;
+                        return attrCondPenalty !== 0 ? (
+                          <Chip
+                            label={`Condição (${ATTRIBUTE_LABELS[selectedOption.attribute]}): ${attrCondPenalty > 0 ? '+' : ''}${attrCondPenalty}d`}
+                            size="small"
+                            color="error"
+                            variant="outlined"
+                          />
+                        ) : null;
+                      })()}
+                      {conditionDefensePenalty !== 0 && (
+                        <Chip
+                          label={`Condição (defesa): ${conditionDefensePenalty > 0 ? '+' : ''}${conditionDefensePenalty}d`}
+                          size="small"
+                          color="error"
+                          variant="outlined"
+                        />
+                      )}
+                      {tempDiceModifier !== 0 && (
+                        <Chip
+                          label={`Mod. temporário: ${tempDiceModifier > 0 ? '+' : ''}${tempDiceModifier}d`}
+                          size="small"
+                          color="info"
+                          variant="outlined"
+                        />
+                      )}
+                    </Stack>
+
+                    {/* Resumo do pool final */}
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography variant="body2" fontWeight={600}>
+                        Pool final:
+                      </Typography>
+                      <Chip
+                        label={pool.formula}
+                        size="small"
+                        color={pool.isPenaltyRoll ? 'warning' : 'success'}
+                        variant="filled"
+                        sx={{ fontWeight: 700 }}
+                      />
+                      {pool.isPenaltyRoll && (
+                        <Chip
+                          label="menor resultado"
+                          size="small"
+                          color="error"
+                          variant="filled"
                         />
                       )}
                     </Stack>
@@ -398,7 +465,8 @@ export const DefenseTest = React.memo(function DefenseTest({
                           )
                         }
                         inputProps={{
-                          'aria-label': 'Modificador permanente de dados de defesa',
+                          'aria-label':
+                            'Modificador permanente de dados de defesa',
                         }}
                         helperText="Bônus ou penalidade permanente (ex: escudo, item)"
                         fullWidth

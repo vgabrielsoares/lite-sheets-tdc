@@ -44,18 +44,22 @@ import {
 import { DiceRollResult } from '@/components/shared/DiceRollResult';
 import type { Character, AttributeName } from '@/types';
 import type { SkillName } from '@/types/skills';
+import type { AttackType } from '@/types/combat';
+import { getAttackDefenseDieSize } from '@/constants/combatLevels';
 
 export interface AttackRollButtonProps {
   /** Nome do ataque (para contexto) */
   attackName: string;
   /** Dados do personagem (para acessar atributos/habilidades) */
   character: Character;
-  /** Nome da habilidade usada no ataque (para calcular pool) */
+  /** Nome da habilidade usada no ataque (undefined = ataque físico por nível) */
   attackSkill?: SkillName;
   /** ID do uso específico de habilidade (opcional) */
   attackSkillUseId?: string;
   /** Atributo alternativo para o ataque (opcional) */
   attackAttribute?: AttributeName;
+  /** Tipo de ataque (para determinar atributo em ataques físicos) */
+  attackType?: AttackType;
   /** Modificador de dados adicional (+Xd / -Xd) */
   attackDiceModifier?: number;
   /** Callback quando rolar (opcional) */
@@ -77,11 +81,11 @@ function getSuccessDisplay(netSuccesses: number): {
   color: 'error' | 'warning' | 'success' | 'info';
   label: string;
 } {
-  if (netSuccesses === 0) return { color: 'error', label: '0✶ — Falha' };
-  if (netSuccesses === 1) return { color: 'warning', label: '1✶ — Sucesso' };
+  if (netSuccesses === 0) return { color: 'error', label: '0✶ - Falha' };
+  if (netSuccesses === 1) return { color: 'warning', label: '1✶ - Sucesso' };
   if (netSuccesses === 2)
-    return { color: 'success', label: '2✶ — Sucesso Forte' };
-  return { color: 'info', label: `${netSuccesses}✶ — Sucesso Excepcional` };
+    return { color: 'success', label: '2✶ - Sucesso Forte' };
+  return { color: 'info', label: `${netSuccesses}✶ - Sucesso Excepcional` };
 }
 
 /**
@@ -96,6 +100,7 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
   attackSkill,
   attackSkillUseId,
   attackAttribute,
+  attackType,
   attackDiceModifier = 0,
   onRoll,
   size = 'small',
@@ -109,28 +114,21 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
 
   // Calcular pool de ataque dinamicamente
   const attackPoolCalc: AttackPoolCalculation = useMemo(() => {
-    if (attackSkill) {
-      return calculateAttackPool(
-        character,
-        attackSkill,
-        attackSkillUseId,
-        attackDiceModifier,
-        attackAttribute
-      );
-    }
-    return {
-      diceCount: 1,
-      dieSize: 'd6' as const,
-      isPenaltyRoll: false,
-      formula: '1d6',
-      attribute: 'corpo' as const,
-      skillName: 'luta' as const,
-    };
+    // Usa calculateAttackPool para todos os casos (físico e mágico)
+    return calculateAttackPool(
+      character,
+      attackSkill,
+      attackSkillUseId,
+      attackDiceModifier,
+      attackAttribute,
+      attackType
+    );
   }, [
     character,
     attackSkill,
     attackSkillUseId,
     attackAttribute,
+    attackType,
     attackDiceModifier,
   ]);
 
