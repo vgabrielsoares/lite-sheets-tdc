@@ -17,6 +17,11 @@ import {
   COMBAT_SKILLS,
   getSkillDieSize,
 } from '@/constants/skills';
+import {
+  getAttackDefenseDieSize,
+  isLevelBasedAttack,
+  getSuggestedPhysicalAttackAttribute,
+} from '@/constants/combatLevels';
 import { calculateSignatureAbilityBonus } from './calculations';
 
 // ============================================================
@@ -65,33 +70,72 @@ export interface PoolRollResult {
  * Calcula a pool de dados para um ataque
  *
  * Regras:
- * - Base = valor do atributo da habilidade/uso
- * - +Xd de modificadores de dados da habilidade
- * - +Xd de modificadores de dados do uso
+ * - **Ataques físicos (sem habilidade)**: dado = nível do personagem (d6-d12),
+ *   quantidade = atributo (Corpo para corpo a corpo, Agilidade para distância)
+ * - **Ataques mágicos (com habilidade)**: dado = proficiência na habilidade,
+ *   quantidade = atributo-chave + modificadores
+ * - +Xd de modificadores de dados da habilidade/uso
  * - +Xd de attackDiceModifier (bônus da arma)
  * - +Xd de Habilidade de Assinatura (1d/2d/3d por nível)
- * - Tamanho do dado = proficiência (Leigo=d6, Adepto=d8, Versado=d10, Mestre=d12)
  * - Se pool ≤ 0, rola 2d e pega o menor
  * - Máximo 8 dados por teste
  *
  * @param character - Dados do personagem
- * @param attackSkill - Habilidade usada no ataque (ex: 'luta', 'acerto')
+ * @param attackSkill - Habilidade usada (undefined = ataque físico padronizado por nível)
  * @param attackSkillUseId - ID do uso específico (opcional)
  * @param attackDiceModifier - Modificador de dados adicional (+Xd/-Xd da arma)
  * @param attributeOverride - Atributo alternativo (opcional)
+ * @param attackType - Tipo de ataque (para determinar atributo em ataques físicos)
  * @returns Pool de dados calculada
  */
 export function calculateAttackPool(
   character: Character,
-  attackSkill: SkillName,
+  attackSkill: SkillName | undefined,
   attackSkillUseId: string | undefined,
   attackDiceModifier: number = 0,
-  attributeOverride?: AttributeName
+  attributeOverride?: AttributeName,
+  attackType?: 'corpo-a-corpo' | 'distancia' | 'magico'
 ): AttackPoolCalculation {
+  // ── Ataque Físico Padronizado (sem habilidade, dado por nível) ──
+  if (
+    !attackSkill ||
+    (attackType && isLevelBasedAttack(attackSkill, attackType))
+  ) {
+    const dieSize = getAttackDefenseDieSize(character.level);
+    const physicalType =
+      attackType === 'magico' ? 'corpo-a-corpo' : attackType || 'corpo-a-corpo';
+    const attr =
+      attributeOverride || getSuggestedPhysicalAttackAttribute(physicalType);
+    const attrValue = character.attributes[attr] ?? 0;
+    const totalDice = attrValue + attackDiceModifier;
+
+    if (totalDice <= 0) {
+      return {
+        diceCount: 2,
+        dieSize,
+        isPenaltyRoll: true,
+        formula: `2${dieSize} (menor)`,
+        attribute: attr,
+        skillName: attackSkill || ('atletismo' as SkillName),
+      };
+    }
+
+    const capped = Math.min(8, totalDice);
+    return {
+      diceCount: capped,
+      dieSize,
+      isPenaltyRoll: false,
+      formula: `${capped}${dieSize}`,
+      attribute: attr,
+      skillName: attackSkill || ('atletismo' as SkillName),
+    };
+  }
+  // ── Ataque com Habilidade (Arcano, Natureza, Religião, etc.) ──
   const skill = character.skills[attackSkill];
 
-  // Fallback se habilidade não existir
+  // Fallback se habilidade não existir no personagem
   if (!skill) {
+    const dieSize = getAttackDefenseDieSize(character.level);
     const attr = attributeOverride || 'corpo';
     const attrValue = character.attributes[attr] ?? 0;
     const totalDice = attrValue + attackDiceModifier;

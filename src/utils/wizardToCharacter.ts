@@ -290,13 +290,13 @@ function calculatePP(state: WizardState): number {
 
 /**
  * Cria o ataque desarmado padrão
+ * Ataque físico padronizado por nível
  */
 function createUnarmedAttack(): Attack {
   return {
     name: 'Ataque Desarmado',
     type: 'corpo-a-corpo',
-    attackSkill: 'luta',
-    attackSkillUseId: 'atacar',
+    attackSkill: undefined,
     attackAttribute: 'corpo',
     attackDiceModifier: 0,
     damageRoll: {
@@ -827,7 +827,7 @@ export function convertWizardToCharacter(state: WizardState): Character {
 
     // Habilidades
     skills: createCharacterSkills(state),
-    signatureSkill: state.skills.signatureSkill || 'acerto',
+    signatureSkill: state.skills.signatureSkill || 'acrobacia',
     // Proficiências de origem + arquétipo são bônus adicionais ao 3+Mente
     skillProficiencyBonusSlots: new Set([
       ...state.origin.skillProficiencies,

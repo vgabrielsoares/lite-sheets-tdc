@@ -43,12 +43,12 @@ export function calculateMaxProficiencies(
  *
  * @example
  * const skills = {
- *   acerto: { proficiencyLevel: 'adepto', ... },
+ *   reflexo: { proficiencyLevel: 'adepto', ... },
  *   acrobacia: { proficiencyLevel: 'leigo', ... },
  *   atletismo: { proficiencyLevel: 'versado', ... },
  *   // ...
  * };
- * countAcquiredProficiencies(skills, 2); // 4 (acerto + atletismo + 2 níveis de sorte)
+ * countAcquiredProficiencies(skills, 2); // 4 (reflexo + atletismo + 2 níveis de sorte)
  */
 export function countAcquiredProficiencies(
   skills: Skills,

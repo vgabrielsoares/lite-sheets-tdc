@@ -139,8 +139,8 @@ export function isValidProficiencyLevel(
  * @returns True if valid skill name, false otherwise
  *
  * @example
- * isValidSkillName('acerto'); // true
  * isValidSkillName('atletismo'); // true
+ * isValidSkillName('reflexo'); // true
  * isValidSkillName('invalid'); // false
  */
 export function isValidSkillName(name: string): name is SkillName {

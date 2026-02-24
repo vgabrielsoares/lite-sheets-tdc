@@ -147,7 +147,8 @@ export const UNARMED_ATTACK_NAME = 'Ataque Desarmado';
 /**
  * Cria o ataque desarmado padrão
  * Todos os personagens têm esse ataque por padrão
- * - Usa Corpo e o uso "Atacar"
+ * - Ataque físico padronizado por nível
+ * - Usa Corpo (corpo a corpo) - dado varia com nível
  * - Dano: 1d2 + Corpo
  * - Custo: 1 ação (▶)
  * - Não pode ser deletado
@@ -157,8 +158,7 @@ function createUnarmedAttack(): Attack {
   return {
     name: UNARMED_ATTACK_NAME,
     type: 'corpo-a-corpo',
-    attackSkill: 'luta',
-    attackSkillUseId: 'default-Atacar',
+    attackSkill: undefined,
     attackAttribute: 'corpo',
     attackDiceModifier: 0,
     damageRoll: {
@@ -486,7 +486,7 @@ export function createDefaultCharacter(
 
     // Habilidades
     skills: createDefaultSkills(),
-    signatureSkill: 'acerto' as SkillName, // Default, deve ser escolhido pelo jogador
+    signatureSkill: 'acrobacia' as SkillName, // Default, deve ser escolhido pelo jogador
     skillProficiencyBonusSlots: 0, // Bônus de slots de proficiência (poderes, arquétipos, classes)
 
     // Combate
