@@ -1,10 +1,8 @@
 # Lite Sheets TDC
 
-**Versão**: 0.2 (v0.1.7 do livro)
+**Versão**: 0.2
 
 Sistema de criação e gerenciamento de fichas de RPG para **Tabuleiro do Caos** totalmente no navegador, com experiência PWA, funcionamento offline, responsividade e foco em acessibilidade. Ideal para jogadores e mestres que buscam praticidade, performance e facilidade de uso, sem depender de backend ou banco de dados externo.
-
-**Nota**: Esta versão reflete as regras atualizadas do livro v0.1.7, incluindo o novo sistema de dados (pool d6+ com contagem de sucessos), 6 novos atributos, sistema GA/PV, e habilidades redesenhadas.
 
 ---
 
@@ -347,7 +345,7 @@ Este projeto segue as diretrizes **WCAG 2.1 Nível AA** para garantir acessibili
 ## Documentação Adicional
 
 - **[CHANGELOG.md](./CHANGELOG.md)**: Histórico de versões e mudanças
-- **Base Files**: Documentos de referência do sistema Tabuleiro do Caos (livro v0.1.7) em `base-files/`
+- **Base Files**: Documentos de referência do sistema Tabuleiro do Caos em `base-files/`
   - `v0.2.md`: Regras completas da v0.2 (1680 linhas)
   - `regras-basicas.md`: Regras básicas atualizadas do jogo
   - `mvp-um.md`: Especificações do MVP 1
