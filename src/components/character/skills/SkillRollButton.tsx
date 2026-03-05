@@ -66,6 +66,8 @@ export interface SkillRollButtonProps {
   disabled?: boolean;
   /** Texto de tooltip customizado */
   tooltipText?: string;
+  /** Sobrescreve o tamanho do dado (ignora proficiencyLevel), usado para testes de defesa */
+  dieSizeOverride?: DieSize;
 }
 
 /**
@@ -86,12 +88,13 @@ export const SkillRollButton: React.FC<SkillRollButtonProps> = ({
   color = 'primary',
   disabled = false,
   tooltipText,
+  dieSizeOverride,
 }) => {
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<DicePoolResult | null>(null);
   const [tempDiceModifier, setTempDiceModifier] = useState(diceModifier);
 
-  const dieSize = getSkillDieSize(proficiencyLevel);
+  const dieSize = dieSizeOverride ?? getSkillDieSize(proficiencyLevel);
 
   /** Abre o diálogo de rolagem */
   const handleOpen = useCallback(

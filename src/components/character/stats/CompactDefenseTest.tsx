@@ -120,7 +120,8 @@ export const CompactDefenseTest = React.memo(function CompactDefenseTest({
           totalDice,
         } as PoolInfo,
         attrValue,
-        diceModifier: permanentDiceModifier + condPenalty,
+        diceModifier:
+          permanentDiceModifier + condPenalty + conditionDefensePenalty,
       };
     });
   }, [
@@ -214,6 +215,7 @@ export const CompactDefenseTest = React.memo(function CompactDefenseTest({
                 skillLabel={`Defesa: ${opt.label}`}
                 attributeValue={opt.attrValue}
                 proficiencyLevel="leigo"
+                dieSizeOverride={dieSize}
                 diceModifier={opt.diceModifier}
                 size="small"
                 tooltipText={`Rolar teste de defesa (${opt.label})`}
