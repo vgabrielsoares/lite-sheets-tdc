@@ -29,7 +29,6 @@ import {
   Delete as DeleteIcon,
   Info as InfoIcon,
   AutoFixHigh as SpellPointsIcon,
-  Casino as CasinoIcon,
 } from '@mui/icons-material';
 import { uuidv4 } from '@/utils/uuid';
 import type { Character, Modifier } from '@/types';
@@ -46,6 +45,7 @@ import {
   CHANNEL_MANA_PF_GENERATION,
 } from '@/constants/spells';
 import { EditableNumber } from '@/components/shared';
+import { SkillRollButton } from '@/components/character/skills/SkillRollButton';
 
 export interface SpellDashboardProps {
   character: Character;
@@ -1147,7 +1147,6 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                             bgcolor: 'action.hover',
                           }}
                         >
-                          <CasinoIcon color="primary" />
                           <Box sx={{ textAlign: 'center' }}>
                             <Typography
                               variant="caption"
@@ -1163,6 +1162,21 @@ export function SpellDashboard({ character, onUpdate }: SpellDashboardProps) {
                               {pool.dieSize}
                             </Typography>
                           </Box>
+                          <SkillRollButton
+                            skillLabel={`Conjuração: ${SKILL_LABELS[ability.skill]}`}
+                            attributeValue={
+                              character.attributes[ability.attribute]
+                            }
+                            proficiencyLevel={
+                              character.skills?.[ability.skill]
+                                ?.proficiencyLevel || 'leigo'
+                            }
+                            diceModifier={
+                              pool.totalDice -
+                              character.attributes[ability.attribute]
+                            }
+                            tooltipText={`Rolar teste de conjuração (${SKILL_LABELS[ability.skill]})`}
+                          />
                         </Box>
                       </Tooltip>
                     </CardContent>
