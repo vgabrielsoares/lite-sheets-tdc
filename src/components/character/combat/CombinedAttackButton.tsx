@@ -33,6 +33,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Alert,
+  TextField,
   alpha,
   useTheme,
 } from '@mui/material';
@@ -42,8 +43,7 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import StarsIcon from '@mui/icons-material/Stars';
 import {
-  rollDicePool,
-  rollWithPenalty,
+  rollSkillTest,
   rollDamageByHitType,
   globalDiceHistory,
 } from '@/utils/diceRoller';
@@ -168,6 +168,7 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
   const [damageResult, setDamageResult] = useState<AttackDamageResult | null>(
     null
   );
+  const [tempDiceModifier, setTempDiceModifier] = useState(0);
 
   // Calcular pool de ataque dinamicamente
   const attackPoolCalc: AttackPoolCalculation = useMemo(() => {
@@ -218,20 +219,13 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
    * Passo 1: Rola o pool de ataque
    */
   const handleRollAttack = useCallback(() => {
-    let poolResult: DicePoolResult;
-
-    if (attackPoolCalc.isPenaltyRoll) {
-      poolResult = rollWithPenalty(
-        attackPoolCalc.dieSize,
-        `Ataque: ${attackName}`
-      );
-    } else {
-      poolResult = rollDicePool(
-        attackPoolCalc.diceCount,
-        attackPoolCalc.dieSize,
-        `Ataque: ${attackName}`
-      );
-    }
+    const baseDice = attackPoolCalc.isPenaltyRoll ? 0 : attackPoolCalc.diceCount;
+    const poolResult = rollSkillTest(
+      baseDice,
+      attackPoolCalc.dieSize,
+      tempDiceModifier,
+      `Ataque: ${attackName}`
+    );
 
     globalDiceHistory.add(poolResult);
     setAttackResult(poolResult);
@@ -242,7 +236,7 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
 
     // Limpar dano anterior
     setDamageResult(null);
-  }, [attackPoolCalc, attackName]);
+  }, [attackPoolCalc, attackName, tempDiceModifier]);
 
   /**
    * Passo 2: Calcula dano baseado no tipo de resultado selecionado
@@ -392,8 +386,36 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
                     variant="outlined"
                   />
                 )}
+                {tempDiceModifier !== 0 && (
+                  <Chip
+                    label={`Mod. temporário: ${tempDiceModifier > 0 ? '+' : ''}${tempDiceModifier}d`}
+                    size="small"
+                    color="info"
+                    variant="outlined"
+                  />
+                )}
               </Stack>
             </Box>
+
+            {/* Modificador temporário de dados */}
+            {!attackResult && (
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Modificador de Dados (bônus/penalidade temporário):
+                </Typography>
+                <TextField
+                  type="number"
+                  value={tempDiceModifier}
+                  onChange={(e) =>
+                    setTempDiceModifier(parseInt(e.target.value) || 0)
+                  }
+                  inputProps={{ min: -10, max: 10, step: 1 }}
+                  size="small"
+                  sx={{ width: 100 }}
+                  label="+/- dados"
+                />
+              </Box>
+            )}
 
             {/* ═══════════════════════════════════════════════ */}
             {/* PASSO 1: Resultado do pool de ataque */}
@@ -644,6 +666,8 @@ export const CombinedAttackButton: React.FC<CombinedAttackButtonProps> = ({
               color="primary"
             >
               Rolar Ataque ({attackPoolCalc.formula})
+              {tempDiceModifier !== 0 &&
+                ` (${tempDiceModifier > 0 ? '+' : ''}${tempDiceModifier}d)`}
             </Button>
           )}
 

@@ -26,14 +26,14 @@ import {
   Typography,
   Chip,
   Stack,
+  TextField,
   alpha,
   useTheme,
 } from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import HistoryIcon from '@mui/icons-material/History';
 import {
-  rollDicePool,
-  rollWithPenalty,
+  rollSkillTest,
   globalDiceHistory,
 } from '@/utils/diceRoller';
 import type { DicePoolResult } from '@/types';
@@ -111,6 +111,7 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<DicePoolResult | null>(null);
+  const [tempDiceModifier, setTempDiceModifier] = useState(0);
 
   // Calcular pool de ataque dinamicamente
   const attackPoolCalc: AttackPoolCalculation = useMemo(() => {
@@ -152,20 +153,13 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
    * Executa a rolagem de ataque usando pool de dados
    */
   const handleRoll = useCallback(() => {
-    let poolResult: DicePoolResult;
-
-    if (attackPoolCalc.isPenaltyRoll) {
-      poolResult = rollWithPenalty(
-        attackPoolCalc.dieSize,
-        `Ataque: ${attackName}`
-      );
-    } else {
-      poolResult = rollDicePool(
-        attackPoolCalc.diceCount,
-        attackPoolCalc.dieSize,
-        `Ataque: ${attackName}`
-      );
-    }
+    const baseDice = attackPoolCalc.isPenaltyRoll ? 0 : attackPoolCalc.diceCount;
+    const poolResult = rollSkillTest(
+      baseDice,
+      attackPoolCalc.dieSize,
+      tempDiceModifier,
+      `Ataque: ${attackName}`
+    );
 
     // Adicionar ao histórico global
     globalDiceHistory.add(poolResult);
@@ -175,7 +169,7 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
     if (onRoll) {
       onRoll(poolResult);
     }
-  }, [attackPoolCalc, attackName, onRoll]);
+  }, [attackPoolCalc, attackName, onRoll, tempDiceModifier]);
 
   /**
    * Rolagem rápida (sem abrir diálogo primeiro)
@@ -184,20 +178,13 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
     (event: React.MouseEvent) => {
       event.stopPropagation();
 
-      let poolResult: DicePoolResult;
-
-      if (attackPoolCalc.isPenaltyRoll) {
-        poolResult = rollWithPenalty(
-          attackPoolCalc.dieSize,
-          `Ataque: ${attackName}`
-        );
-      } else {
-        poolResult = rollDicePool(
-          attackPoolCalc.diceCount,
-          attackPoolCalc.dieSize,
-          `Ataque: ${attackName}`
-        );
-      }
+      const baseDice = attackPoolCalc.isPenaltyRoll ? 0 : attackPoolCalc.diceCount;
+      const poolResult = rollSkillTest(
+        baseDice,
+        attackPoolCalc.dieSize,
+        tempDiceModifier,
+        `Ataque: ${attackName}`
+      );
 
       globalDiceHistory.add(poolResult);
 
@@ -214,7 +201,7 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
         setResult(null);
       }, 3000);
     },
-    [attackPoolCalc, attackName, onRoll]
+    [attackPoolCalc, attackName, onRoll, tempDiceModifier]
   );
 
   // Informação de sucesso do resultado
@@ -309,7 +296,33 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
                     variant="outlined"
                   />
                 )}
+                {tempDiceModifier !== 0 && (
+                  <Chip
+                    label={`Mod. temporário: ${tempDiceModifier > 0 ? '+' : ''}${tempDiceModifier}d`}
+                    size="small"
+                    color="info"
+                    variant="outlined"
+                  />
+                )}
               </Stack>
+            </Box>
+
+            {/* Modificador temporário de dados */}
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Modificador de Dados (bônus/penalidade temporário):
+              </Typography>
+              <TextField
+                type="number"
+                value={tempDiceModifier}
+                onChange={(e) =>
+                  setTempDiceModifier(parseInt(e.target.value) || 0)
+                }
+                inputProps={{ min: -10, max: 10, step: 1 }}
+                size="small"
+                sx={{ width: 100 }}
+                label="+/- dados"
+              />
             </Box>
 
             {/* Resultado da rolagem */}
@@ -366,6 +379,8 @@ export const AttackRollButton: React.FC<AttackRollButtonProps> = ({
             disabled={disabled}
           >
             Rolar
+            {tempDiceModifier !== 0 &&
+              ` (${tempDiceModifier > 0 ? '+' : ''}${tempDiceModifier}d)`}
           </Button>
         </DialogActions>
       </Dialog>
